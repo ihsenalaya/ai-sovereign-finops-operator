@@ -1,11 +1,11 @@
 scenario,strategy,total_cost_eur,served,blocked,violations,reroutes,mean_quality_norm
 global,B1-premium-static,0.038930,40,0,0,0,0.900000
-global,B6-ours,0.013798,40,0,0,30,0.900000
+global,B6-ours,0.011353,40,0,0,40,0.912500
 eu-only,B1-premium-static,0.038930,40,0,40,0,0.900000
-eu-only,B6-ours,0.000110,20,20,0,20,0.740000
+eu-only,B6-ours,0.018160,40,0,0,40,0.866250
 france-only,B1-premium-static,0.038930,40,0,40,0,0.900000
 france-only,B6-ours,0.000110,20,20,0,20,0.740000
 no-external-sensitive,B1-premium-static,0.038930,40,0,10,0,0.900000
-no-external-sensitive,B6-ours,0.013136,40,0,0,30,0.878750
+no-external-sensitive,B6-ours,0.010691,40,0,0,40,0.891250
 self-hosted-only,B1-premium-static,0.038930,40,0,40,0,0.900000
 self-hosted-only,B6-ours,0.000110,20,20,0,20,0.740000

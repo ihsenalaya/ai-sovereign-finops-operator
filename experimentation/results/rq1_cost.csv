@@ -1,7 +1,7 @@
 strategy,total_cost_eur,served,blocked,cost_per_request_eur,cost_per_token_eur,savings_vs_premium_pct
 B1-premium-static,0.038930,40,0,0.000973,0.000007,0.00
-B2-round-robin,0.010174,40,0,0.000254,0.000002,73.87
+B2-round-robin,0.014667,40,0,0.000367,0.000003,62.32
 B3-least-cost,0.000700,40,0,0.000017,0.000000,98.20
 B4-static-policy,0.021011,40,0,0.000525,0.000005,46.03
 B5-budget-hard-block,0.038930,40,0,0.000973,0.000007,0.00
-B6-ours,0.013798,40,0,0.000345,0.000003,64.56
+B6-ours,0.011353,40,0,0.000284,0.000002,70.84

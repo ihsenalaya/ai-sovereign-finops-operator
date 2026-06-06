@@ -1,6 +1,6 @@
 # Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways
 
-**Draft v0.2 — single-provider (OpenAI) evaluation.** A first complete write-up built from real
+**Draft v0.3 — two-provider (OpenAI US + Mistral EU) evaluation.** A complete write-up built from real
 measurements (`../results/`). Numbers are reproduced from the committed run; figures are in
 `../figures/`; citations use the verified `references.bib` (keys in brackets). Items explicitly
 labeled *modeled* are not real measurements (see §8). This is preliminary work toward a Q1 submission;
@@ -18,18 +18,21 @@ gateways. We formalize model selection as a constrained scoring problem that rej
 violating declarative sovereignty rules and, among the rest, minimizes a weighted combination of
 cost, expected quality loss, latency, and budget pressure. We realize the approach as a Kubernetes
 operator whose FinOps and sovereignty engines drive routing, and we evaluate it on a reproducible
-testbed with **real LLM calls**. **Scope of current evidence (preliminary):** a *single provider*
-(OpenAI), *four synthetic enterprise workloads* (40 prompts), *one deterministic pass* (temperature 0),
-with *modeled* self-hosting economics; we therefore report effects *within this testbed*, without
-significance testing yet. Within this scope: relative to an always-premium policy, our approach
-reduces measured cost by **64.6%** over the 40-prompt matrix while keeping LLM-as-judge quality
-**comparable** (normalized 0.900 vs 0.900; pairwise win-rate vs premium 41.7%, i.e. near parity but
-slightly below 50%); routing adds **tens of microseconds** of decision overhead; it enforces five
-declarative sovereignty scenarios with **zero violations** versus 40 for a sovereignty-blind baseline;
-and it sustains **100% request availability with 0% budget overrun** under a tight budget where a
-hard-block policy drops to 60%. The managed-vs-self-hosted break-even (RQ6) is a **modeled** prediction
-to be validated on real GPUs. All code, datasets, cached responses, and analysis are released; we
-present this as preliminary evidence and a reproducible framework, not a universal claim.
+testbed with **real LLM calls across two providers**. **Scope of current evidence (preliminary):**
+*two providers* — OpenAI (US, managed) and **Mistral (EU)** served via **Azure AI Foundry**
+(Mistral-Large-3, *DataZoneStandard* EU data zone) — over *four synthetic enterprise workloads*
+(40 prompts), *one deterministic pass* (temperature 0), with *modeled* self-hosting economics
+(no GPU); we report effects *within this testbed*, without significance testing yet. Within this
+scope: relative to an always-premium policy, our approach reduces measured cost by **70.8%** over the
+40-prompt matrix while keeping LLM-as-judge quality **comparable to (slightly above) premium**
+(normalized 0.9125 vs 0.900; pairwise win-rate vs premium 50.0%); routing adds **tens of microseconds**
+of decision overhead; it enforces declarative sovereignty scenarios with **zero violations** versus 40
+for a sovereignty-blind baseline, and under an **EU-only** policy it keeps **100% availability by
+routing to the real EU provider (Mistral)** where the blind baseline commits 40 violations; and it
+sustains **100% request availability with 0% budget overrun** under a tight budget where a hard-block
+policy drops to 60%. The managed-vs-self-hosted break-even (RQ6) remains a **modeled** prediction to be
+validated on real GPUs. All code, datasets, cached responses, and analysis are released; we present
+this as preliminary evidence and a reproducible framework, not a universal claim.
 
 ## 1. Introduction
 
@@ -134,10 +137,13 @@ data-path enforcement inside Envoy is the live-integration step (§9).
 
 ## 5. Methodology
 
-**Testbed.** A Go harness drives the operator's *actual* engines and issues **real** LLM calls. The
-provider in this phase is **OpenAI** (the harness is provider-agnostic; a second provider is the next
-step). Models: gpt-4o (premium), gpt-4o-mini (medium), gpt-4.1-nano (cheap), and a *modeled* EU
-self-hosted model (no GPU locally; cost computed, response stubbed, rows tagged *modeled*).
+**Testbed.** A Go harness drives the operator's *actual* engines and issues **real** LLM calls across
+**two providers**: (1) **OpenAI (US, managed)** — gpt-4o (premium), gpt-4o-mini (medium), gpt-4.1-nano
+(cheap); (2) **Mistral (EU)** — `mistral-large` served via **Azure AI Foundry** as **Mistral-Large-3**
+in **DataZoneStandard** (EU data zone), a real EU-hosted provider. A *modeled* EU self-hosted model
+(no GPU; cost computed, response stubbed, rows tagged *modeled*) is retained only for the RQ6
+break-even prediction. The harness is provider-agnostic (per-provider OpenAI-compatible clients), so
+adding further providers is additive.
 
 **Workloads (W1–W4).** HR chatbot (short, sensitive), RAG docs (long context, quality-sensitive), Dev
 assistant (high quality), Analytical agent (high volume). Each declares team, namespace, sensitivity,
@@ -159,20 +165,21 @@ supports ≥30 repetitions (§8).
 ## 6. Results
 
 ### RQ1 — Cost (Figure 2, Table 1)
-Relative to premium-static, **B6-ours cuts total cost by 64.6%** (0.0138 vs 0.0389 EUR over the 40-
-prompt matrix; cost/request 0.000345 vs 0.000973). Naïve least-cost (B3) saves 98.2% but at a quality
-cost (RQ2); round-robin 73.9%; static policy 46.0%.
+Relative to premium-static, **B6-ours cuts total cost by 70.8%** (0.01135 vs 0.03893 EUR over the
+40-prompt matrix; cost/request 0.000284 vs 0.000973). With the second provider available, Ours routes
+much traffic to the cheaper Mistral EU and OpenAI mid/cheap tiers. Naïve least-cost (B3) saves 98.2%
+but at a quality cost (RQ2); round-robin 62.3%; static policy 46.0%.
 
 ### RQ2 — Quality (Figure 3, Table 2)
-Within this single-pass, single-provider scope, B6-ours's mean normalized quality **matches** the
-premium baseline (0.900 vs 0.900; acceptable-rate 97.5%), while least-cost drops to 0.858 and
-static-policy to 0.869. The pairwise win-rate of B6 vs the premium reference is **41.7%** — near parity
-but **below 50%**, i.e. the judge slightly prefers the premium answers on contested prompts. Two
-caveats temper any "no quality loss" reading: (i) the **premium model is also the routing reference and
-the basis of the judge comparison**, which can bias pairwise results toward premium; (ii) we have **not
-yet run significance tests** (one deterministic pass). We therefore claim only that *quality remained
-comparable within the evaluated scope*, and defer a statistically supported statement to the
-multi-repetition, multi-judge protocol (§8, `QUALITY_EVALUATION_PROTOCOL.md`).
+Within this two-provider, single-pass scope, B6-ours's mean normalized quality is **comparable to —
+marginally above — premium** (0.9125 vs 0.900; acceptable-rate 97.5%), with a pairwise win-rate vs the
+premium reference of **50.0%** (statistical parity). The cross-provider mix helps: Mistral-Large-3
+sometimes matches or beats gpt-4o on the judge. Least-cost drops to 0.858 and static-policy to 0.869.
+Two caveats remain: (i) the **premium model is also the routing reference and the judge anchor**, which
+can bias pairwise results; (ii) we have **not yet run significance tests** (one deterministic pass).
+We therefore claim only that *quality remained comparable within the evaluated scope*, and defer a
+statistically supported statement to the multi-repetition, multi-judge protocol
+(§8, `QUALITY_EVALUATION_PROTOCOL.md`).
 
 ### RQ3 — Latency and overhead (Figure 4, Table 3)
 The **routing decision adds tens of microseconds** (B6 ≈ 26.5 µs/request) — negligible vs network
@@ -187,12 +194,16 @@ disentangle routing-distribution effects from API jitter. Least-cost has the low
 (p95 1476 ms), consistent with always picking small models.
 
 ### RQ4 — Sovereignty (Figure 5, Table 4)
-A sovereignty-blind baseline (B1) commits **40 violations** under eu-only, france-only, and
+A sovereignty-blind baseline (B1) commits **40 violations** under eu-only, france-only and
 self-hosted-only, and 10 under no-external-sensitive. **B6-ours commits zero violations in every
-scenario.** It reveals the *cost of sovereignty*: under no-external-sensitive it still serves all 40
-requests (quality 0.879) by rerouting; under the strict france-only/self-hosted-only scenarios only
-the workloads that permit the self-hosted model are served (20/40), the rest are refused rather than
-violated — quantifying the availability price of strict residency (self-hosted quality is *modeled*).
+scenario.** Crucially, with a **real EU provider** (Mistral-Large-3, Azure AI Foundry DataZone EU),
+under the **EU-only** policy Ours **keeps 100% availability (40/40 served) with zero violations** by
+rerouting to Mistral EU (quality 0.866) — where the blind baseline would commit 40 violations. Under
+**no-external-sensitive** it also serves all 40 (quality 0.891). The *cost of sovereignty* appears in
+the stricter **france-only/self-hosted-only** scenarios: only the modeled FR self-hosted model
+qualifies, so 20/40 are served and the rest refused rather than violated — quantifying the
+availability price of strict, France-only residency (that fallback's quality is *modeled*; a real
+French-hosted endpoint would remove the modeling).
 
 ### RQ5 — Budget-aware degradation (Figure 6, Table 5)
 Under a budget tight enough to be exceeded by always-premium, **ours-graceful keeps 100% availability
@@ -226,22 +237,25 @@ sustained volume.
 Summarized here; full version in `threats_to_validity.md`. **Internal:** API/latency variability
 (mitigated by temperature 0, caching, bootstrap CIs); LLM-as-judge bias (absolute + pairwise, fixed
 judge). **External:** single provider and **modeled** self-hosting in this phase; four synthetic
-workloads; volatile cloud prices (isolated as configuration). **Construct:** acceptability/win-rate
+workloads; **modeled** self-hosting/GPU economics (RQ6); the Mistral EU model uses Azure AI Foundry
+DataZoneStandard (EU data zone) — strict France-only residency still relies on a modeled fallback;
+volatile cloud prices (isolated as configuration). **Construct:** acceptability/win-rate
 are quality proxies; declarative sovereignty simplifies legal reality — the system targets *audit
 preparation*, not legal compliance. **Conclusion:** one deterministic pass (temperature 0); the
 protocol supports ≥30 repetitions with significance tests and effect sizes for the camera-ready.
 
 ## 9. Conclusion and Future Work
 
-Within our preliminary, single-provider, single-pass testbed, a gateway-level, economic-aware,
-sovereignty-constrained, budget-aware control plane substantially reduced cost while keeping quality
-comparable, enforcing sovereignty with zero violations, and preserving availability under budget
-pressure. We deliberately frame these as *preliminary evidence and a reproducible framework*, not
-universal claims. To reach a defensible Q1 result we plan (see `ROADMAP_Q1.md` and the dedicated
+Within our preliminary, two-provider, single-pass testbed, a gateway-level, economic-aware,
+sovereignty-constrained, budget-aware control plane substantially reduced cost (−70.8%) while keeping
+quality comparable, enforcing sovereignty with zero violations — including **maintaining 100%
+availability under an EU-only policy via a real EU provider** — and preserving availability under
+budget pressure. We deliberately frame these as *preliminary evidence and a reproducible framework*,
+not universal claims. To reach a defensible Q1 result we plan (see `ROADMAP_Q1.md` and the dedicated
 protocol files):
-(1) a **second provider** for cross-provider routing and real EU-sovereignty
-(`MULTI_PROVIDER_EVALUATION_PLAN.md`);
-(2) **real GPU self-hosting** (vLLM on AKS) to validate the modeled break-even
+(1) **more providers** (Azure OpenAI, additional Mistral/Foundry and other models) beyond the current
+OpenAI+Mistral pair (`MULTI_PROVIDER_EVALUATION_PLAN.md`);
+(2) **real GPU self-hosting** (vLLM) to validate the modeled break-even
 (`GPU_SELF_HOSTING_VALIDATION_PLAN.md`);
 (3) **multi-judge + human** quality evaluation with agreement statistics
 (`QUALITY_EVALUATION_PROTOCOL.md`);

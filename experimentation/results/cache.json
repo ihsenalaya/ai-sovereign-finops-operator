@@ -610,6 +610,16 @@
    "Model": "gpt-4o-mini",
    "Provider": "openai"
   },
+  "gpt-4o-mini|w3-03": {
+   "Text": "The bug in the provided code snippet is related to the closure capturing the loop variable `i`. In Go, when you launch a goroutine inside a loop, the loop variable is shared among all iterations. By the time the goroutine executes, the loop may have already completed, and `i` will hold the value of the last iteration, which can lead to unexpected behavior.\n\nHere's the problematic code:\n\n```go\nfor i := range items {\n    go func() {\n        process(items[i])\n    }()\n}\n```\n\nIn this code, all goroutines will reference the same `i`, which will be the last value of `i` after the loop finishes. This means that all goroutines will attempt to process `items[len(items)-1]`, which is likely not the intended behavior.\n\n### Fix\n\nTo fix this issue, you need to pass the loop variable `i` as an argument to the goroutine's function. This way, each goroutine will capture its own copy of `i` at the time of the iteration. Here's the corrected code:\n\n```go\nfor i := range items {\n    go func(i int) {\n        process(items[i])\n    }(i) // Pass i as an argument to the goroutine\n}\n```\n\nIn",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 3576,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
   "gpt-4o-mini|w3-04": {
    "Text": "You can use the following command to find the 5 largest files under `/var/log`:\n\n```bash\nfind /var/log -type f -exec du -h {} + | sort -hr | head -n 5\n```",
    "Usage": {
@@ -1140,6 +1150,326 @@
    "Model": "gpt-4o",
    "Provider": "openai"
   },
+  "mistral-large|w1-04": {
+   "Text": "As an internal HR assistant, here are the typical documents and steps required to update an employee's bank details for payroll:\n\n### **Required Documents:**\n1. **Bank Details Update Form** (Company-Specific):\n   - A formal request form (digital or physical) signed by the employee, including:\n     - Full name (as per company records)\n     - Employee ID\n     - New bank account number\n     - Bank name and branch\n     - IFSC code (for India) / Routing number (for US) / IBAN (for Europe) / Other relevant codes\n     - Account holder’s name (must match employee’s legal name)\n     - Cancelled cheque or bank passbook copy (for verification)\n\n2. **Proof of Bank Account Ownership:**\n   - **Cancelled cheque** (with the employee’s name printed on it) **OR**\n   - **Bank passbook/statement** (first page with account details) **OR**\n   - **Bank letter** (on official letterhead, signed by a bank representative)\n\n3. **Employee ID Proof (if required):**\n   - Copy of government-issued ID (e.g., Aadhaar, PAN, Passport, Driver’s License) to verify identity.",
+   "Usage": {
+    "InputTokens": 27,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 2062,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w1-09": {
+   "Text": "I'm really sorry you're dealing with this. Here’s how to report it confidentially and safely:\n\n1. **Direct Report**: Share concerns with your manager (unless they’re involved).\n2. **HR Contact**: Reach out to HR via email, phone, or our secure portal.\n3. **Anonymous Option**: Use our whistleblower hotline if you prefer anonymity.\n\nWe take this seriously and will handle it with care. Let me know if you’d like help drafting a message or need support. You’re not alone. 💙",
+   "Usage": {
+    "InputTokens": 28,
+    "OutputTokens": 113
+   },
+   "LatencyMS": 914,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-01": {
+   "Text": "From the provided context, audit logs are kept for **180 days** before archival.",
+   "Usage": {
+    "InputTokens": 57,
+    "OutputTokens": 21
+   },
+   "LatencyMS": 342,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-02": {
+   "Text": "For a 30 EUR order refund, store credit is granted.",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 15
+   },
+   "LatencyMS": 372,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-03": {
+   "Text": "The burst limit is **1000 requests**.",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 12
+   },
+   "LatencyMS": 488,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-04": {
+   "Text": "- **Uptime Guarantee**: 99.9% monthly uptime is assured.\n- **Response Time**: Critical incidents are addressed within 4 hours.\n- **Compensation**: Service credits of 10% are provided for each 0.1% the uptime falls below the target.",
+   "Usage": {
+    "InputTokens": 59,
+    "OutputTokens": 64
+   },
+   "LatencyMS": 488,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-05": {
+   "Text": "EU customers are served from Frankfurt.",
+   "Usage": {
+    "InputTokens": 38,
+    "OutputTokens": 8
+   },
+   "LatencyMS": 294,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-06": {
+   "Text": "Based on the provided context, the onboarding fee is paid by customers who choose **monthly plans**. The fee is waived for those who opt for **annual plans**.",
+   "Usage": {
+    "InputTokens": 46,
+    "OutputTokens": 37
+   },
+   "LatencyMS": 365,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-07": {
+   "Text": "The backups are encrypted with **AES-256**.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 15
+   },
+   "LatencyMS": 297,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-08": {
+   "Text": "The key figure for churn after the change is **3.8%**.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 16
+   },
+   "LatencyMS": 278,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-09": {
+   "Text": "From the provided context, the Pro tier gets support during business hours.",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 15
+   },
+   "LatencyMS": 287,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w2-10": {
+   "Text": "Over a weekend, the migration successfully transferred 2.3 TB of data across 14 services with no data loss and only 12 minutes of read-only downtime.",
+   "Usage": {
+    "InputTokens": 50,
+    "OutputTokens": 37
+   },
+   "LatencyMS": 345,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-01": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"crypto/sha256\"\n\t\"encoding/hex\"\n)\n\nfunc sha256HexDigest(s string) string {\n\th := sha256.New()\n\th.Write([]byte(s))\n\treturn hex.EncodeToString(h.Sum(nil))\n}\n```",
+   "Usage": {
+    "InputTokens": 41,
+    "OutputTokens": 64
+   },
+   "LatencyMS": 685,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-02": {
+   "Text": "1. **Purpose \u0026 Use Case**: A Kubernetes **Deployment** is designed for managing stateless applications, where pods are interchangeable and can be replaced without preserving identity or data, while a **StatefulSet** is tailored for stateful applications (e.g., databases) that require stable, unique network identifiers, persistent storage, and ordered scaling/deployment.\n\n2. **Pod Identity \u0026 Storage**: In a **Deployment**, pods are ephemeral and created with random names (e.g., `pod-abc123`), and storage is typically shared or non-persistent, whereas a **StatefulSet** assigns each pod a stable, predictable name (e.g., `pod-0`, `pod-1`) and binds them to persistent volume claims (PVCs) that persist even if the pod is rescheduled.\n\n3. **Scaling \u0026 Updates**: **Deployments** support rolling updates and can scale pods in any order, with no guarantees about pod termination sequence, while **StatefulSets** enforce ordered, graceful scaling (e.g., `pod-1` won’t start until `pod-0` is running) and sequential updates/rollbacks to maintain data consistency.",
+   "Usage": {
+    "InputTokens": 28,
+    "OutputTokens": 245
+   },
+   "LatencyMS": 1697,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-03": {
+   "Text": "The bug in this code is a **data race** and **capture of the loop variable** by the goroutine. Here's what's happening:\n\n### The Problem:\n1. **Loop Variable Capture**: The goroutine closure captures the variable `i` by reference, not by value. By the time the goroutine executes, the loop may have already advanced, and `i` could point to a different index (or even be out of bounds if the loop has finished).\n2. **Data Race**: Multiple goroutines may read `items[i]` concurrently, leading to undefined behavior if `items` is modified elsewhere or if `process()` is not thread-safe.\n\n### Example of the Bug:\nIf `items` has 3 elements, all goroutines might end up processing `items[2]` (or another index) because the loop finishes before the goroutines start, and `i` is shared.\n\n---\n\n### How to Fix It:\nPass the loop variable as an argument to the goroutine to capture it by value:\n\n#### Fix 1: Pass `i` as an argument\n```go\nfor i := range items {\n    go func(idx int) {\n        process(items[idx])\n    }(i) // Pass current value of `i` to the",
+   "Usage": {
+    "InputTokens": 42,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1634,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-04": {
+   "Text": "Here's a one-line bash command to find the 5 largest files under `/var/log`:\n\n```bash\nsudo find /var/log -type f -exec du -h {} + | sort -rh | head -n 5\n```\n\n### Explanation:\n- `sudo`: Ensures you have permission to access all files in `/var/log`.\n- `find /var/log -type f`: Recursively finds all files (`-type f`) under `/var/log`.\n- `-exec du -h {} +`: Computes the disk usage (`du -h`) of each file in a human-readable format.\n- `sort -rh`: Sorts the results in reverse (`-r`) order by human-readable sizes (`-h`).\n- `head -n 5`: Displays only the top 5 largest files.\n\n### Alternative (faster for large directories):\nIf `/var/log` is very large, this version avoids sorting all files and is more efficient:\n```bash\nsudo find /var/log -type f -exec du -h {} + | sort -rh | head -n 5\n```\nOr using `ls` (less reliable for filenames with spaces/newlines):\n```bash\nsudo ls -lShR /var/log |",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1621,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-05": {
+   "Text": "```go\npackage math\n\nimport \"testing\"\n\nfunc TestAdd(t *testing.T) {\n    tests := []struct {\n        name     string\n        a, b     int\n        expected int\n    }{\n        {\"positive numbers\", 2, 3, 5},\n        {\"negative numbers\", -1, -1, -2},\n        {\"mixed signs\", -5, 10, 5},\n        {\"zero values\", 0, 0, 0},\n    }\n\n    for _, tt := range tests {\n        t.Run(tt.name, func(t *testing.T) {\n            if got := Add(tt.a, tt.b); got != tt.expected {\n                t.Errorf(\"Add(%d, %d) = %d; expected %d\", tt.a, tt.b, got, tt.expected)\n            }\n        })\n    }\n}\n```",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 184
+   },
+   "LatencyMS": 1770,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-06": {
+   "Text": "A SQL index is a database structure that improves the speed of data retrieval operations by providing quick access to rows in a table, similar to how a book's index helps you find information faster. However, one downside is that indexes consume additional storage space and can slow down write operations (INSERT, UPDATE, DELETE) because the index must also be updated.",
+   "Usage": {
+    "InputTokens": 27,
+    "OutputTokens": 72
+   },
+   "LatencyMS": 1209,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-07": {
+   "Text": "Here's the Prometheus query to calculate the **95th percentile (p95) of average request latency over 5 minutes** for the job `'api'` using the `histogram_quantile` function on the `http_request_duration_seconds_bucket` metric:\n\n```promql\nhistogram_quantile(\n  0.95,\n  sum by(le, job) (\n    rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])\n  )\n)\n```\n\n### Explanation:\n1. **`rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])`**\n   - Computes the per-second average rate of requests over the last 5 minutes for the `api` job.\n   - The `rate()` function is used to handle counter resets and provide a smooth rate.\n\n2. **`sum by(le, job)`**\n   - Aggregates the rates by the `le` (bucket label) and `job` to ensure the histogram buckets are correctly aligned for the quantile calculation.\n\n3. **`histogram_quantile(0.95, ...)`**\n   - Computes the 95th percentile latency from the histogram buckets.\n\n### Optional Refinements:\n-",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 2355,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-08": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\ntype Config struct {\n\tName string `json:\"name\"`\n\tPort int    `json:\"port\"`\n}\n\nfunc loadConfig(path string) (*Config, error) {\n\tdata, err := os.ReadFile(path)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\tvar cfg Config\n\tif err := json.Unmarshal(data, \u0026cfg); err != nil {\n\t\treturn nil, err\n\t}\n\n\treturn \u0026cfg, nil\n}\n```",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 109
+   },
+   "LatencyMS": 799,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-09": {
+   "Text": "The `kubectl rollout undo deploy/foo` command reverts the `foo` deployment to its previous revision, effectively rolling back the last applied change.",
+   "Usage": {
+    "InputTokens": 28,
+    "OutputTokens": 33
+   },
+   "LatencyMS": 505,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w3-10": {
+   "Text": "When a system prioritizes **availability** during a network partition (AP system), it must sacrifice **consistency**, allowing temporary inconsistencies across nodes to ensure continuous operation. This trade-off means clients may read stale or conflicting data until the partition heals and consistency is eventually restored (e.g., via conflict resolution or anti-entropy mechanisms).",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 70
+   },
+   "LatencyMS": 946,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-01": {
+   "Text": "29.2",
+   "Usage": {
+    "InputTokens": 49,
+    "OutputTokens": 5
+   },
+   "LatencyMS": 254,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-02": {
+   "Text": "**3.33%** (average of 12.5%, 11.11%, -5.33%, 12.68%)",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 36
+   },
+   "LatencyMS": 502,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-03": {
+   "Text": "Bug",
+   "Usage": {
+    "InputTokens": 37,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 405,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-04": {
+   "Text": "To calculate the **visit-to-paid conversion rate**, follow these steps:\n\n1. **Identify the key metrics:**\n   - **Visits (Top of funnel):** 10,000\n   - **Paid conversions (Bottom of funnel):** 240\n\n2. **Use the conversion rate formula:**\n   \\[\n   \\text{Conversion Rate (\\%)} = \\left( \\frac{\\text{Number of Paid Conversions}}{\\text{Number of Visits}} \\right) \\times 100\n   \\]\n\n3. **Plug in the numbers:**\n   \\[\n   \\text{Conversion Rate (\\%)} = \\left( \\frac{240}{10,000} \\right) \\times 100 = 2.4\\%\n   \\]\n\n### **Final Answer:**\n**The visit-to-paid conversion rate is 2.4%.**",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 189
+   },
+   "LatencyMS": 1193,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-05": {
+   "Text": "The churn rate shows a consistent downward trend over the five months, decreasing from 5.0% to 3.5%.",
+   "Usage": {
+    "InputTokens": 49,
+    "OutputTokens": 27
+   },
+   "LatencyMS": 403,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-06": {
+   "Text": "To determine which model is cheaper per token for a 1000-in/500-out request, let's calculate the total cost for each model.\n\n### Model A:\n- Input cost: 2.5 per 1M tokens\n- Output cost: 10 per 1M tokens\n\n**Cost for 1000 input tokens:**\n(1000 / 1,000,000) * 2.5 = 0.0025\n\n**Cost for 500 output tokens:**\n(500 / 1,000,000) * 10 = 0.005\n\n**Total cost for Model A:**\n0.0025 + 0.005 = 0.0075\n\n### Model B:\n- Input cost: 0.15 per 1M tokens\n- Output cost: 0.60 per 1M tokens\n\n**Cost for 1000 input tokens:**\n(1000 / 1,000,000) * 0.15 = 0.00015\n\n**Cost for 5",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1207,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-07": {
+   "Text": "2025-11-03",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 301,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-08": {
+   "Text": "Yes.",
+   "Usage": {
+    "InputTokens": 24,
+    "OutputTokens": 3
+   },
+   "LatencyMS": 249,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-09": {
+   "Text": "rag",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 298,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|w4-10": {
+   "Text": "To compute the 95th percentile mentally for the given dataset, follow these steps:\n\n### **Step 1: Understand the Dataset**\nThe dataset is:\n**[10, 12, 14, 18, 22, 30, 45, 60, 90, 200]**\n- **Number of data points (n) = 10**\n\n### **Step 2: Determine the Position for the 95th Percentile**\nThe formula for the position (k) of the p-th percentile in an ordered dataset is:\n\n\\[\nk = \\frac{p}{100} \\times (n + 1)\n\\]\n\nFor the **95th percentile (p = 95)**:\n\n\\[\nk = \\frac{95}{100} \\times (10 + 1) = 0.95 \\times 11 = 10.45\n\\]\n\n### **Step 3: Interpolate Between the 10th and 11th Values**\nSince **k = 10.45**, the 95th percentile lies **45% of the way between the 1",
+   "Usage": {
+    "InputTokens": 66,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1409,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
   "selfhosted-eu-llama|w1-01": {
    "Text": "[modeled self-hosted answer; quality from prior]",
    "Usage": {
@@ -1403,6 +1733,7 @@
   "gpt-4o-mini|w2-09": 5,
   "gpt-4o-mini|w2-10": 5,
   "gpt-4o-mini|w3-01": 5,
+  "gpt-4o-mini|w3-03": 5,
   "gpt-4o-mini|w3-04": 4,
   "gpt-4o-mini|w3-07": 5,
   "gpt-4o-mini|w3-10": 5,
@@ -1455,7 +1786,39 @@
   "gpt-4o|w4-07": 5,
   "gpt-4o|w4-08": 5,
   "gpt-4o|w4-09": 5,
-  "gpt-4o|w4-10": 3
+  "gpt-4o|w4-10": 3,
+  "mistral-large|w1-04": 5,
+  "mistral-large|w1-09": 5,
+  "mistral-large|w2-01": 5,
+  "mistral-large|w2-02": 5,
+  "mistral-large|w2-03": 5,
+  "mistral-large|w2-04": 5,
+  "mistral-large|w2-05": 5,
+  "mistral-large|w2-06": 5,
+  "mistral-large|w2-07": 5,
+  "mistral-large|w2-08": 5,
+  "mistral-large|w2-09": 5,
+  "mistral-large|w2-10": 5,
+  "mistral-large|w3-01": 5,
+  "mistral-large|w3-02": 5,
+  "mistral-large|w3-03": 5,
+  "mistral-large|w3-04": 4,
+  "mistral-large|w3-05": 5,
+  "mistral-large|w3-06": 5,
+  "mistral-large|w3-07": 5,
+  "mistral-large|w3-08": 5,
+  "mistral-large|w3-09": 5,
+  "mistral-large|w3-10": 5,
+  "mistral-large|w4-01": 1,
+  "mistral-large|w4-02": 5,
+  "mistral-large|w4-03": 5,
+  "mistral-large|w4-04": 5,
+  "mistral-large|w4-05": 5,
+  "mistral-large|w4-06": 3,
+  "mistral-large|w4-07": 5,
+  "mistral-large|w4-08": 5,
+  "mistral-large|w4-09": 5,
+  "mistral-large|w4-10": 1
  },
  "pair": {
   "gpt-4.1-nano|w1-01": "tie",
@@ -1488,7 +1851,9 @@
   "gpt-4.1-nano|w3-08": "win",
   "gpt-4.1-nano|w3-09": "tie",
   "gpt-4.1-nano|w3-10": "tie",
+  "gpt-4.1-nano|w4-01": "tie",
   "gpt-4.1-nano|w4-03": "tie",
+  "gpt-4.1-nano|w4-06": "lose",
   "gpt-4.1-nano|w4-07": "tie",
   "gpt-4o-mini|w1-01": "tie",
   "gpt-4o-mini|w1-02": "lose",
@@ -1511,6 +1876,7 @@
   "gpt-4o-mini|w2-09": "tie",
   "gpt-4o-mini|w2-10": "tie",
   "gpt-4o-mini|w3-01": "lose",
+  "gpt-4o-mini|w3-03": "tie",
   "gpt-4o-mini|w3-04": "win",
   "gpt-4o-mini|w3-07": "tie",
   "gpt-4o-mini|w3-10": "tie",
@@ -1523,6 +1889,23 @@
   "gpt-4o-mini|w4-07": "tie",
   "gpt-4o-mini|w4-08": "tie",
   "gpt-4o-mini|w4-09": "tie",
-  "gpt-4o-mini|w4-10": "lose"
+  "gpt-4o-mini|w4-10": "lose",
+  "mistral-large|w1-04": "win",
+  "mistral-large|w1-09": "win",
+  "mistral-large|w2-02": "tie",
+  "mistral-large|w2-06": "win",
+  "mistral-large|w2-10": "win",
+  "mistral-large|w3-01": "lose",
+  "mistral-large|w3-02": "win",
+  "mistral-large|w3-03": "tie",
+  "mistral-large|w3-04": "win",
+  "mistral-large|w3-05": "win",
+  "mistral-large|w3-06": "tie",
+  "mistral-large|w3-07": "win",
+  "mistral-large|w3-08": "win",
+  "mistral-large|w3-09": "win",
+  "mistral-large|w3-10": "tie",
+  "mistral-large|w4-04": "tie",
+  "mistral-large|w4-09": "tie"
  }
 }

@@ -1,7 +1,7 @@
 strategy,mean_quality_norm,acceptable_rate_pct,winrate_vs_premium_pct,pairwise_comparisons
 B1-premium-static,0.900000,97.50,0.00,0
-B2-round-robin,0.892500,97.50,45.65,23
+B2-round-robin,0.905250,97.50,51.85,27
 B3-least-cost,0.857500,100.00,42.50,20
 B4-static-policy,0.868750,97.50,35.00,20
 B5-budget-hard-block,0.900000,97.50,0.00,0
-B6-ours,0.900000,97.50,41.67,30
+B6-ours,0.912500,97.50,50.00,40

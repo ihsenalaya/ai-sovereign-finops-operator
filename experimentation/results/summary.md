@@ -1,49 +1,49 @@
 # Experiment summary
 
 
-**Headline:** Ours reduces cost by **64.6%** vs premium-static with a quality change of **0.00%** (win-rate vs premium 41.7%).
+**Headline:** Ours reduces cost by **70.8%** vs premium-static with a quality change of **-1.39%** (win-rate vs premium 50.0%).
 
 ## RQ1 Cost
 | strategy             |   total_cost_eur |   served |   blocked |   cost_per_request_eur |   cost_per_token_eur |   savings_vs_premium_pct |
 |:---------------------|-----------------:|---------:|----------:|-----------------------:|---------------------:|-------------------------:|
 | B1-premium-static    |         0.03893  |       40 |         0 |               0.000973 |                7e-06 |                     0    |
-| B2-round-robin       |         0.010174 |       40 |         0 |               0.000254 |                2e-06 |                    73.87 |
+| B2-round-robin       |         0.014667 |       40 |         0 |               0.000367 |                3e-06 |                    62.32 |
 | B3-least-cost        |         0.0007   |       40 |         0 |               1.7e-05  |                0     |                    98.2  |
 | B4-static-policy     |         0.021011 |       40 |         0 |               0.000525 |                5e-06 |                    46.03 |
 | B5-budget-hard-block |         0.03893  |       40 |         0 |               0.000973 |                7e-06 |                     0    |
-| B6-ours              |         0.013798 |       40 |         0 |               0.000345 |                3e-06 |                    64.56 |
+| B6-ours              |         0.011353 |       40 |         0 |               0.000284 |                2e-06 |                    70.84 |
 
 ## RQ2 Quality
 | strategy             |   mean_quality_norm |   acceptable_rate_pct |   winrate_vs_premium_pct |   pairwise_comparisons |
 |:---------------------|--------------------:|----------------------:|-------------------------:|-----------------------:|
 | B1-premium-static    |             0.9     |                  97.5 |                     0    |                      0 |
-| B2-round-robin       |             0.8925  |                  97.5 |                    45.65 |                     23 |
+| B2-round-robin       |             0.90525 |                  97.5 |                    51.85 |                     27 |
 | B3-least-cost        |             0.8575  |                 100   |                    42.5  |                     20 |
 | B4-static-policy     |             0.86875 |                  97.5 |                    35    |                     20 |
 | B5-budget-hard-block |             0.9     |                  97.5 |                     0    |                      0 |
-| B6-ours              |             0.9     |                  97.5 |                    41.67 |                     30 |
+| B6-ours              |             0.9125  |                  97.5 |                    50    |                     40 |
 
 ## RQ3 Latency
 | strategy             |   latency_p50_ms |   latency_p95_ms |   latency_p99_ms |   latency_mean_ms |   routing_decision_us |
 |:---------------------|-----------------:|-----------------:|-----------------:|------------------:|----------------------:|
-| B1-premium-static    |              906 |             2494 |             2646 |           1125.97 |                 22.03 |
-| B2-round-robin       |              703 |             2323 |             3475 |            970.73 |                 14.46 |
-| B3-least-cost        |              700 |             1476 |             2815 |            753.98 |                 11.18 |
-| B4-static-policy     |              797 |             1911 |             2634 |            941.3  |                 19.79 |
-| B5-budget-hard-block |              906 |             2494 |             2646 |           1125.97 |                  6.07 |
-| B6-ours              |              906 |             3475 |             4265 |           1483.55 |                 26.55 |
+| B1-premium-static    |              906 |             2494 |             2646 |           1125.97 |                 11.8  |
+| B2-round-robin       |              797 |             2902 |             3576 |           1075.38 |                 14.38 |
+| B3-least-cost        |              700 |             1476 |             2815 |            753.98 |                  9.07 |
+| B4-static-policy     |              797 |             1911 |             2634 |            941.3  |                  5.85 |
+| B5-budget-hard-block |              906 |             2494 |             2646 |           1125.97 |                  5.39 |
+| B6-ours              |              946 |             3475 |             4265 |           1509.95 |                 15.94 |
 
 ## RQ4 Sovereignty
 | scenario              | strategy          |   total_cost_eur |   served |   blocked |   violations |   reroutes |   mean_quality_norm |
 |:----------------------|:------------------|-----------------:|---------:|----------:|-------------:|-----------:|--------------------:|
 | global                | B1-premium-static |         0.03893  |       40 |         0 |            0 |          0 |             0.9     |
-| global                | B6-ours           |         0.013798 |       40 |         0 |            0 |         30 |             0.9     |
+| global                | B6-ours           |         0.011353 |       40 |         0 |            0 |         40 |             0.9125  |
 | eu-only               | B1-premium-static |         0.03893  |       40 |         0 |           40 |          0 |             0.9     |
-| eu-only               | B6-ours           |         0.00011  |       20 |        20 |            0 |         20 |             0.74    |
+| eu-only               | B6-ours           |         0.01816  |       40 |         0 |            0 |         40 |             0.86625 |
 | france-only           | B1-premium-static |         0.03893  |       40 |         0 |           40 |          0 |             0.9     |
 | france-only           | B6-ours           |         0.00011  |       20 |        20 |            0 |         20 |             0.74    |
 | no-external-sensitive | B1-premium-static |         0.03893  |       40 |         0 |           10 |          0 |             0.9     |
-| no-external-sensitive | B6-ours           |         0.013136 |       40 |         0 |            0 |         30 |             0.87875 |
+| no-external-sensitive | B6-ours           |         0.010691 |       40 |         0 |            0 |         40 |             0.89125 |
 | self-hosted-only      | B1-premium-static |         0.03893  |       40 |         0 |           40 |          0 |             0.9     |
 | self-hosted-only      | B6-ours           |         0.00011  |       20 |        20 |            0 |         20 |             0.74    |
 
@@ -75,7 +75,7 @@
 ## Ablation
 | variant         |   total_cost_eur |   savings_vs_nocost_pct |   mean_quality_norm |
 |:----------------|-----------------:|------------------------:|--------------------:|
-| full-system     |         0.013798 |                    0    |              0.9    |
+| full-system     |         0.011353 |                    0    |              0.9125 |
 | no-cost-term    |         0.03893  |                    0    |              0.9    |
 | no-quality-term |         0.001213 |                   96.88 |              0.8625 |
-| no-latency-term |         0.013798 |                   64.56 |              0.9    |
+| no-latency-term |         0.011353 |                   70.84 |              0.9125 |

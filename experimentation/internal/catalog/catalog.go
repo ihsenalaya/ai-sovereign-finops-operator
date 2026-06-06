@@ -54,12 +54,12 @@ func OpenAIModels() []Model {
 // MistralModels are EU-hosted Mistral models (real, second provider). EU zone +
 // allowed-for-sensitive makes RQ4 sovereignty real (not modeled). APIModel values
 // match Mistral La Plateforme / Azure AI Foundry serverless deployment names.
+// Deployed on Azure AI Foundry: Mistral-Large-3 in DataZoneStandard (EU data
+// zone) — a real EU-hosted second provider that makes RQ4 sovereignty real.
 func MistralModels() []Model {
 	return []Model{
-		{ID: "mistral-large", APIModel: "mistral-large-latest", Provider: "mistral-eu", Zone: "FR", Managed: true, Real: true,
+		{ID: "mistral-large", APIModel: "mistral-large-latest", Provider: "mistral-eu", Zone: "EU", Managed: true, Real: true,
 			Tier: TierPremium, InPerMillion: 2.00, OutPerMillion: 6.00, QualityPrior: 0.96, LatencyPriorMS: 850, SensitiveAllowed: true},
-		{ID: "mistral-small", APIModel: "mistral-small-latest", Provider: "mistral-eu", Zone: "FR", Managed: true, Real: true,
-			Tier: TierMedium, InPerMillion: 0.20, OutPerMillion: 0.60, QualityPrior: 0.86, LatencyPriorMS: 550, SensitiveAllowed: true},
 	}
 }
 

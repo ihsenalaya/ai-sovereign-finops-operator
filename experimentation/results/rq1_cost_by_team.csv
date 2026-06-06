@@ -3,10 +3,10 @@ B1-premium-static,analytics,0.008095
 B1-premium-static,hr,0.015415
 B1-premium-static,knowledge,0.003018
 B1-premium-static,platform,0.012403
-B2-round-robin,analytics,0.001607
-B2-round-robin,hr,0.002898
-B2-round-robin,knowledge,0.001698
-B2-round-robin,platform,0.003972
+B2-round-robin,analytics,0.001892
+B2-round-robin,hr,0.005547
+B2-round-robin,knowledge,0.001865
+B2-round-robin,platform,0.005364
 B3-least-cost,analytics,0.000056
 B3-least-cost,hr,0.000055
 B3-least-cost,knowledge,0.000117
@@ -22,4 +22,4 @@ B5-budget-hard-block,platform,0.012403
 B6-ours,analytics,0.000497
 B6-ours,hr,0.000717
 B6-ours,knowledge,0.000182
-B6-ours,platform,0.012403
+B6-ours,platform,0.009958
