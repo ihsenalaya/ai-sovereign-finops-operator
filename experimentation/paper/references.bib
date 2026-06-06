@@ -1,0 +1,155 @@
+% Bibliography for "Economic-Aware and Sovereignty-Constrained Routing for
+% Enterprise LLM Gateways". Focus: recent (2022-2025) work on LLM routing,
+% cost-efficiency, serving systems, evaluation, gateways, and regulation.
+% All entries verified against arXiv / proceedings / official sources.
+
+%% ---------------- LLM routing & cost-efficient inference ----------------
+
+@inproceedings{ong2024routellm,
+  title     = {{RouteLLM}: Learning to Route {LLMs} with Preference Data},
+  author    = {Ong, Isaac and Almahairi, Amjad and Wu, Vincent and Chiang, Wei-Lin and Wu, Tianhao and Gonzalez, Joseph E. and Kadous, M. Waleed and Stoica, Ion},
+  year      = {2024},
+  eprint    = {2406.18665},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.LG},
+  note      = {arXiv:2406.18665},
+  url       = {https://arxiv.org/abs/2406.18665}
+}
+
+@article{chen2023frugalgpt,
+  title   = {{FrugalGPT}: How to Use Large Language Models While Reducing Cost and Improving Performance},
+  author  = {Chen, Lingjiao and Zaharia, Matei and Zou, James},
+  year    = {2023},
+  eprint  = {2305.05176},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.LG},
+  note    = {arXiv:2305.05176},
+  url     = {https://arxiv.org/abs/2305.05176}
+}
+
+@inproceedings{ding2024hybridllm,
+  title     = {Hybrid {LLM}: Cost-Efficient and Quality-Aware Query Routing},
+  author    = {Ding, Dujian and Mallick, Ankur and Wang, Chi and Sim, Robert and Mukherjee, Subhabrata and R{\"u}hle, Victor and Lakshmanan, Laks V. S. and Awadallah, Ahmed Hassan},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024},
+  eprint    = {2404.14618},
+  archivePrefix = {arXiv},
+  url       = {https://arxiv.org/abs/2404.14618}
+}
+
+@inproceedings{aggarwal2024automix,
+  title     = {{AutoMix}: Automatically Mixing Language Models},
+  author    = {Aggarwal, Pranjal and Madaan, Aman and Anand, Ankit and others},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2024},
+  eprint    = {2310.12963},
+  archivePrefix = {arXiv},
+  url       = {https://arxiv.org/abs/2310.12963}
+}
+
+%% ---------------- LLM serving systems ----------------
+
+@inproceedings{kwon2023pagedattention,
+  title     = {Efficient Memory Management for Large Language Model Serving with {PagedAttention}},
+  author    = {Kwon, Woosuk and Li, Zhuohan and Zhuang, Siyuan and Sheng, Ying and Zheng, Lianmin and Yu, Cody Hao and Gonzalez, Joseph E. and Zhang, Hao and Stoica, Ion},
+  booktitle = {Proceedings of the 29th Symposium on Operating Systems Principles (SOSP)},
+  year      = {2023},
+  doi       = {10.1145/3600006.3613165},
+  url       = {https://arxiv.org/abs/2309.06180}
+}
+
+@inproceedings{yu2022orca,
+  title     = {{Orca}: A Distributed Serving System for Transformer-Based Generative Models},
+  author    = {Yu, Gyeong-In and Jeong, Joo Seong and Kim, Geon-Woo and Kim, Soojeong and Chun, Byung-Gon},
+  booktitle = {16th USENIX Symposium on Operating Systems Design and Implementation (OSDI)},
+  year      = {2022},
+  url       = {https://www.usenix.org/conference/osdi22/presentation/yu}
+}
+
+@inproceedings{zhong2024distserve,
+  title     = {{DistServe}: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving},
+  author    = {Zhong, Yinmin and Liu, Shengyu and Chen, Junda and Hu, Jianbo and Zhu, Yibo and Liu, Xuanzhe and Jin, Xin and Zhang, Hao},
+  booktitle = {18th USENIX Symposium on Operating Systems Design and Implementation (OSDI)},
+  year      = {2024},
+  eprint    = {2401.09670},
+  archivePrefix = {arXiv},
+  url       = {https://arxiv.org/abs/2401.09670}
+}
+
+@inproceedings{zheng2024sglang,
+  title     = {{SGLang}: Efficient Execution of Structured Language Model Programs},
+  author    = {Zheng, Lianmin and Yin, Liangsheng and Xie, Zhiqiang and Sun, Chuyue and Huang, Jeff and Yu, Cody Hao and Cao, Shiyi and Kozyrakis, Christos and Stoica, Ion and Gonzalez, Joseph E. and Barrett, Clark and Sheng, Ying},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2024},
+  eprint    = {2312.07104},
+  archivePrefix = {arXiv},
+  url       = {https://arxiv.org/abs/2312.07104}
+}
+
+%% ---------------- Evaluation (LLM-as-a-judge) ----------------
+
+@inproceedings{zheng2023judge,
+  title     = {Judging {LLM-as-a-Judge} with {MT-Bench} and {Chatbot Arena}},
+  author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2023},
+  eprint    = {2306.05685},
+  archivePrefix = {arXiv},
+  url       = {https://arxiv.org/abs/2306.05685}
+}
+
+%% ---------------- Surveys ----------------
+
+@article{zhou2024surveyinference,
+  title   = {A Survey on Efficient Inference for Large Language Models},
+  author  = {Zhou, Zixuan and Ning, Xuefei and Hong, Ke and Fu, Tianyu and Xu, Jiaming and others},
+  year    = {2024},
+  eprint  = {2404.14294},
+  archivePrefix = {arXiv},
+  url     = {https://arxiv.org/abs/2404.14294}
+}
+
+@article{li2025tamingtitans,
+  title   = {Taming the Titans: A Survey of Efficient {LLM} Inference Serving},
+  author  = {Li, Ranran and others},
+  year    = {2025},
+  eprint  = {2504.19720},
+  archivePrefix = {arXiv},
+  url     = {https://arxiv.org/abs/2504.19720}
+}
+
+%% ---------------- Gateways & software artifacts ----------------
+
+@misc{envoyaigateway,
+  title        = {Envoy {AI} Gateway: Unified Access to Generative {AI} Services on Envoy},
+  author       = {{Envoy Proxy Community}},
+  year         = {2025},
+  howpublished = {\url{https://aigateway.envoyproxy.io/}},
+  note         = {Open-source project (Bloomberg, Tetrate); v0.1.0 Feb 2025. Accessed 2026.}
+}
+
+@misc{litellm,
+  title        = {{LiteLLM}: Call 100+ LLM APIs in the OpenAI format},
+  author       = {{BerriAI}},
+  year         = {2024},
+  howpublished = {\url{https://github.com/BerriAI/litellm}},
+  note         = {Open-source LLM gateway/proxy. Accessed 2026.}
+}
+
+%% ---------------- Regulation ----------------
+
+@misc{euaiact2024,
+  title        = {Regulation (EU) 2024/1689 of the European Parliament and of the Council (Artificial Intelligence Act)},
+  author       = {{European Union}},
+  year         = {2024},
+  howpublished = {Official Journal of the European Union},
+  note         = {Published 12 July 2024; in force 1 August 2024. \url{https://eur-lex.europa.eu/eli/reg/2024/1689/oj}}
+}
+
+@misc{gdpr2016,
+  title        = {Regulation (EU) 2016/679 (General Data Protection Regulation)},
+  author       = {{European Union}},
+  year         = {2016},
+  howpublished = {Official Journal of the European Union},
+  note         = {\url{https://eur-lex.europa.eu/eli/reg/2016/679/oj}}
+}

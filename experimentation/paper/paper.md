@@ -1,9 +1,10 @@
 # Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways
 
-**Draft v0.1 — single-provider (OpenAI) evaluation.** This is a first complete write-up built from
-real measurements (`../results/`). Numbers are reproduced from the committed run; figures are in
-`../figures/`. Placeholders `[CIT]` mark citations to add. Items explicitly labeled *modeled* are not
-real measurements (see §8).
+**Draft v0.2 — single-provider (OpenAI) evaluation.** A first complete write-up built from real
+measurements (`../results/`). Numbers are reproduced from the committed run; figures are in
+`../figures/`; citations use the verified `references.bib` (keys in brackets). Items explicitly
+labeled *modeled* are not real measurements (see §8). This is preliminary work toward a Q1 submission;
+the gap to camera-ready is tracked in `ROADMAP_Q1.md`.
 
 ---
 
@@ -55,18 +56,36 @@ and surface the self-hosting break-even from observed usage — without signific
 
 ## 2. Background and Related Work
 
-**LLM gateways.** Envoy AI Gateway and LiteLLM provide a unified data path to multiple providers
-`[CIT]`. They expose telemetry but leave routing policy to the operator/user.
+References are in `references.bib` (recent, verified); citation keys are shown in brackets.
 
-**Model routing and cascades.** Prior work routes between models by difficulty or confidence, or
-cascades from cheap to expensive `[CIT]`. We add *hard* sovereignty constraints and *budget-aware*
-degradation as first-class signals, and we attribute and bound cost at the team/namespace level.
+**Model routing and cascades.** A growing line of work trades quality for cost by selecting among
+models per request. FrugalGPT [chen2023frugalgpt] cascades from cheap to expensive models using a
+learned scorer; Hybrid LLM [ding2024hybridllm] routes by predicted query difficulty with a tunable
+quality target; RouteLLM [ong2024routellm] learns routers from preference data; AutoMix
+[aggarwal2024automix] uses few-shot self-verification and a POMDP router. These works optimize a
+*cost–quality* trade-off for a single tenant and do not model **hard data-sovereignty constraints**,
+**per-team/namespace budgets**, or **budget-aware graceful degradation** — the dimensions our control
+plane adds. Our scoring function subsumes their cost/quality terms while rejecting models that violate
+declarative residency/sensitivity policies and degrading (rather than blocking) under budget pressure.
 
-**FinOps for AI.** Cloud FinOps practice emphasizes attribution and budgets `[CIT]`; we operationalize
-it for LLM traffic with per-token pricing and budget policies enforced at routing time.
+**LLM serving systems.** Orca [yu2022orca], vLLM/PagedAttention [kwon2023pagedattention], SGLang
+[zheng2024sglang], and DistServe [zhong2024distserve] optimize *throughput/latency* of a single
+self-hosted engine; surveys [zhou2024surveyinference; li2025tamingtitans] organize this space. They
+are complementary: they define the *cost* of the self-hosted option whose break-even our system
+predicts (RQ6), but they do not address cross-provider routing, attribution, or sovereignty.
 
-**Serving economics.** Self-hosting via vLLM/TGI trades fixed GPU/ops cost for marginal token cost
-`[CIT]`. We predict the break-even point from runtime telemetry.
+**LLM gateways.** Envoy AI Gateway [envoyaigateway] and LiteLLM [litellm] provide a unified data path
+to multiple providers and expose usage telemetry, but leave *policy* (which model, under which
+constraints, within which budget) to the operator. We contribute that policy layer as a Kubernetes
+control plane and validate it.
+
+**Evaluation.** We follow the LLM-as-a-judge methodology of Zheng et al. [zheng2023judge] (MT-Bench /
+Chatbot Arena), which shows strong judges approximate human preference at ~80% agreement, and we adopt
+both absolute and pairwise protocols while acknowledging its documented biases (§8).
+
+**Regulation.** Data-residency and sensitive-data handling are driven by the GDPR [gdpr2016] and the
+EU AI Act [euaiact2024]; our system targets *audit preparation* for these regimes, not legal
+attestation.
 
 ## 3. Problem Formulation and Algorithm
 
@@ -205,3 +224,12 @@ to validate the break-even; (3) **data-path enforcement in Envoy** and live oper
 Operator + `experimentation/` (datasets, harness, scripts, results, figures, cached responses).
 Reproduce with `scripts/run_experiment.sh` then `python3 scripts/analyze_results.py`. Every test is
 journaled; no test is skipped.
+
+## References
+
+See `references.bib` (BibTeX). Key works cited: model routing/cascades — FrugalGPT
+[chen2023frugalgpt], Hybrid LLM [ding2024hybridllm], RouteLLM [ong2024routellm], AutoMix
+[aggarwal2024automix]; serving — Orca [yu2022orca], vLLM [kwon2023pagedattention], SGLang
+[zheng2024sglang], DistServe [zhong2024distserve], surveys [zhou2024surveyinference;
+li2025tamingtitans]; gateways — Envoy AI Gateway [envoyaigateway], LiteLLM [litellm]; evaluation —
+[zheng2023judge]; regulation — GDPR [gdpr2016], EU AI Act [euaiact2024].
