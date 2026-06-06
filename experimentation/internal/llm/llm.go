@@ -82,6 +82,22 @@ func NewOpenAI(apiKey string) *OpenAI {
 	}
 }
 
+// NewOpenAICompatible builds a client for any OpenAI-compatible Chat Completions
+// endpoint (e.g. a self-hosted vLLM server, Azure OpenAI proxy). baseURL is the
+// API root ending in /v1; provider is a telemetry label. apiKey may be empty for
+// unauthenticated local servers.
+func NewOpenAICompatible(baseURL, apiKey, provider string) *OpenAI {
+	if provider == "" {
+		provider = "openai-compatible"
+	}
+	return &OpenAI{
+		apiKey:   apiKey,
+		baseURL:  baseURL,
+		provider: provider,
+		http:     &http.Client{Timeout: 120 * time.Second},
+	}
+}
+
 // Provider implements Client.
 func (c *OpenAI) Provider() string { return c.provider }
 
@@ -120,7 +136,9 @@ func (c *OpenAI) Chat(ctx context.Context, model string, msgs []Message, maxToke
 		if err != nil {
 			return Response{}, err
 		}
-		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+		if c.apiKey != "" {
+			req.Header.Set("Authorization", "Bearer "+c.apiKey)
+		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := c.http.Do(req)
