@@ -29,3 +29,11 @@ go.work
 
 # Unrelated scratch content, not part of the operator
 experimentation/
+
+# Secrets — never commit
+.env
+*.key
+*secret*
+docs/openaikey.txt
+*apikey*
+*openaikey*
