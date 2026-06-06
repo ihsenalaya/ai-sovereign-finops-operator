@@ -6,18 +6,75 @@
   "defaultSensitive": true,
   "monthlyBudgetEUR": 50,
   "premiumModel": "gpt-4o",
-  "allowedModels": ["gpt-4o", "gpt-4o-mini", "gpt-4.1-nano", "selfhosted-eu-llama"],
-  "minQuality": 0.70,
+  "allowedModels": [
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-4.1-nano",
+    "selfhosted-eu-llama",
+    "mistral-large",
+    "mistral-small"
+  ],
+  "minQuality": 0.7,
   "prompts": [
-    {"id": "w1-01", "sensitive": true, "system": "You are an internal HR assistant. Be concise and policy-compliant.", "text": "How many paid vacation days do full-time employees accrue per year in France?"},
-    {"id": "w1-02", "sensitive": true, "system": "You are an internal HR assistant.", "text": "An employee named Marie wants to know the deadline to submit her 2025 expense reports. Give a short answer."},
-    {"id": "w1-03", "sensitive": true, "system": "You are an internal HR assistant.", "text": "Summarize in two sentences how parental leave works for a new father."},
-    {"id": "w1-04", "sensitive": true, "system": "You are an internal HR assistant.", "text": "What documents are needed to update an employee's bank details for payroll?"},
-    {"id": "w1-05", "sensitive": true, "system": "You are an internal HR assistant.", "text": "Explain briefly the difference between sick leave and unpaid leave."},
-    {"id": "w1-06", "sensitive": true, "system": "You are an internal HR assistant.", "text": "Draft a one-paragraph polite reply confirming receipt of an employee's resignation letter."},
-    {"id": "w1-07", "sensitive": true, "system": "You are an internal HR assistant.", "text": "What is the standard notice period for a permanent contract (CDI) in France?"},
-    {"id": "w1-08", "sensitive": true, "system": "You are an internal HR assistant.", "text": "List three onboarding steps for a new hire on their first day."},
-    {"id": "w1-09", "sensitive": true, "system": "You are an internal HR assistant.", "text": "How should an employee report a workplace harassment concern? Keep it short and supportive."},
-    {"id": "w1-10", "sensitive": true, "system": "You are an internal HR assistant.", "text": "What is the maximum number of remote-work days allowed per week under the default telework policy?"}
+    {
+      "id": "w1-01",
+      "sensitive": true,
+      "system": "You are an internal HR assistant. Be concise and policy-compliant.",
+      "text": "How many paid vacation days do full-time employees accrue per year in France?"
+    },
+    {
+      "id": "w1-02",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "An employee named Marie wants to know the deadline to submit her 2025 expense reports. Give a short answer."
+    },
+    {
+      "id": "w1-03",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "Summarize in two sentences how parental leave works for a new father."
+    },
+    {
+      "id": "w1-04",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "What documents are needed to update an employee's bank details for payroll?"
+    },
+    {
+      "id": "w1-05",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "Explain briefly the difference between sick leave and unpaid leave."
+    },
+    {
+      "id": "w1-06",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "Draft a one-paragraph polite reply confirming receipt of an employee's resignation letter."
+    },
+    {
+      "id": "w1-07",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "What is the standard notice period for a permanent contract (CDI) in France?"
+    },
+    {
+      "id": "w1-08",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "List three onboarding steps for a new hire on their first day."
+    },
+    {
+      "id": "w1-09",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "How should an employee report a workplace harassment concern? Keep it short and supportive."
+    },
+    {
+      "id": "w1-10",
+      "sensitive": true,
+      "system": "You are an internal HR assistant.",
+      "text": "What is the maximum number of remote-work days allowed per week under the default telework policy?"
+    }
   ]
 }

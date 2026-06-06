@@ -23,7 +23,8 @@ import (
 
 // Engine orchestrates the experiments.
 type Engine struct {
-	Client     llm.Client
+	Client     llm.Client            // default/fallback client
+	Clients    map[string]llm.Client // per-provider clients (keyed by Model.Provider)
 	Judge      quality.Judge
 	Models     map[string]catalog.Model
 	ModelList  []catalog.Model
@@ -38,13 +39,25 @@ type Engine struct {
 	records     []callRecord            // full per-call log (calls.csv)
 }
 
-// New builds an Engine.
-func New(client llm.Client, judge quality.Judge, models []catalog.Model, ws []workload.Workload, j *journal.Journal, resultsDir string) *Engine {
+// New builds an Engine. clients maps a provider name (Model.Provider) to its LLM
+// client; client is the default/fallback used when a provider has no entry.
+func New(client llm.Client, clients map[string]llm.Client, judge quality.Judge, models []catalog.Model, ws []workload.Workload, j *journal.Journal, resultsDir string) *Engine {
+	if clients == nil {
+		clients = map[string]llm.Client{}
+	}
 	return &Engine{
-		Client: client, Judge: judge, Models: catalog.ByID(models), ModelList: models,
+		Client: client, Clients: clients, Judge: judge, Models: catalog.ByID(models), ModelList: models,
 		Workloads: ws, J: j, ResultsDir: resultsDir, MaxTokens: 256,
 		answerCache: map[string]llm.Response{}, acceptCache: map[string]float64{}, pairCache: map[string]string{},
 	}
+}
+
+// clientFor returns the client for a model's provider (fallback: default).
+func (e *Engine) clientFor(m catalog.Model) llm.Client {
+	if c, ok := e.Clients[m.Provider]; ok && c != nil {
+		return c
+	}
+	return e.Client
 }
 
 func estTokens(s string) int {
@@ -78,7 +91,7 @@ func (e *Engine) callModel(ctx context.Context, m catalog.Model, p workload.Prom
 		msgs = append(msgs, llm.Message{Role: "system", Content: p.System})
 	}
 	msgs = append(msgs, llm.Message{Role: "user", Content: p.Text})
-	r, err := e.Client.Chat(ctx, m.APIModel, msgs, e.MaxTokens, 0)
+	r, err := e.clientFor(m).Chat(ctx, m.APIModel, msgs, e.MaxTokens, 0)
 	if err != nil {
 		return llm.Response{}, true, err
 	}

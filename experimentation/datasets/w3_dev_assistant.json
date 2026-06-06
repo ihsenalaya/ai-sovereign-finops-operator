@@ -6,18 +6,64 @@
   "defaultSensitive": false,
   "monthlyBudgetEUR": 300,
   "premiumModel": "gpt-4o",
-  "allowedModels": ["gpt-4o", "gpt-4o-mini", "gpt-4.1-nano"],
-  "minQuality": 0.90,
+  "allowedModels": [
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-4.1-nano",
+    "mistral-large",
+    "mistral-small"
+  ],
+  "minQuality": 0.9,
   "prompts": [
-    {"id": "w3-01", "system": "You are a senior Go engineer. Be correct and concise.", "text": "Write a Go function that returns the SHA-256 hex digest of a string. No explanation, code only."},
-    {"id": "w3-02", "system": "You are a senior engineer.", "text": "Explain in 3 sentences the difference between a Kubernetes Deployment and a StatefulSet."},
-    {"id": "w3-03", "system": "You are a senior Go engineer.", "text": "What is the bug here and how to fix it? `for i := range items { go func() { process(items[i]) }() }`"},
-    {"id": "w3-04", "system": "You are a senior engineer.", "text": "Give a one-line bash command to find the 5 largest files under /var/log."},
-    {"id": "w3-05", "system": "You are a senior Go engineer.", "text": "Write a table-driven Go test skeleton for a function Add(a, b int) int. Code only."},
-    {"id": "w3-06", "system": "You are a senior engineer.", "text": "Explain what a SQL index does and one downside, in two sentences."},
-    {"id": "w3-07", "system": "You are a senior engineer.", "text": "Convert this to a Prometheus query: average request latency over 5 minutes for job 'api' using histogram_quantile on http_request_duration_seconds_bucket at p95."},
-    {"id": "w3-08", "system": "You are a senior Go engineer.", "text": "Write idiomatic Go to read a JSON file into a struct Config{Name string; Port int}. Code only."},
-    {"id": "w3-09", "system": "You are a senior engineer.", "text": "What does `kubectl rollout undo deploy/foo` do? One sentence."},
-    {"id": "w3-10", "system": "You are a senior engineer.", "text": "Describe the CAP theorem trade-off for a system that must stay available during a network partition, in two sentences."}
+    {
+      "id": "w3-01",
+      "system": "You are a senior Go engineer. Be correct and concise.",
+      "text": "Write a Go function that returns the SHA-256 hex digest of a string. No explanation, code only."
+    },
+    {
+      "id": "w3-02",
+      "system": "You are a senior engineer.",
+      "text": "Explain in 3 sentences the difference between a Kubernetes Deployment and a StatefulSet."
+    },
+    {
+      "id": "w3-03",
+      "system": "You are a senior Go engineer.",
+      "text": "What is the bug here and how to fix it? `for i := range items { go func() { process(items[i]) }() }`"
+    },
+    {
+      "id": "w3-04",
+      "system": "You are a senior engineer.",
+      "text": "Give a one-line bash command to find the 5 largest files under /var/log."
+    },
+    {
+      "id": "w3-05",
+      "system": "You are a senior Go engineer.",
+      "text": "Write a table-driven Go test skeleton for a function Add(a, b int) int. Code only."
+    },
+    {
+      "id": "w3-06",
+      "system": "You are a senior engineer.",
+      "text": "Explain what a SQL index does and one downside, in two sentences."
+    },
+    {
+      "id": "w3-07",
+      "system": "You are a senior engineer.",
+      "text": "Convert this to a Prometheus query: average request latency over 5 minutes for job 'api' using histogram_quantile on http_request_duration_seconds_bucket at p95."
+    },
+    {
+      "id": "w3-08",
+      "system": "You are a senior Go engineer.",
+      "text": "Write idiomatic Go to read a JSON file into a struct Config{Name string; Port int}. Code only."
+    },
+    {
+      "id": "w3-09",
+      "system": "You are a senior engineer.",
+      "text": "What does `kubectl rollout undo deploy/foo` do? One sentence."
+    },
+    {
+      "id": "w3-10",
+      "system": "You are a senior engineer.",
+      "text": "Describe the CAP theorem trade-off for a system that must stay available during a network partition, in two sentences."
+    }
   ]
 }

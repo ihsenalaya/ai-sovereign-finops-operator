@@ -39,7 +39,8 @@ type Model struct {
 // Default returns the experiment catalog. OpenAI prices are approximate public
 // EUR rates at time of writing (documented in paper/methodology.md). The
 // self-hosted entry is modeled.
-func Default() []Model {
+// OpenAIModels are the US managed OpenAI tiers (real).
+func OpenAIModels() []Model {
 	return []Model{
 		{ID: "gpt-4o", APIModel: "gpt-4o", Provider: "openai-us", Zone: "US", Managed: true, Real: true,
 			Tier: TierPremium, InPerMillion: 2.50, OutPerMillion: 10.00, QualityPrior: 1.00, LatencyPriorMS: 900, SensitiveAllowed: false},
@@ -47,10 +48,33 @@ func Default() []Model {
 			Tier: TierMedium, InPerMillion: 0.15, OutPerMillion: 0.60, QualityPrior: 0.88, LatencyPriorMS: 600, SensitiveAllowed: false},
 		{ID: "gpt-4.1-nano", APIModel: "gpt-4.1-nano", Provider: "openai-us", Zone: "US", Managed: true, Real: true,
 			Tier: TierCheap, InPerMillion: 0.10, OutPerMillion: 0.40, QualityPrior: 0.80, LatencyPriorMS: 450, SensitiveAllowed: false},
-		// MODELED EU self-hosted fallback (served by local stub; cost modeled).
+	}
+}
+
+// MistralModels are EU-hosted Mistral models (real, second provider). EU zone +
+// allowed-for-sensitive makes RQ4 sovereignty real (not modeled). APIModel values
+// match Mistral La Plateforme / Azure AI Foundry serverless deployment names.
+func MistralModels() []Model {
+	return []Model{
+		{ID: "mistral-large", APIModel: "mistral-large-latest", Provider: "mistral-eu", Zone: "FR", Managed: true, Real: true,
+			Tier: TierPremium, InPerMillion: 2.00, OutPerMillion: 6.00, QualityPrior: 0.96, LatencyPriorMS: 850, SensitiveAllowed: true},
+		{ID: "mistral-small", APIModel: "mistral-small-latest", Provider: "mistral-eu", Zone: "FR", Managed: true, Real: true,
+			Tier: TierMedium, InPerMillion: 0.20, OutPerMillion: 0.60, QualityPrior: 0.86, LatencyPriorMS: 550, SensitiveAllowed: true},
+	}
+}
+
+// SelfHostedModeled is the modeled EU self-hosted fallback (no GPU; cost modeled,
+// response stubbed). Used for the RQ6 break-even prediction only.
+func SelfHostedModeled() []Model {
+	return []Model{
 		{ID: "selfhosted-eu-llama", APIModel: "selfhosted-eu-llama", Provider: "onprem-fr", Zone: "FR", Managed: false, Real: false,
 			Tier: TierSelfHosted, InPerMillion: 0.05, OutPerMillion: 0.05, QualityPrior: 0.74, LatencyPriorMS: 700, SensitiveAllowed: true},
 	}
+}
+
+// Default is OpenAI + modeled self-hosted (single-provider baseline catalog).
+func Default() []Model {
+	return append(OpenAIModels(), SelfHostedModeled()...)
 }
 
 // ByID indexes models by ID.

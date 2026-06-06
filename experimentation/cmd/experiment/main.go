@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/imperium/ai-sovereign-finops-operator/experimentation/internal/catalog"
@@ -27,6 +28,11 @@ func main() {
 	maxTokens := flag.Int("max-tokens", 256, "max completion tokens per answer")
 	timeoutMin := flag.Int("timeout-min", 40, "overall timeout in minutes")
 	smoke := flag.Bool("smoke", false, "run a single real call to validate the pipeline")
+	// Second provider: Mistral (Azure AI Foundry serverless or Mistral La Plateforme).
+	mistralBase := flag.String("mistral-base", "", "Mistral OpenAI-compatible base URL ending in /v1 (enables 2nd provider)")
+	mistralKeyP := flag.String("mistral-key", "", "Mistral API key file (or set MISTRAL_API_KEY)")
+	mistralAuth := flag.String("mistral-auth", "bearer", "mistral auth: bearer (La Plateforme) | api-key (Azure Foundry)")
+	mistralAPIVer := flag.String("mistral-api-version", "", "Azure Foundry api-version (for api-key auth)")
 	flag.Parse()
 
 	j, err := journal.New(*resultsDir)
@@ -68,7 +74,32 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(*timeoutMin)*time.Minute)
 	defer cancel()
 
-	eng := runner.New(client, quality.Judge{Client: client, Model: *judgeModel}, catalog.Default(), ws, j, *resultsDir)
+	// Build the model catalog + per-provider clients. OpenAI always; Mistral (EU,
+	// 2nd provider) added only when its endpoint+key are configured.
+	models := append(catalog.OpenAIModels(), catalog.SelfHostedModeled()...)
+	clients := map[string]llm.Client{"openai-us": client}
+
+	if *mistralBase != "" {
+		mkey := strings.TrimSpace(os.Getenv("MISTRAL_API_KEY"))
+		if *mistralKeyP != "" {
+			if k, err := os.ReadFile(*mistralKeyP); err == nil {
+				mkey = strings.TrimSpace(string(k))
+			}
+		}
+		var mc llm.Client
+		if *mistralAuth == "api-key" {
+			mc = llm.NewAzureFoundry(*mistralBase, mkey, "mistral-eu", *mistralAPIVer)
+		} else {
+			mc = llm.NewOpenAICompatible(*mistralBase, mkey, "mistral-eu")
+		}
+		clients["mistral-eu"] = mc
+		models = append(models, catalog.MistralModels()...)
+		fmt.Printf("Second provider enabled: Mistral EU (%s, auth=%s)\n", *mistralBase, *mistralAuth)
+	} else {
+		fmt.Println("Mistral provider not configured (-mistral-base); running OpenAI-only.")
+	}
+
+	eng := runner.New(client, clients, quality.Judge{Client: client, Model: *judgeModel}, models, ws, j, *resultsDir)
 	eng.MaxTokens = *maxTokens
 
 	cachePath := *resultsDir + "/cache.json"

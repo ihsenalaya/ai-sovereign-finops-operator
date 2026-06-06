@@ -63,29 +63,37 @@ func LoadKey(path string) (string, error) {
 	return "", fmt.Errorf("no API key found at %s or in OPENAI_API_KEY", path)
 }
 
-// OpenAI is a Client backed by the OpenAI Chat Completions API.
+// authMode selects how the API key is sent.
+type authMode int
+
+const (
+	authBearer authMode = iota // Authorization: Bearer <key>  (OpenAI, vLLM)
+	authAPIKey                 // api-key: <key>                (Azure AI Foundry / Azure OpenAI)
+)
+
+// OpenAI is a Client backed by any OpenAI-compatible Chat Completions API.
 type OpenAI struct {
 	apiKey   string
 	baseURL  string
 	provider string
+	auth     authMode
+	query    string // optional query string appended to requests (e.g. api-version=...)
 	http     *http.Client
 }
 
-// NewOpenAI builds an OpenAI client. baseURL defaults to the public API;
-// provider is a label used in telemetry (e.g. "openai").
+// NewOpenAI builds a client for the public OpenAI API.
 func NewOpenAI(apiKey string) *OpenAI {
 	return &OpenAI{
 		apiKey:   apiKey,
 		baseURL:  "https://api.openai.com/v1",
 		provider: "openai",
+		auth:     authBearer,
 		http:     &http.Client{Timeout: 90 * time.Second},
 	}
 }
 
-// NewOpenAICompatible builds a client for any OpenAI-compatible Chat Completions
-// endpoint (e.g. a self-hosted vLLM server, Azure OpenAI proxy). baseURL is the
-// API root ending in /v1; provider is a telemetry label. apiKey may be empty for
-// unauthenticated local servers.
+// NewOpenAICompatible builds a client for any OpenAI-compatible endpoint (vLLM,
+// proxies). baseURL ends in /v1; apiKey may be empty for unauthenticated servers.
 func NewOpenAICompatible(baseURL, apiKey, provider string) *OpenAI {
 	if provider == "" {
 		provider = "openai-compatible"
@@ -94,6 +102,29 @@ func NewOpenAICompatible(baseURL, apiKey, provider string) *OpenAI {
 		apiKey:   apiKey,
 		baseURL:  baseURL,
 		provider: provider,
+		auth:     authBearer,
+		http:     &http.Client{Timeout: 120 * time.Second},
+	}
+}
+
+// NewAzureFoundry builds a client for an Azure AI Foundry serverless/MaaS endpoint
+// (e.g. Mistral). baseURL is the inference root ending in /v1 (e.g.
+// https://<ep>.<region>.inference.ai.azure.com/v1); auth uses the api-key header.
+// apiVersion, if non-empty, is appended as ?api-version=...
+func NewAzureFoundry(baseURL, apiKey, provider, apiVersion string) *OpenAI {
+	if provider == "" {
+		provider = "azure-foundry"
+	}
+	q := ""
+	if apiVersion != "" {
+		q = "api-version=" + apiVersion
+	}
+	return &OpenAI{
+		apiKey:   apiKey,
+		baseURL:  strings.TrimRight(baseURL, "/"),
+		provider: provider,
+		auth:     authAPIKey,
+		query:    q,
 		http:     &http.Client{Timeout: 120 * time.Second},
 	}
 }
@@ -132,12 +163,21 @@ func (c *OpenAI) Chat(ctx context.Context, model string, msgs []Message, maxToke
 			time.Sleep(time.Duration(attempt) * 2 * time.Second)
 		}
 		start := time.Now()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(reqBody))
+		url := c.baseURL + "/chat/completions"
+		if c.query != "" {
+			url += "?" + c.query
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(reqBody))
 		if err != nil {
 			return Response{}, err
 		}
 		if c.apiKey != "" {
-			req.Header.Set("Authorization", "Bearer "+c.apiKey)
+			switch c.auth {
+			case authAPIKey:
+				req.Header.Set("api-key", c.apiKey)
+			default:
+				req.Header.Set("Authorization", "Bearer "+c.apiKey)
+			}
 		}
 		req.Header.Set("Content-Type", "application/json")
 
