@@ -1,0 +1,23 @@
+{
+  "name": "W2-RAG-Docs",
+  "description": "Documentary RAG prompts: medium length, longer context, quality-sensitive.",
+  "team": "knowledge",
+  "namespace": "rag",
+  "defaultSensitive": false,
+  "monthlyBudgetEUR": 200,
+  "premiumModel": "gpt-4o",
+  "allowedModels": ["gpt-4o", "gpt-4o-mini", "gpt-4.1-nano"],
+  "minQuality": 0.85,
+  "prompts": [
+    {"id": "w2-01", "system": "Answer strictly from the provided context. If unknown, say so.", "text": "Context: 'The retention policy keeps audit logs for 180 days, then archives them to cold storage for 5 years.' Question: How long are audit logs kept before archival?"},
+    {"id": "w2-02", "system": "Answer strictly from the provided context.", "text": "Context: 'Refunds are issued within 14 business days for orders above 50 EUR; below that, store credit is granted.' Question: What happens for a 30 EUR order refund?"},
+    {"id": "w2-03", "system": "Answer strictly from the provided context.", "text": "Context: 'The API rate limit is 600 requests/min per key, with a burst of 1000.' Question: What is the burst limit?"},
+    {"id": "w2-04", "system": "Summarize faithfully.", "text": "Summarize in 3 bullet points: 'Our SLA guarantees 99.9% monthly uptime, 4-hour response for critical incidents, and credits of 10% per 0.1% below target.'"},
+    {"id": "w2-05", "system": "Answer strictly from the provided context.", "text": "Context: 'Data residency: EU customers are served from Frankfurt; US from Virginia.' Question: Where are EU customers served from?"},
+    {"id": "w2-06", "system": "Answer strictly from the provided context.", "text": "Context: 'The onboarding fee is waived for annual plans and applies only to monthly plans at 99 EUR.' Question: Who pays the onboarding fee?"},
+    {"id": "w2-07", "system": "Answer strictly from the provided context.", "text": "Context: 'Backups run nightly at 02:00 UTC and are encrypted with AES-256.' Question: What encryption is used for backups?"},
+    {"id": "w2-08", "system": "Extract the key figure.", "text": "Context: 'In Q3, churn dropped from 5.2% to 3.8% after the new onboarding flow.' Question: What was the churn after the change?"},
+    {"id": "w2-09", "system": "Answer strictly from the provided context.", "text": "Context: 'Support is available 24/7 for Enterprise, business hours for Pro, and community-only for Free.' Question: What support does the Pro tier get?"},
+    {"id": "w2-10", "system": "Summarize faithfully.", "text": "Summarize in one sentence: 'The migration moved 2.3 TB across 14 services over a weekend with zero data loss and 12 minutes of read-only downtime.'"}
+  ]
+}

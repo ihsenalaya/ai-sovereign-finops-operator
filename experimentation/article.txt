@@ -1,0 +1,520 @@
+Tu es Codex, expert senior en recherche expérimentale, Kubernetes, Envoy, LLM Gateway, FinOps, observabilité, reproductibilité scientifique et rédaction d’articles Q1.
+
+Je développe un opérateur Kubernetes appelé provisoirement **AI Sovereign FinOps Operator**.
+
+L’opérateur utilise **Envoy comme AI Gateway** et ajoute un plan de contrôle pour :
+
+* routage économique des appels LLM
+* contrôle des coûts
+* attribution par équipe / namespace / application
+* contraintes de souveraineté
+* analyse API managée vs auto-hébergement GPU
+* génération de rapports FinOps et auditabilité
+
+Je veux préparer tout ce qu’il faut pour écrire un article scientifique Q1.
+
+## 1. Objectif scientifique
+
+Ne pas présenter le papier comme :
+
+> “Nous avons construit un opérateur Kubernetes.”
+
+Le papier doit être formulé comme une contribution scientifique :
+
+> **Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways**
+
+L’opérateur Kubernetes est l’artefact expérimental qui implémente et valide l’approche.
+
+## 2. Problème de recherche
+
+Les entreprises utilisent de plus en plus les LLMs, mais elles ne savent pas :
+
+* quel modèle coûte réellement le plus
+* quelle équipe consomme quoi
+* quand router vers un modèle moins cher
+* quel est le coût réel d’une contrainte de souveraineté
+* quand l’auto-hébergement GPU devient plus rentable qu’une API managée
+* comment maintenir le service quand le budget est presque consommé
+
+Le but scientifique est de montrer qu’un plan de contrôle placé au niveau de la gateway Envoy peut réduire les coûts LLM tout en conservant qualité, latence acceptable et conformité aux politiques de souveraineté.
+
+## 3. Hypothèse centrale
+
+Un plan de contrôle LLM basé sur Envoy, enrichi par des signaux FinOps et souveraineté, peut réduire le coût opérationnel des applications IA sans dégradation significative de qualité de réponse ni violation des politiques déclaratives.
+
+## 4. Questions de recherche
+
+Préparer le protocole expérimental autour des RQ suivantes.
+
+### RQ1 — Cost Reduction
+
+Question :
+
+> Can economic-aware routing reduce LLM operational costs compared with static routing strategies?
+
+Comparer :
+
+* Baseline 1 : always GPT-4o / modèle premium
+* Baseline 2 : round-robin
+* Baseline 3 : least-cost model
+* Baseline 4 : static model mapping
+* Notre approche : economic-aware routing via Envoy + operator
+
+Métriques :
+
+* coût total
+* coût par requête
+* coût par token
+* coût par équipe
+* coût par application
+* économie relative en %
+
+### RQ2 — Quality Preservation
+
+Question :
+
+> Does cost-aware routing preserve response quality within an acceptable degradation threshold?
+
+Comparer la qualité entre :
+
+* modèle premium fixe
+* routage économique
+* routage low-cost naïf
+
+Métriques possibles :
+
+* exact match si dataset QA
+* F1 score si extraction
+* LLM-as-a-Judge
+* win-rate pairwise
+* taux de réponses acceptables
+* taux d’échec fonctionnel
+
+Objectif attendu :
+
+* réduction coût significative
+* perte qualité inférieure à 3–5 %
+
+### RQ3 — Latency and Reliability
+
+Question :
+
+> What is the operational overhead of gateway-level economic routing?
+
+Mesurer :
+
+* latence p50 / p95 / p99
+* throughput
+* taux d’erreur
+* surcharge CPU/mémoire côté Envoy/operator
+* temps de décision du routing
+* disponibilité du service
+
+Comparer :
+
+* Envoy seul
+* Envoy + observabilité
+* Envoy + operator + routing dynamique
+
+### RQ4 — Sovereignty Constraints
+
+Question :
+
+> What is the cost and performance impact of enforcing sovereignty constraints on LLM routing?
+
+Scénarios :
+
+* Global unrestricted
+* EU only
+* France only
+* no external provider for sensitive data
+* self-hosted only
+
+Métriques :
+
+* coût supplémentaire lié à la souveraineté
+* violations détectées
+* violations évitées
+* latence supplémentaire
+* impact qualité
+* nombre de requêtes reroutées
+
+### RQ5 — Budget-Aware Graceful Degradation
+
+Question :
+
+> Can budget-aware degradation maintain service availability compared with hard blocking policies?
+
+Comparer :
+
+* hard block quand budget atteint
+* alert only
+* graceful degradation : modèle premium → modèle moyen → modèle local/cache
+
+Métriques :
+
+* disponibilité
+* coût
+* qualité
+* taux de requêtes servies
+* taux de requêtes bloquées
+* budget overrun
+
+### RQ6 — Managed API vs Self-Hosted Break-even
+
+Question :
+
+> Can runtime telemetry predict when self-hosting becomes economically preferable to managed LLM APIs?
+
+Faire varier :
+
+* volume tokens/jour
+* coût GPU
+* coût ops
+* coût migration
+* modèle utilisé
+* taux d’utilisation GPU
+* batching
+* cache hit ratio
+
+Comparer :
+
+* Azure OpenAI / OpenAI / Mistral API
+* vLLM auto-hébergé sur GPU
+* modèle hybride
+
+Métriques :
+
+* coût mensuel API
+* coût mensuel self-hosted
+* point mort en mois
+* économie potentielle
+* erreur de prédiction
+* sensibilité aux hypothèses
+
+## 5. Architecture expérimentale cible
+
+Préparer les manifests, scripts et documentation pour une plateforme expérimentale avec :
+
+* Kubernetes
+* Envoy Gateway
+* AI Sovereign FinOps Operator
+* Prometheus
+* Grafana
+* OpenTelemetry si utile
+* vLLM comme backend auto-hébergé
+* plusieurs fournisseurs LLM simulés ou réels
+* datasets de requêtes
+* générateur de charge
+* collecteur de métriques
+* scripts d’analyse statistique
+
+Architecture logique :
+
+```text
+Client Workloads
+      |
+      v
+Envoy AI Gateway
+      |
+      +--> Managed LLM Provider A
+      +--> Managed LLM Provider B
+      +--> Self-hosted vLLM
+      +--> Cached / fallback model
+
+AI Sovereign FinOps Operator
+      |
+      +--> Cost Engine
+      +--> Budget Engine
+      +--> Sovereignty Engine
+      +--> Break-even Engine
+      +--> Report Engine
+
+Observability
+      |
+      +--> Prometheus
+      +--> Grafana
+      +--> Experiment logs
+```
+
+## 6. Workloads à préparer
+
+Créer 4 familles de workloads réalistes :
+
+### W1 — HR Chatbot
+
+* prompts courts
+* faible complexité
+* sensible aux données personnelles
+* bon candidat pour modèle moins cher ou local
+
+### W2 — RAG documentaire
+
+* prompts moyens
+* contexte long
+* qualité importante
+* coût token élevé
+
+### W3 — Developer Assistant
+
+* prompts longs
+* forte exigence de qualité
+* modèle premium parfois nécessaire
+
+### W4 — Analytical Agent
+
+* nombreuses requêtes
+* appels chaînés
+* fort risque d’explosion de coût
+
+Chaque workload doit avoir :
+
+* dataset de prompts
+* niveau de sensibilité
+* équipe propriétaire
+* namespace Kubernetes
+* budget mensuel simulé
+* modèle premium par défaut
+* modèles alternatifs autorisés
+
+## 7. Baselines à implémenter
+
+Préparer les baselines suivantes :
+
+### B1 — Premium Static
+
+Toutes les requêtes vont vers le modèle premium.
+
+### B2 — Round Robin
+
+Routage naïf entre modèles disponibles.
+
+### B3 — Least Cost
+
+Toujours choisir le modèle le moins cher autorisé.
+
+### B4 — Static Policy
+
+Mapping manuel :
+
+* HR → small model
+* RAG → medium model
+* Dev Assistant → premium model
+* Agent → premium model
+
+### B5 — Budget Hard Block
+
+Quand budget atteint, bloquer.
+
+### B6 — Notre approche
+
+Routage dynamique selon :
+
+* coût
+* budget restant
+* sensibilité
+* zone autorisée
+* qualité minimale
+* latence
+* disponibilité du fournisseur
+* possibilité de cache
+* possibilité self-hosted
+
+## 8. Algorithme à formaliser
+
+Préparer une version formelle de l’algorithme :
+
+Inputs :
+
+* request metadata
+* model catalog
+* provider catalog
+* pricing
+* sovereignty policy
+* budget state
+* historical quality score
+* latency score
+* availability score
+
+Output :
+
+* selected model
+* selected provider
+* reason
+* expected cost
+* policy findings
+* fallback decision
+
+Score possible :
+
+```text
+score(model) =
+  α * normalized_cost
++ β * expected_quality_loss
++ γ * latency_penalty
++ δ * sovereignty_risk
++ ε * budget_pressure
+```
+
+L’algorithme doit rejeter tout modèle qui viole une contrainte dure de souveraineté.
+
+Préparer pseudo-code clair pour l’article.
+
+## 9. Résultats attendus
+
+Préparer les scripts pour produire les figures suivantes :
+
+### Figure 1
+
+Architecture HLD du système.
+
+### Figure 2
+
+Coût total par stratégie de routage.
+
+### Figure 3
+
+Qualité vs coût.
+
+### Figure 4
+
+Latence p95 par stratégie.
+
+### Figure 5
+
+Impact des contraintes de souveraineté sur coût et qualité.
+
+### Figure 6
+
+Budget hard block vs graceful degradation.
+
+### Figure 7
+
+Courbe de break-even API managée vs self-hosted GPU.
+
+### Figure 8
+
+Ablation study :
+
+* sans budget engine
+* sans sovereignty engine
+* sans quality score
+* sans cache
+* système complet
+
+## 10. Analyse statistique
+
+Préparer un pipeline Python/R pour :
+
+* importer les résultats CSV/JSON
+* calculer moyenne, médiane, p95
+* calculer intervalles de confiance 95 %
+* effectuer tests statistiques appropriés
+* calculer effect size
+* générer graphiques publication-ready
+
+Prévoir au minimum :
+
+* 30 répétitions par scénario
+* seeds contrôlées
+* séparation warm-up / mesure
+* export reproductible
+
+## 11. Menaces à la validité
+
+Préparer une section avec :
+
+### Validité interne
+
+* variabilité des APIs LLM
+* fluctuations de latence
+* effets de cache
+* coût GPU dépendant du fournisseur
+
+### Validité externe
+
+* résultats dépendants des modèles testés
+* généralisation limitée à certains workloads
+* prix cloud variables
+
+### Validité de construction
+
+* LLM-as-a-Judge peut être biaisé
+* qualité difficile à mesurer
+* souveraineté simplifiée par politiques déclaratives
+
+### Validité conclusion
+
+* nombre de répétitions
+* incertitude statistique
+* sensibilité aux hypothèses économiques
+
+## 12. Artefacts attendus
+
+Créer un repository expérimental séparé ou un dossier `experiments/` contenant :
+
+```text
+experiments/
+├── README.md
+├── datasets/
+├── workloads/
+├── baselines/
+├── manifests/
+├── scripts/
+│   ├── run_experiment.sh
+│   ├── collect_metrics.sh
+│   ├── export_results.sh
+│   └── analyze_results.py
+├── results/
+│   └── sample/
+├── notebooks/
+├── figures/
+├── dashboards/
+└── paper/
+    ├── outline.md
+    ├── methodology.md
+    ├── threats_to_validity.md
+    └── tables.md
+```
+
+## 13. Ce que tu dois faire maintenant
+
+Prépare tout ce qui peut être fait avant que l’opérateur soit terminé :
+
+1. créer le protocole expérimental complet
+2. créer les datasets synthétiques de prompts
+3. créer les manifests Kubernetes génériques
+4. créer les scénarios de test
+5. créer les scripts de load testing
+6. créer les scripts d’analyse
+7. créer les templates de résultats
+8. créer le squelette de l’article
+9. créer les figures vides ou générées depuis sample data
+10. documenter comment brancher l’opérateur final plus tard
+
+Ne suppose pas que l’opérateur est déjà terminé.
+
+Prévois des mocks/stubs pour :
+
+* routing decisions
+* cost engine
+* sovereignty findings
+* budget state
+* break-even analysis
+
+L’objectif est que, quand l’opérateur sera prêt, je puisse simplement remplacer les mocks par les métriques réelles.
+
+## 14. Style attendu
+
+Le résultat doit être :
+
+* scientifique
+* reproductible
+* clair
+* orienté publication Q1
+* utile commercialement pour convaincre des clients régulés
+
+Toujours documenter les hypothèses.
+Toujours séparer données simulées et données réelles.
+Ne jamais inventer de résultat final.
+Préparer seulement le cadre, les scripts, les tableaux, les figures et la méthodologie.

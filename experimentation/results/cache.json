@@ -1,0 +1,1528 @@
+{
+ "answers": {
+  "gpt-4.1-nano|w1-01": {
+   "Text": "In France, full-time employees are entitled to a minimum of 25 paid vacation days per year, which corresponds to five weeks of leave.",
+   "Usage": {
+    "InputTokens": 40,
+    "OutputTokens": 28
+   },
+   "LatencyMS": 474,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-02": {
+   "Text": "The deadline for submitting your 2025 expense reports is typically February 28, 2026. Please confirm with your department's specific guidelines.",
+   "Usage": {
+    "InputTokens": 41,
+    "OutputTokens": 29
+   },
+   "LatencyMS": 642,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-03": {
+   "Text": "Parental leave for a new father typically allows for a designated period off work to care for and bond with the newborn, with the duration and pay varying depending on the company's policies and local regulations. Generally, fathers are entitled to a specific amount of paid or unpaid leave, which can often be shared or transferred from parental leave entitlements, supporting family bonding and early child development.",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 75
+   },
+   "LatencyMS": 904,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-04": {
+   "Text": "To update an employee's bank details for payroll, the following documents are typically required:\n\n1. **Bank Account Details Form:** A completed and signed form provided by the HR or payroll department, specifying the new bank account information.\n\n2. **Void Cheque or Bank Statement:** A voided cheque or an official bank statement showing the new account details to verify accuracy.\n\n3. **Identification Document:** A valid government-issued ID (e.g., passport, driver's license) to confirm the employee's identity.\n\n4. **Authorization Letter (if applicable):** A signed letter from the employee authorizing the change of bank details.\n\nPlease note that specific requirements may vary depending on your company's policies or local regulations. It's advisable to consult your HR or payroll department for any additional documentation or procedures.",
+   "Usage": {
+    "InputTokens": 32,
+    "OutputTokens": 156
+   },
+   "LatencyMS": 1308,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-05": {
+   "Text": "Sick leave is time off granted to employees when they are ill or injured, often with pay or partially paid, depending on company policy and local laws. Unpaid leave, on the other hand, is time off taken for personal reasons or other circumstances without pay, and it typically requires prior approval from the employer.",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 63
+   },
+   "LatencyMS": 822,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-06": {
+   "Text": "Dear [Employee's Name],  \nThank you for your resignation letter received on [date]. We acknowledge your decision to resign from your position and appreciate your notice. Please let us know if there are any further details or assistance needed during this transition period. We wish you all the best in your future endeavors.  \nSincerely,  \n[Your Name]  \n[Your Position]",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 75
+   },
+   "LatencyMS": 804,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-07": {
+   "Text": "In France, the standard notice period for a permanent contract (CDI) typically depends on the employee's length of service and the terms specified in the employment contract or collective bargaining agreement. Generally:\n\n- For employees with less than six months of service, the notice period is usually at least one week.\n- For employees with more than six months of service, the notice period is often at least one month.\n\nHowever, these periods can vary depending on the specific industry, company policies, or collective agreements. It's important to consult the employment contract and applicable collective bargaining agreement for precise details.",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 116
+   },
+   "LatencyMS": 1005,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-08": {
+   "Text": "Certainly! Here are three common onboarding steps for a new hire on their first day:\n\n1. **Welcome and Orientation:** Greet the new hire, introduce them to the team, and provide an overview of the company's mission, values, and culture.\n2. **Administrative Setup:** Assist with completing necessary paperwork, setting up email accounts, access to relevant systems, and providing any required equipment or materials.\n3. **Job Role Introduction:** Review the new hire’s job responsibilities, expectations, and initial tasks, and introduce them to their manager or mentor for ongoing support.",
+   "Usage": {
+    "InputTokens": 31,
+    "OutputTokens": 113
+   },
+   "LatencyMS": 1005,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-09": {
+   "Text": "If you experience workplace harassment, please report it promptly to HR or your supervisor. You can also use our confidential reporting channels. Your safety and well-being are our priority, and we are here to support you.",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 42
+   },
+   "LatencyMS": 703,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w1-10": {
+   "Text": "Under the default telework policy, the maximum number of remote-work days allowed per week is typically three days. However, please refer to your specific departmental guidelines or consult with your HR representative for the most accurate and current information.",
+   "Usage": {
+    "InputTokens": 37,
+    "OutputTokens": 45
+   },
+   "LatencyMS": 623,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-01": {
+   "Text": "Audit logs are kept for 180 days before being archived.",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 12
+   },
+   "LatencyMS": 612,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-02": {
+   "Text": "For a 30 EUR order, which is below 50 EUR, store credit is granted.",
+   "Usage": {
+    "InputTokens": 57,
+    "OutputTokens": 19
+   },
+   "LatencyMS": 344,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-03": {
+   "Text": "The burst limit is 1000.",
+   "Usage": {
+    "InputTokens": 49,
+    "OutputTokens": 8
+   },
+   "LatencyMS": 505,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-04": {
+   "Text": "- Guarantees 99.9% uptime per month.  \n- Provides a 4-hour response time for critical incidents.  \n- Offers service credits of 10% for every 0.1% drop below the uptime target.",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 47
+   },
+   "LatencyMS": 559,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-05": {
+   "Text": "EU customers are served from Frankfurt.",
+   "Usage": {
+    "InputTokens": 44,
+    "OutputTokens": 7
+   },
+   "LatencyMS": 502,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-06": {
+   "Text": "Only those who choose monthly plans pay the onboarding fee.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 472,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-07": {
+   "Text": "AES-256 encryption is used for backups.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 356,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-08": {
+   "Text": "The churn after the change was 3.8%.",
+   "Usage": {
+    "InputTokens": 53,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 376,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-09": {
+   "Text": "The Pro tier receives support during business hours.",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 502,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w2-10": {
+   "Text": "The migration transferred 2.3 TB across 14 services over a weekend with no data loss and only 12 minutes of read-only downtime.",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 29
+   },
+   "LatencyMS": 471,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-01": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"crypto/sha256\"\n\t\"encoding/hex\"\n)\n\nfunc sha256HexDigest(s string) string {\n\thash := sha256.Sum256([]byte(s))\n\treturn hex.EncodeToString(hash[:])\n}\n```",
+   "Usage": {
+    "InputTokens": 45,
+    "OutputTokens": 51
+   },
+   "LatencyMS": 694,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-02": {
+   "Text": "A Kubernetes Deployment manages stateless applications by ensuring a specified number of identical pods are running, providing features like rolling updates and rollbacks. In contrast, a StatefulSet is designed for stateful applications that require persistent storage and stable network identities, maintaining ordered deployment and scaling. While Deployments do not guarantee pod identity or storage persistence across restarts, StatefulSets provide unique, stable network IDs and persistent storage for each pod, making them suitable for databases and other stateful services.",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 95
+   },
+   "LatencyMS": 1249,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-03": {
+   "Text": "The bug in this code is related to the closure capturing the loop variable `i`. In Go, the `for i := range items` loop reuses the same variable `i` for each iteration, so when you launch goroutines inside the loop, they all capture the same `i` variable. This often results in all goroutines seeing the final value of `i` after the loop ends, leading to unexpected behavior or panics if `i` goes out of bounds.\n\n**The problematic code:**\n\n```go\nfor i := range items {\n    go func() {\n        process(items[i])\n    }()\n}\n```\n\n**The issue:**\n\n- The closure captures the variable `i` by reference.\n- By the time the goroutine runs, `i` may have changed, often ending up with the last value from the loop.\n\n---\n\n### How to fix it\n\nYou should pass `i` as a parameter to the anonymous function to capture its current value:\n\n```go\nfor i := range items {\n    i := i // create a new variable scoped to this iteration\n    go func() {\n        process(items[i])\n    }()\n}\n```\n\nOr, more idiomatically:\n\n```go\nfor i := range items {\n    i := i //",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1494,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-04": {
+   "Text": "```bash\nfind /var/log -type f -exec du -h {} + | sort -rh | head -n 5\n```",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 29
+   },
+   "LatencyMS": 469,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-05": {
+   "Text": "```go\npackage main\n\nimport \"testing\"\n\nfunc TestAdd(t *testing.T) {\n    tests := []struct {\n        name string\n        a, b int\n        want int\n    }{\n        // Add test cases here, e.g.:\n        // {\"positive numbers\", 1, 2, 3},\n        // {\"zero and positive\", 0, 5, 5},\n        // {\"negative and positive\", -1, 1, 0},\n    }\n\n    for _, tt := range tests {\n        t.Run(tt.name, func(t *testing.T) {\n            got := Add(tt.a, tt.b)\n            if got != tt.want {\n                t.Errorf(\"Add(%d, %d) = %d; want %d\", tt.a, tt.b, got, tt.want)\n            }\n        })\n    }\n}\n```",
+   "Usage": {
+    "InputTokens": 39,
+    "OutputTokens": 178
+   },
+   "LatencyMS": 1476,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-06": {
+   "Text": "A SQL index improves query performance by providing a quick lookup mechanism for data retrieval, similar to an index in a book. However, creating and maintaining indexes can slow down data modification operations like INSERT, UPDATE, and DELETE, because the index must be updated alongside the data.",
+   "Usage": {
+    "InputTokens": 31,
+    "OutputTokens": 54
+   },
+   "LatencyMS": 666,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-07": {
+   "Text": "Certainly! To compute the 95th percentile (p95) of request latency over the last 5 minutes for the job `'api'` using `histogram_quantile`, you can use the following Prometheus query:\n\n```promql\nhistogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])) by (le))\n```\n\n**Explanation:**\n- `http_request_duration_seconds_bucket{job=\"api\"}`: Selects the histogram buckets for the `'api'` job.\n- `rate(...[5m])`: Calculates the per-second rate over the last 5 minutes.\n- `sum(...) by (le)`: Sums the rates across all instances (if multiple) for each bucket label `le`.\n- `histogram_quantile(0.95, ...)`: Computes the 95th percentile from the bucketed data.\n\nThis query gives you the approximate 95th percentile latency over the past 5 minutes for your `'api'` job.",
+   "Usage": {
+    "InputTokens": 51,
+    "OutputTokens": 209
+   },
+   "LatencyMS": 2815,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-08": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"os\"\n)\n\ntype Config struct {\n\tName string `json:\"name\"`\n\tPort int    `json:\"port\"`\n}\n\nfunc main() {\n\tfile, err := os.Open(\"config.json\")\n\tif err != nil {\n\t\tfmt.Println(\"Error opening file:\", err)\n\t\treturn\n\t}\n\tdefer file.Close()\n\n\tvar cfg Config\n\tif err := json.NewDecoder(file).Decode(\u0026cfg); err != nil {\n\t\tfmt.Println(\"Error decoding JSON:\", err)\n\t\treturn\n\t}\n\n\tfmt.Printf(\"Config: %+v\\n\", cfg)\n}\n```",
+   "Usage": {
+    "InputTokens": 40,
+    "OutputTokens": 126
+   },
+   "LatencyMS": 990,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-09": {
+   "Text": "The command `kubectl rollout undo deploy/foo` reverts the deployment named `foo` to its previous revision.",
+   "Usage": {
+    "InputTokens": 32,
+    "OutputTokens": 23
+   },
+   "LatencyMS": 500,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w3-10": {
+   "Text": "In a system that must remain available during a network partition, the CAP theorem dictates that it cannot simultaneously guarantee consistency and partition tolerance; it must choose to prioritize availability over consistency. This means that during a partition, the system will continue to serve requests, potentially serving stale or inconsistent data until the partition is resolved.",
+   "Usage": {
+    "InputTokens": 39,
+    "OutputTokens": 62
+   },
+   "LatencyMS": 1107,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-01": {
+   "Text": "29.2",
+   "Usage": {
+    "InputTokens": 53,
+    "OutputTokens": 3
+   },
+   "LatencyMS": 578,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-02": {
+   "Text": "The month-over-month average growth is approximately 8.33 units.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 14
+   },
+   "LatencyMS": 500,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-03": {
+   "Text": "Bug",
+   "Usage": {
+    "InputTokens": 43,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 312,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-04": {
+   "Text": "To calculate the visit-to-paid conversion rate in percent:\n\n\\[\n\\text{Conversion rate} = \\left( \\frac{\\text{Number of paid users}}{\\text{Number of visits}} \\right) \\times 100\n\\]\n\nPlugging in the numbers:\n\n\\[\n\\left( \\frac{240}{10,000} \\right) \\times 100 = 0.024 \\times 100 = 2.4\\%\n\\]\n\n**Answer: The visit-to-paid conversion rate is 2.4%.**",
+   "Usage": {
+    "InputTokens": 45,
+    "OutputTokens": 111
+   },
+   "LatencyMS": 1200,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-05": {
+   "Text": "The churn rate has been steadily decreasing over the five-month period.",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 13
+   },
+   "LatencyMS": 502,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-06": {
+   "Text": "Let's calculate the total cost for each model based on the given input and output tokens.\n\n**Model A:**\n- Input tokens: 1000\n- Output tokens: 500\n- Cost per 1 million tokens:\n  - In: \\$2.50\n  - Out: \\$10.00\n\n**Total cost for Model A:**\n- Input: (1000 / 1,000,000) * \\$2.50 = 0.001 * \\$2.50 = \\$0.0025\n- Output: (500 / 1,000,000) * \\$10.00 = 0.0005 * \\$10.00 = \\$0.005\n- **Total:** \\$0.0025 + \\$0.005 = **\\$0.0075**\n\n---\n\n**Model B:**\n- Input tokens: 1000\n- Output tokens: 500\n- Cost per 1 million tokens:\n  - In: \\$0.15\n  - Out: \\$0.60\n\n**Total cost for Model B:**\n- Input: (1000 / 1,000,000) * \\$0.15 = 0.001 * \\$0.15 = \\$0.00015\n-",
+   "Usage": {
+    "InputTokens": 79,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1912,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-07": {
+   "Text": "2025-11-03",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 6
+   },
+   "LatencyMS": 340,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-08": {
+   "Text": "Yes",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 399,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-09": {
+   "Text": "rag",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 475,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|w4-10": {
+   "Text": "To find the 95th percentile, we first determine its position in the ordered list.\n\nNumber of data points, n = 10\n\nPosition \\( P = 0.95 \\times (n + 1) = 0.95 \\times 11 = 10.45 \\)\n\nThis means the 95th percentile is between the 10th and an imaginary 11th data point, which we can interpret as:\n\n- The 10th data point is 200.\n- Since 10.45 is beyond 10, we interpolate slightly beyond the last data point.\n\nBecause the position is 10.45, the approximate 95th percentile is:\n\n\\[ 200 + 0.45 \\times (\\text{next value} - 200) \\]\n\nBut there is no 11th data point, so we can approximate it as just slightly above 200, close to 200.\n\n**Approximate 95th percentile ≈ 200**",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 197
+   },
+   "LatencyMS": 2813,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-01": {
+   "Text": "In France, full-time employees typically accrue a minimum of 25 paid vacation days per year, based on a standard 5-day workweek. This is in addition to public holidays.",
+   "Usage": {
+    "InputTokens": 40,
+    "OutputTokens": 37
+   },
+   "LatencyMS": 815,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-02": {
+   "Text": "The deadline to submit 2025 expense reports is typically January 31, 2026. Please confirm with your department for any specific guidelines.",
+   "Usage": {
+    "InputTokens": 41,
+    "OutputTokens": 29
+   },
+   "LatencyMS": 805,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-03": {
+   "Text": "Parental leave for a new father typically allows him to take time off work to care for and bond with his newborn child, with the duration and pay depending on company policy and local laws. Many organizations offer a combination of paid and unpaid leave, and it's important for fathers to check their specific entitlements and any necessary procedures for applying.",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 67
+   },
+   "LatencyMS": 1605,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-04": {
+   "Text": "To update an employee's bank details for payroll, you typically need the following documents:\n\n1. **Bank Details Update Form**: A specific form provided by the HR or payroll department that the employee must fill out to request the change.\n\n2. **Identification**: A copy of a government-issued ID (e.g., driver's license, passport) to verify the employee's identity.\n\n3. **New Bank Account Information**: This includes:\n   - Bank name\n   - Account number\n   - Routing number (or IBAN for international accounts)\n   - Account type (checking or savings)\n\n4. **Signature**: The employee's signature on the update form to authorize the change.\n\n5. **Proof of New Bank Account**: Some organizations may require a voided check or a bank statement showing the new account details.\n\n6. **Previous Bank Details**: If applicable, the employee may need to provide their old bank account information for verification purposes.\n\nAlways check your organization's specific policies and procedures, as requirements may vary.",
+   "Usage": {
+    "InputTokens": 32,
+    "OutputTokens": 206
+   },
+   "LatencyMS": 3018,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-05": {
+   "Text": "Sick leave is a type of paid time off that employees can use when they are ill or need to care for a sick family member. It is typically part of an employee's benefits package and allows them to maintain their income while taking time off for health-related reasons.\n\nUnpaid leave, on the other hand, is time off from work that is not compensated. Employees may take unpaid leave for various reasons, such as personal matters, family emergencies, or extended vacations, but they do not receive their regular pay during this time. Unpaid leave may be subject to company policies or legal regulations, such as the Family and Medical Leave Act (FMLA) in the U.S.",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 137
+   },
+   "LatencyMS": 2795,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-06": {
+   "Text": "Subject: Confirmation of Resignation\n\nDear [Employee's Name],\n\nThank you for your resignation letter dated [insert date]. I acknowledge receipt of your notice and appreciate your professionalism in informing us of your decision. We will begin the process of transitioning your responsibilities and will be in touch to discuss the next steps. If you have any questions or need assistance during this time, please feel free to reach out.\n\nBest regards,  \n[Your Name]  \n[Your Job Title]  \n[Company Name]",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 100
+   },
+   "LatencyMS": 2034,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-07": {
+   "Text": "In France, the standard notice period for a permanent contract (Contrat à Durée Indéterminée, CDI) varies depending on the employee's length of service and the terms specified in the employment contract or collective bargaining agreements. Generally, the notice periods are as follows:\n\n- **For employees with less than 6 months of service**: 1 month\n- **For employees with 6 months to 2 years of service**: 2 months\n- **For employees with more than 2 years of service**: 2 months (though some agreements may specify longer periods)\n\nIt's important to check the specific employment contract and any applicable collective agreements, as they may stipulate different notice periods. Additionally, the notice period can be negotiated between the employer and employee.",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 156
+   },
+   "LatencyMS": 3475,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-08": {
+   "Text": "Here are three onboarding steps for a new hire on their first day:\n\n1. **Welcome and Orientation Session**: Conduct a welcome meeting to introduce the new hire to the company culture, values, and mission. Provide an overview of the organization, including key policies, procedures, and an introduction to the team and their roles.\n\n2. **Workspace Setup and IT Access**: Ensure that the new hire's workspace is ready, including necessary equipment (computer, phone, etc.) and supplies. Assist them in setting up their IT accounts, including email, software access, and any other tools they will need for their role.\n\n3. **Training and Introduction to Job Responsibilities**: Provide an overview of the new hire's specific job responsibilities and expectations. Schedule any necessary training sessions or shadowing opportunities with colleagues to help them acclimate to their role and understand their tasks.",
+   "Usage": {
+    "InputTokens": 31,
+    "OutputTokens": 173
+   },
+   "LatencyMS": 2902,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-09": {
+   "Text": "If you experience or witness workplace harassment, please follow these steps:\n\n1. **Document the Incident**: Write down what happened, including dates, times, locations, and any witnesses.\n2. **Report to Your Supervisor**: If you feel safe, inform your direct supervisor or manager about the situation.\n3. **Contact HR**: If you’re uncomfortable speaking to your supervisor, reach out to the HR department directly. You can do this in person, via email, or through our confidential reporting system.\n4. **Follow Up**: Ensure your concern is being addressed and ask about the next steps.\n\nRemember, you have the right to a safe and respectful workplace. We are here to support you.",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 142
+   },
+   "LatencyMS": 2956,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w1-10": {
+   "Text": "The maximum number of remote-work days allowed per week under the default telework policy is typically up to 2-3 days, depending on the organization's specific guidelines. However, it's best to refer to your company's official telework policy document or consult with your HR department for the most accurate and current information.",
+   "Usage": {
+    "InputTokens": 37,
+    "OutputTokens": 61
+   },
+   "LatencyMS": 1435,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-01": {
+   "Text": "Audit logs are kept for 180 days before archival.",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 797,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-02": {
+   "Text": "For a 30 EUR order refund, store credit is granted.",
+   "Usage": {
+    "InputTokens": 57,
+    "OutputTokens": 13
+   },
+   "LatencyMS": 525,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-03": {
+   "Text": "The burst limit is 1000 requests.",
+   "Usage": {
+    "InputTokens": 49,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 703,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-04": {
+   "Text": "- The Service Level Agreement (SLA) ensures 99.9% monthly uptime.\n- Critical incidents will receive a response within 4 hours.\n- Customers are eligible for credits of 10% for every 0.1% below the uptime target.",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 52
+   },
+   "LatencyMS": 1207,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-05": {
+   "Text": "EU customers are served from Frankfurt.",
+   "Usage": {
+    "InputTokens": 44,
+    "OutputTokens": 7
+   },
+   "LatencyMS": 704,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-06": {
+   "Text": "The onboarding fee is paid by those who choose monthly plans, as it is waived for annual plans.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 20
+   },
+   "LatencyMS": 804,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-07": {
+   "Text": "The backups are encrypted with AES-256.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 749,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-08": {
+   "Text": "The churn after the change was 3.8%.",
+   "Usage": {
+    "InputTokens": 53,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 500,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-09": {
+   "Text": "The Pro tier gets support during business hours.",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 703,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w2-10": {
+   "Text": "The migration successfully transferred 2.3 TB across 14 services over a weekend, achieving zero data loss and only 12 minutes of read-only downtime.",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 31
+   },
+   "LatencyMS": 1309,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w3-01": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"crypto/sha256\"\n\t\"encoding/hex\"\n)\n\nfunc SHA256HexDigest(s string) string {\n\thash := sha256.New()\n\thash.Write([]byte(s))\n\treturn hex.EncodeToString(hash.Sum(nil))\n}\n```",
+   "Usage": {
+    "InputTokens": 45,
+    "OutputTokens": 54
+   },
+   "LatencyMS": 1803,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w3-04": {
+   "Text": "You can use the following command to find the 5 largest files under `/var/log`:\n\n```bash\nfind /var/log -type f -exec du -h {} + | sort -hr | head -n 5\n```",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 48
+   },
+   "LatencyMS": 950,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w3-07": {
+   "Text": "To calculate the average request latency over 5 minutes for the job 'api' using `histogram_quantile` at the 95th percentile, you can use the following Prometheus query:\n\n```promql\nhistogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])) by (le))\n```\n\n### Explanation:\n- `http_request_duration_seconds_bucket{job=\"api\"}`: This filters the histogram buckets for the job labeled 'api'.\n- `rate(http_request_duration_seconds_bucket[5m])`: This calculates the per-second rate of requests over the last 5 minutes.\n- `sum(...) by (le)`: This sums the rates of the histogram buckets, grouping by the bucket's upper bound (`le`).\n- `histogram_quantile(0.95, ...)`: This computes the 95th percentile latency from the summed histogram data.\n\nThis query will give you the 95th percentile request latency for the 'api' job over the last 5 minutes.",
+   "Usage": {
+    "InputTokens": 51,
+    "OutputTokens": 212
+   },
+   "LatencyMS": 3123,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w3-10": {
+   "Text": "The CAP theorem states that in a distributed system, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance (CAP) during a network partition. If a system prioritizes Availability and Partition Tolerance, it may sacrifice Consistency, allowing different nodes to return potentially stale or divergent data to clients during the partition.",
+   "Usage": {
+    "InputTokens": 39,
+    "OutputTokens": 66
+   },
+   "LatencyMS": 1507,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-01": {
+   "Text": "29.2",
+   "Usage": {
+    "InputTokens": 53,
+    "OutputTokens": 3
+   },
+   "LatencyMS": 789,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-02": {
+   "Text": "The month-over-month average growth is approximately 6.67%.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 13
+   },
+   "LatencyMS": 662,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-03": {
+   "Text": "Bug",
+   "Usage": {
+    "InputTokens": 43,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 2349,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-04": {
+   "Text": "To calculate the visit-to-paid conversion rate in percent, you can use the following formula:\n\n\\[\n\\text{Conversion Rate} = \\left( \\frac{\\text{Number of Paid}}{\\text{Number of Visits}} \\right) \\times 100\n\\]\n\nIn this case, the number of visits is 10,000 and the number of paid is 240. Plugging in the numbers:\n\n\\[\n\\text{Conversion Rate} = \\left( \\frac{240}{10000} \\right) \\times 100 = 2.4\\%\n\\]\n\nSo, the visit-to-paid conversion rate is **2.4%**.",
+   "Usage": {
+    "InputTokens": 45,
+    "OutputTokens": 136
+   },
+   "LatencyMS": 2870,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-05": {
+   "Text": "The churn rate has steadily decreased from 5.0 to 3.5 over the five-month period, indicating an improving retention trend.",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 28
+   },
+   "LatencyMS": 637,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-06": {
+   "Text": "To determine which model is cheaper per token for a request of 1000 input tokens and 500 output tokens, we need to calculate the total cost for each model.\n\n**Model A:**\n- Cost for input: \\( \\frac{2.5}{1,000,000} \\times 1000 = 0.0025 \\)\n- Cost for output: \\( \\frac{10}{1,000,000} \\times 500 = 0.005 \\)\n- Total cost for Model A: \\( 0.0025 + 0.005 = 0.0075 \\)\n\n**Model B:**\n- Cost for input: \\( \\frac{0.15}{1,000,000} \\times 1000 = 0.00015 \\)\n- Cost for output: \\( \\frac{0.60}{1,000,000} \\times 500 = 0.0003 \\)\n- Total cost for Model B: \\( 0.00015 + 0.0003 = 0.00045 \\)\n\nNow, let's compare the total costs:\n- Model A: \\( 0.0075 \\)\n- Model B: \\( 0.00045 \\)\n\n**Conclusion:**",
+   "Usage": {
+    "InputTokens": 79,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 4265,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-07": {
+   "Text": "2025-11-03",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 6
+   },
+   "LatencyMS": 520,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-08": {
+   "Text": "Yes.",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 812,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-09": {
+   "Text": "rag",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 408,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|w4-10": {
+   "Text": "To compute the 95th percentile of the dataset [10, 12, 14, 18, 22, 30, 45, 60, 90, 200], we can follow these steps:\n\n1. **Order the data**: The data is already ordered.\n2. **Calculate the rank (position) for the 95th percentile**: \n   \\[\n   P = \\frac{95}{100} \\times (N + 1)\n   \\]\n   where \\( N \\) is the number of data points. Here, \\( N = 10 \\):\n   \\[\n   P = 0.95 \\times (10 + 1) = 0.95 \\times 11 = 10.45\n   \\]\n\n3. **Interpret the rank**: The rank of 10.45 means we need to find the value that is at the 10th position and interpolate between the 10th and the next value (which doesn't exist in this case since we only have 10 values).\n\nSince the 10th position corresponds to the maximum value in the dataset, which is 200, we can conclude that the 95th percentile is approximately 200.\n\nThus, the approximate value of",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 4024,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-01": {
+   "Text": "In France, full-time employees are entitled to a minimum of five weeks of paid vacation per year, which equates to 25 working days. This is based on the standard French labor law.",
+   "Usage": {
+    "InputTokens": 40,
+    "OutputTokens": 39
+   },
+   "LatencyMS": 989,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-02": {
+   "Text": "The deadline for submitting 2025 expense reports will depend on your company's specific policy. Please refer to the company's expense report guidelines or contact the finance department for the exact deadline.",
+   "Usage": {
+    "InputTokens": 41,
+    "OutputTokens": 35
+   },
+   "LatencyMS": 721,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-03": {
+   "Text": "Parental leave for a new father typically allows him to take time off work to care for and bond with his newborn child, with the duration and compensation varying based on the country's laws and the employer's policies. In many places, fathers may be eligible for paternity leave, which can be paid or unpaid, and may also have the option to share parental leave with the child's mother, depending on the specific regulations and company benefits.",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 86
+   },
+   "LatencyMS": 1231,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-04": {
+   "Text": "To update an employee's bank details for payroll, you typically need the following documents:\n\n1. **Bank Account Change Form**: A completed and signed form provided by the HR or payroll department, where the employee can fill in their new bank details.\n\n2. **Void Check or Bank Statement**: A voided check or a bank statement from the new account to verify the account number and routing number. This helps ensure accuracy in the details provided.\n\n3. **Identification**: A copy of a government-issued ID may be required to verify the employee's identity and ensure that the request is legitimate.\n\n4. **Written Authorization**: A signed letter or email from the employee authorizing the change in bank details. This serves as a formal request and consent for the update.\n\n5. **Direct Deposit Authorization Form**: If applicable, a new direct deposit authorization form may be required to set up the new account for payroll deposits.\n\nEnsure that all documents are submitted securely to protect the employee's sensitive information. It's also a good practice to confirm the update with the employee once the changes have been made.",
+   "Usage": {
+    "InputTokens": 32,
+    "OutputTokens": 220
+   },
+   "LatencyMS": 2646,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-05": {
+   "Text": "Sick leave and unpaid leave are two different types of leave that employees can take from work, each with distinct characteristics:\n\n1. **Sick Leave**: This is a type of paid leave that employees can use when they are ill or need to care for a sick family member. It is typically part of an employee's benefits package and allows them to take time off without losing pay. The specifics, such as the amount of sick leave available and the conditions for its use, can vary depending on the employer's policy and local labor laws.\n\n2. **Unpaid Leave**: This type of leave allows employees to take time off from work without receiving pay. Unpaid leave can be used for various reasons, such as personal matters, extended illness beyond available sick leave, or other situations not covered by paid leave policies. While on unpaid leave, employees generally retain their employment status and may continue to receive certain benefits, depending on the employer's policies and applicable laws.\n\nIn summary, the primary difference lies in compensation: sick leave is paid, while unpaid leave is not.",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 215
+   },
+   "LatencyMS": 2494,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-06": {
+   "Text": "Dear [Employee's Name],\n\nI hope this message finds you well. I am writing to confirm receipt of your resignation letter dated [Date]. We appreciate your professionalism and the advance notice you have provided. Your contributions to [Company Name] have been greatly valued, and we will ensure a smooth transition during your remaining time with us. Please feel free to reach out if you have any questions or need assistance during this period. Wishing you all the best in your future endeavors.\n\nWarm regards,\n\n[Your Name]  \n[Your Position]  \n[Company Name]",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 112
+   },
+   "LatencyMS": 1309,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-07": {
+   "Text": "In France, the standard notice period for terminating a permanent contract (CDI) can vary depending on several factors, including the employee's role, length of service, and any applicable collective bargaining agreements. Generally, the notice period is as follows:\n\n1. **For Non-Executive Employees (Employés and Ouvriers):**\n   - Less than 6 months of service: Typically, the notice period is not legally required, but it can be specified in the employment contract or collective agreement.\n   - 6 months to 2 years of service: Usually, the notice period is 1 month.\n   - More than 2 years of service: Typically, the notice period is 2 months.\n\n2. **For Executive Employees (Cadres):**\n   - The notice period is often longer and can be specified in the employment contract or collective agreement. It is commonly 3 months, but this can vary.\n\nIt's important to note that these are general guidelines and the specific notice period can be influenced by the terms outlined in the employment contract, company policies, or applicable collective bargaining agreements. Additionally, certain industries or positions may have different standards. Always refer to the specific terms of the contract and any relevant agreements for precise information.",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 247
+   },
+   "LatencyMS": 2013,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-08": {
+   "Text": "On a new hire's first day, it's important to ensure a smooth and welcoming onboarding experience. Here are three key steps to include:\n\n1. **Welcome and Orientation:**\n   - Greet the new hire warmly and introduce them to their team and key colleagues.\n   - Provide an overview of the company culture, values, and mission.\n   - Conduct a tour of the office or workspace, highlighting important areas such as restrooms, break rooms, and emergency exits.\n\n2. **Paperwork and Administrative Setup:**\n   - Assist the new hire in completing any remaining HR paperwork, such as tax forms, direct deposit information, and benefits enrollment.\n   - Set up their workstation, including computer, phone, and any necessary software or access credentials.\n   - Ensure they have access to company systems, email, and any other tools they will need to perform their job.\n\n3. **Role-Specific Training and Expectations:**\n   - Provide an overview of their role, responsibilities, and immediate goals or projects.\n   - Introduce them to any training materials or resources they will need to get started.\n   - Schedule a meeting with their manager or mentor to discuss expectations and answer any questions they may have.\n\nThese steps help new hires feel welcomed, informed, and prepared to begin their",
+   "Usage": {
+    "InputTokens": 31,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 2263,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-09": {
+   "Text": "An employee should report a workplace harassment concern by following these steps:\n\n1. **Document the Incident**: Write down details of the harassment, including dates, times, locations, and any witnesses.\n\n2. **Review Company Policy**: Check your employee handbook for specific procedures on reporting harassment.\n\n3. **Report to a Supervisor or HR**: Contact your immediate supervisor or the HR department to report the incident. If the supervisor is involved, go directly to HR.\n\n4. **Use Formal Channels**: If available, use any formal reporting systems or hotlines provided by the company.\n\n5. **Seek Support**: Consider reaching out to a trusted colleague or employee assistance program for emotional support.\n\nRemember, you have the right to a safe and respectful workplace.",
+   "Usage": {
+    "InputTokens": 34,
+    "OutputTokens": 152
+   },
+   "LatencyMS": 1433,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w1-10": {
+   "Text": "The maximum number of remote-work days allowed per week under the default telework policy can vary significantly depending on the organization and its specific policies. Generally, many companies allow for one to three days of remote work per week under a standard telework policy. However, some organizations may offer full-time remote work options, while others might have more restrictive policies. To get the most accurate information, you should refer to your company's specific telework policy or contact your HR department.",
+   "Usage": {
+    "InputTokens": 37,
+    "OutputTokens": 93
+   },
+   "LatencyMS": 1134,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-01": {
+   "Text": "Audit logs are kept for 180 days before archival.",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 603,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-02": {
+   "Text": "For a 30 EUR order refund, store credit is granted.",
+   "Usage": {
+    "InputTokens": 57,
+    "OutputTokens": 13
+   },
+   "LatencyMS": 705,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-03": {
+   "Text": "The burst limit is 1000 requests.",
+   "Usage": {
+    "InputTokens": 49,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 1464,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-04": {
+   "Text": "- The Service Level Agreement (SLA) ensures a monthly uptime of 99.9%.\n- It includes a 4-hour response time for critical incidents.\n- If the uptime falls below the target, credits of 10% are provided for every 0.1% shortfall.",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 58
+   },
+   "LatencyMS": 850,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-05": {
+   "Text": "EU customers are served from Frankfurt.",
+   "Usage": {
+    "InputTokens": 44,
+    "OutputTokens": 7
+   },
+   "LatencyMS": 604,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-06": {
+   "Text": "Customers who choose monthly plans pay the onboarding fee of 99 EUR.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 14
+   },
+   "LatencyMS": 503,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-07": {
+   "Text": "The backups are encrypted with AES-256.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 503,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-08": {
+   "Text": "The churn after the change was 3.8%.",
+   "Usage": {
+    "InputTokens": 53,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 804,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-09": {
+   "Text": "The Pro tier gets support during business hours.",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 484,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w2-10": {
+   "Text": "The migration successfully transferred 2.3 TB across 14 services over a weekend with no data loss and only 12 minutes of read-only downtime.",
+   "Usage": {
+    "InputTokens": 52,
+    "OutputTokens": 30
+   },
+   "LatencyMS": 925,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-01": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"crypto/sha256\"\n\t\"encoding/hex\"\n)\n\nfunc SHA256HexDigest(input string) string {\n\thash := sha256.Sum256([]byte(input))\n\treturn hex.EncodeToString(hash[:])\n}\n```",
+   "Usage": {
+    "InputTokens": 45,
+    "OutputTokens": 51
+   },
+   "LatencyMS": 906,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-02": {
+   "Text": "A Kubernetes Deployment is used to manage stateless applications, ensuring that the specified number of pod replicas are running at any given time, and it facilitates rolling updates and rollbacks. In contrast, a StatefulSet is designed for stateful applications, providing each pod with a unique, stable network identity and persistent storage, which is crucial for applications that require stable, consistent storage and network identifiers. While Deployments focus on scaling and updating stateless applications, StatefulSets cater to applications that need stable storage and ordered, predictable deployment and scaling.",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 106
+   },
+   "LatencyMS": 1095,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-03": {
+   "Text": "The bug in the code snippet you provided is related to the closure capturing the loop variable `i`. In Go, the loop variable `i` is reused in each iteration of the loop, and because the goroutine is launched asynchronously, by the time the goroutine executes, the value of `i` may have changed. This can lead to unexpected behavior where the goroutine processes the wrong item or even causes an out-of-bounds error if `i` exceeds the length of `items`.\n\nTo fix this issue, you need to ensure that each goroutine captures the correct value of `i` for its execution. You can achieve this by passing `i` as an argument to the anonymous function, which creates a new variable scope for each iteration. Here's how you can fix it:\n\n```go\nfor i := range items {\n    go func(i int) {\n        process(items[i])\n    }(i)\n}\n```\n\nIn this corrected version, `i` is passed as an argument to the anonymous function, ensuring that each goroutine has its own copy of `i` with the correct value for that iteration.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 226
+   },
+   "LatencyMS": 2323,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-04": {
+   "Text": "```bash\nfind /var/log -type f -exec du -h {} + | sort -rh | head -n 5\n```",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 29
+   },
+   "LatencyMS": 603,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-05": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"testing\"\n)\n\n// Add function to be tested\nfunc Add(a, b int) int {\n\treturn a + b\n}\n\nfunc TestAdd(t *testing.T) {\n\ttests := []struct {\n\t\tname     string\n\t\ta, b     int\n\t\texpected int\n\t}{\n\t\t{\"both positive\", 1, 2, 3},\n\t\t{\"both negative\", -1, -2, -3},\n\t\t{\"positive and negative\", 1, -1, 0},\n\t\t{\"zero and positive\", 0, 5, 5},\n\t\t{\"zero and negative\", 0, -5, -5},\n\t}\n\n\tfor _, tt := range tests {\n\t\tt.Run(tt.name, func(t *testing.T) {\n\t\t\tresult := Add(tt.a, tt.b)\n\t\t\tif result != tt.expected {\n\t\t\t\tt.Errorf(\"Add(%d, %d) = %d; want %d\", tt.a, tt.b, result, tt.expected)\n\t\t\t}\n\t\t})\n\t}\n}\n```",
+   "Usage": {
+    "InputTokens": 39,
+    "OutputTokens": 222
+   },
+   "LatencyMS": 1613,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-06": {
+   "Text": "A SQL index is a data structure that improves the speed of data retrieval operations on a database table by providing quick access to rows based on the values of one or more columns. One downside of using an index is that it can increase the time and resources required for data modification operations, such as INSERT, UPDATE, and DELETE, because the index must be updated to reflect changes in the data.",
+   "Usage": {
+    "InputTokens": 31,
+    "OutputTokens": 78
+   },
+   "LatencyMS": 1033,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-07": {
+   "Text": "To calculate the average request latency over 5 minutes for the job 'api' using `histogram_quantile` at the 95th percentile (p95), you can use the following Prometheus query:\n\n```promql\nhistogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])) by (le))\n```\n\nThis query does the following:\n\n- `rate(http_request_duration_seconds_bucket{job=\"api\"}[5m])`: Calculates the per-second rate of requests for each bucket over the last 5 minutes.\n- `sum(...) by (le)`: Aggregates the rates by the bucket label `le` (less than or equal to), which is necessary for `histogram_quantile` to work correctly.\n- `histogram_quantile(0.95, ...)`: Computes the 95th percentile (p95) latency from the aggregated bucket data.",
+   "Usage": {
+    "InputTokens": 51,
+    "OutputTokens": 189
+   },
+   "LatencyMS": 1778,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-08": {
+   "Text": "```go\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"io/ioutil\"\n\t\"log\"\n\t\"os\"\n)\n\ntype Config struct {\n\tName string `json:\"name\"`\n\tPort int    `json:\"port\"`\n}\n\nfunc main() {\n\tfile, err := os.Open(\"config.json\")\n\tif err != nil {\n\t\tlog.Fatalf(\"Failed to open file: %v\", err)\n\t}\n\tdefer file.Close()\n\n\tbytes, err := ioutil.ReadAll(file)\n\tif err != nil {\n\t\tlog.Fatalf(\"Failed to read file: %v\", err)\n\t}\n\n\tvar config Config\n\tif err := json.Unmarshal(bytes, \u0026config); err != nil {\n\t\tlog.Fatalf(\"Failed to unmarshal JSON: %v\", err)\n\t}\n\n\tfmt.Printf(\"Config: %+v\\n\", config)\n}\n```",
+   "Usage": {
+    "InputTokens": 40,
+    "OutputTokens": 164
+   },
+   "LatencyMS": 1509,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-09": {
+   "Text": "The command `kubectl rollout undo deploy/foo` reverts the deployment named \"foo\" to its previous revision.",
+   "Usage": {
+    "InputTokens": 32,
+    "OutputTokens": 23
+   },
+   "LatencyMS": 502,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w3-10": {
+   "Text": "The CAP theorem states that in the presence of a network partition, a distributed system must choose between consistency and availability. For a system that must remain available during a network partition, it will prioritize availability over consistency, potentially serving stale or divergent data until the partition is resolved.",
+   "Usage": {
+    "InputTokens": 39,
+    "OutputTokens": 54
+   },
+   "LatencyMS": 803,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-01": {
+   "Text": "29.2",
+   "Usage": {
+    "InputTokens": 53,
+    "OutputTokens": 3
+   },
+   "LatencyMS": 402,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-02": {
+   "Text": "The month-over-month average growth is 7.75%.",
+   "Usage": {
+    "InputTokens": 48,
+    "OutputTokens": 12
+   },
+   "LatencyMS": 602,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-03": {
+   "Text": "Bug",
+   "Usage": {
+    "InputTokens": 43,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 603,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-04": {
+   "Text": "To calculate the visit-to-paid conversion rate, you need to divide the number of paid conversions by the total number of visits and then multiply by 100 to get the percentage.\n\nHere is the calculation:\n\n\\[\n\\text{Visit-to-paid conversion rate} = \\left( \\frac{\\text{Number of paid conversions}}{\\text{Number of visits}} \\right) \\times 100\n\\]\n\n\\[\n\\text{Visit-to-paid conversion rate} = \\left( \\frac{240}{10000} \\right) \\times 100 = 2.4\\%\n\\]\n\nThe visit-to-paid conversion rate is 2.4%.",
+   "Usage": {
+    "InputTokens": 45,
+    "OutputTokens": 133
+   },
+   "LatencyMS": 1106,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-05": {
+   "Text": "The churn rate has been consistently decreasing over the five-month period.",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 13
+   },
+   "LatencyMS": 603,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-06": {
+   "Text": "To determine which model is cheaper per token for a 1000-in/500-out request, we need to calculate the cost for each model based on their pricing.\n\n**Model A:**\n- Cost for input tokens: \\( \\frac{2.5}{1,000,000} \\times 1000 = 0.0025 \\)\n- Cost for output tokens: \\( \\frac{10}{1,000,000} \\times 500 = 0.005 \\)\n- Total cost for Model A: \\( 0.0025 + 0.005 = 0.0075 \\)\n\n**Model B:**\n- Cost for input tokens: \\( \\frac{0.15}{1,000,000} \\times 1000 = 0.00015 \\)\n- Cost for output tokens: \\( \\frac{0.60}{1,000,000} \\times 500 = 0.0003 \\)\n- Total cost for Model B: \\( 0.00015 + 0.0003 = 0.00045 \\)\n\nComparing the total costs, Model B is cheaper at 0.00045 compared to Model A's 0.0075.\n\nTherefore, the cheaper model is",
+   "Usage": {
+    "InputTokens": 79,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 1911,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-07": {
+   "Text": "2025-11-03",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 6
+   },
+   "LatencyMS": 455,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-08": {
+   "Text": "Yes.",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 449,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-09": {
+   "Text": "rag",
+   "Usage": {
+    "InputTokens": 47,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 431,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|w4-10": {
+   "Text": "To find the 95th percentile of the given dataset, we first need to determine the position of the 95th percentile in the ordered list. The formula to find the position \\( P \\) of the \\( k \\)-th percentile in a dataset of size \\( n \\) is:\n\n\\[ P = \\frac{k}{100} \\times (n + 1) \\]\n\nFor the 95th percentile (\\( k = 95 \\)) and a dataset of size \\( n = 10 \\):\n\n\\[ P = \\frac{95}{100} \\times (10 + 1) = 0.95 \\times 11 = 10.45 \\]\n\nThe position 10.45 indicates that the 95th percentile lies between the 10th and 11th values in the ordered dataset. Since our dataset only has 10 values, we will interpolate between the 10th value (200) and an imaginary 11th value, which we assume to be the same as the 10th value for simplicity.\n\nSince 10.45 is very close to 10, the 95th percentile will be very close to the 10th value, which is 200. Therefore, the approximate value of the 95th percentile",
+   "Usage": {
+    "InputTokens": 60,
+    "OutputTokens": 256
+   },
+   "LatencyMS": 2634,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "selfhosted-eu-llama|w1-01": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-02": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 35,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-03": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 25,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-04": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 27,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-05": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 25,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-06": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 30,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-07": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 27,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-08": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 23,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-09": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 31,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w1-10": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 32,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-01": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 39,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-02": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-03": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-04": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 30,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-05": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 26,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-06": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 43,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-07": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 30,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-08": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 15,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-09": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 29,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  },
+  "selfhosted-eu-llama|w4-10": {
+   "Text": "[modeled self-hosted answer; quality from prior]",
+   "Usage": {
+    "InputTokens": 33,
+    "OutputTokens": 80
+   },
+   "LatencyMS": 700,
+   "Model": "selfhosted-eu-llama",
+   "Provider": "onprem-fr"
+  }
+ },
+ "accept": {
+  "gpt-4.1-nano|w1-01": 5,
+  "gpt-4.1-nano|w1-02": 3,
+  "gpt-4.1-nano|w1-03": 4,
+  "gpt-4.1-nano|w1-04": 4,
+  "gpt-4.1-nano|w1-05": 5,
+  "gpt-4.1-nano|w1-06": 4,
+  "gpt-4.1-nano|w1-07": 3,
+  "gpt-4.1-nano|w1-08": 5,
+  "gpt-4.1-nano|w1-09": 4,
+  "gpt-4.1-nano|w1-10": 3,
+  "gpt-4.1-nano|w2-01": 5,
+  "gpt-4.1-nano|w2-02": 5,
+  "gpt-4.1-nano|w2-03": 5,
+  "gpt-4.1-nano|w2-04": 5,
+  "gpt-4.1-nano|w2-05": 5,
+  "gpt-4.1-nano|w2-06": 5,
+  "gpt-4.1-nano|w2-07": 5,
+  "gpt-4.1-nano|w2-08": 5,
+  "gpt-4.1-nano|w2-09": 5,
+  "gpt-4.1-nano|w2-10": 5,
+  "gpt-4.1-nano|w3-01": 5,
+  "gpt-4.1-nano|w3-02": 5,
+  "gpt-4.1-nano|w3-03": 4,
+  "gpt-4.1-nano|w3-04": 4,
+  "gpt-4.1-nano|w3-05": 5,
+  "gpt-4.1-nano|w3-06": 5,
+  "gpt-4.1-nano|w3-07": 5,
+  "gpt-4.1-nano|w3-08": 5,
+  "gpt-4.1-nano|w3-09": 5,
+  "gpt-4.1-nano|w3-10": 5,
+  "gpt-4.1-nano|w4-01": 1,
+  "gpt-4.1-nano|w4-02": 1,
+  "gpt-4.1-nano|w4-03": 5,
+  "gpt-4.1-nano|w4-04": 5,
+  "gpt-4.1-nano|w4-05": 5,
+  "gpt-4.1-nano|w4-06": 5,
+  "gpt-4.1-nano|w4-07": 5,
+  "gpt-4.1-nano|w4-08": 5,
+  "gpt-4.1-nano|w4-09": 5,
+  "gpt-4.1-nano|w4-10": 3,
+  "gpt-4o-mini|w1-01": 5,
+  "gpt-4o-mini|w1-02": 3,
+  "gpt-4o-mini|w1-03": 4,
+  "gpt-4o-mini|w1-04": 5,
+  "gpt-4o-mini|w1-05": 5,
+  "gpt-4o-mini|w1-06": 5,
+  "gpt-4o-mini|w1-07": 3,
+  "gpt-4o-mini|w1-08": 5,
+  "gpt-4o-mini|w1-09": 5,
+  "gpt-4o-mini|w1-10": 3,
+  "gpt-4o-mini|w2-01": 5,
+  "gpt-4o-mini|w2-02": 5,
+  "gpt-4o-mini|w2-03": 5,
+  "gpt-4o-mini|w2-04": 5,
+  "gpt-4o-mini|w2-05": 5,
+  "gpt-4o-mini|w2-06": 5,
+  "gpt-4o-mini|w2-07": 5,
+  "gpt-4o-mini|w2-08": 5,
+  "gpt-4o-mini|w2-09": 5,
+  "gpt-4o-mini|w2-10": 5,
+  "gpt-4o-mini|w3-01": 5,
+  "gpt-4o-mini|w3-04": 4,
+  "gpt-4o-mini|w3-07": 5,
+  "gpt-4o-mini|w3-10": 5,
+  "gpt-4o-mini|w4-01": 1,
+  "gpt-4o-mini|w4-02": 5,
+  "gpt-4o-mini|w4-03": 5,
+  "gpt-4o-mini|w4-04": 5,
+  "gpt-4o-mini|w4-05": 5,
+  "gpt-4o-mini|w4-06": 5,
+  "gpt-4o-mini|w4-07": 5,
+  "gpt-4o-mini|w4-08": 5,
+  "gpt-4o-mini|w4-09": 5,
+  "gpt-4o-mini|w4-10": 3,
+  "gpt-4o|w1-01": 5,
+  "gpt-4o|w1-02": 4,
+  "gpt-4o|w1-03": 4,
+  "gpt-4o|w1-04": 5,
+  "gpt-4o|w1-05": 5,
+  "gpt-4o|w1-06": 5,
+  "gpt-4o|w1-07": 4,
+  "gpt-4o|w1-08": 5,
+  "gpt-4o|w1-09": 5,
+  "gpt-4o|w1-10": 3,
+  "gpt-4o|w2-01": 5,
+  "gpt-4o|w2-02": 5,
+  "gpt-4o|w2-03": 5,
+  "gpt-4o|w2-04": 5,
+  "gpt-4o|w2-05": 5,
+  "gpt-4o|w2-06": 5,
+  "gpt-4o|w2-07": 5,
+  "gpt-4o|w2-08": 5,
+  "gpt-4o|w2-09": 5,
+  "gpt-4o|w2-10": 5,
+  "gpt-4o|w3-01": 5,
+  "gpt-4o|w3-02": 5,
+  "gpt-4o|w3-03": 5,
+  "gpt-4o|w3-04": 3,
+  "gpt-4o|w3-05": 5,
+  "gpt-4o|w3-06": 5,
+  "gpt-4o|w3-07": 4,
+  "gpt-4o|w3-08": 5,
+  "gpt-4o|w3-09": 5,
+  "gpt-4o|w3-10": 5,
+  "gpt-4o|w4-01": 1,
+  "gpt-4o|w4-02": 3,
+  "gpt-4o|w4-03": 5,
+  "gpt-4o|w4-04": 5,
+  "gpt-4o|w4-05": 5,
+  "gpt-4o|w4-06": 5,
+  "gpt-4o|w4-07": 5,
+  "gpt-4o|w4-08": 5,
+  "gpt-4o|w4-09": 5,
+  "gpt-4o|w4-10": 3
+ },
+ "pair": {
+  "gpt-4.1-nano|w1-01": "tie",
+  "gpt-4.1-nano|w1-02": "lose",
+  "gpt-4.1-nano|w1-03": "tie",
+  "gpt-4.1-nano|w1-04": "lose",
+  "gpt-4.1-nano|w1-05": "lose",
+  "gpt-4.1-nano|w1-06": "lose",
+  "gpt-4.1-nano|w1-07": "lose",
+  "gpt-4.1-nano|w1-08": "lose",
+  "gpt-4.1-nano|w1-09": "win",
+  "gpt-4.1-nano|w1-10": "lose",
+  "gpt-4.1-nano|w2-01": "tie",
+  "gpt-4.1-nano|w2-02": "tie",
+  "gpt-4.1-nano|w2-03": "tie",
+  "gpt-4.1-nano|w2-04": "tie",
+  "gpt-4.1-nano|w2-05": "tie",
+  "gpt-4.1-nano|w2-06": "lose",
+  "gpt-4.1-nano|w2-07": "tie",
+  "gpt-4.1-nano|w2-08": "tie",
+  "gpt-4.1-nano|w2-09": "tie",
+  "gpt-4.1-nano|w2-10": "lose",
+  "gpt-4.1-nano|w3-01": "tie",
+  "gpt-4.1-nano|w3-02": "tie",
+  "gpt-4.1-nano|w3-03": "lose",
+  "gpt-4.1-nano|w3-04": "tie",
+  "gpt-4.1-nano|w3-05": "lose",
+  "gpt-4.1-nano|w3-06": "tie",
+  "gpt-4.1-nano|w3-07": "tie",
+  "gpt-4.1-nano|w3-08": "win",
+  "gpt-4.1-nano|w3-09": "tie",
+  "gpt-4.1-nano|w3-10": "tie",
+  "gpt-4.1-nano|w4-03": "tie",
+  "gpt-4.1-nano|w4-07": "tie",
+  "gpt-4o-mini|w1-01": "tie",
+  "gpt-4o-mini|w1-02": "lose",
+  "gpt-4o-mini|w1-03": "lose",
+  "gpt-4o-mini|w1-04": "tie",
+  "gpt-4o-mini|w1-05": "tie",
+  "gpt-4o-mini|w1-06": "lose",
+  "gpt-4o-mini|w1-07": "lose",
+  "gpt-4o-mini|w1-08": "lose",
+  "gpt-4o-mini|w1-09": "win",
+  "gpt-4o-mini|w1-10": "lose",
+  "gpt-4o-mini|w2-01": "tie",
+  "gpt-4o-mini|w2-02": "tie",
+  "gpt-4o-mini|w2-03": "tie",
+  "gpt-4o-mini|w2-04": "tie",
+  "gpt-4o-mini|w2-05": "tie",
+  "gpt-4o-mini|w2-06": "tie",
+  "gpt-4o-mini|w2-07": "tie",
+  "gpt-4o-mini|w2-08": "tie",
+  "gpt-4o-mini|w2-09": "tie",
+  "gpt-4o-mini|w2-10": "tie",
+  "gpt-4o-mini|w3-01": "lose",
+  "gpt-4o-mini|w3-04": "win",
+  "gpt-4o-mini|w3-07": "tie",
+  "gpt-4o-mini|w3-10": "tie",
+  "gpt-4o-mini|w4-01": "tie",
+  "gpt-4o-mini|w4-02": "win",
+  "gpt-4o-mini|w4-03": "tie",
+  "gpt-4o-mini|w4-04": "tie",
+  "gpt-4o-mini|w4-05": "win",
+  "gpt-4o-mini|w4-06": "lose",
+  "gpt-4o-mini|w4-07": "tie",
+  "gpt-4o-mini|w4-08": "tie",
+  "gpt-4o-mini|w4-09": "tie",
+  "gpt-4o-mini|w4-10": "lose"
+ }
+}

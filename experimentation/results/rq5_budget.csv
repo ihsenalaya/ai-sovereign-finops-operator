@@ -1,0 +1,4 @@
+policy,budget_eur,used_eur,served,blocked,availability_pct,budget_overrun_pct,mean_quality_norm
+alert-only,0.003238,0.008095,10,0,100.00,150.00,0.800000
+hard-block,0.003238,0.004987,6,4,60.00,54.03,0.750000
+ours-graceful,0.003238,0.000497,10,0,100.00,0.00,0.850000

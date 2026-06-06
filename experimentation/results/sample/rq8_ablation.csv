@@ -1,0 +1,5 @@
+variant,total_cost_eur,savings_vs_nocost_pct,mean_quality_norm
+full-system,0.013798,0.00,0.900000
+no-cost-term,0.038930,0.00,0.900000
+no-quality-term,0.001213,96.88,0.862500
+no-latency-term,0.013798,64.56,0.900000
