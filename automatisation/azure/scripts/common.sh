@@ -15,7 +15,9 @@ export CLUSTER="${CLUSTER:-greenops-aks}"
 export K8S_VERSION="${K8S_VERSION:-}"                  # empty = AKS default
 
 # --- System (CPU) node pool: small, for operator/Envoy/Prometheus ---
-export SYS_VMSIZE="${SYS_VMSIZE:-Standard_D4s_v5}"
+# NOTE: choose a family that HAS quota. On the FHIR sub, DSv5 had 0 cores while
+# DSv4/DSv3/BS families have 10 (Total Regional vCPUs = 10). D4s_v4 = 4 vCPU.
+export SYS_VMSIZE="${SYS_VMSIZE:-Standard_D4s_v4}"
 export SYS_COUNT="${SYS_COUNT:-1}"
 
 # --- GPU node pool: autoscale 0..MAX. T4 is cheapest/most quota-friendly on MPN;
