@@ -35,6 +35,15 @@ export HF_TOKEN="${HF_TOKEN:-}"                        # for gated models (optio
 export OPERATOR_IMAGE="${OPERATOR_IMAGE:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator}"
 export OPERATOR_TAG="${OPERATOR_TAG:-0.1.0}"
 
+# --- Key Vault (secrets: OpenAI key, HF token, gateway creds) ---
+# KV names are global + 3-24 chars; derive a stable suffix from the subscription.
+_subid="$(az account show --query id -o tsv 2>/dev/null | tr -d '-' || echo 000000)"
+export KEYVAULT="${KEYVAULT:-greenops-kv-${_subid:0:6}}"
+export KV_OPENAI_SECRET="${KV_OPENAI_SECRET:-openai-api-key}"
+export KV_HF_SECRET="${KV_HF_SECRET:-hf-token}"
+# Local source file (never printed/committed; docs/openaikey.txt is gitignored).
+export OPENAI_KEY_FILE="${OPENAI_KEY_FILE:-${REPO_ROOT}/docs/openaikey.txt}"
+
 log()  { printf '\033[1;36m[azure]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[azure]\033[0m %s\n' "$*"; }
 die()  { printf '\033[1;31m[azure]\033[0m %s\n' "$*" >&2; exit 1; }

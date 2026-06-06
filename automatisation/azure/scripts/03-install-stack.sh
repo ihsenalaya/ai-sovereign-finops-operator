@@ -9,13 +9,18 @@ require kubectl
 
 TOLER_KEY="${GPU_TAINT%%=*}"   # "sku"
 
-log "installing NVIDIA GPU Operator (tolerating ${GPU_TAINT})..."
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia >/dev/null 2>&1 || true
-helm repo update >/dev/null
-helm upgrade --install gpu-operator nvidia/gpu-operator \
-  -n gpu-operator --create-namespace \
-  --set-json "daemonsets.tolerations=[{\"key\":\"${TOLER_KEY}\",\"operator\":\"Equal\",\"value\":\"gpu\",\"effect\":\"NoSchedule\"}]" \
-  --wait --timeout 15m
+# Set SKIP_GPU_OPERATOR=true for a CPU-only base cluster (before GPU quota).
+if [ "${SKIP_GPU_OPERATOR:-false}" = "true" ]; then
+  warn "SKIP_GPU_OPERATOR=true → installing operator only (no NVIDIA GPU Operator)."
+else
+  log "installing NVIDIA GPU Operator (tolerating ${GPU_TAINT})..."
+  helm repo add nvidia https://helm.ngc.nvidia.com/nvidia >/dev/null 2>&1 || true
+  helm repo update >/dev/null
+  helm upgrade --install gpu-operator nvidia/gpu-operator \
+    -n gpu-operator --create-namespace \
+    --set-json "daemonsets.tolerations=[{\"key\":\"${TOLER_KEY}\",\"operator\":\"Equal\",\"value\":\"gpu\",\"effect\":\"NoSchedule\"}]" \
+    --wait --timeout 15m
+fi
 
 log "installing AI Sovereign FinOps Operator (${OPERATOR_IMAGE}:${OPERATOR_TAG})..."
 helm upgrade --install greenops "${REPO_ROOT}/charts/ai-sovereign-finops-operator" \

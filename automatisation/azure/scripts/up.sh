@@ -5,6 +5,7 @@ DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "${DIR}/common.sh"
 
 "${DIR}/00-quota-check.sh" || warn "quota check returned non-zero; continuing (verify quota!)"
+"${DIR}/00b-keyvault.sh"
 "${DIR}/01-create-aks.sh"
 "${DIR}/02-add-gpu-nodepool.sh"
 "${DIR}/03-install-stack.sh"
