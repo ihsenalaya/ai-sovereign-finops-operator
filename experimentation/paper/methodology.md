@@ -59,6 +59,32 @@ Default weights: α=1.0, β=1.5, γ=0.3, δ=0.5, ε=1.0 (`router.DefaultWeights`
 - Budget: availability, served/blocked, budget overrun, quality.
 - Break-even: managed vs self-hosted monthly cost, savings, payback months, recommendation.
 
+## Execution environment and protocol
+- **Software:** Go 1.25 harness; Python 3.10 analysis (numpy, pandas, scipy, matplotlib). OpenAI Chat
+  Completions API. Versions and prices are configuration, not results.
+- **Model snapshots:** model *aliases* are used; the exact dated snapshots returned at run time should
+  be pinned for camera-ready (TODO — record the served `model` field per call). Prices are public EUR
+  rates at experiment time (`internal/catalog`).
+- **Determinism / seeds:** temperature 0 for all answer and judge calls; bootstrap seed fixed (42).
+  Baselines are deterministic except round-robin (per-strategy state).
+- **Warm-up vs measurement:** premium reference answers are pre-warmed and cached before the measured
+  matrix so pairwise comparisons have a stable reference; the measured pass reads cache for repeated
+  (model, prompt) pairs, isolating new calls.
+- **Repetition status:** the committed run is **one deterministic pass**. The protocol and the stats
+  scaffold (`scripts/stats.py`) target **N ≥ 30** repetitions; that run is future work and is NOT
+  reflected in current numbers.
+
+## Measured vs modeled (do not conflate)
+| Component | Status | How |
+|-----------|--------|-----|
+| Answer cost (OpenAI tiers) | **measured** | real token usage × catalog price |
+| Quality (acceptability, win-rate) | **measured** | LLM-as-judge (gpt-4o), 1 pass |
+| Latency (end-to-end, routing µs) | **measured** | real API timing; 1 pass |
+| Sovereignty violations/reroutes | **measured** | real routing decisions over scenarios |
+| Self-hosted answers/quality | **modeled** | deterministic stub; quality = prior |
+| Self-hosted & GPU cost (RQ6) | **modeled** | declared GPU/ops parameters |
+| Per-team cost aggregation | **measured** | operator `costengine` over real usage |
+
 ## Statistics & reproducibility
 - LLM calls use temperature 0 for determinism of cost/quality; latency retains natural variance.
 - 95% confidence intervals for latency via bootstrap (2000 resamples) on per-call data

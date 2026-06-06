@@ -7,6 +7,13 @@ self-hosting, and live data-path enforcement. This file is the concrete plan to 
 
 Legend: ✅ done · 🟡 partial · ⬜ to do.
 
+## Companion protocol documents (this directory)
+- `MULTI_PROVIDER_EVALUATION_PLAN.md` — add Azure OpenAI / Mistral / vLLM (planned).
+- `GPU_SELF_HOSTING_VALIDATION_PLAN.md` — real GPU on AKS to validate RQ6 (planned).
+- `QUALITY_EVALUATION_PROTOCOL.md` — multi-judge + human eval, Cohen's Kappa / Krippendorff's Alpha.
+- `RQ7_HUMAN_EXPERT_PROTOCOL.md` — human FinOps expert vs automated control plane (planned).
+- `../scripts/stats.py` — significance/effect-size scaffolding (ready; needs ≥30-rep data).
+
 ## 0. Target venues
 - **Systems / cloud:** USENIX ATC, ACM SoCC, IEEE TPDS (Q1 journal), Middleware, EuroSys.
 - **ML systems:** MLSys, NeurIPS D&B (for the benchmark), ICLR (if framed as routing method).
@@ -70,10 +77,12 @@ Pick one primary; tailor framing (systems contribution vs routing method vs serv
 | P2 | Literature baselines (FrugalGPT/RouteLLM/Hybrid) | competitive comparison | ~2–3 days |
 | P3 | Real vLLM on Azure GPU | RQ6 validated, break-even error | ~2–3 days |
 | P4 | Live Envoy enforcement + load test | RQ3 at scale, failover | ~3–5 days |
-| P5 | Sensitivity/Pareto + multi-judge quality | robustness section | ~2 days |
-| P6 | Writing polish + feature matrix + artifact/Zenodo | submission-ready | ~3–5 days |
+| P5 | Sensitivity/Pareto + multi-judge quality (Kappa/Alpha) | robustness section | ~2 days |
+| P6 | RQ7 human FinOps expert study | expert-vs-system agreement | ~3–5 days |
+| P7 | Writing polish + feature matrix + artifact/Zenodo | submission-ready | ~3–5 days |
 
-→ Realistic **2–4 weeks** of focused work to a credible Q1 submission, most of it in P1–P4.
+→ Realistic **2–4 weeks** of focused work to a credible Q1 submission, most of it in P1–P4. P6
+(human study) can run in parallel once scenarios are frozen.
 
 ## 8. Definition of done (Q1 bar)
 - ≥30 reps, CIs, significance + effect sizes on every headline claim.

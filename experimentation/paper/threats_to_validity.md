@@ -8,6 +8,13 @@
   strategies; a human or alternate-judge audit is planned.
 - **Cache effects:** the answer cache ensures determinism but means a single measured pass; latency
   variance is therefore estimated from intra-pass per-call samples.
+- **Premium-reference anchoring:** the premium model is simultaneously the routing reference *and* the
+  anchor of the pairwise quality comparison, which can bias pairwise win-rate toward premium. We report
+  it explicitly (win-rate 41.7% < 50%) and do not claim "no quality loss"; a multi-judge + human
+  protocol (`QUALITY_EVALUATION_PROTOCOL.md`) is planned to remove this dependency.
+- **Latency tail (RQ3):** B6's p95 exceeds premium's; with a single pass, tail percentiles are
+  sensitive to a few slow API responses. We flag this as not fully resolved and require ≥30 reps with
+  cross-run CIs to separate routing-distribution effects from API jitter.
 
 ## External validity
 - **Model/provider scope:** current results use OpenAI tiers only; a second provider (cross-provider

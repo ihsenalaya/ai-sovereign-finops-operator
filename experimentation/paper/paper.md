@@ -18,13 +18,18 @@ gateways. We formalize model selection as a constrained scoring problem that rej
 violating declarative sovereignty rules and, among the rest, minimizes a weighted combination of
 cost, expected quality loss, latency, and budget pressure. We realize the approach as a Kubernetes
 operator whose FinOps and sovereignty engines drive routing, and we evaluate it on a reproducible
-testbed with **real LLM calls** across four enterprise workloads and six routing strategies. Against
-an always-premium policy, our approach reduces operational cost by **64.6%** with **no measurable
-quality loss** (LLM-as-judge), adds only **tens of microseconds** of routing overhead, enforces
-sovereignty scenarios with **zero violations** (vs 40 for a sovereignty-blind baseline), sustains
-**100% availability with 0% budget overrun** under budget pressure where a hard-block policy drops to
-60% availability, and predicts a managed-vs-self-hosted break-even from runtime telemetry. All code,
-datasets, cached responses, and analysis are released for reproducibility.
+testbed with **real LLM calls**. **Scope of current evidence (preliminary):** a *single provider*
+(OpenAI), *four synthetic enterprise workloads* (40 prompts), *one deterministic pass* (temperature 0),
+with *modeled* self-hosting economics; we therefore report effects *within this testbed*, without
+significance testing yet. Within this scope: relative to an always-premium policy, our approach
+reduces measured cost by **64.6%** over the 40-prompt matrix while keeping LLM-as-judge quality
+**comparable** (normalized 0.900 vs 0.900; pairwise win-rate vs premium 41.7%, i.e. near parity but
+slightly below 50%); routing adds **tens of microseconds** of decision overhead; it enforces five
+declarative sovereignty scenarios with **zero violations** versus 40 for a sovereignty-blind baseline;
+and it sustains **100% request availability with 0% budget overrun** under a tight budget where a
+hard-block policy drops to 60%. The managed-vs-self-hosted break-even (RQ6) is a **modeled** prediction
+to be validated on real GPUs. All code, datasets, cached responses, and analysis are released; we
+present this as preliminary evidence and a reproducible framework, not a universal claim.
 
 ## 1. Introduction
 
@@ -63,10 +68,14 @@ models per request. FrugalGPT [chen2023frugalgpt] cascades from cheap to expensi
 learned scorer; Hybrid LLM [ding2024hybridllm] routes by predicted query difficulty with a tunable
 quality target; RouteLLM [ong2024routellm] learns routers from preference data; AutoMix
 [aggarwal2024automix] uses few-shot self-verification and a POMDP router. These works optimize a
-*cost–quality* trade-off for a single tenant and do not model **hard data-sovereignty constraints**,
-**per-team/namespace budgets**, or **budget-aware graceful degradation** — the dimensions our control
-plane adds. Our scoring function subsumes their cost/quality terms while rejecting models that violate
-declarative residency/sensitivity policies and degrading (rather than blocking) under budget pressure.
+*cost–quality* trade-off, largely via per-request difficulty/confidence prediction for a single
+tenant. Our work is **orthogonal and complementary, not a replacement**: they decide *which model is
+good enough*; we add the **governance layer** around that decision — hard data-sovereignty constraints,
+per-team/namespace budgets, budget-aware graceful degradation, attribution, and hosting economics — at
+the gateway/control-plane level. Crucially, our routing score is intentionally simple (priors, not a
+learned difficulty predictor); **combining a learned difficulty router (e.g., Hybrid LLM/RouteLLM) with
+our sovereignty/budget constraints is explicit future work** (§9), and such learned routers are planned
+as *baselines* we compare against, not methods we claim to surpass here.
 
 **LLM serving systems.** Orca [yu2022orca], vLLM/PagedAttention [kwon2023pagedattention], SGLang
 [zheng2024sglang], and DistServe [zhong2024distserve] optimize *throughput/latency* of a single
@@ -154,17 +163,28 @@ Relative to premium-static, **B6-ours cuts total cost by 64.6%** (0.0138 vs 0.03
 prompt matrix; cost/request 0.000345 vs 0.000973). Naïve least-cost (B3) saves 98.2% but at a quality
 cost (RQ2); round-robin 73.9%; static policy 46.0%.
 
-### RQ2 — Quality preservation (Figure 3, Table 2)
-**B6-ours preserves quality exactly** at the premium level (normalized 0.900, acceptable-rate 97.5%),
-with a pairwise win-rate vs premium of 41.7% (statistical parity). Least-cost drops to 0.858 and
-static-policy to 0.869. Thus the 64.6% saving comes with **0.00% quality loss**, well within the 3–5%
-target.
+### RQ2 — Quality (Figure 3, Table 2)
+Within this single-pass, single-provider scope, B6-ours's mean normalized quality **matches** the
+premium baseline (0.900 vs 0.900; acceptable-rate 97.5%), while least-cost drops to 0.858 and
+static-policy to 0.869. The pairwise win-rate of B6 vs the premium reference is **41.7%** — near parity
+but **below 50%**, i.e. the judge slightly prefers the premium answers on contested prompts. Two
+caveats temper any "no quality loss" reading: (i) the **premium model is also the routing reference and
+the basis of the judge comparison**, which can bias pairwise results toward premium; (ii) we have **not
+yet run significance tests** (one deterministic pass). We therefore claim only that *quality remained
+comparable within the evaluated scope*, and defer a statistically supported statement to the
+multi-repetition, multi-judge protocol (§8, `QUALITY_EVALUATION_PROTOCOL.md`).
 
 ### RQ3 — Latency and overhead (Figure 4, Table 3)
 The **routing decision adds tens of microseconds** (B6 ≈ 26.5 µs/request) — negligible vs network
-latency. End-to-end latency tracks the chosen model: B6's p95 (3475 ms) is higher than premium's
-because it routes quality-critical workloads to the premium model while saving elsewhere; least-cost
-has the lowest latency (p95 1476 ms).
+latency. End-to-end latency tracks the chosen model and provider-side variance. Notably, **B6's p95
+(3475 ms) exceeds premium-static's (2494 ms)**, which we do not hide. Two factors plausibly explain it,
+and we flag it as not fully resolved: (i) B6 still sends quality-critical workloads to the premium
+model *plus* mixes in other models, so its latency distribution has a heavier tail than the
+single-model premium policy; (ii) with **one pass**, tail percentiles are sensitive to a few slow API
+responses (measurement variance), and our 95% CIs are over intra-pass per-call samples, not across
+repetitions. **TODO (§8):** with ≥30 repetitions, report tail latency with cross-run CIs and
+disentangle routing-distribution effects from API jitter. Least-cost has the lowest latency
+(p95 1476 ms), consistent with always picking small models.
 
 ### RQ4 — Sovereignty (Figure 5, Table 4)
 A sovereignty-blind baseline (B1) commits **40 violations** under eu-only, france-only, and
@@ -213,11 +233,25 @@ protocol supports ≥30 repetitions with significance tests and effect sizes for
 
 ## 9. Conclusion and Future Work
 
-A gateway-level, economic-aware, sovereignty-constrained, budget-aware control plane can cut LLM cost
-substantially without quality loss while enforcing sovereignty and preserving availability. Next:
-(1) a **second provider** for cross-provider routing; (2) **real GPU self-hosting** (vLLM on Azure)
-to validate the break-even; (3) **data-path enforcement in Envoy** and live operator metrics;
-(4) **≥30-repetition** runs with full statistics.
+Within our preliminary, single-provider, single-pass testbed, a gateway-level, economic-aware,
+sovereignty-constrained, budget-aware control plane substantially reduced cost while keeping quality
+comparable, enforcing sovereignty with zero violations, and preserving availability under budget
+pressure. We deliberately frame these as *preliminary evidence and a reproducible framework*, not
+universal claims. To reach a defensible Q1 result we plan (see `ROADMAP_Q1.md` and the dedicated
+protocol files):
+(1) a **second provider** for cross-provider routing and real EU-sovereignty
+(`MULTI_PROVIDER_EVALUATION_PLAN.md`);
+(2) **real GPU self-hosting** (vLLM on AKS) to validate the modeled break-even
+(`GPU_SELF_HOSTING_VALIDATION_PLAN.md`);
+(3) **multi-judge + human** quality evaluation with agreement statistics
+(`QUALITY_EVALUATION_PROTOCOL.md`);
+(4) **≥30-repetition** runs with confidence intervals, significance tests and effect sizes
+(`scripts/stats.py`);
+(5) **data-path enforcement in Envoy** with load testing and failover;
+(6) **RQ7 — human FinOps expert vs automated control plane** (`RQ7_HUMAN_EXPERT_PROTOCOL.md`), a
+planned human study comparing expert and automated routing/hosting decisions;
+(7) integrating a **learned difficulty router** (Hybrid LLM/RouteLLM) with our governance constraints.
+Items (1)–(3),(6) are *not yet evaluated*; the paper claims only what the committed results support.
 
 ## Artifact / Reproducibility
 
