@@ -12,8 +12,9 @@ if [ -n "${HF_TOKEN}" ]; then
     --dry-run=client -o yaml | kubectl apply -f -
 fi
 
-log "deploying vLLM model=${VLLM_MODEL} served=${VLLM_SERVED_NAME} (GPU node will scale up)..."
+log "deploying vLLM model=${VLLM_MODEL} served=${VLLM_SERVED_NAME} args='${VLLM_EXTRA_ARGS:-}'..."
 sed -e "s|__MODEL__|${VLLM_MODEL}|g" -e "s|__SERVED__|${VLLM_SERVED_NAME}|g" \
+    -e "s|__EXTRA_ARGS__|${VLLM_EXTRA_ARGS:-}|g" \
   "${AZURE_DIR}/manifests/vllm.yaml" | kubectl apply -f -
 
 log "waiting for vLLM to be ready (model download + GPU scale-up can take 10-20 min)..."

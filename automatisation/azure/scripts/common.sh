@@ -20,17 +20,20 @@ export K8S_VERSION="${K8S_VERSION:-}"                  # empty = AKS default
 export SYS_VMSIZE="${SYS_VMSIZE:-Standard_D4s_v4}"
 export SYS_COUNT="${SYS_COUNT:-1}"
 
-# --- GPU node pool: autoscale 0..MAX. T4 is cheapest/most quota-friendly on MPN;
-#     override GPU_VMSIZE for A10/A100/H100 once quota is granted. ---
+# --- GPU node pool: autoscale 0..MAX. Quota granted: NCASv3_T4 = 8 vCPU =>
+#     one Standard_NC8as_T4_v3 (8 vCPU, 1x T4 16GB). Override for A10/A100/H100. ---
 export GPU_POOL="${GPU_POOL:-gpupool}"
-export GPU_VMSIZE="${GPU_VMSIZE:-Standard_NC4as_T4_v3}"   # T4 (validation). H100: Standard_NC40ads_H100_v5
+export GPU_VMSIZE="${GPU_VMSIZE:-Standard_NC8as_T4_v3}"   # 1x T4 16GB (fits the 8 vCPU quota)
 export GPU_MIN="${GPU_MIN:-0}"
-export GPU_MAX="${GPU_MAX:-1}"
+export GPU_MAX="${GPU_MAX:-1}"                            # 1 node = 8 vCPU = whole quota
 export GPU_TAINT="${GPU_TAINT:-sku=gpu:NoSchedule}"
 
 # --- vLLM ---
-export VLLM_MODEL="${VLLM_MODEL:-meta-llama/Meta-Llama-3-8B-Instruct}"
-export VLLM_SERVED_NAME="${VLLM_SERVED_NAME:-llama-3-8b}"
+# T4 = 16GB VRAM: an 8B model in FP16 does NOT fit. Default to an AWQ 4-bit 7B
+# (no HF gating) that fits comfortably. Override VLLM_MODEL/EXTRA_ARGS as needed.
+export VLLM_MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct-AWQ}"
+export VLLM_SERVED_NAME="${VLLM_SERVED_NAME:-qwen2.5-7b-awq}"
+export VLLM_EXTRA_ARGS="${VLLM_EXTRA_ARGS:---quantization awq --max-model-len 8192 --gpu-memory-utilization 0.92}"
 export HF_TOKEN="${HF_TOKEN:-}"                        # for gated models (optional)
 
 # --- Operator image (from the GHCR push) ---
