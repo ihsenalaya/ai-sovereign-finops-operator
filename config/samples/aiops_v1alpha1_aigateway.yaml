@@ -1,0 +1,19 @@
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIGateway
+metadata:
+  name: main-gateway
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  type: litellm
+  endpoint: http://litellm.default.svc.cluster.local:4000
+  namespaceSelector:
+    matchLabels:
+      ai-finops/enabled: "true"
+  telemetry:
+    mode: fake          # MVP default; switch to "prometheus" or "litellm" later
+    metricsEndpoint: /metrics
+  auth:
+    secretRef:
+      name: litellm-admin-secret

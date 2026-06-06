@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+      - name: Verify generated manifests are up to date
+        run: |
+          make manifests generate
+          git diff --exit-code || (echo "Run 'make manifests generate' and commit the result" && exit 1)
+      - name: Vet
+        run: go vet ./...
+      - name: Unit + envtest
+        run: make test
+      - name: Build
+        run: make build
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Lint chart
+        run: helm lint charts/ai-sovereign-finops-operator
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t ai-sovereign-finops-operator:ci .

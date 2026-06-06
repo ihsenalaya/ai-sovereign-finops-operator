@@ -1,0 +1,89 @@
+# In-cluster Git server (Gitea, OSS) used as the GitOps source of truth.
+# Self-contained: no external Git remote needed. Ephemeral storage (demo).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitea
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitea-config
+  namespace: gitea
+data:
+  app.ini: |
+    APP_NAME = greenops-git
+    RUN_MODE = prod
+    [server]
+    PROTOCOL = http
+    HTTP_PORT = 3000
+    ROOT_URL = http://localhost:30083/
+    DISABLE_SSH = true
+    OFFLINE_MODE = true
+    [database]
+    DB_TYPE = sqlite3
+    PATH = /data/gitea/gitea.db
+    [security]
+    INSTALL_LOCK = true
+    [service]
+    DISABLE_REGISTRATION = true
+    [repository]
+    DEFAULT_BRANCH = main
+    [log]
+    LEVEL = warn
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea
+  namespace: gitea
+  labels: { app: gitea }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: gitea }
+  template:
+    metadata:
+      labels: { app: gitea }
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: gitea
+          image: gitea/gitea:1.22
+          env:
+            - name: GITEA_WORK_DIR
+              value: /data/gitea
+          ports:
+            - { name: http, containerPort: 3000 }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: config, mountPath: /data/gitea/conf }
+          readinessProbe:
+            httpGet: { path: /api/healthz, port: 3000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: "1", memory: 512Mi }
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: gitea-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitea-http
+  namespace: gitea
+  labels: { app: gitea }
+spec:
+  type: NodePort
+  selector: { app: gitea }
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30083

@@ -1,0 +1,26 @@
+# ArgoCD Application that deploys the demo catalog/policies (Kustomize samples).
+# Synced after the operator so the CRDs exist first (sync wave 1).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: greenops-samples
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: greenops
+  source:
+    repoURL: __REPO_URL__
+    targetRevision: __REVISION__
+    path: config/samples
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

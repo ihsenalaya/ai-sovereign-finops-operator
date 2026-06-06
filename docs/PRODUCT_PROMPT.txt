@@ -1,0 +1,653 @@
+Tu es Claude Code, expert senior en Kubernetes Operator, Go, Kubebuilder, FinOps, AI Gateway, observabilité Prometheus/Grafana, sécurité Kubernetes et architecture SaaS B2B.
+
+Je veux construire un MVP d’un opérateur Kubernetes appelé provisoirement :
+
+**AI Sovereign FinOps Operator**
+
+## 1. Vision produit
+
+Le produit est un **plan de contrôle FinOps et souveraineté pour l’IA d’entreprise**.
+
+Il se branche sur une gateway IA existante comme :
+
+* LiteLLM
+* Envoy
+* Kong
+* Gateway API
+* ou une gateway custom
+
+Son objectif est de gouverner tous les appels LLM d’une organisation :
+
+* combien ça coûte
+* qui consomme
+* vers quel modèle les requêtes partent
+* où part la donnée
+* quel fournisseur est utilisé
+* quel modèle est autorisé
+* quel budget est consommé
+* quel scénario est plus rentable : API managée ou auto-hébergement GPU
+
+Le produit cible surtout les entreprises françaises et européennes régulées :
+
+* santé
+* finance
+* assurance
+* secteur public
+* industrie critique
+* entreprises sensibles à la souveraineté des données
+
+## 2. Motivation
+
+Les entreprises commencent à utiliser massivement l’IA, mais elles ont trois problèmes majeurs :
+
+### Problème 1 — Coût opaque
+
+Elles ne savent pas répondre précisément à :
+
+* quelle équipe consomme le plus ?
+* quel modèle coûte le plus cher ?
+* combien coûte un agent IA par mois ?
+* combien coûte une application IA par utilisateur ?
+* combien coûte une requête LLM ?
+* combien coûte l’inférence sur GPU interne ?
+
+### Problème 2 — Souveraineté et conformité
+
+Les entreprises régulées doivent savoir :
+
+* où partent les données
+* si le modèle est hébergé en France, en Europe ou hors UE
+* si un fournisseur externe est autorisé
+* si les prompts contiennent des données sensibles
+* comment produire une traçabilité exploitable pour audit RGPD, AI Act, politique interne ou exigences de souveraineté
+
+Ne pas promettre une conformité juridique automatique. Le produit doit produire une **traçabilité exploitable et un dossier de préparation à l’audit**.
+
+### Problème 3 — Mauvais arbitrage économique
+
+Les entreprises ne savent pas quand il devient plus rentable de passer :
+
+* d’un modèle API managé comme OpenAI, Azure OpenAI, Mistral API
+* vers un modèle auto-hébergé sur GPU privé avec vLLM, TGI ou Ollama
+
+Le produit doit fournir un moteur de calcul de point mort :
+
+> À partir de quel volume d’usage l’auto-hébergement devient moins cher que l’API managée ?
+
+## 3. Différenciateur
+
+Les outils existants font souvent du reporting ou de la mesure.
+
+Ce produit doit devenir le cerveau de décision :
+
+* observer
+* attribuer
+* calculer
+* recommander
+* router
+* dégrader intelligemment
+* préparer les preuves d’audit
+
+Différenciateur principal :
+
+**Gateway + FinOps + Kubernetes + souveraineté + arbitrage auto-hébergement GPU**
+
+## 4. Objectif du MVP
+
+Le MVP ne doit pas tout automatiser au début.
+
+Le premier objectif est simple :
+
+Créer un opérateur Kubernetes capable de se connecter à une gateway IA existante et produire un rapport clair avec :
+
+1. consommation par équipe / namespace / application
+2. coût par modèle
+3. coût par fournisseur
+4. coût par requête
+5. coût par token
+6. latence et taux d’erreur
+7. fournisseurs et pays/régions utilisés
+8. alertes de souveraineté
+9. gaspillage détecté
+10. recommandation d’auto-hébergement avec calcul de point mort
+
+Le MVP doit être utilisable dans un cluster Kubernetes de démonstration.
+
+## 5. Stack technique souhaitée
+
+Utiliser prioritairement :
+
+* Go
+* Kubebuilder
+* Kubernetes CRDs
+* controller-runtime
+* Prometheus metrics
+* Grafana dashboards
+* Helm chart
+* Kustomize
+* Docker
+* GitHub Actions
+* Makefile
+* envtest pour les tests
+* OpenAPI schema validation pour les CRDs
+
+Le code doit être propre, modulaire, testable et documenté.
+
+## 6. CRDs à créer
+
+Proposer et implémenter au minimum les CRDs suivantes.
+
+### CRD 1 — AIGateway
+
+Représente une gateway IA existante.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIGateway
+metadata:
+  name: main-gateway
+spec:
+  type: litellm
+  endpoint: http://litellm.default.svc.cluster.local:4000
+  namespaceSelector:
+    matchLabels:
+      ai-finops/enabled: "true"
+  telemetry:
+    mode: prometheus
+    metricsEndpoint: /metrics
+  auth:
+    secretRef:
+      name: litellm-admin-secret
+```
+
+But :
+
+* déclarer la gateway
+* dire comment récupérer les métriques
+* dire quels namespaces sont gouvernés
+* stocker les références de secrets nécessaires
+
+### CRD 2 — AIProvider
+
+Représente un fournisseur de modèles.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: azure-openai-france
+spec:
+  type: azure-openai
+  region: francecentral
+  dataResidency: france
+  managed: true
+  pricing:
+    currency: EUR
+    inputTokenPricePerMillion: 2.5
+    outputTokenPricePerMillion: 10
+  compliance:
+    allowedForSensitiveData: true
+    allowedCountries:
+      - FR
+      - EU
+```
+
+But :
+
+* définir les fournisseurs
+* stocker pays/région
+* stocker prix tokens
+* définir conformité et souveraineté
+* distinguer fournisseur managé et modèle auto-hébergé
+
+### CRD 3 — AIModel
+
+Représente un modèle IA disponible.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: mistral-small
+spec:
+  providerRef: azure-openai-france
+  modelName: mistral-small
+  type: llm
+  contextWindow: 32000
+  qualityTier: medium
+  costTier: low
+  sensitiveDataAllowed: true
+```
+
+But :
+
+* cataloguer les modèles
+* lier un modèle à un fournisseur
+* définir niveau de coût, qualité, contexte, restrictions
+
+### CRD 4 — AIBudgetPolicy
+
+Définit les budgets IA.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: rh-budget
+spec:
+  target:
+    namespace: rh
+    team: rh
+    application: chatbot-rh
+  period: monthly
+  budgetEUR: 500
+  warningThresholdPercent: 70
+  criticalThresholdPercent: 90
+  hardLimitPercent: 100
+  actions:
+    onWarning:
+      - alert
+    onCritical:
+      - enableCache
+      - routeToCheaperModel
+    onHardLimit:
+      - blockOrRequireApproval
+  fallbackModelRef: mistral-small
+```
+
+But :
+
+* définir budget par équipe, namespace ou application
+* générer alertes
+* recommander dégradation intelligente
+* plus tard appliquer des actions
+
+### CRD 5 — AISovereigntyPolicy
+
+Définit les règles de souveraineté.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AISovereigntyPolicy
+metadata:
+  name: regulated-france-policy
+spec:
+  dataResidency:
+    allowedZones:
+      - FR
+      - EU
+    forbiddenZones:
+      - US
+      - CN
+  sensitiveData:
+    externalProvidersAllowed: false
+    requireAnonymization: true
+  audit:
+    retainLogsDays: 180
+    immutableLogs: true
+  enforcementMode: reportOnly
+```
+
+But :
+
+* définir les pays ou zones autorisées
+* interdire certains fournisseurs
+* détecter usage non conforme
+* produire des rapports
+* mode initial : reportOnly, pas de blocage automatique
+
+### CRD 6 — AIBreakEvenAnalysis
+
+Analyse économique API managée vs auto-hébergement GPU.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBreakEvenAnalysis
+metadata:
+  name: chatbot-rh-analysis
+spec:
+  target:
+    namespace: rh
+    application: chatbot-rh
+  currentModelRef: gpt-4o
+  alternativeSelfHosted:
+    modelName: llama-3-70b
+    runtime: vllm
+    gpuType: l40s
+    gpuCount: 2
+    monthlyGpuCostEUR: 1800
+    estimatedOpsCostEUR: 700
+  analysisWindowDays: 30
+```
+
+But :
+
+* calculer coût actuel API
+* estimer coût auto-hébergement
+* calculer point mort
+* produire recommandation
+
+### CRD 7 — AIFinOpsReport
+
+Rapport généré par l’opérateur.
+
+Exemple :
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIFinOpsReport
+metadata:
+  name: monthly-ai-report-rh
+spec:
+  target:
+    namespace: rh
+    period: monthly
+status:
+  totalCostEUR: 1240
+  totalInputTokens: 12000000
+  totalOutputTokens: 3000000
+  topModels:
+    - name: gpt-4o
+      costEUR: 950
+  sovereigntyFindings:
+    - severity: warning
+      message: "Provider outside allowed zone detected"
+  recommendations:
+    - type: self-hosting
+      message: "Self-hosting could reduce cost by 35 percent after 4.2 months"
+```
+
+But :
+
+* produire un rapport lisible
+* exposer les résultats en status
+* permettre export JSON/Markdown plus tard
+
+## 7. Fonctionnalités MVP attendues
+
+Implémenter les fonctionnalités suivantes :
+
+### 7.1 Reconciliation Kubernetes
+
+Chaque CRD doit avoir :
+
+* validation schema
+* status
+* conditions Kubernetes standard
+* controller/reconciler
+* events Kubernetes
+* logs structurés
+
+### 7.2 Collecte de données
+
+Pour le MVP, simuler ou intégrer une source simple.
+
+Prévoir une abstraction `TelemetryCollector`.
+
+Elle doit pouvoir récupérer :
+
+* nombre de requêtes
+* tokens input
+* tokens output
+* modèle utilisé
+* fournisseur utilisé
+* namespace
+* application
+* équipe
+* latence
+* erreurs
+
+Implémenter au minimum :
+
+* un fake collector pour tests
+* un collecteur Prometheus simple
+* préparer l’interface pour LiteLLM
+
+### 7.3 Moteur de coût
+
+Créer un package Go `costengine`.
+
+Il doit calculer :
+
+* coût input tokens
+* coût output tokens
+* coût total par modèle
+* coût total par équipe
+* coût total par namespace
+* coût moyen par requête
+* coût par application
+
+### 7.4 Moteur de budget
+
+Créer un package Go `budgetengine`.
+
+Il doit :
+
+* comparer consommation vs budget
+* calculer % consommé
+* générer alertes warning / critical / hard limit
+* produire des recommandations d’action
+
+En MVP, rester en mode recommandation. Pas de blocage réel.
+
+### 7.5 Moteur de souveraineté
+
+Créer un package Go `sovereigntyengine`.
+
+Il doit :
+
+* comparer fournisseur utilisé vs policy
+* vérifier pays/région
+* détecter fournisseur non autorisé
+* détecter modèle non autorisé pour donnée sensible
+* produire findings avec sévérité : info, warning, critical
+
+### 7.6 Moteur break-even auto-hébergement
+
+Créer un package Go `breakevenengine`.
+
+Il doit calculer :
+
+* coût actuel API managée
+* coût estimé auto-hébergement GPU
+* coût mensuel GPU
+* coût ops estimé
+* différence mensuelle
+* économie potentielle
+* point mort en mois
+* recommandation : keep-managed, investigate, self-host
+
+Formule simple pour MVP :
+
+```text
+managed_monthly_cost = token_cost + provider_fixed_cost
+self_hosted_monthly_cost = gpu_monthly_cost + ops_monthly_cost + storage_network_cost
+monthly_savings = managed_monthly_cost - self_hosted_monthly_cost
+payback_months = migration_cost / monthly_savings
+```
+
+### 7.7 Reporting
+
+Générer un rapport Markdown et JSON.
+
+Le rapport doit contenir :
+
+* résumé exécutif
+* consommation par équipe
+* consommation par modèle
+* coût par modèle
+* coût par fournisseur
+* alertes budget
+* alertes souveraineté
+* recommandations d’optimisation
+* analyse auto-hébergement
+* limites et hypothèses
+
+### 7.8 Observabilité
+
+Exposer des métriques Prometheus :
+
+* `ai_finops_requests_total`
+* `ai_finops_input_tokens_total`
+* `ai_finops_output_tokens_total`
+* `ai_finops_cost_eur_total`
+* `ai_finops_budget_usage_percent`
+* `ai_finops_sovereignty_findings_total`
+* `ai_finops_breakeven_savings_eur`
+* `ai_finops_recommendations_total`
+
+Créer un dashboard Grafana simple.
+
+### 7.9 Helm chart
+
+Créer un chart Helm avec :
+
+* deployment controller
+* service account
+* RBAC
+* CRDs
+* values.yaml
+* options pour metrics
+* options pour namespace
+* options pour image
+
+### 7.10 Documentation
+
+Créer une documentation claire :
+
+* README principal
+* architecture HLD
+* installation locale avec kind
+* installation AKS
+* exemples CRD
+* guide de démo
+* guide de développement
+* guide de contribution
+* limites du MVP
+
+## 8. Architecture de code souhaitée
+
+Proposer une structure comme :
+
+```text
+.
+├── api/
+│   └── v1alpha1/
+├── cmd/
+│   └── main.go
+├── internal/
+│   ├── controller/
+│   ├── collectors/
+│   │   ├── fake/
+│   │   ├── prometheus/
+│   │   └── litellm/
+│   ├── costengine/
+│   ├── budgetengine/
+│   ├── sovereigntyengine/
+│   ├── breakevenengine/
+│   ├── reporting/
+│   └── metrics/
+├── config/
+│   ├── crd/
+│   ├── rbac/
+│   ├── manager/
+│   └── samples/
+├── charts/
+│   └── ai-sovereign-finops-operator/
+├── dashboards/
+├── docs/
+├── test/
+├── Makefile
+└── README.md
+```
+
+## 9. Contraintes importantes
+
+* Ne pas construire un produit juridique qui promet la conformité.
+* Ne pas bloquer les requêtes en MVP.
+* Ne pas modifier la gateway au début.
+* Travailler en lecture seule autant que possible.
+* Produire d’abord de la valeur par le rapport.
+* Préparer l’automatisation pour plus tard.
+* Prioriser la clarté, les tests et la démonstrabilité.
+* Le produit doit pouvoir être présenté à un design partner régulé.
+
+## 10. Roadmap demandée
+
+Diviser le travail en sprints.
+
+### Sprint 1 — Skeleton operator
+
+* init Kubebuilder
+* CRDs principales
+* controllers vides
+* status conditions
+* samples
+* Makefile
+* tests basiques
+
+### Sprint 2 — Cost engine
+
+* AIProvider pricing
+* AIModel catalog
+* fake telemetry
+* coût par modèle / namespace / équipe
+* premiers rapports
+
+### Sprint 3 — Budget engine
+
+* AIBudgetPolicy
+* seuils
+* recommandations
+* Prometheus metrics
+
+### Sprint 4 — Sovereignty engine
+
+* AISovereigntyPolicy
+* détection fournisseurs non autorisés
+* zones FR/EU
+* findings audit
+
+### Sprint 5 — Break-even engine
+
+* AIBreakEvenAnalysis
+* API vs self-hosted
+* point mort
+* recommandation
+
+### Sprint 6 — Reporting & demo
+
+* AIFinOpsReport
+* export Markdown/JSON
+* dashboard Grafana
+* Helm chart
+* demo kind ou AKS
+
+## 11. Ce que j’attends de toi maintenant
+
+Commence par analyser cette demande et produire :
+
+1. une architecture technique détaillée
+2. la liste finale des CRDs avec champs exacts
+3. les packages Go à créer
+4. les interfaces principales
+5. le plan de fichiers
+6. les commandes Kubebuilder à exécuter
+7. le backlog sprint par sprint
+8. ensuite seulement, commence à générer le code
+
+Avant de coder, pose uniquement les questions vraiment bloquantes. Si une décision n’est pas bloquante, fais une hypothèse raisonnable et documente-la.
+
+Le résultat attendu est un dépôt Git propre, testable, documenté et prêt pour un MVP démontrable.

@@ -1,0 +1,11 @@
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIFinOpsReport
+metadata:
+  name: monthly-ai-report-rh
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+spec:
+  target:
+    namespace: rh
+    period: monthly
+  gatewayRef: main-gateway

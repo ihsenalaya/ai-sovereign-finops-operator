@@ -1,0 +1,19 @@
+AI Sovereign FinOps Operator installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+The operator runs read-only and non-blocking (reportOnly). Next steps:
+
+1. Check the controller is running:
+   kubectl -n {{ .Release.Namespace }} get deploy {{ include "operator.fullname" . }}
+
+2. Create your catalog and policies (see config/samples in the repo), e.g.:
+   kubectl apply -k config/samples/
+
+3. Inspect results:
+   kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport -A
+   kubectl get configmap <report-name>-report -o jsonpath='{.data.report\.md}'
+
+4. Metrics (Prometheus ai_finops_*):
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "operator.fullname" . }}-metrics {{ .Values.metrics.port }}:{{ .Values.metrics.port }}
+   curl -s localhost:{{ .Values.metrics.port }}/metrics | grep ai_finops_
+
+Import dashboards/ai-finops-overview.json into Grafana for the overview dashboard.

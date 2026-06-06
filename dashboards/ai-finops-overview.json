@@ -1,0 +1,105 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "schemaVersion": 39,
+  "title": "AI Sovereign FinOps — Overview",
+  "tags": ["ai-finops", "sovereignty", "cncf"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {}
+      }
+    ]
+  },
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total cost (EUR)",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR" } },
+      "targets": [{ "expr": "sum(ai_finops_cost_eur_total)", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Requests",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "sum(ai_finops_requests_total)", "refId": "A" }]
+    },
+    {
+      "type": "gauge",
+      "title": "Budget usage (%)",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 120,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 70 },
+              { "color": "orange", "value": 90 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "max(ai_finops_budget_usage_percent)", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Critical sovereignty findings",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": 0 }, { "color": "red", "value": 1 }
+          ] }
+        }
+      },
+      "targets": [{ "expr": "sum(ai_finops_sovereignty_findings_total{severity=\"critical\"})", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost (EUR) by namespace",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR" } },
+      "targets": [{ "expr": "ai_finops_cost_eur_total", "legendFormat": "{{namespace}}", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tokens by namespace (input / output)",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        { "expr": "ai_finops_input_tokens_total", "legendFormat": "in {{namespace}}", "refId": "A" },
+        { "expr": "ai_finops_output_tokens_total", "legendFormat": "out {{namespace}}", "refId": "B" }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Break-even monthly savings (EUR)",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR" } },
+      "targets": [{ "expr": "ai_finops_breakeven_savings_eur", "legendFormat": "{{analysis}}", "refId": "A" }]
+    },
+    {
+      "type": "piechart",
+      "title": "Recommendations by type",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [{ "expr": "ai_finops_recommendations_total", "legendFormat": "{{type}}", "refId": "A" }]
+    }
+  ]
+}

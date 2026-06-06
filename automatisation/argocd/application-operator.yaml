@@ -1,0 +1,31 @@
+# ArgoCD Application that deploys the operator Helm chart.
+# __REPO_URL__ and __REVISION__ are substituted by scripts/04-bootstrap-apps.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: greenops-operator
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: greenops
+  source:
+    repoURL: __REPO_URL__
+    targetRevision: __REVISION__
+    path: charts/ai-sovereign-finops-operator
+    helm:
+      values: |
+        image:
+          repository: __IMAGE_REPO__
+          tag: __IMAGE_TAG__
+          pullPolicy: Never
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: greenops-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

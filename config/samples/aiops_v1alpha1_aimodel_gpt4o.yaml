@@ -1,0 +1,14 @@
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: gpt-4o
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+spec:
+  providerRef: azure-openai-france
+  modelName: gpt-4o
+  type: llm
+  contextWindow: 128000
+  qualityTier: high
+  costTier: high
+  sensitiveDataAllowed: true

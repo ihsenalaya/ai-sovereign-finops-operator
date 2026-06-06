@@ -1,0 +1,12 @@
+## Append samples of your project ##
+resources:
+- aiops_v1alpha1_aigateway.yaml
+- aiops_v1alpha1_aiprovider.yaml
+- aiops_v1alpha1_aiprovider_openai_us.yaml
+- aiops_v1alpha1_aimodel.yaml
+- aiops_v1alpha1_aimodel_gpt4o.yaml
+- aiops_v1alpha1_aibudgetpolicy.yaml
+- aiops_v1alpha1_aisovereigntypolicy.yaml
+- aiops_v1alpha1_aibreakevenanalysis.yaml
+- aiops_v1alpha1_aifinopsreport.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
