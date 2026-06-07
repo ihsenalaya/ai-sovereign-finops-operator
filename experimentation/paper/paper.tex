@@ -1,0 +1,144 @@
+\documentclass[10pt,conference]{article}
+% Submission-ready LaTeX skeleton (Overleaf-compilable). Swap \documentclass for
+% IEEEtran / acmart when the target venue is fixed. Numbers mirror paper.md
+% (v0.4) and are traceable to ../results, ../results-stats, ../results-bench.
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+
+\title{Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways}
+\author{(authors omitted for review)}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Enterprises adopt large language models (LLMs) faster than they can govern them: they cannot say which
+model truly costs the most, which team consumes what, what a data-sovereignty constraint costs, or when
+self-hosting beats a managed API. We present an \emph{economic-aware, sovereignty-constrained,
+budget-aware routing control plane} for enterprise LLM gateways, realised as a Kubernetes operator whose
+FinOps and sovereignty engines drive routing. We evaluate it with real LLM calls across two providers
+(OpenAI US + Mistral EU via Azure AI Foundry, EU data zone) over four synthetic enterprise workloads and
+500 public-benchmark items (GSM8K, MMLU). Relative to always-premium routing, our approach reduces
+measured cost by $\sim$71\% (30-repetition run: $p\approx3\times10^{-11}$, Cohen $d\approx-43$) at a
+significant but bounded latency increase, enforces five declarative sovereignty scenarios with zero
+violations (vs.\ 40 for a sovereignty-blind baseline) and keeps 100\% availability under an EU-only
+policy via a real EU provider. On quality we are deliberately careful: an LLM judge finds our routing
+comparable on open-ended workloads, but on objective benchmarks our policy trades accuracy for cost
+(47.2\% vs.\ 65.4\%, $-94\%$ cost), and we show the LLM judge over-rates incorrect answers (81\% of
+wrong answers rated ``acceptable''). We frame the contribution as a governance layer with a favourable
+cost/quality trade-off, not a quality-free lunch, and release all code, data and analysis.
+\end{abstract}
+
+\section{Introduction}
+LLMs are embedded in HR assistants, document RAG, developer tooling and analytical agents. Each call has
+a provider- and token-dependent price and may cross jurisdictions. Three problems recur in regulated
+enterprises: \textbf{cost opacity}, \textbf{sovereignty/compliance}, and \textbf{managed-vs-self-hosted
+arbitrage}. Existing gateways and FinOps tools mostly \emph{measure and report}; our thesis is that a
+control plane at the gateway can \emph{act}: route each request to the cheapest model meeting a quality
+bar and all hard sovereignty constraints, degrade gracefully under budget pressure rather than block,
+and surface the self-hosting break-even from observed usage.
+\textbf{Contributions:} (i) a constrained scoring formulation unifying cost, quality, latency,
+sovereignty and budget; (ii) a Kubernetes/Envoy control-plane realisation (the AI Sovereign FinOps
+Operator) with Cost, Budget, Sovereignty, Break-even and Report engines as CRDs; (iii) a reproducible
+evaluation methodology; (iv) empirical evidence across six research questions plus an objective
+public-benchmark study and an LLM-judge validity analysis.
+
+\section{Related Work and Positioning}
+Model routing/cascades trade quality for cost via per-request difficulty prediction: FrugalGPT
+\cite{chen2023frugalgpt}, Hybrid LLM \cite{ding2024hybridllm}, RouteLLM \cite{ong2024routellm}, AutoMix
+\cite{aggarwal2024automix}. LLM serving systems optimise throughput/latency of a single engine: Orca
+\cite{yu2022orca}, vLLM \cite{kwon2023pagedattention}, SGLang \cite{zheng2024sglang}, DistServe
+\cite{zhong2024distserve}; surveys \cite{zhou2024surveyinference,li2025tamingtitans}. Gateways
+(Envoy AI Gateway \cite{envoyaigateway}, LiteLLM \cite{litellm}) expose telemetry but leave policy to the
+operator. Evaluation follows LLM-as-judge \cite{zheng2023judge}; regulation follows GDPR \cite{gdpr2016}
+and the EU AI Act \cite{euaiact2024}. Our work is \emph{orthogonal}: prior routers decide \emph{which
+model is good enough}; we add the governance layer (hard sovereignty, per-tenant budgets, graceful
+degradation, attribution, hosting economics) at the control-plane level (Table~\ref{tab:matrix}).
+
+\begin{table}[t]\centering\small
+\caption{Feature matrix (positioning).}\label{tab:matrix}
+\begin{tabular}{lccccc}
+\toprule
+Capability & FrugalGPT & Hybrid & RouteLLM & AutoMix & \textbf{Ours} \\
+\midrule
+Cost-aware routing        & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+Quality-aware routing     & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+Hard sovereignty          & -- & -- & -- & -- & \textbf{\checkmark} \\
+Per-tenant budgets        & -- & -- & -- & -- & \textbf{\checkmark} \\
+Graceful degradation      & -- & -- & -- & -- & \textbf{\checkmark} \\
+Cost attribution          & -- & -- & -- & -- & \textbf{\checkmark} \\
+Break-even (managed/self) & -- & -- & -- & -- & \textbf{\checkmark} \\
+Gateway/K8s artifact      & -- & -- & -- & -- & \textbf{\checkmark} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Problem Formulation and Algorithm}
+Given a request $r$ (team, namespace, sensitivity, token estimate), a model catalog $M$ (provider, zone,
+managed flag, per-token price, quality/latency priors), a sovereignty policy $P$ and budget state
+$(\mathit{used},\mathit{total})$: reject any $m$ violating $P$ (forbidden zone; outside an allow-list
+where EU covers EU members; sensitive request to a managed external provider when disallowed). Among the
+compliant candidates $C$ meeting minimum quality $q_{\min}$ (relaxed only when the budget is exhausted,
+enabling graceful degradation), select
+\begin{equation}
+\arg\min_{m\in C}\ \alpha\,\widehat{c}(m)(1+\varepsilon\rho) + \beta\,\ell_q(m) + \gamma\,\ell_\lambda(m) + \delta\,\sigma(m),
+\end{equation}
+with normalized cost $\widehat{c}$, budget pressure $\rho=\mathit{used}/\mathit{total}$, quality loss
+$\ell_q=\max(0,(q_{\text{prem}}-q_m)/q_{\text{prem}})$, latency penalty $\ell_\lambda$, sovereignty risk
+$\sigma$; defaults $\alpha{=}1,\beta{=}1.5,\gamma{=}0.3,\delta{=}0.5,\varepsilon{=}1$.
+
+\section{Methodology}
+A Go harness drives the operator's actual engines and issues real calls to two providers (OpenAI US;
+Mistral EU = Mistral-Large-3 on Azure AI Foundry, DataZoneStandard). Four enterprise workloads and 500
+public-benchmark items (250 GSM8K, 250 MMLU). Baselines B1--B5 (premium, round-robin, least-cost,
+static, hard-block), B7 (difficulty router, Hybrid/RouteLLM-style proxy) and B6 (ours). Metrics: cost
+(operator cost engine), judge quality (open-ended) and exact-match accuracy (ground truth), latency,
+sovereignty, budget. Determinism via temperature 0; a 30-repetition run at temperature 0.7 gives
+distributions; responses cached for reproducibility; every test is journaled (no skips).
+
+\section{Results}
+\textbf{RQ1 Cost.} Ours $-70.8\%$ vs.\ premium; B7 $-73\%$ at lower quality; least-cost $-98\%$ at the
+largest quality cost. \textbf{RQ2 Quality (judge).} Ours comparable on open-ended workloads (judge).
+\textbf{RQ2b Objective + judge validity.} On 500 GSM8K/MMLU items premium reaches 65.4\% vs.\ Ours 47.2\%
+($-94\%$ cost); the LLM judge rated 81.1\% of \emph{wrong} answers ``acceptable'' (point-biserial
+$r{=}0.12$), so judge-quality over-estimates correctness (Fig.~\ref{fig:judge}). \textbf{RQ3 Latency.}
+Routing overhead $\sim$26\,$\mu$s; end-to-end latency significantly higher for Ours (real trade-off,
+$d{=}+3.7$). \textbf{RQ4 Sovereignty.} Ours 0 violations across five scenarios; under EU-only it keeps
+100\% availability via the real EU provider where the blind baseline commits 40 violations. \textbf{RQ5
+Budget.} Graceful degradation: 100\% availability, 0\% overrun vs.\ hard-block 60\%. \textbf{RQ6
+Break-even.} Managed-vs-self-hosted crossover from telemetry (modeled). \textbf{Statistics (N=30):} cost
+reduction $p\approx3\times10^{-11}$, Cohen $d\approx-43$ (Fig.~\ref{fig:stats}).
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.8\linewidth]{../figures/fig2_cost_by_strategy.png}
+\caption{Total cost by routing strategy.}\label{fig:cost}
+\end{figure}
+\begin{figure}[t]\centering
+\includegraphics[width=0.7\linewidth]{../figures/fig_judge_vs_truth.png}
+\caption{LLM-judge score by objective correctness: the judge over-rates wrong answers.}\label{fig:judge}
+\end{figure}
+\begin{figure}[t]\centering
+\includegraphics[width=0.8\linewidth]{../figures/fig_stats_cost.png}
+\caption{Per-repetition cost, mean $\pm$95\% CI (N=30).}\label{fig:stats}
+\end{figure}
+
+\section{Threats to Validity}
+LLM-API variability (temperature 0, caching, bootstrap CIs); LLM-judge over-rates objective answers
+(hence exact-match where ground truth exists); modeled self-hosting economics; two providers; synthetic
+enterprise workloads; declarative sovereignty simplifies legal reality (we target audit preparation, not
+attestation). A blind human-evaluation package (100 items) is prepared and awaits evaluators.
+
+\section{Conclusion and Future Work}
+A gateway control plane can substantially cut LLM cost under governance constraints with a favourable
+(not free) quality trade-off, real EU-sovereignty enforcement and graceful budget degradation. Future
+work: human evaluation; live Envoy data-path enforcement under load; grafting a learned difficulty
+router; more providers; and validating the modeled break-even.
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}

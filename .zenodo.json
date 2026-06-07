@@ -1,0 +1,14 @@
+{
+  "title": "AI Sovereign FinOps Operator: Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways",
+  "upload_type": "software",
+  "description": "Kubernetes operator and reproducible experimental framework for economic-aware, sovereignty-constrained, budget-aware routing of enterprise LLM traffic. Includes 7 CRDs and pure FinOps/sovereignty/break-even engines, a multi-provider experiment harness (OpenAI + Mistral EU via Azure AI Foundry), public-benchmark evaluation (GSM8K, MMLU) with objective exact-match, a 30-repetition statistical study (CIs, significance, effect sizes), an LLM-judge validity analysis, and a Q1-oriented paper. All results, cached responses and analysis scripts are released for reproducibility.",
+  "keywords": ["LLM", "FinOps", "data sovereignty", "Kubernetes operator", "Envoy", "model routing", "reproducibility", "GDPR", "EU AI Act"],
+  "license": "Apache-2.0",
+  "access_right": "open",
+  "creators": [
+    { "name": "Alaya, Ihsen" }
+  ],
+  "related_identifiers": [
+    { "relation": "isSupplementTo", "identifier": "https://github.com/ihsenalaya/ai-sovereign-finops-operator", "scheme": "url" }
+  ]
+}

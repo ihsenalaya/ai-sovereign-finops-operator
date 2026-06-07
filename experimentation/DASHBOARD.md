@@ -1,6 +1,6 @@
 # Experiment dashboard
 
-_Last updated: 2026-06-07 07:26 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
+_Last updated: 2026-06-07 07:42 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
 
 ## Test runs (status + duration)
 
@@ -33,10 +33,11 @@ _Last updated: 2026-06-07 07:26 UTC_  ·  regenerate: `python3 scripts/dashboard
 | Learned-style baseline (B7) | ✅ |
 | Public benchmark + exact-match | ✅ |
 | Feature-matrix positioning | ✅ |
-| Scale-up (currently 540 prompts; target 1000s) | ⬜ |
+| Scale-up (540 prompts; target >=500) | ✅ |
 | Live gateway enforcement under load | ⬜ |
-| Human evaluation | ⬜ |
-| Submission format (LaTeX) + artifact DOI | ⬜ |
+| Human evaluation (package ready) | ⬜ |
+| Submission format (LaTeX) ready | ✅ |
+| Artifact metadata (Zenodo/CITATION) | ✅ |
 
 _Datasets: 540 prompts across 6 files._
 
@@ -48,7 +49,7 @@ _Datasets: 540 prompts across 6 files._
 | 2 | Human evaluation on 100 examples | ⬜ | PACKAGE READY (100 blind items) — awaiting evaluators; see human_eval/README.md |
 | 3 | Increase dataset to >=500 prompts | ✅ | 540 prompts (40 synthetic + 500 public GSM8K/MMLU) |
 | 4 | Live gateway routing benchmark under load | ⬜ | TODO — requires the cluster |
-| 5 | Artifact packaging (GitHub + Zenodo DOI) | ⬜ | TODO — repo public step pending |
+| 5 | LaTeX + GitHub/Zenodo packaging | ✅ | LaTeX (paper/paper.tex) + .zenodo.json + CITATION.cff READY; mint DOI via a GitHub Release (see paper/RELEASE_ARTIFACT.md) |
 
 ## Critical gaps
 

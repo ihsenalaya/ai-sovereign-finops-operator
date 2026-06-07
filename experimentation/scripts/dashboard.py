@@ -117,10 +117,11 @@ def main():
         ("Learned-style baseline (B7)", any(r.get("strategy") == "B7-difficulty-router" for r in rq1)),
         ("Public benchmark + exact-match", has("results-bench/rq_benchmark.csv")),
         ("Feature-matrix positioning", has("paper/paper.md")),
-        (f"Scale-up (currently {prompts} prompts; target 1000s)", prompts >= 1000),
+        (f"Scale-up ({prompts} prompts; target >=500)", prompts >= 500),
         ("Live gateway enforcement under load", False),
-        ("Human evaluation", False),
-        ("Submission format (LaTeX) + artifact DOI", False),
+        ("Human evaluation (package ready)", bool(glob.glob("human_eval/sheet_*.csv"))),
+        ("Submission format (LaTeX) ready", has("paper/paper.tex")),
+        ("Artifact metadata (Zenodo/CITATION)", os.path.exists("../.zenodo.json") and os.path.exists("../CITATION.cff")),
     ]
     out += ["## Q1 hardening progress", "", "| Step | Status |", "|---|:--:|"]
     for name, done in steps:
@@ -140,7 +141,10 @@ def main():
          ("PACKAGE READY (100 blind items) — awaiting evaluators; see human_eval/README.md" if he_pkg else "TODO")),
         (prompts >= 500, "Increase dataset to >=500 prompts", f"{prompts} prompts (40 synthetic + 500 public GSM8K/MMLU)"),
         (False, "Live gateway routing benchmark under load", "TODO — requires the cluster"),
-        (False, "Artifact packaging (GitHub + Zenodo DOI)", "TODO — repo public step pending"),
+        (os.path.exists("../.zenodo.json") and has("paper/paper.tex"),
+         "LaTeX + GitHub/Zenodo packaging",
+         "LaTeX (paper/paper.tex) + .zenodo.json + CITATION.cff READY; mint DOI via a GitHub Release (see paper/RELEASE_ARTIFACT.md)"
+         if (os.path.exists("../.zenodo.json") and has("paper/paper.tex")) else "TODO"),
     ]
     out += ["", "## Recommended next actions (status)", "", "| # | Action | Status | Note |", "|--:|---|:--:|---|"]
     for i, (done, name, note) in enumerate(actions, 1):

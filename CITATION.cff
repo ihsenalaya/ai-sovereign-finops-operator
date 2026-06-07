@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it."
+title: "AI Sovereign FinOps Operator: Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways"
+authors:
+  - family-names: Alaya
+    given-names: Ihsen
+repository-code: "https://github.com/ihsenalaya/ai-sovereign-finops-operator"
+license: Apache-2.0
+keywords:
+  - LLM
+  - FinOps
+  - data sovereignty
+  - Kubernetes operator
+  - model routing
+  - reproducibility
+version: "0.1.0"
