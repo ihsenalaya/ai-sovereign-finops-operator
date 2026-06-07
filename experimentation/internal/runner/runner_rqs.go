@@ -426,9 +426,9 @@ func (e *Engine) RunAblation(ctx context.Context) error {
 	global := router.SovScenario{Name: "global", ExternalProvidersAllowed: true}
 	w0 := router.DefaultWeights()
 	variants := []struct {
-		name       string
-		w          router.Weights
-		dropQGate  bool
+		name      string
+		w         router.Weights
+		dropQGate bool
 	}{
 		{"full-system", w0, false},
 		{"no-cost-term", router.Weights{Alpha: 0, Beta: w0.Beta, Gamma: w0.Gamma, Delta: w0.Delta, Epsilon: w0.Epsilon}, false},

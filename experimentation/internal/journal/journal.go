@@ -24,13 +24,13 @@ const (
 
 // Entry is one journaled test result.
 type Entry struct {
-	Name       string                 `json:"name"`
-	Group      string                 `json:"group"` // e.g. RQ1, RQ2, setup
-	Status     Status                 `json:"status"`
-	StartedAt  time.Time              `json:"startedAt"`
-	DurationMS int64                  `json:"durationMs"`
-	Error      string                 `json:"error,omitempty"`
-	Details    map[string]any         `json:"details,omitempty"`
+	Name       string         `json:"name"`
+	Group      string         `json:"group"` // e.g. RQ1, RQ2, setup
+	Status     Status         `json:"status"`
+	StartedAt  time.Time      `json:"startedAt"`
+	DurationMS int64          `json:"durationMs"`
+	Error      string         `json:"error,omitempty"`
+	Details    map[string]any `json:"details,omitempty"`
 }
 
 // Journal writes entries to JSONL + Markdown.

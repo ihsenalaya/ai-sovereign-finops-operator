@@ -1,7 +1,7 @@
 # Experiment test status
 
-- Run started: 2026-06-06T21:24:41Z
-- Last update: 2026-06-06T21:25:44Z
+- Run started: 2026-06-07T00:28:29Z
+- Last update: 2026-06-07T00:28:31Z
 - Totals: **42 PASS**, **0 FAIL**, 42 total
 
 | # | Group | Test | Status | Duration | Details |
@@ -10,10 +10,10 @@
 | 2 | RQ1-3-matrix | B1-premium-static / W2-RAG-Docs | PASS | 0ms | {"blocked":0,"costEUR":0.003018,"meanQuality1to5":5,"served":10} |
 | 3 | RQ1-3-matrix | B1-premium-static / W3-Dev-Assistant | PASS | 0ms | {"blocked":0,"costEUR":0.012403,"meanQuality1to5":4.7,"served":10} |
 | 4 | RQ1-3-matrix | B1-premium-static / W4-Analytical-Agent | PASS | 0ms | {"blocked":0,"costEUR":0.008095,"meanQuality1to5":4.2,"served":10} |
-| 5 | RQ1-3-matrix | B2-round-robin / W1-HR-Chatbot | PASS | 6281ms | {"blocked":0,"costEUR":0.005547,"meanQuality1to5":4.392,"served":10} |
-| 6 | RQ1-3-matrix | B2-round-robin / W2-RAG-Docs | PASS | 4056ms | {"blocked":0,"costEUR":0.001865,"meanQuality1to5":5,"served":10} |
-| 7 | RQ1-3-matrix | B2-round-robin / W3-Dev-Assistant | PASS | 9769ms | {"blocked":0,"costEUR":0.005364,"meanQuality1to5":4.9,"served":10} |
-| 8 | RQ1-3-matrix | B2-round-robin / W4-Analytical-Agent | PASS | 4385ms | {"blocked":0,"costEUR":0.001892,"meanQuality1to5":4.192,"served":10} |
+| 5 | RQ1-3-matrix | B2-round-robin / W1-HR-Chatbot | PASS | 0ms | {"blocked":0,"costEUR":0.005547,"meanQuality1to5":4.392,"served":10} |
+| 6 | RQ1-3-matrix | B2-round-robin / W2-RAG-Docs | PASS | 0ms | {"blocked":0,"costEUR":0.001865,"meanQuality1to5":5,"served":10} |
+| 7 | RQ1-3-matrix | B2-round-robin / W3-Dev-Assistant | PASS | 0ms | {"blocked":0,"costEUR":0.005364,"meanQuality1to5":4.9,"served":10} |
+| 8 | RQ1-3-matrix | B2-round-robin / W4-Analytical-Agent | PASS | 0ms | {"blocked":0,"costEUR":0.001892,"meanQuality1to5":4.192,"served":10} |
 | 9 | RQ1-3-matrix | B3-least-cost / W1-HR-Chatbot | PASS | 0ms | {"blocked":0,"costEUR":0.000055,"meanQuality1to5":3.96,"served":10} |
 | 10 | RQ1-3-matrix | B3-least-cost / W2-RAG-Docs | PASS | 0ms | {"blocked":0,"costEUR":0.000117,"meanQuality1to5":5,"served":10} |
 | 11 | RQ1-3-matrix | B3-least-cost / W3-Dev-Assistant | PASS | 0ms | {"blocked":0,"costEUR":0.000472,"meanQuality1to5":4.8,"served":10} |
@@ -28,12 +28,12 @@
 | 20 | RQ1-3-matrix | B5-budget-hard-block / W4-Analytical-Agent | PASS | 0ms | {"blocked":0,"costEUR":0.008095,"meanQuality1to5":4.2,"served":10} |
 | 21 | RQ1-3-matrix | B6-ours / W1-HR-Chatbot | PASS | 0ms | {"blocked":0,"costEUR":0.000717,"meanQuality1to5":4.3,"served":10} |
 | 22 | RQ1-3-matrix | B6-ours / W2-RAG-Docs | PASS | 0ms | {"blocked":0,"costEUR":0.000182,"meanQuality1to5":5,"served":10} |
-| 23 | RQ1-3-matrix | B6-ours / W3-Dev-Assistant | PASS | 20615ms | {"blocked":0,"costEUR":0.009958,"meanQuality1to5":4.9,"served":10} |
+| 23 | RQ1-3-matrix | B6-ours / W3-Dev-Assistant | PASS | 0ms | {"blocked":0,"costEUR":0.009958,"meanQuality1to5":4.9,"served":10} |
 | 24 | RQ1-3-matrix | B6-ours / W4-Analytical-Agent | PASS | 0ms | {"blocked":0,"costEUR":0.000497,"meanQuality1to5":4.4,"served":10} |
-| 25 | RQ4-sovereignty | global / B1-premium-static | PASS | 0ms | {"blocked":0,"costEUR":0.03893,"meanQualityNorm":0.9,"reroutes":0,"served":40,"violations":0} |
+| 25 | RQ4-sovereignty | global / B1-premium-static | PASS | 2ms | {"blocked":0,"costEUR":0.03893,"meanQualityNorm":0.9,"reroutes":0,"served":40,"violations":0} |
 | 26 | RQ4-sovereignty | global / B6-ours | PASS | 0ms | {"blocked":0,"costEUR":0.011353,"meanQualityNorm":0.9125,"reroutes":40,"served":40,"violations":0} |
 | 27 | RQ4-sovereignty | eu-only / B1-premium-static | PASS | 0ms | {"blocked":0,"costEUR":0.03893,"meanQualityNorm":0.9,"reroutes":0,"served":40,"violations":40} |
-| 28 | RQ4-sovereignty | eu-only / B6-ours | PASS | 14751ms | {"blocked":0,"costEUR":0.018161,"meanQualityNorm":0.86625,"reroutes":40,"served":40,"violations":0} |
+| 28 | RQ4-sovereignty | eu-only / B6-ours | PASS | 0ms | {"blocked":0,"costEUR":0.018161,"meanQualityNorm":0.86625,"reroutes":40,"served":40,"violations":0} |
 | 29 | RQ4-sovereignty | france-only / B1-premium-static | PASS | 0ms | {"blocked":0,"costEUR":0.03893,"meanQualityNorm":0.9,"reroutes":0,"served":40,"violations":40} |
 | 30 | RQ4-sovereignty | france-only / B6-ours | PASS | 0ms | {"blocked":20,"costEUR":0.00011,"meanQualityNorm":0.74,"reroutes":20,"served":20,"violations":0} |
 | 31 | RQ4-sovereignty | no-external-sensitive / B1-premium-static | PASS | 0ms | {"blocked":0,"costEUR":0.03893,"meanQualityNorm":0.9,"reroutes":0,"served":40,"violations":10} |

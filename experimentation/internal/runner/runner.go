@@ -152,7 +152,7 @@ type callRecord struct {
 	RoutingNS                                                                  int64
 	Quality1to5                                                                float64
 	Win                                                                        string
-	SovViolation                                                              bool
+	SovViolation                                                               bool
 	Reroute                                                                    bool
 }
 

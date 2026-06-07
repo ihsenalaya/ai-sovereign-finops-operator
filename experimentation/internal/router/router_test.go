@@ -17,8 +17,8 @@ func baseCtx() RequestContext {
 		PremiumModel:   "gpt-4o",
 		MinQuality:     0.75,
 		BudgetTotalEUR: 100, BudgetUsedEUR: 0,
-		Scenario:        SovScenario{Name: "global", ExternalProvidersAllowed: true},
-		EstInputTokens:  500, EstOutputTokens: 200,
+		Scenario:       SovScenario{Name: "global", ExternalProvidersAllowed: true},
+		EstInputTokens: 500, EstOutputTokens: 200,
 	}
 }
 

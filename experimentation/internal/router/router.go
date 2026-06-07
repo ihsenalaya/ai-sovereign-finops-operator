@@ -230,7 +230,9 @@ func (BudgetHardBlock) Choose(ctx RequestContext, models map[string]catalog.Mode
 type Weights struct{ Alpha, Beta, Gamma, Delta, Epsilon float64 }
 
 // DefaultWeights are the experiment defaults (documented in methodology).
-func DefaultWeights() Weights { return Weights{Alpha: 1.0, Beta: 1.5, Gamma: 0.3, Delta: 0.5, Epsilon: 1.0} }
+func DefaultWeights() Weights {
+	return Weights{Alpha: 1.0, Beta: 1.5, Gamma: 0.3, Delta: 0.5, Epsilon: 1.0}
+}
 
 type Ours struct{ W Weights }
 

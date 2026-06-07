@@ -26,12 +26,12 @@
 ## RQ3 Latency
 | strategy             |   latency_p50_ms |   latency_p95_ms |   latency_p99_ms |   latency_mean_ms |   routing_decision_us |
 |:---------------------|-----------------:|-----------------:|-----------------:|------------------:|----------------------:|
-| B1-premium-static    |              906 |             2494 |             2646 |           1125.97 |                 11.8  |
-| B2-round-robin       |              797 |             2902 |             3576 |           1075.38 |                 14.38 |
-| B3-least-cost        |              700 |             1476 |             2815 |            753.98 |                  9.07 |
-| B4-static-policy     |              797 |             1911 |             2634 |            941.3  |                  5.85 |
-| B5-budget-hard-block |              906 |             2494 |             2646 |           1125.97 |                  5.39 |
-| B6-ours              |              946 |             3475 |             4265 |           1509.95 |                 15.94 |
+| B1-premium-static    |              906 |             2494 |             2646 |           1125.97 |                 10.68 |
+| B2-round-robin       |              797 |             2902 |             3576 |           1075.38 |                 13.6  |
+| B3-least-cost        |              700 |             1476 |             2815 |            753.98 |                  7.15 |
+| B4-static-policy     |              797 |             1911 |             2634 |            941.3  |                 13.21 |
+| B5-budget-hard-block |              906 |             2494 |             2646 |           1125.97 |                  9    |
+| B6-ours              |              946 |             3475 |             4265 |           1509.95 |                 14.66 |
 
 ## RQ4 Sovereignty
 | scenario              | strategy          |   total_cost_eur |   served |   blocked |   violations |   reroutes |   mean_quality_norm |
