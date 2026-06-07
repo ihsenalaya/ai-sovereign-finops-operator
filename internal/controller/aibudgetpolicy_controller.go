@@ -116,7 +116,7 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			"%s — recommended actions: %s", result.Phase, strings.Join(result.TriggeredActions, ", "))
 	}
 	logger.V(1).Info("reconciled AIBudgetPolicy", "phase", result.Phase, "usagePercent", result.UsagePercent)
-	return ctrl.Result{RequeueAfter: 10 * time.Minute}, nil
+	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

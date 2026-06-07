@@ -1,0 +1,100 @@
+# Stable data-path Service for the Envoy AI Gateway + two REAL consumer apps that
+# continuously call LLMs through the gateway. The gateway measures the tokens;
+# the operator reads them (telemetry mode aigw). No API key in the apps — the
+# gateway holds it.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: greenops-aigw
+  namespace: envoy-gateway-system
+  labels: { app: greenops-aigw }
+spec:
+  selector:
+    gateway.envoyproxy.io/owning-gateway-name: greenops-aigw
+  ports:
+    - name: http
+      port: 80
+      targetPort: 10080
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rh
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finance
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot-rh
+  namespace: rh
+  labels: { app: chatbot-rh, aiops.imperium.io/demo: "true" }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: chatbot-rh } }
+  template:
+    metadata:
+      labels: { app: chatbot-rh, aiops.imperium.io/demo: "true" }
+    spec:
+      containers:
+        - name: client
+          image: curlimages/curl:8.10.1
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+          env:
+            - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
+            - { name: MODEL, value: "gpt-4o-mini" }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              PROMPTS='Explique la politique de conges en une phrase.|Redige un accueil pour un nouvel employe.|Comment soumettre une note de frais ?'
+              while true; do
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
+                curl -s -m 60 -o /dev/null -w "chatbot-rh($MODEL): %{http_code}\n" \
+                  -H 'Content-Type: application/json' \
+                  -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":220}" \
+                  "$GATEWAY" || true
+                sleep 3
+              done
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-assistant
+  namespace: finance
+  labels: { app: risk-assistant, aiops.imperium.io/demo: "true" }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: risk-assistant } }
+  template:
+    metadata:
+      labels: { app: risk-assistant, aiops.imperium.io/demo: "true" }
+    spec:
+      containers:
+        - name: client
+          image: curlimages/curl:8.10.1
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+          env:
+            - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
+            - { name: MODEL, value: "gpt-4o" }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              PROMPTS='Summarize key counterparty risks for a new supplier.|List three liquidity-risk indicators.|Explain value-at-risk in two sentences.'
+              while true; do
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
+                curl -s -m 60 -o /dev/null -w "risk-assistant($MODEL): %{http_code}\n" \
+                  -H 'Content-Type: application/json' \
+                  -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":320}" \
+                  "$GATEWAY" || true
+                sleep 4
+              done

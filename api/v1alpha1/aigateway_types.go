@@ -21,13 +21,16 @@ import (
 )
 
 // TelemetryMode enumerates the supported ways to pull usage telemetry from a gateway.
-// +kubebuilder:validation:Enum=prometheus;litellm;fake;configmap
+// +kubebuilder:validation:Enum=prometheus;litellm;fake;configmap;aigw
 type TelemetryMode string
 
 const (
 	TelemetryModePrometheus TelemetryMode = "prometheus"
 	TelemetryModeLiteLLM    TelemetryMode = "litellm"
 	TelemetryModeFake       TelemetryMode = "fake"
+	// TelemetryModeAIGW reads real token usage from an Envoy AI Gateway's
+	// gen_ai_* OpenTelemetry Prometheus endpoint (Endpoint + MetricsEndpoint).
+	TelemetryModeAIGW TelemetryMode = "aigw"
 	// TelemetryModeConfigMap reads usage samples from a ConfigMap (key
 	// "usage.json" = a JSON array of usage records). This is how measured, real
 	// telemetry is fed to the operator without a live gateway scrape.

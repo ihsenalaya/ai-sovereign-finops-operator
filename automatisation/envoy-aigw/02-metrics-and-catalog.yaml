@@ -1,0 +1,135 @@
+# Stable metrics Service for the Envoy AI Gateway extproc (gen_ai_* token
+# metrics on :1064) + the greenops catalog wired to read it.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: greenops-aigw-metrics
+  namespace: envoy-gateway-system
+  labels: { app: greenops-aigw-metrics }
+spec:
+  selector:
+    gateway.envoyproxy.io/owning-gateway-name: greenops-aigw
+  ports:
+    - name: metrics
+      port: 1064
+      targetPort: 1064
+---
+# AIGateway: read REAL token usage from the Envoy AI Gateway metrics endpoint.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIGateway
+metadata:
+  name: main-gateway
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: envoy
+  endpoint: http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064
+  telemetry:
+    mode: aigw
+    metricsEndpoint: /metrics
+---
+# Two real OpenAI (US) models, each priced and attributed to the app that uses it.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: openai-us
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: openai
+  region: eastus
+  dataResidency: us
+  managed: true
+  # Real gpt-4o list price (USD 2.50/10.00 -> EUR x0.92). Source: openai.com/api/pricing
+  pricing: { currency: EUR, inputTokenPricePerMillion: "2.30", outputTokenPricePerMillion: "9.20" }
+  compliance: { allowedForSensitiveData: false, allowedCountries: [US] }
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: openai-us-mini
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: openai
+  region: eastus
+  dataResidency: us
+  managed: true
+  # Real gpt-4o-mini list price (USD 0.15/0.60 -> EUR x0.92).
+  pricing: { currency: EUR, inputTokenPricePerMillion: "0.14", outputTokenPricePerMillion: "0.55" }
+  compliance: { allowedForSensitiveData: false, allowedCountries: [US] }
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: gpt-4o
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  providerRef: openai-us
+  modelName: gpt-4o
+  type: llm
+  qualityTier: high
+  costTier: high
+  sensitiveDataAllowed: false
+  # Attribute this model's gateway telemetry to the finance risk-assistant app.
+  servesNamespace: finance
+  servesApplication: risk-assistant
+  servesTeam: finance
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: gpt-4o-mini
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  providerRef: openai-us-mini
+  modelName: gpt-4o-mini
+  type: llm
+  qualityTier: medium
+  costTier: low
+  sensitiveDataAllowed: false
+  servesNamespace: rh
+  servesApplication: chatbot-rh
+  servesTeam: rh
+---
+# EU-only sovereignty: both apps route to OpenAI US -> real per-app violations.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AISovereigntyPolicy
+metadata:
+  name: regulated-france-policy
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  dataResidency: { allowedZones: [FR, EU], forbiddenZones: [US, CN] }
+  sensitiveData: { externalProvidersAllowed: false, requireAnonymization: true }
+  enforcementMode: reportOnly
+---
+# Daily observation; operator forecasts the month (run-rate).
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIFinOpsReport
+metadata:
+  name: ai-report-all
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { period: monthly }
+  gatewayRef: main-gateway
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: finance-budget
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: finance, team: finance, application: risk-assistant }
+  period: monthly        # real month-to-date spend vs monthly cap (truthful)
+  budgetEUR: "0.50"      # small real monthly cap so demo-scale spend is a meaningful %
+  warningThresholdPercent: 70
+  criticalThresholdPercent: 90
+  hardLimitPercent: 100
+  actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
+  fallbackModelRef: gpt-4o-mini

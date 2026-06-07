@@ -71,6 +71,13 @@ var (
 		Help: "Sovereignty findings detected for an AISovereigntyPolicy, by namespace, application and severity.",
 	}, []string{"namespace", "application", "policy", "severity"})
 
+	// SovereigntyRequests is the number of requests affected by sovereignty
+	// findings, by namespace, application and severity (the real volume at risk).
+	SovereigntyRequests = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_sovereignty_requests_total",
+		Help: "Requests affected by sovereignty findings, by namespace, application and severity.",
+	}, []string{"namespace", "application", "policy", "severity"})
+
 	// BreakevenSavingsEUR is the estimated monthly savings of self-hosting.
 	BreakevenSavingsEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_breakeven_savings_eur",
@@ -93,6 +100,7 @@ func init() {
 		ProjectedMonthlyCostEUR,
 		BudgetUsagePercent,
 		SovereigntyFindings,
+		SovereigntyRequests,
 		BreakevenSavingsEUR,
 		Recommendations,
 	)

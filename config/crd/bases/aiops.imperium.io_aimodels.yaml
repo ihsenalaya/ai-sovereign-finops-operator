@@ -85,6 +85,16 @@ spec:
                 description: SensitiveDataAllowed states whether this model may process
                   sensitive data.
                 type: boolean
+              servesApplication:
+                type: string
+              servesNamespace:
+                description: |-
+                  ServesNamespace/ServesApplication/ServesTeam attribute gateway telemetry that
+                  only carries the model (e.g. Envoy AI Gateway gen_ai metrics) to the workload
+                  consuming this model, so cost is attributed per namespace/app/team.
+                type: string
+              servesTeam:
+                type: string
               type:
                 default: llm
                 description: Type categorizes the model.

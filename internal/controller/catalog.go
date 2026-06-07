@@ -23,6 +23,7 @@ import (
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
+	aigwcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/aigw"
 	cmcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/configmap"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors/fake"
 	promcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/prometheus"
@@ -116,6 +117,9 @@ func collectorFor(c client.Client, namespace string, gw *aiopsv1alpha1.AIGateway
 			return fake.New()
 		}
 		return cmcollector.New(c, namespace, name)
+	case aiopsv1alpha1.TelemetryModeAIGW:
+		endpoint := gw.Spec.Endpoint + gw.Spec.Telemetry.MetricsEndpoint
+		return aigwcollector.New(c, namespace, endpoint)
 	default:
 		return fake.New()
 	}

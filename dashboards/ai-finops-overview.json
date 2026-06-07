@@ -6,20 +6,16 @@
   "tags": ["ai-finops", "sovereignty", "cncf"],
   "templating": {
     "list": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "query": "prometheus",
-        "current": {}
-      }
+      { "name": "datasource", "type": "datasource", "query": "prometheus", "current": {} }
     ]
   },
-  "time": { "from": "now-24h", "to": "now" },
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
   "panels": [
     {
       "type": "stat",
-      "title": "Observed cost (EUR)",
-      "description": "Real cost of the measured tokens over the observation window.",
+      "title": "Total cost (EUR) — observed",
+      "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4 } },
@@ -27,101 +23,83 @@
     },
     {
       "type": "stat",
-      "title": "Projected monthly cost (EUR)",
-      "description": "Run-rate forecast of full-month spend (observed x 30.4 / observation-window).",
+      "title": "Tokens (total in + out)",
+      "description": "Real total tokens measured by the gateway across all apps.",
       "datasource": "${datasource}",
       "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "blue" } } },
-      "targets": [{ "expr": "sum(ai_finops_projected_monthly_cost_eur)", "refId": "A" }]
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } } },
+      "targets": [{ "expr": "sum(ai_finops_input_tokens_total) + sum(ai_finops_output_tokens_total)", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Requests (total)",
+      "description": "Total LLM requests routed through the gateway and accounted by the operator.",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "sum(ai_finops_requests_total)", "refId": "A" }]
     },
     {
       "type": "gauge",
-      "title": "Budget usage (%)",
+      "title": "Budget usage (%) — finance",
+      "description": "Forecast monthly spend vs the monthly budget cap (AIBudgetPolicy).",
       "datasource": "${datasource}",
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 120,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": 0 },
-              { "color": "yellow", "value": 70 },
-              { "color": "orange", "value": 90 },
-              { "color": "red", "value": 100 }
-            ]
-          }
+          "unit": "percent", "min": 0, "max": 150,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": 0 }, { "color": "yellow", "value": 70 },
+            { "color": "orange", "value": 90 }, { "color": "red", "value": 100 }
+          ] }
         }
       },
       "targets": [{ "expr": "max(ai_finops_budget_usage_percent)", "refId": "A" }]
     },
     {
-      "type": "stat",
-      "title": "Critical sovereignty findings",
-      "datasource": "${datasource}",
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": 0 }, { "color": "red", "value": 1 }
-          ] }
-        }
-      },
-      "targets": [{ "expr": "sum(ai_finops_sovereignty_findings_total{severity=\"critical\"})", "refId": "A" }]
-    },
-    {
       "type": "timeseries",
       "title": "Cost (EUR) by namespace",
+      "description": "Real per-namespace spend over time.",
       "datasource": "${datasource}",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR" } },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
       "targets": [{ "expr": "ai_finops_cost_eur_total", "legendFormat": "{{namespace}}", "refId": "A" }]
     },
     {
       "type": "timeseries",
       "title": "Tokens by namespace (input / output)",
+      "description": "Real token volume measured by the gateway, per namespace.",
       "datasource": "${datasource}",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
       "targets": [
         { "expr": "ai_finops_input_tokens_total", "legendFormat": "in {{namespace}}", "refId": "A" },
         { "expr": "ai_finops_output_tokens_total", "legendFormat": "out {{namespace}}", "refId": "B" }
       ]
     },
     {
-      "type": "bargauge",
-      "title": "Break-even monthly savings (EUR)",
+      "type": "barchart",
+      "title": "Requests violating sovereignty (by app / severity)",
+      "description": "Real number of requests each app routed to a non-compliant (forbidden-zone) provider.",
       "datasource": "${datasource}",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR" } },
-      "targets": [{ "expr": "ai_finops_breakeven_savings_eur", "legendFormat": "{{analysis}}", "refId": "A" }]
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "orange", "value": 0 }, { "color": "red", "value": 1 } ] }
+        }
+      },
+      "targets": [{
+        "expr": "sum by (namespace, application, severity) (ai_finops_sovereignty_requests_total{severity=~\"critical|warning\"})",
+        "legendFormat": "{{namespace}}/{{application}} — {{severity}}",
+        "refId": "A"
+      }]
     },
     {
       "type": "piechart",
       "title": "Recommendations by type",
+      "description": "Optimization recommendations surfaced by the operator.",
       "datasource": "${datasource}",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "targets": [{ "expr": "ai_finops_recommendations_total", "legendFormat": "{{type}}", "refId": "A" }]
-    },
-    {
-      "type": "barchart",
-      "title": "Sovereignty findings by application / severity",
-      "description": "Flow-aware sovereignty verification: violations attributed to the namespace/application whose traffic triggered them.",
-      "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": 0 }, { "color": "orange", "value": 1 }, { "color": "red", "value": 1 }
-          ] }
-        }
-      },
-      "targets": [{
-        "expr": "sum by (namespace, application, severity) (ai_finops_sovereignty_findings_total{severity!=\"info\"})",
-        "legendFormat": "{{namespace}}/{{application}} — {{severity}}",
-        "refId": "A"
-      }]
     }
   ]
 }

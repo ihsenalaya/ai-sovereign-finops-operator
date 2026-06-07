@@ -105,7 +105,7 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 			"%d critical sovereignty finding(s) detected", counts[sovereigntyengine.SeverityCritical])
 	}
 	logger.V(1).Info("reconciled AISovereigntyPolicy", "findings", len(findings))
-	return ctrl.Result{RequeueAfter: 10 * time.Minute}, nil
+	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

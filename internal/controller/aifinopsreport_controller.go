@@ -135,7 +135,7 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	logger.V(1).Info("generated AIFinOpsReport",
 		"totalCost", breakdown.Total.CostTotal, "samples", len(samples))
 	// Refresh periodically so the report tracks ongoing usage.
-	return ctrl.Result{RequeueAfter: 10 * time.Minute}, nil
+	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil
 }
 
 // applyCostToStatus writes the cost breakdown into the report status.
@@ -224,14 +224,19 @@ func (r *AIFinOpsReportReconciler) applySovereigntyToStatus(ctx context.Context,
 		})
 	}
 
-	// Flow-aware metric: findings per namespace/application/severity.
+	// Flow-aware metrics: findings count AND requests-at-risk per
+	// namespace/application/severity (the real volume violating the policy).
 	type key struct{ ns, app, sev string }
 	counts := map[key]int{}
+	reqs := map[key]int64{}
 	for _, f := range findings {
-		counts[key{f.Namespace, f.Application, f.Severity}]++
+		k := key{f.Namespace, f.Application, f.Severity}
+		counts[k]++
+		reqs[k] += f.Requests
 	}
 	for k, n := range counts {
 		metrics.SovereigntyFindings.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(n))
+		metrics.SovereigntyRequests.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(reqs[k]))
 	}
 }
 

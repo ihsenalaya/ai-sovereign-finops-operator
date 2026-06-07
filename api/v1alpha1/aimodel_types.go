@@ -61,6 +61,16 @@ type AIModelSpec struct {
 	// SensitiveDataAllowed states whether this model may process sensitive data.
 	// +optional
 	SensitiveDataAllowed bool `json:"sensitiveDataAllowed,omitempty"`
+
+	// ServesNamespace/ServesApplication/ServesTeam attribute gateway telemetry that
+	// only carries the model (e.g. Envoy AI Gateway gen_ai metrics) to the workload
+	// consuming this model, so cost is attributed per namespace/app/team.
+	// +optional
+	ServesNamespace string `json:"servesNamespace,omitempty"`
+	// +optional
+	ServesApplication string `json:"servesApplication,omitempty"`
+	// +optional
+	ServesTeam string `json:"servesTeam,omitempty"`
 }
 
 // AIModelStatus defines the observed state of AIModel.
