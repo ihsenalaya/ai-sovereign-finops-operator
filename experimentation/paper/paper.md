@@ -266,8 +266,12 @@ preparation*, not legal compliance. **Conclusion:** beyond the deterministic sin
 a **30-repetition** run (temperature 0.7) with 95% CIs, Mann-Whitney U significance and Cliff's
 δ/Cohen's d effect sizes (§6); the cost reduction and the latency increase are highly significant with
 large effect sizes. The remaining caveat is **judge dependence** of the small quality gap (the N=30
-run used a gpt-4o-mini judge; the single-pass gpt-4o judge showed parity) — a multi-judge + human
-study is planned (`QUALITY_EVALUATION_PROTOCOL.md`).
+run used a gpt-4o-mini judge; the single-pass gpt-4o judge showed parity). A **two-judge agreement
+study** (gpt-4o vs Mistral-Large, n=120; `results/judge_agreement_summary.md`) finds **moderate
+agreement** — Cohen's quadratic-weighted κ=0.40, Krippendorff α=0.39, Spearman ρ=0.61 (p≈10⁻¹³),
+within-1 agreement 94.2% — i.e. judges correlate significantly but do not agree strongly on the 1–5
+scale, which is precisely why we treat the small quality gap as *judge-dependent* and plan a human
+evaluation (`QUALITY_EVALUATION_PROTOCOL.md`).
 
 ## 9. Conclusion and Future Work
 
