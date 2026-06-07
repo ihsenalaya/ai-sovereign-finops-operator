@@ -49,7 +49,13 @@ var (
 	// CostEURTotal is the spend in EUR per namespace.
 	CostEURTotal = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_cost_eur_total",
-		Help: "Spend in EUR attributed to a namespace over the reporting window.",
+		Help: "Spend in EUR actually observed for a namespace over the reporting window.",
+	}, []string{"namespace"})
+
+	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
+	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_projected_monthly_cost_eur",
+		Help: "Run-rate forecast of full-month spend in EUR per namespace (observed x 30.4/window-days).",
 	}, []string{"namespace"})
 
 	// BudgetUsagePercent is the percent of budget consumed per policy.
@@ -84,6 +90,7 @@ func init() {
 		InputTokensTotal,
 		OutputTokensTotal,
 		CostEURTotal,
+		ProjectedMonthlyCostEUR,
 		BudgetUsagePercent,
 		SovereigntyFindings,
 		BreakevenSavingsEUR,

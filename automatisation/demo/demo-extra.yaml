@@ -1,9 +1,11 @@
 # Extra CRs that round out the demo on top of config/samples:
 #  - a report over ALL flows (no namespace filter) so the forbidden finance->US
-#    flow surfaces with full per-flow attribution;
-#  - a deliberately tight budget on the rh namespace (spend ~60 EUR > 50 EUR
-#    budget) so the budget engine shows a hard-limit breach + graceful
-#    degradation to the fallback model.
+#    flow surfaces with full per-flow attribution, and the monthly run-rate
+#    forecast covers every namespace;
+#  - a deliberately tight budget on the rh namespace whose FORECAST monthly spend
+#    (~34 EUR run-rate) exceeds the 25 EUR monthly cap, showing the budget engine
+#    flag an over-budget trajectory + graceful degradation to the fallback model.
+# Observation window = daily everywhere; the operator forecasts the month.
 ---
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIFinOpsReport
@@ -13,7 +15,7 @@ metadata:
   labels: { aiops.imperium.io/demo: "true" }
 spec:
   target:
-    period: monthly
+    period: daily
 ---
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIBudgetPolicy
@@ -26,8 +28,8 @@ spec:
     namespace: rh
     team: rh
     application: chatbot-rh
-  period: monthly
-  budgetEUR: 35          # rh spend (~41 EUR at real prices) exceeds this on purpose
+  period: daily          # daily observation; budgetEUR is the monthly cap
+  budgetEUR: 25          # forecast monthly rh spend (~34 EUR run-rate) exceeds this on purpose
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100
@@ -35,4 +37,4 @@ spec:
     onWarning: [alert]
     onCritical: [enableCache, routeToCheaperModel]
     onHardLimit: [blockOrRequireApproval]
-  fallbackModelRef: mistral-small
+  fallbackModelRef: mistral-large

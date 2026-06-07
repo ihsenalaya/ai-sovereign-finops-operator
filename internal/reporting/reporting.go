@@ -31,14 +31,15 @@ import (
 
 // Data is the snapshot a report is rendered from.
 type Data struct {
-	Name        string
-	Namespace   string
-	Period      string
-	GeneratedAt time.Time
-	Collector   string
-	Breakdown   costengine.Breakdown
-	Sovereignty []aiopsv1alpha1.SovereigntyFinding
-	Recommends  []aiopsv1alpha1.Recommendation
+	Name             string
+	Namespace        string
+	Period           string
+	GeneratedAt      time.Time
+	Collector        string
+	Breakdown        costengine.Breakdown
+	ProjectedMonthly float64 // run-rate monthly forecast
+	Sovereignty      []aiopsv1alpha1.SovereigntyFinding
+	Recommends       []aiopsv1alpha1.Recommendation
 }
 
 // jsonReport is the curated JSON shape (stable contract for downstream tooling).
@@ -49,6 +50,7 @@ type jsonReport struct {
 	GeneratedAt       string                 `json:"generatedAt"`
 	Currency          string                 `json:"currency"`
 	TotalCost         float64                `json:"totalCost"`
+	ProjectedMonthly  float64                `json:"projectedMonthlyCost"`
 	TotalInputTokens  int64                  `json:"totalInputTokens"`
 	TotalOutputTokens int64                  `json:"totalOutputTokens"`
 	AvgCostPerRequest float64                `json:"avgCostPerRequest"`
@@ -116,6 +118,7 @@ func RenderJSON(d Data) ([]byte, error) {
 		GeneratedAt:       d.GeneratedAt.UTC().Format(time.RFC3339),
 		Currency:          b.Currency,
 		TotalCost:         b.Total.CostTotal,
+		ProjectedMonthly:  d.ProjectedMonthly,
 		TotalInputTokens:  b.Total.InputTokens,
 		TotalOutputTokens: b.Total.OutputTokens,
 		AvgCostPerRequest: b.AvgCostPerRequest(),
@@ -151,7 +154,10 @@ func RenderMarkdown(d Data) string {
 		nonEmpty(d.Namespace, "(all)"), d.Period, d.GeneratedAt.UTC().Format(time.RFC3339), d.Collector)
 
 	sb.WriteString("## Executive summary\n\n")
-	fmt.Fprintf(&sb, "- **Total cost:** %.2f %s\n", b.Total.CostTotal, cur)
+	fmt.Fprintf(&sb, "- **Observed cost (this %s):** %.4f %s\n", nonEmpty(d.Period, "period"), b.Total.CostTotal, cur)
+	if d.ProjectedMonthly != b.Total.CostTotal {
+		fmt.Fprintf(&sb, "- **Projected monthly cost (run-rate):** %.2f %s  _(observed × 30.4 / window)_\n", d.ProjectedMonthly, cur)
+	}
 	fmt.Fprintf(&sb, "- **Requests:** %d  ·  **Input tokens:** %d  ·  **Output tokens:** %d\n",
 		b.Total.Requests, b.Total.InputTokens, b.Total.OutputTokens)
 	fmt.Fprintf(&sb, "- **Avg cost / request:** %.4f %s  ·  **Cost / token:** %.6f %s\n\n",

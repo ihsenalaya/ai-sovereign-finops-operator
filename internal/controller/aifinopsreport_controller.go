@@ -95,7 +95,12 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	collector := collectorFor(gw)
+	// Fall back to any gateway in the namespace when no explicit ref is set, so a
+	// configured telemetry source (e.g. configmap) is used consistently.
+	if gw == nil {
+		gw = firstGateway(ctx, r.Client, report.Namespace)
+	}
+	collector := collectorFor(r.Client, report.Namespace, gw)
 	samples, err := collector.Collect(ctx, periodWindow(report.Spec.Target.Period))
 	if err != nil {
 		meta.SetStatusCondition(&report.Status.Conditions,
@@ -139,6 +144,11 @@ func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFin
 	report.Status.TotalInputTokens = b.Total.InputTokens
 	report.Status.TotalOutputTokens = b.Total.OutputTokens
 
+	// Run-rate forecast: project the observed spend to a full month based on the
+	// report's observation window (period). For a monthly period the factor is 1.
+	factor := monthlyFactor(report.Spec.Target.Period)
+	report.Status.ProjectedMonthlyCostEUR = moneyQuantityPtr(b.Total.CostTotal * factor)
+
 	// Emit usage/cost metrics keyed by the real telemetry namespace (from the
 	// cost breakdown), not by the report scope. This keeps sum() correct even
 	// when several reports overlap (e.g. an all-namespaces report alongside a
@@ -153,6 +163,7 @@ func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFin
 		metrics.InputTokensTotal.WithLabelValues(label).Set(float64(li.InputTokens))
 		metrics.OutputTokensTotal.WithLabelValues(label).Set(float64(li.OutputTokens))
 		metrics.CostEURTotal.WithLabelValues(label).Set(li.CostTotal)
+		metrics.ProjectedMonthlyCostEUR.WithLabelValues(label).Set(li.CostTotal * factor)
 	}
 
 	top := costengine.TopByCost(b.ByModel, 5)
@@ -232,14 +243,15 @@ func (r *AIFinOpsReportReconciler) writeReportConfigMap(ctx context.Context, rep
 		generatedAt = report.Status.GeneratedAt.Time
 	}
 	data := reporting.Data{
-		Name:        report.Name,
-		Namespace:   report.Spec.Target.Namespace,
-		Period:      report.Spec.Target.Period,
-		GeneratedAt: generatedAt,
-		Collector:   collectorName,
-		Breakdown:   b,
-		Sovereignty: report.Status.SovereigntyFindings,
-		Recommends:  report.Status.Recommendations,
+		Name:             report.Name,
+		Namespace:        report.Spec.Target.Namespace,
+		Period:           report.Spec.Target.Period,
+		GeneratedAt:      generatedAt,
+		Collector:        collectorName,
+		Breakdown:        b,
+		ProjectedMonthly: b.Total.CostTotal * monthlyFactor(report.Spec.Target.Period),
+		Sovereignty:      report.Status.SovereigntyFindings,
+		Recommends:       report.Status.Recommendations,
 	}
 	md := reporting.RenderMarkdown(data)
 	jsonBytes, err := reporting.RenderJSON(data)

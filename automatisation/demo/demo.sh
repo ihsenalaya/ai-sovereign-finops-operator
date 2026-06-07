@@ -14,7 +14,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../.." && pwd)"
 NS="greenops-system"
 CTX="${KCTX:-kind-greenops}"
-IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.2"
+IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.3"
 K="kubectl --context ${CTX}"
 
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -42,6 +42,35 @@ ensure_operator() {
   fi
   ${K} -n "${NS}" rollout status deploy/greenops-ai-sovereign-finops-operator --timeout=120s
 }
+
+seed_usage() {
+  step "Real telemetry (live LLM calls -> measured tokens)"
+  local key_path="${OPENAI_KEY:-${REPO}/docs/openaikey.txt}"
+  local fbase="${FOUNDRY_BASE:-https://greenops-foundry.services.ai.azure.com/models}"
+  local fdeploy="${FOUNDRY_DEPLOYMENT:-mistral-large-latest}"
+  local fver="${FOUNDRY_API_VERSION:-2024-05-01-preview}"
+  local frg="${FOUNDRY_RG:-greenops-rg}"
+  local facct="${FOUNDRY_ACCOUNT:-greenops-foundry}"
+  local pdays="${PROJECT_DAYS:-1}"   # 1 = seed one day of consumption; operator forecasts the month
+  local fkey=""
+  if command -v az >/dev/null 2>&1; then
+    fkey="$(az cognitiveservices account keys list -g "${frg}" -n "${facct}" --query key1 -o tsv 2>/dev/null || true)"
+  fi
+  local args=(-openai-key "${key_path}" -calls "${SEED_CALLS:-3}" -project-days "${pdays}" -out /tmp/greenops-usage.json)
+  if [ -n "${fkey}" ]; then
+    args+=(-foundry-base "${fbase}" -foundry-key "${fkey}" -foundry-deployment "${fdeploy}" -foundry-api-version "${fver}")
+    bold "Calling OpenAI (gpt-4o, US) + Mistral-Large (Foundry, EU)..."
+  else
+    warn "No Foundry key (az not logged in / resource absent) — seeding OpenAI flows only."
+  fi
+  ( cd "${REPO}" && go run ./cmd/seed-usage "${args[@]}" )
+  ${K} -n default create configmap greenops-usage \
+    --from-file=usage.json=/tmp/greenops-usage.json --dry-run=client -o yaml | ${K} apply -f - >/dev/null
+  ${K} label configmap greenops-usage -n default aiops.imperium.io/demo=true --overwrite >/dev/null
+  bold "Measured usage -> ConfigMap default/greenops-usage (the operator reads it)."
+}
+
+warn() { printf '\033[33mWARN:\033[0m %s\n' "$*" >&2; }
 
 apply_crs() {
   step "Applying CRs (catalogue + policies + reports)"
@@ -75,9 +104,10 @@ tour() {
   ${K} get aigw,aiprov,aimodel -A
   hr
 
-  bold "2) Cost attribution (AIFinOpsReport .status) — cost by model, tokens, recommendations"
+  bold "2) Cost attribution (AIFinOpsReport .status) — REAL measured tokens, observed + projected"
   ${K} -n default get aifinopsreport -o custom-columns=\
-'NAME:.metadata.name,TARGET-NS:.spec.target.namespace,TOTAL_EUR:.status.totalCostEUR,IN_TOK:.status.totalInputTokens,OUT_TOK:.status.totalOutputTokens'
+'NAME:.metadata.name,WINDOW:.spec.target.period,IN_TOK:.status.totalInputTokens,OUT_TOK:.status.totalOutputTokens,OBSERVED_EUR:.status.totalCostEUR,PROJECTED_MONTHLY_EUR:.status.projectedMonthlyCostEUR'
+  echo "  (observed = real cost of measured tokens over the window; projected = run-rate x 30.4/window)"
   hr
 
   bold "3) Sovereignty — FLOW-AWARE verification (per namespace/app)"
@@ -87,9 +117,9 @@ tour() {
   ${K} -n default get aisovereigntypolicy -o custom-columns='POLICY:.metadata.name,MODE:.spec.enforcementMode,FINDINGS:.status.findingsCount'
   hr
 
-  bold "4) Budget — graceful degradation (AIBudgetPolicy .status)"
+  bold "4) Budget — forecast vs monthly budget (AIBudgetPolicy .status)"
   ${K} -n default get aibudgetpolicy -o custom-columns=\
-'NAME:.metadata.name,BUDGET_EUR:.spec.budgetEUR,SPEND_EUR:.status.currentSpendEUR,USAGE%:.status.usagePercent,PHASE:.status.phase'
+'NAME:.metadata.name,MONTHLY_BUDGET:.spec.budgetEUR,OBSERVED:.status.currentSpendEUR,PROJECTED_MONTHLY:.status.projectedMonthlySpendEUR,USAGE%:.status.usagePercent,PHASE:.status.phase'
   echo "rh-tight-budget condition:"
   ${K} -n default get aibudgetpolicy rh-tight-budget -o jsonpath='  {.status.conditions[0].message}{"\n"}' 2>/dev/null || true
   hr
@@ -125,6 +155,7 @@ open_grafana() {
 down() {
   step "Tearing down demo (operator is kept)"
   ${K} -n "${NS}" delete deploy,svc,configmap -l aiops.imperium.io/demo=true --ignore-not-found
+  ${K} -n default delete configmap -l aiops.imperium.io/demo=true --ignore-not-found
   ${K} -n default delete -f "${HERE}/demo-extra.yaml" --ignore-not-found
   echo "Done. Operator and base samples remain."
 }
@@ -134,6 +165,7 @@ main() {
   case "${1:-up}" in
     up)
       ensure_operator
+      seed_usage
       apply_crs
       deploy_observability
       tour

@@ -70,7 +70,7 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	collector := collectorFor(firstGateway(ctx, r.Client, policy.Namespace))
+	collector := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
 	samples, err := collector.Collect(ctx, 30*24*time.Hour)
 	if err != nil {
 		meta.SetStatusCondition(&policy.Status.Conditions,

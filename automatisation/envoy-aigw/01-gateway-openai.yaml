@@ -1,0 +1,139 @@
+# Envoy AI Gateway — Gateway + OpenAI route/backend for the greenops demo.
+# Real apps call this gateway; Envoy AI Gateway parses the OpenAI-compatible
+# traffic and emits real token-usage metrics per request. The OpenAI API key is
+# NOT in this file — it is created as a Secret from docs/openaikey.txt at deploy
+# time (see automatisation/envoy-aigw/deploy.sh). Routing is by the
+# `x-ai-eg-model` header the AI Gateway injects from the request body's model.
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: greenops-aigw
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: greenops-aigw
+  namespace: default
+spec:
+  gatewayClassName: greenops-aigw
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: greenops-aigw
+---
+# Lean Envoy proxy (clear default cpu/mem requests so it fits a small kind node).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: greenops-aigw
+  namespace: default
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        container:
+          resources: {}
+---
+# AI workloads need a larger client buffer than the 32kiB default.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: greenops-aigw-buffer
+  namespace: default
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: greenops-aigw
+  connection:
+    bufferLimit: 50Mi
+---
+# Route gpt-4o and gpt-4o-mini (both served by OpenAI) by the model header.
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: greenops-openai
+  namespace: default
+spec:
+  parentRefs:
+    - name: greenops-aigw
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: gpt-4o
+      backendRefs:
+        - name: greenops-openai
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: gpt-4o-mini
+      backendRefs:
+        - name: greenops-openai
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: greenops-openai
+  namespace: default
+spec:
+  schema:
+    name: OpenAI
+  backendRef:
+    name: greenops-openai
+    kind: Backend
+    group: gateway.envoyproxy.io
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: BackendSecurityPolicy
+metadata:
+  name: greenops-openai-apikey
+  namespace: default
+spec:
+  targetRefs:
+    - group: aigateway.envoyproxy.io
+      kind: AIServiceBackend
+      name: greenops-openai
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: greenops-openai-apikey
+      namespace: default
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: greenops-openai
+  namespace: default
+spec:
+  endpoints:
+    - fqdn:
+        hostname: api.openai.com
+        port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha3
+kind: BackendTLSPolicy
+metadata:
+  name: greenops-openai-tls
+  namespace: default
+spec:
+  targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-openai
+  validation:
+    wellKnownCACertificates: "System"
+    hostname: api.openai.com

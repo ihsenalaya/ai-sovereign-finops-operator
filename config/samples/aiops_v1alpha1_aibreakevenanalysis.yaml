@@ -8,7 +8,7 @@ spec:
   target:
     namespace: rh
     application: chatbot-rh
-  currentModelRef: mistral-small
+  currentModelRef: gpt-4o
   alternativeSelfHosted:
     modelName: llama-3-70b
     runtime: vllm

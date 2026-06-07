@@ -23,6 +23,7 @@ import (
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
+	cmcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/configmap"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors/fake"
 	promcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/prometheus"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/costengine"
@@ -98,8 +99,10 @@ func orDefault(v, def string) string {
 
 // collectorFor returns the TelemetryCollector implied by a gateway's telemetry
 // mode. The MVP defaults to the fake collector when no gateway is found or the
-// mode is fake, so reports are always demonstrable without a live gateway.
-func collectorFor(gw *aiopsv1alpha1.AIGateway) collectors.TelemetryCollector {
+// mode is fake, so reports are always demonstrable without a live gateway. The
+// configmap mode reads real measured usage from a ConfigMap in the gateway's
+// namespace (see internal/collectors/configmap).
+func collectorFor(c client.Client, namespace string, gw *aiopsv1alpha1.AIGateway) collectors.TelemetryCollector {
 	if gw == nil {
 		return fake.New()
 	}
@@ -107,6 +110,12 @@ func collectorFor(gw *aiopsv1alpha1.AIGateway) collectors.TelemetryCollector {
 	case aiopsv1alpha1.TelemetryModePrometheus:
 		endpoint := gw.Spec.Endpoint + gw.Spec.Telemetry.MetricsEndpoint
 		return promcollector.New(endpoint)
+	case aiopsv1alpha1.TelemetryModeConfigMap:
+		name := gw.Spec.Telemetry.SourceConfigMap
+		if name == "" {
+			return fake.New()
+		}
+		return cmcollector.New(c, namespace, name)
 	default:
 		return fake.New()
 	}
@@ -184,6 +193,23 @@ func (cat catalog) flows(samples []collectors.UsageSample) []sovereigntyengine.F
 		out = append(out, fl)
 	}
 	return out
+}
+
+// avgDaysPerMonth is the run-rate denominator (365.25/12).
+const avgDaysPerMonth = 30.4375
+
+// monthlyFactor returns the multiplier that forecasts a full month from spend
+// observed over the given period window (run-rate). daily -> ~30.4, weekly ->
+// ~4.35, monthly/unknown -> 1 (no extrapolation).
+func monthlyFactor(period string) float64 {
+	switch period {
+	case "daily":
+		return avgDaysPerMonth
+	case "weekly":
+		return avgDaysPerMonth / 7.0
+	default:
+		return 1.0
+	}
 }
 
 // firstSovereigntyPolicy returns any AISovereigntyPolicy in the namespace, or nil.

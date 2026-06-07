@@ -18,18 +18,21 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR)",
+      "title": "Observed cost (EUR)",
+      "description": "Real cost of the measured tokens over the observation window.",
       "datasource": "${datasource}",
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR" } },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4 } },
       "targets": [{ "expr": "sum(ai_finops_cost_eur_total)", "refId": "A" }]
     },
     {
       "type": "stat",
-      "title": "Requests",
+      "title": "Projected monthly cost (EUR)",
+      "description": "Run-rate forecast of full-month spend (observed x 30.4 / observation-window).",
       "datasource": "${datasource}",
       "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
-      "targets": [{ "expr": "sum(ai_finops_requests_total)", "refId": "A" }]
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "blue" } } },
+      "targets": [{ "expr": "sum(ai_finops_projected_monthly_cost_eur)", "refId": "A" }]
     },
     {
       "type": "gauge",

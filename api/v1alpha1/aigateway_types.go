@@ -21,13 +21,17 @@ import (
 )
 
 // TelemetryMode enumerates the supported ways to pull usage telemetry from a gateway.
-// +kubebuilder:validation:Enum=prometheus;litellm;fake
+// +kubebuilder:validation:Enum=prometheus;litellm;fake;configmap
 type TelemetryMode string
 
 const (
 	TelemetryModePrometheus TelemetryMode = "prometheus"
 	TelemetryModeLiteLLM    TelemetryMode = "litellm"
 	TelemetryModeFake       TelemetryMode = "fake"
+	// TelemetryModeConfigMap reads usage samples from a ConfigMap (key
+	// "usage.json" = a JSON array of usage records). This is how measured, real
+	// telemetry is fed to the operator without a live gateway scrape.
+	TelemetryModeConfigMap TelemetryMode = "configmap"
 )
 
 // TelemetrySpec describes how the operator collects usage data from the gateway.
@@ -40,6 +44,11 @@ type TelemetrySpec struct {
 	// +kubebuilder:default=/metrics
 	// +optional
 	MetricsEndpoint string `json:"metricsEndpoint,omitempty"`
+
+	// SourceConfigMap is the name of the ConfigMap holding usage samples (for the
+	// configmap mode); read from the gateway's own namespace, key "usage.json".
+	// +optional
+	SourceConfigMap string `json:"sourceConfigMap,omitempty"`
 }
 
 // GatewayAuth holds references to credentials required to query the gateway.

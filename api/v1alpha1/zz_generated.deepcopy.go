@@ -223,6 +223,11 @@ func (in *AIBudgetPolicyStatus) DeepCopyInto(out *AIBudgetPolicyStatus) {
 		x := (*in).DeepCopy()
 		*out = &x
 	}
+	if in.ProjectedMonthlySpendEUR != nil {
+		in, out := &in.ProjectedMonthlySpendEUR, &out.ProjectedMonthlySpendEUR
+		x := (*in).DeepCopy()
+		*out = &x
+	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
 		*out = make([]v1.Condition, len(*in))
@@ -326,6 +331,11 @@ func (in *AIFinOpsReportStatus) DeepCopyInto(out *AIFinOpsReportStatus) {
 	}
 	if in.TotalCostEUR != nil {
 		in, out := &in.TotalCostEUR, &out.TotalCostEUR
+		x := (*in).DeepCopy()
+		*out = &x
+	}
+	if in.ProjectedMonthlyCostEUR != nil {
+		in, out := &in.ProjectedMonthlyCostEUR, &out.ProjectedMonthlyCostEUR
 		x := (*in).DeepCopy()
 		*out = &x
 	}

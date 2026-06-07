@@ -97,7 +97,12 @@ type AIBudgetPolicyStatus struct {
 	// +optional
 	CurrentSpendEUR *resource.Quantity `json:"currentSpendEUR,omitempty"`
 
-	// UsagePercent is CurrentSpend/Budget*100, rounded.
+	// ProjectedMonthlySpendEUR forecasts a full month from the observed spend
+	// (run-rate); usage/phase are evaluated against this forecast vs the budget.
+	// +optional
+	ProjectedMonthlySpendEUR *resource.Quantity `json:"projectedMonthlySpendEUR,omitempty"`
+
+	// UsagePercent is ProjectedMonthlySpend/Budget*100, rounded.
 	// +optional
 	UsagePercent int32 `json:"usagePercent,omitempty"`
 

@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -61,7 +62,7 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	collector := collectorFor(firstGateway(ctx, r.Client, policy.Namespace))
+	collector := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
 	samples, err := collector.Collect(ctx, periodWindow(policy.Spec.Period))
 	if err != nil {
 		meta.SetStatusCondition(&policy.Status.Conditions,
@@ -72,8 +73,15 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	samples = filterByBudgetTarget(samples, policy.Spec.Target)
 	breakdown := costengine.Compute(samples, cat.priceBook())
 
+	// Forecast the full month from the observed spend (run-rate) and evaluate the
+	// forecast against the monthly budget, so the phase answers "at this rate, will
+	// we exceed the budget this month?".
+	observed := breakdown.Total.CostTotal
+	factor := monthlyFactor(policy.Spec.Period)
+	projected := observed * factor
+
 	result := budgetengine.Evaluate(
-		breakdown.Total.CostTotal,
+		projected,
 		policy.Spec.BudgetEUR.AsApproximateFloat64(),
 		budgetengine.Thresholds{
 			WarningPct:   policy.Spec.WarningThresholdPercent,
@@ -89,8 +97,14 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	policy.Status.Phase = result.Phase
 	policy.Status.UsagePercent = result.UsagePercent
-	policy.Status.CurrentSpendEUR = moneyQuantityPtr(result.SpendEUR)
-	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation, result.Message))
+	policy.Status.CurrentSpendEUR = moneyQuantityPtr(observed)
+	policy.Status.ProjectedMonthlySpendEUR = moneyQuantityPtr(projected)
+	msg := result.Message
+	if factor != 1.0 {
+		msg = fmt.Sprintf("projected %.2f / %.2f EUR monthly (%d%%) — %s [observed %.4f over %s window]",
+			projected, policy.Spec.BudgetEUR.AsApproximateFloat64(), result.UsagePercent, result.Phase, observed, policy.Spec.Period)
+	}
+	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation, msg))
 
 	metrics.BudgetUsagePercent.WithLabelValues(policy.Namespace, policy.Name).Set(float64(result.UsagePercent))
 

@@ -96,9 +96,15 @@ type AIFinOpsReportStatus struct {
 	// +optional
 	GeneratedAt *metav1.Time `json:"generatedAt,omitempty"`
 
-	// TotalCostEUR is the total spend over the period.
+	// TotalCostEUR is the total spend actually observed over the period.
 	// +optional
 	TotalCostEUR *resource.Quantity `json:"totalCostEUR,omitempty"`
+
+	// ProjectedMonthlyCostEUR forecasts a full month from the observed spend using
+	// a run-rate: observed x (30.4 / observation-window-days). For a monthly period
+	// it equals TotalCostEUR.
+	// +optional
+	ProjectedMonthlyCostEUR *resource.Quantity `json:"projectedMonthlyCostEUR,omitempty"`
 
 	// TotalInputTokens over the period.
 	// +optional

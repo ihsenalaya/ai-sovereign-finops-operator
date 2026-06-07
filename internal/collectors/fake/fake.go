@@ -34,33 +34,25 @@ type Collector struct {
 // New returns a fake collector using the built-in demo profile.
 func New() *Collector { return &Collector{Samples: DemoSamples()} }
 
-// DemoSamples is the canonical demo dataset, aligned with config/samples. The
-// token volumes are illustrative monthly figures; cost is computed from the real
-// per-model list prices declared on the AIProviders (see config/samples), so the
-// demo reflects genuine token economics rather than invented prices:
-//   - gpt-4o:        2.50 USD in / 10.00 USD out per 1M tokens (OpenAI / Azure)
-//   - mistral-small: 0.10 USD in /  0.30 USD out per 1M tokens (Mistral)
-// (EUR in the samples = USD list price x 0.92, June 2026.) Each sample's Provider
-// matches the model's cataloged AIProvider so sovereignty zones resolve correctly.
+// DemoSamples is a small offline fallback dataset used ONLY for unit tests and
+// when no real telemetry source is configured. The real demo does NOT use this:
+// it reads measured usage from a ConfigMap (telemetry mode "configmap") produced
+// by the seed-usage tool from live LLM calls. Volumes here are illustrative; the
+// providers/models match config/samples (gpt-4o @ openai-us, mistral-large @
+// mistral-eu) so sovereignty zones and prices resolve consistently.
 func DemoSamples() []collectors.UsageSample {
 	return []collectors.UsageSample{
 		{
 			Namespace: "rh", Application: "chatbot-rh", Team: "rh",
-			Provider: "azure-openai-france", Model: "gpt-4o",
-			Requests: 40000, InputTokens: 9_000_000, OutputTokens: 2_200_000,
-			LatencyMillis: 850, Errors: 120,
-		},
-		{
-			Namespace: "rh", Application: "chatbot-rh", Team: "rh",
-			Provider: "mistral-france", Model: "mistral-small",
-			Requests: 60000, InputTokens: 3_000_000, OutputTokens: 800_000,
-			LatencyMillis: 420, Errors: 30,
+			Provider: "mistral-eu", Model: "mistral-large",
+			Requests: 30000, InputTokens: 3_000_000, OutputTokens: 6_000_000,
+			LatencyMillis: 820, Errors: 30,
 		},
 		{
 			Namespace: "finance", Application: "risk-assistant", Team: "finance",
 			Provider: "openai-us", Model: "gpt-4o",
-			Requests: 12000, InputTokens: 4_000_000, OutputTokens: 1_000_000,
-			LatencyMillis: 910, Errors: 80,
+			Requests: 8000, InputTokens: 2_000_000, OutputTokens: 1_200_000,
+			LatencyMillis: 910, Errors: 40,
 		},
 	}
 }

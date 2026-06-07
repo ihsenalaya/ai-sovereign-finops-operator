@@ -12,7 +12,10 @@ spec:
     matchLabels:
       ai-finops/enabled: "true"
   telemetry:
-    mode: fake          # MVP default; switch to "prometheus" or "litellm" later
+    # Real measured usage: seed-usage makes live LLM calls and writes the measured
+    # token volumes to the ConfigMap below; the operator reads usage from it.
+    mode: configmap
+    sourceConfigMap: greenops-usage
     metricsEndpoint: /metrics
   auth:
     secretRef:

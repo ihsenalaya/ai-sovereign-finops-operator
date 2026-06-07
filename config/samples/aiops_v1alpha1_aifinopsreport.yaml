@@ -7,5 +7,6 @@ metadata:
 spec:
   target:
     namespace: rh
-    period: monthly
+    # Observation window = daily; the operator forecasts the month (run-rate).
+    period: daily
   gatewayRef: main-gateway
