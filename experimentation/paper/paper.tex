@@ -78,6 +78,27 @@ Gateway/K8s artifact      & -- & -- & -- & -- & \textbf{\checkmark} \\
 \end{tabular}
 \end{table}
 
+\begin{table}[t]\centering\small
+\caption{Side-by-side vs.\ representative systems.}\label{tab:compare}
+\begin{tabular}{lccccc}
+\toprule
+Dimension & RouteLLM & FrugalGPT & AutoMix & LiteLLM & \textbf{Ours} \\
+\midrule
+Type & router & cascade & router & gateway & \textbf{ctrl plane} \\
+Multi-provider & part. & \checkmark & \checkmark & \checkmark & \checkmark \\
+Hard sovereignty & -- & -- & -- & -- & \textbf{\checkmark} \\
+Budget+degradation & -- & -- & -- & basic & \textbf{\checkmark} \\
+Cost attribution & -- & -- & -- & per-key & \textbf{\checkmark} \\
+Break-even & -- & -- & -- & -- & \textbf{\checkmark} \\
+K8s/Envoy artifact & -- & -- & -- & proxy & \textbf{\checkmark} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+LiteLLM is the closest engineering peer (gateway with per-key spend and fallbacks) but lacks
+constraint-aware routing, graceful degradation and break-even; learned routers are stronger on the
+cost--quality decision but carry no governance. Our governance layer composes with a learned router.
+
 \section{Problem Formulation and Algorithm}
 Given a request $r$ (team, namespace, sensitivity, token estimate), a model catalog $M$ (provider, zone,
 managed flag, per-token price, quality/latency priors), a sovereignty policy $P$ and budget state
@@ -126,6 +147,17 @@ reduction $p\approx3\times10^{-11}$, Cohen $d\approx-43$ (Fig.~\ref{fig:stats}).
 \includegraphics[width=0.8\linewidth]{../figures/fig_stats_cost.png}
 \caption{Per-repetition cost, mean $\pm$95\% CI (N=30).}\label{fig:stats}
 \end{figure}
+
+\section{When not to use economic routing}
+Economic routing is not a universal win; our results delimit where to avoid it: (i) \textbf{high-stakes,
+correctness-critical tasks} (RQ2b: cheap models fail objective reasoning, so routing trades accuracy for
+cost) --- pin the premium model; (ii) \textbf{low volume/spend}, where savings do not justify the added
+complexity; (iii) \textbf{strict tail-latency SLOs} (RQ3 shows a significant tail increase from model
+mixing); (iv) \textbf{no reliable quality signal} (priors miss task difficulty; the LLM judge over-rates
+wrong answers) --- prefer a fixed model or a calibrated/learned predictor; (v) \textbf{no governance
+need} (single tenant/jurisdiction, flat budget); (vi) \textbf{homogeneous high-quality workloads}, where
+the policy degenerates to premium-static. The approach targets multi-tenant, governance-constrained,
+mixed-difficulty, sufficiently high-volume settings.
 
 \section{Threats to Validity}
 LLM-API variability (temperature 0, caching, bootstrap CIs); LLM-judge over-rates objective answers

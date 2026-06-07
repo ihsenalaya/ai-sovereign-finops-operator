@@ -1,6 +1,6 @@
 # Experiment dashboard
 
-_Last updated: 2026-06-07 07:51 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
+_Last updated: 2026-06-07 08:16 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
 
 ## Test runs (status + duration)
 

@@ -125,6 +125,26 @@ budget, attribution) at the gateway/control-plane level, and the managed-vs-self
 We do not claim to beat learned routers on the cost–quality frontier; rather, our governance layer is
 *orthogonal* and could wrap any of them (a planned integration, §9).
 
+**Side-by-side comparison (Table 0b).** Against the systems most often cited in this space — three
+learned routers (RouteLLM, FrugalGPT, AutoMix) and a production gateway (LiteLLM):
+
+| Dimension | RouteLLM | FrugalGPT | AutoMix | LiteLLM | **Ours** |
+|---|---|---|---|---|---|
+| Type | learned router | cascade | self-verify router | gateway/proxy | **governance control plane** |
+| Primary goal | cost↔quality | cost↔quality | cost↔quality | unified access + basic cost log | **cost under governance** |
+| Routing signal | learned (preference data) | confidence cascade | few-shot self-verification + POMDP | static config / simple fallback | priors + policy (learned = future) |
+| Multi-provider | partial | yes | yes | **yes** | **yes (OpenAI + Mistral EU)** |
+| Hard sovereignty constraints | ✗ | ✗ | ✗ | ✗ | **✓ (zones, sensitive data)** |
+| Per-tenant budgets + degradation | ✗ | ✗ | ✗ | basic budgets, no degradation | **✓ (graceful)** |
+| Cost attribution (team/ns/app) | ✗ | ✗ | ✗ | per-key spend | **✓ (policy-level)** |
+| Managed-vs-self-hosted break-even | ✗ | ✗ | ✗ | ✗ | **✓ (modeled)** |
+| Form factor | library | library | library | proxy (data path) | **K8s operator + Envoy data path** |
+
+LiteLLM is the closest *engineering* peer (a real gateway with per-key spend and fallbacks) but offers
+no constraint-aware routing, graceful degradation, or break-even; the learned routers are stronger on
+the cost–quality decision but carry none of the governance dimensions. Our contribution is the
+governance layer, designed to compose with a learned router rather than replace it.
+
 ## 3. Problem Formulation and Algorithm
 
 A request $r$ carries metadata (team, namespace, sensitivity) and an estimated token footprint. Given
@@ -308,6 +328,26 @@ most of the savings at no quality cost. Strict sovereignty has a real availabili
 the system makes explicit and auditable rather than hidden. For budget control, graceful degradation
 strictly dominates hard-blocking on availability and overrun. Self-hosting pays off only at high,
 sustained volume.
+
+### When *not* to use economic routing
+Economic routing is not a universal win; our own results delimit where it should be avoided:
+- **High-stakes, correctness-critical tasks.** On objective reasoning (RQ2b: GSM8K/MMLU) cheaper models
+  genuinely fail, so cost routing trades accuracy for cost (47.2% vs 65.4%). Where a wrong answer is
+  expensive (legal, medical, shipping code, financial calculations), pin the premium model.
+- **Low volume / low spend.** Below a few hundred thousand tokens/month the absolute saving is small
+  and does not justify the added control-plane complexity and risk; premium-static is simpler.
+- **Strict tail-latency SLOs.** Ours shows a significant tail-latency increase (RQ3, $d{=}+3.7$) from
+  mixing models; for ultra-low-latency paths, a single fast model is preferable.
+- **No reliable quality signal.** Our priors miss task-specific difficulty and the LLM judge over-rates
+  wrong answers (RQ2b); without a trustworthy per-task quality estimate, routing can silently degrade
+  quality — prefer a fixed model or add a calibrated/learned difficulty predictor first.
+- **No governance need.** If there is no sovereignty, budget, or attribution requirement (single
+  tenant, single jurisdiction, flat budget), the governance layer adds little; a plain cost–quality
+  router (or none) suffices.
+- **Homogeneous high-quality workloads.** If essentially every request needs the premium model, there
+  is nothing to route — the policy degenerates to premium-static.
+In short, our approach targets **multi-tenant, governance-constrained, mixed-difficulty, sufficiently
+high-volume** settings; outside that envelope its benefits shrink or invert.
 
 ## 8. Threats to Validity
 
