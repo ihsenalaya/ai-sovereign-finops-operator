@@ -1,15 +1,15 @@
 # Experiment dashboard
 
-_Last updated: 2026-06-07 07:12 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
+_Last updated: 2026-06-07 07:26 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
 
 ## Test runs (status + duration)
 
 | Run dir | Tests | PASS | FAIL | Duration | Groups |
 |---|---:|---:|---:|---:|---|
 | results | 46 | 46 | 0 | 4s | RQ-ablation,RQ1-3-matrix,RQ4-sovereignty,RQ5-bud |
-| results-bench | 7 | 7 | 0 | 8m51s | BENCHMARK |
+| results-bench | 7 | 7 | 0 | 5m32s | BENCHMARK |
 | results-stats | 30 | 30 | 0 | 36m20s | STATS-matrix |
-| **TOTAL** | **83** | **83** | **0** | **45m15s** | — |
+| **TOTAL** | **83** | **83** | **0** | **41m56s** | — |
 
 **Integrity:** 83/83 PASS, none, no skipped tests.
 
@@ -18,7 +18,7 @@ _Last updated: 2026-06-07 07:12 UTC_  ·  regenerate: `python3 scripts/dashboard
 - **Cost** (Ours vs premium): −70.84% (B6 0.011353 vs B1 0.038930 EUR).
 - **Quality** (judge, norm): Ours 0.912500 vs premium 0.900000 (win-rate 50.00%).
 - **Sovereignty (EU-only)**: Ours served 40/40, 0 violations (blind baseline: 40).
-- **Objective benchmark (exact-match)**: B1 premium static=66.67%; B6 ours=45.00%
+- **Objective benchmark (exact-match)**: B1 premium static=65.40%; B6 ours=47.20%
 - **Statistics**: see `results-stats/stats_summary.md` (N=30, CIs + Mann-Whitney + Cliff δ / Cohen d).
 - **Inter-judge agreement**: see `results/judge_agreement_summary.md`.
 
@@ -33,26 +33,26 @@ _Last updated: 2026-06-07 07:12 UTC_  ·  regenerate: `python3 scripts/dashboard
 | Learned-style baseline (B7) | ✅ |
 | Public benchmark + exact-match | ✅ |
 | Feature-matrix positioning | ✅ |
-| Scale-up (currently 340 prompts; target 1000s) | ⬜ |
+| Scale-up (currently 540 prompts; target 1000s) | ⬜ |
 | Live gateway enforcement under load | ⬜ |
 | Human evaluation | ⬜ |
 | Submission format (LaTeX) + artifact DOI | ⬜ |
 
-_Datasets: 340 prompts across 6 files._
+_Datasets: 540 prompts across 6 files._
 
 ## Recommended next actions (status)
 
 | # | Action | Status | Note |
 |--:|---|:--:|---|
 | 1 | Investigate exact-match vs judge contradiction | ✅ | RESOLVED — judge rates 81% of *wrong* answers acceptable (r=0.12); see results/judge_vs_truth_summary.md |
-| 2 | Human evaluation on 100 examples | ⬜ | TODO — needs human evaluators (package can be prepared) |
-| 3 | Increase dataset to >=500 prompts | ⬜ | 340 prompts now (40 synthetic + 300 public GSM8K/MMLU) |
+| 2 | Human evaluation on 100 examples | ⬜ | PACKAGE READY (100 blind items) — awaiting evaluators; see human_eval/README.md |
+| 3 | Increase dataset to >=500 prompts | ✅ | 540 prompts (40 synthetic + 500 public GSM8K/MMLU) |
 | 4 | Live gateway routing benchmark under load | ⬜ | TODO — requires the cluster |
 | 5 | Artifact packaging (GitHub + Zenodo DOI) | ⬜ | TODO — repo public step pending |
 
 ## Critical gaps
 
 1. **Quality contradiction** — RESOLVED: LLM-judge over-rates wrong answers on objective tasks; we now report exact-match where ground truth exists.
-2. **Dataset scale** — 340 prompts (below 500 target).
+2. **Dataset scale** — 540 prompts (>=500 OK).
 3. **Human validation** — still missing (needs evaluators).
 4. **Live gateway enforcement** — control-plane validated; data-path under load pending.

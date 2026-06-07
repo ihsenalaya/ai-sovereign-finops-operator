@@ -34,8 +34,8 @@ policy drops to 60%. The managed-vs-self-hosted break-even (RQ6) remains a **mod
 validated on real GPUs. A **30-repetition** run (temperature 0.7) confirms the cost reduction is highly
 significant (p ≈ 3×10⁻¹¹, Cohen d ≈ −43) at a significant but bounded latency increase (§6). On
 **quality we are deliberately careful**: an LLM-judge finds Ours comparable on open-ended workloads,
-but on **300 objective public-benchmark items (GSM8K + MMLU)** Ours **trades accuracy for cost**
-(45.0% vs 66.7% premium, −94% cost); we further show the LLM-judge **over-rates incorrect answers**
+but on **500 objective public-benchmark items (GSM8K + MMLU)** Ours **trades accuracy for cost**
+(47.2% vs 65.4% premium, −94% cost); we further show the LLM-judge **over-rates incorrect answers**
 (81.1% of wrong answers rated "acceptable"), so we report exact-match where ground truth exists and do
 **not** claim universal quality preservation. We frame the contribution as a **governance layer**
 (sovereignty/budget/attribution) with a favourable cost/quality trade-off, not a quality-free lunch.
@@ -214,11 +214,11 @@ statistically supported statement to the multi-repetition, multi-judge protocol
 (§8, `QUALITY_EVALUATION_PROTOCOL.md`).
 
 ### RQ2b — Objective accuracy on public benchmarks + judge validity
-To remove judge bias and test generality, we evaluate on **300 real public-benchmark items** — 150
-**GSM8K** (math, numeric) and 150 **MMLU** (multiple-choice A–D) — scored by **objective exact-match**
+To remove judge bias and test generality, we evaluate on **500 real public-benchmark items** — 250
+**GSM8K** (math, numeric) and 250 **MMLU** (multiple-choice A–D) — scored by **objective exact-match**
 (no LLM judge; `datasets-public/`, `results-bench/rq_benchmark.csv`). Premium-static (gpt-4o) reaches
-**66.7%** accuracy at 0.069 EUR; **Ours 45.0%** at 0.0043 EUR (**−94% cost**); static-policy 58.0%;
-least-cost/difficulty-router 41–42%. On these objective tasks aggressive cost routing **trades accuracy
+**65.4%** accuracy at 0.116 EUR; **Ours 47.2%** at 0.0073 EUR (**−94% cost**); static-policy 59.4%;
+least-cost/difficulty-router 44–46%. On these objective tasks aggressive cost routing **trades accuracy
 for cost**.
 
 **Why this contradicts the judge (a methodological finding).** We re-scored 300 objective answers with
@@ -337,8 +337,10 @@ OpenAI+Mistral pair (`MULTI_PROVIDER_EVALUATION_PLAN.md`);
 (`GPU_SELF_HOSTING_VALIDATION_PLAN.md`);
 (3) **multi-judge + human** quality evaluation with agreement statistics
 (`QUALITY_EVALUATION_PROTOCOL.md`);
-(4) **multi-judge/human** quality evaluation to settle the judge-dependent quality sign — the
-**≥30-repetition** statistical run (CIs, significance, effect sizes) is **done** (§6);
+(4) **human** quality evaluation to settle the judge-dependent quality sign — a **blind 100-item
+human-eval package is ready** (`human_eval/`: shuffled, model-hidden, scoring protocol + agreement
+analyzer) awaiting evaluators; the **≥30-repetition** statistics and the **judge-vs-ground-truth**
+validity study (§6) are **done**;
 (5) **data-path enforcement in Envoy** with load testing and failover;
 (6) **RQ7 — human FinOps expert vs automated control plane** (`RQ7_HUMAN_EXPERT_PROTOCOL.md`), a
 planned human study comparing expert and automated routing/hosting decisions;

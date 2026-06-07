@@ -1,7 +1,7 @@
-{"name":"B1-premium-static","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T08:52:12.35997416+02:00","durationMs":146805,"details":{"accuracyPct":66.666667,"correct":200,"costEUR":0.06938,"total":300}}
-{"name":"B2-round-robin","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T08:54:39.173943607+02:00","durationMs":165213,"details":{"accuracyPct":49.666667,"correct":149,"costEUR":0.032903,"total":300}}
-{"name":"B3-least-cost","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T08:57:24.394598093+02:00","durationMs":101554,"details":{"accuracyPct":41,"correct":123,"costEUR":0.004182,"total":300}}
-{"name":"B4-static-policy","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T08:59:06.447789996+02:00","durationMs":53863,"details":{"accuracyPct":58,"correct":174,"costEUR":0.036003,"total":300}}
-{"name":"B5-budget-hard-block","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:00:00.321128587+02:00","durationMs":1,"details":{"accuracyPct":66.666667,"correct":200,"costEUR":0.06938,"total":300}}
-{"name":"B7-difficulty-router","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:00:00.347500547+02:00","durationMs":2,"details":{"accuracyPct":42,"correct":126,"costEUR":0.003514,"total":300}}
-{"name":"B6-ours","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:00:00.368958362+02:00","durationMs":63669,"details":{"accuracyPct":45,"correct":135,"costEUR":0.004336,"total":300}}
+{"name":"B1-premium-static","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:14:09.116925488+02:00","durationMs":98739,"details":{"accuracyPct":65.4,"correct":327,"costEUR":0.116388,"total":500}}
+{"name":"B2-round-robin","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:15:47.868306711+02:00","durationMs":88243,"details":{"accuracyPct":52.2,"correct":261,"costEUR":0.055803,"total":500}}
+{"name":"B3-least-cost","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:17:16.120818586+02:00","durationMs":63856,"details":{"accuracyPct":44,"correct":220,"costEUR":0.006435,"total":500}}
+{"name":"B4-static-policy","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:18:19.98567963+02:00","durationMs":39968,"details":{"accuracyPct":59.4,"correct":297,"costEUR":0.060491,"total":500}}
+{"name":"B5-budget-hard-block","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:18:59.962403633+02:00","durationMs":3,"details":{"accuracyPct":65.4,"correct":327,"costEUR":0.116388,"total":500}}
+{"name":"B7-difficulty-router","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:18:59.994815471+02:00","durationMs":3,"details":{"accuracyPct":45.8,"correct":229,"costEUR":0.006057,"total":500}}
+{"name":"B6-ours","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:19:00.022357907+02:00","durationMs":41267,"details":{"accuracyPct":47.2,"correct":236,"costEUR":0.007286,"total":500}}

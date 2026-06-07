@@ -1063,6 +1063,706 @@
       "system": "You are answering a multiple-choice exam.",
       "text": "A 0 - 100 V voltmeter has a guaranteed accuracy of 2 % of full scale reading. The voltage measured by the voltmeter is 75 V. The limiting error is in percentage\nA. 3.33 %.\nB. 2.66 %.\nC. 2 %.\nD. 1 %.\n\nAnswer with ONLY the letter (A, B, C, or D).",
       "reference": "B"
+    },
+    {
+      "id": "mmlu-151",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following methods is/are used for reactive or voltage compensation\nA. shunt capacitor\nB. series capacitor\nC. generation excitation control\nD. all of the above\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-152",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The ROM programmed during manufacturing process itself is called\nA. MROM\nB. PROM\nC. EPROM\nD. EEPROM\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-153",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "In 8085 name/names of the 16 bit registers is/are\nA. stack pointer.\nB. program counter.\nC. both A and B.\nD. none of these.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-154",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Stability of a transmission line can be increased by\nA. shunt capacitor\nB. series capacitor\nC. shunt reactor\nD. both A and B\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-155",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Snubber circuit is used with SCR\nA. in series.\nB. in parallel.\nC. either series or parallel.\nD. anti parallel.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-156",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The number of rings in the Bohr model of any element is determined by what?\nA. Column number on periodic table.\nB. Atomic mass.\nC. Row number on periodic table.\nD. Atomic number.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-157",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Silicon and Germanium are ________ elements.\nA. trivalant\nB. pentavalant\nC. hexavalant\nD. tetravalant\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-158",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The number of output pins in 8085 microprocessors are\nA. 27.\nB. 40.\nC. 21.\nD. 19.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-159",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If P is the power of a star connected system then what will be power of an equivalent delta connected system?\nA. P\nB. 3P\nC. P/3\nD. None of the above\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-160",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which oscillators are easy to fabricate in a monolithic IC?\nA. Crystal oscillator.\nB. Hartley oscillator.\nC. Wien bridge oscillator.\nD. Relaxation oscillator.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-161",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If all the elements in a particular network are linear, then the superposition theorem would hold, when the excitation is\nA. DC only\nB. AC only\nC. Either AC or DC\nD. An Impulse\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-162",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The feedback factor of a Wien bridge oscillator using Op-Amp is\nA. 1/3\nB. 1/4\nC. 1/2\nD. 1\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-163",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The length of bus cycle in 8086/8088 is four clock cycles, T1, T2, T3, T4 and an indeterminate number of wait state clock cycles denoted by Tw. The wait states are always inserted between\nA. T1 & T2\nB. T2 & T3\nC. T3 & T4\nD. T4 & T1\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-164",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following is not a sinusoidal oscillator?\nA. LC oscillator\nB. RC phase shift oscillator\nC. Relaxation oscillator\nD. Crystal oscillator\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-165",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A wire carrying current is bent in the form of a circular loop. Then the magnetic field around each portion of the wire will be\nA. parallel to the plane of the wire.\nB. perpendicular to the circumference of the wire.\nC. parallel to half portion and perpendicular for the other half.\nD. none of above.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-166",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What is the value of p in 24 = 2p?\nA. p = 4\nB. p = 8\nC. p = 12\nD. p = 24\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-167",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Ms. Perez drove a total of 40 miles in 5 days. She drove the same number of miles each day. How many miles did Ms. Perez drive each day?\nA. 5\nB. 7\nC. 8\nD. 9\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-168",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the quotient of −40 ÷ (−8).\nA. 1 over 5\nB. −5\nC. −1 over 5\nD. 5\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-169",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A soccer team has $90.00 to buy soccer balls. If one soccer ball costs $15.60, what is the greatest number of soccer balls the team can buy?\nA. 4\nB. 5\nC. 6\nD. 7\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-170",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "You and three friends go to a concert. The total cost for four tickets is $112. Write and solve an equation to find the cost of one ticket t.\nA. 4t = 112; $448\nB. 4t = 112; $28\nC. t over 4 = 112; $448\nD. t over 4 = 112; $28\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-171",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Use the expression below to answer the question. 3 × [(2 × 6 – 5) + (8 ÷ 4)] – 1 What is the value of the expression?\nA. 9\nB. 11\nC. 26\nD. 32\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-172",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Write 1 and 1 over 11 as a whole or mixed number in simplest form.\nA. 1.1 over 11\nB. 11 over 11\nC. 12 over 11\nD. 11 over 12\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-173",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the quotient of 2.16 ÷ 0.06.\nA. 3.6\nB. 36\nC. 0.01272\nD. 12.72\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-174",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the difference of 142.76 – 16.5.\nA. 159.26\nB. 2.224\nC. 14,111\nD. 126.26\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-175",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the quotient of 5.04/0.7\nA. 0.72\nB. 0.702\nC. 10.0571\nD. 7.2\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-176",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Jimmy and Kima are going on a trip. They will drive for three days. The first day they will drive 182 miles. The second day they will drive 439 miles. The third day they will drive 217 miles. Which expression is the closest estimate of how many miles Jimmy and Kima will drive on their trip?\nA. 150 + 400 + 200\nB. 200 + 400 + 200\nC. 200 + 450 + 200\nD. 200 + 500 + 200\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-177",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What is the remainder of 21 divided by 7?\nA. 21\nB. 7\nC. 1\nD. None of these\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-178",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Maddie will ride her bike a total of 56 miles over 7 days. She will ride the same number of miles each day. What is the total number of miles Maddie will ride each day?\nA. 8\nB. 9\nC. 49\nD. 63\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-179",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the number that makes the statement 48 over 88 = ? over 11 true.\nA. 6\nB. 11\nC. 8\nD. 5\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-180",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which is the best buy?\nA. 10 bars of soap for $23.20\nB. 16 bars of soap for $36.48\nC. 13 bars of soap for $29.51\nD. 12 bars of soap for $27.60\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-181",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Trish’s resting heart rate is 50 beats per minute. For every minute she exercises, her heart rate increases 5 beats per minute. How long will it take her to reach a heart rate of 120 beats per minute?\nA. 5 minutes\nB. 14 minutes\nC. 34 minutes\nD. 70 minutes\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-182",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the median in the set of data 23, 13, 18, 29, 32, 25.\nA. 18\nB. 24\nC. 25\nD. 29\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-183",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Jack picks 60 apples from an apple tree. He uses 12 of them to make applesauce. He places the remaining apples equally into 6 gift baskets. Which equation can be used to determine the numberof apples, a, that Jack places into each gift basket?\nA. (60/6)—12=a\nB. (60—12)/6=a\nC. (60-6)-12=a\nD. (60+12)/6=a\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-184",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A certain map uses a scale of 1 inch equals 25 miles. How many miles are represented by 5 inches on this map?\nA. 5\nB. 25\nC. 50\nD. 125\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-185",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Simplify (2 + 5)^2 − 42.\nA. 7\nB. 16\nC. 30\nD. 33\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-186",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the value of 4 ÷ 2 • 2 + 8 − 4.\nA. −12\nB. 12\nC. 8\nD. 16\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-187",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A coach rounded the number of runners at a track meet to the nearest 10. The rounded number of runners is 400. Which number could be the actual number of runners at the track meet?\nA. 382\nB. 397\nC. 406\nD. 447\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-188",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "−4 +  ( −3 )=\nA. −7\nB. −1\nC. 1\nD. 7\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-189",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Mark has a stamp collection. He has 22 stamps from Japan, 34 from Canada, and 17 from Mexico. How many stamps does he have in all?\nA. 53\nB. 63\nC. 73\nD. 83\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-190",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Identify a solution for the equation x + 2.7 = 8.4 from the given numbers.\nA. 11.1\nB. 5.7\nC. 3.7\nD. 22.68\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-191",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the number that makes the statement true: 0.32 g = _ cg.\nA. 32\nB. 3.2\nC. 3,200\nD. 320\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-192",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Find the product of 5.7(8) mentally using the Distributive Property.\nA. 46.4\nB. 456\nC. 4.56\nD. 45.6\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-193",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What is the quotient for the expression 2,314 / 4?\nA. 508\nB. 508 r2\nC. 578\nD. 578 r2\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-194",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Rosa has a goal of running a total of 100 miles this month. Each day that she ran, she ran 5 miles. Which expression could Rosa use to determine how many miles she has left to run after running for d days?\nA. 100 — 5d\nB. 5d+ 100\nC. 100 / 5d\nD. 5d\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-195",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Identify the algebraic expression that matches the word phrase: 4 times as many cans as Tom collected.\nA. 4t\nB. t over 4\nC. t − 4\nD. t + 4\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-196",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Andrew wrote the number 186,425 on the board. In which number is the value of the digit 6 exactly 10 times the value of the digit 6 in the number Andrew wrote?\nA. 681,452\nB. 462,017\nC. 246,412\nD. 125,655\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-197",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What is 123 / 8?\nA. 15 remainder 7\nB. 15 remainder 3\nC. 16 remainder 5\nD. 16 remainder 1\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-198",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Write 8 and 2 over 4 as an improper fraction in simplest form.\nA. 17 over 2\nB. 34 over 4\nC. 17 over 4\nD. 19 over 2\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-199",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What expression can be used to show 270,240 written in expanded form?\nA. 200,000 + 7,000 + 200 + 4\nB. 200,000 + 7,000 + 200 + 40\nC. 200,000 + 70,000 + 200 + 40\nD. 200,000 + 70,000 + 2,000 + 40\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-200",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A worker on an assembly line takes 7 hours to produce 22 parts. At that rate how many parts can she produce in 35 hours?\nA. 220 parts\nB. 770 parts\nC. 4 parts\nD. 110 parts\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-201",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Of the following choices the most direct exchange in the circular flow model of a private closed economy is when\nA. households provide goods to firms in exchange for wage payments.\nB. households provide resources to firms in exchange for goods.\nC. households provide revenues to firms in exchange for wage payments.\nD. firms supply goods to households in exchange for revenues.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-202",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Depreciation of the dollar is most likely to\nA. increase imports\nB. increase travel abroad\nC. increase exports\nD. decrease a trade surplus\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-203",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following increases the size of the tax multiplier?\nA. An increase in the marginal propensity to consume.\nB. An increase in the reserve ratio.\nC. An increase in the marginal propensity to save.\nD. A decrease in the spending multiplier.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-204",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following is not a scarce economic resource?\nA. Labor\nB. Capital\nC. Human wants\nD. Land\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-205",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Lower interest rates in the United States cause the value of the dollar and exports to change in which of the following ways? VALUE OF THE DOLLAR     U.S. EXPORTS\nA. Increasing     Increasing\nB. Increasing     Decreasing\nC. Decreasing     Increasing\nD. Decreasing     Unchanged\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-206",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following is true of automatic fiscal policy stabilizers?\nA. For a given level of government spending they produce a deficit during a recession and a surplus during an expansion.\nB. They serve to prolong recessionary and inflationary periods.\nC. The regressive tax system is a fundamental component of automatic stabilizers.\nD. For a given level of government spending they produce a surplus during a recession and a surplus during an expansion.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-207",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following would NOT shift the aggregate demand curve?\nA. A change in consumer confidence.\nB. A change in technology.\nC. A change in the money supply.\nD. A change in spending by state governments.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-208",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following would likely contribute to faster rates of economic growth?\nA. A more restrictive immigration policy\nB. Negative net investment\nC. Higher taxes on households and firms\nD. Higher government funding of research on clean energy supplies\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-209",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The Phillips curve represents the relationship between\nA. inflation and the money supply.\nB. unemployment and the money supply.\nC. the money supply and the real interest rate.\nD. inflation and unemployment.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-210",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If real GDP per capita grows at a rate of 10 percent a year then we can expect the standard of living to double in\nA. 10 years.\nB. 9 years.\nC. 8 years.\nD. 7 years.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-211",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The government can promote economic growth by\nA. setting a minimum wage.\nB. regulating industry.\nC. taxing firms that waste resources.\nD. job training programs.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-212",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following would shift the aggregate demand curve to the left?\nA. An increase in consumer confidence.\nB. Business firms expect lower sales in the future.\nC. Foreigners develop a preference for our products.\nD. Government increases its level of spending.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-213",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which component of a nation's balance of payments recognizes the purchase and sale of real and financial assets between nations?\nA. The capital account\nB. The official reserves account\nC. The current account\nD. The trade deficit account\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-214",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "At the break-even point\nA. the expenses of corporations just equal their revenues.\nB. household spending equals household income.\nC. total spending equals income.\nD. dissaving occurs and inventories are accumulating.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-215",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A dark room technician who develops film into photographs loses his job because few people use film cameras any more. This is an example of which of the following?\nA. Frictional unemployment\nB. Structural unemployment\nC. Cyclical unemployment\nD. Seasonal unemployment\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-216",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The fractional reserve banking system's ability to create money is lessened if\nA. households that borrow redeposit the entire loan amounts back into the banks.\nB. banks hold excess reserves.\nC. banks lend all excess reserves to borrowing customers.\nD. households increase checking deposits in banks.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-217",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If a bank has $500 in checking deposits and the bank is required to reserve $50 what is the reserve ratio? How much does the bank have in excess reserves?\nA. 10 percent $450 in excess reserves\nB. 90 percent $50 in excess reserves\nC. 90 percent $450 in excess reserves\nD. 10 percent $50 in excess reserves\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-218",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The government of a country decides to increase government spending and taxes by the same amount in order to keep a balanced budget. The MPC is 0.75. Which of the following is true of this situation? Policy Direction     Expenditure Multiplier     Tax Multiplier\nA. expansionary     4     3\nB. expansionary     4     -3\nC. contractionary     4     3\nD. contractionary     4     -3\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-219",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "How does an increasing national debt impact the market for U.S. dollars and the value of the dollar with respect to other currencies? MARKET FOR THE DOLLAR     VALUE OF THE DOLLAR\nA. Increased demand     Appreciating\nB. Increased supply     Appreciating\nC. Decreased supply     Depreciating\nD. Decreased demand     Depreciating\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-220",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What will happen to the equilibrium price level and the equilibrium quantity of output if the aggregate supply curve shifts to the left? Assume a Classical aggregate supply curve.\nA. The equilibrium price level increases while the equilibrium quantity of output decreases.\nB. The equilibrium price level decreases while the equilibrium quantity of output increases.\nC. The equilibrium price level and quantity of output increase.\nD. The equilibrium price level remains unchanged while the equilibrium quantity of output increases.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-221",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If Nation A can produce a good at lower opportunity cost than Nation B can produce the same good it is said that\nA. Nation A has comparative advantage in the production of that good.\nB. Nation B has comparative advantage in the production of that good.\nC. Nation A has absolute advantage in the production of that good.\nD. Nation B has absolute advantage in the production of that good.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-222",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "A stronger stock market is likely to cause which of the following changes in the consumption function and aggregate demand? CONSUMPTION FUNCTION     AGGREGATE DEMAND\nA. Increase     Increase\nB. No change     No change\nC. Increase     No change\nD. Increase     Increase\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-223",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Suppose the President plans to cut taxes for consumers and also plans to increase spending on the military. How does this affect real GDP and the price level?\nA. GDP increases and the price level decreases.\nB. GDP decreases and the price level increases.\nC. GDP stays the same and the price level increases.\nD. GDP increases and the price level increases.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-224",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following statements is correct in regard to the federal budget deficit and the federal debt?\nA. When the debt is negative the deficit decreases.\nB. When the debt is positive the deficit decreases.\nC. The deficit is the accumulation of past debts.\nD. When the deficit is negative the debt decreases.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-225",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Suppose that elected officials and the central bank agree to combine fiscal and monetary policies to lessen the threat of inflation. Which of the following combinations would likely accomplish this goal? FISCAL POLICY     MONETARY POLICY\nA. Decrease taxes     Increase the reserve ratio\nB. Decrease spending     Buy government securities\nC. Decrease taxes     Sell government securities\nD. Increase taxes     Increase the discount ratio\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-226",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Kevin wants shoes and grows turnips. Lisa wants turnips and makes sheet metal. Bob wants sheet metal and makes shoes. Which function of money will cater most directly to the situation at hand?\nA. Store of value\nB. Unit of account\nC. Medium of exchange\nD. Means of deferred payment\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-227",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Economic growth is best described as\nA. an increase in the production possibility curve and an increase in the natural rate of unemployment.\nB. an increase in the production possibility curve and a leftward shift in long-run aggregate supply.\nC. a decrease in the production possibility curve and a rightward shift in long-run aggregate supply.\nD. an increase in the production possibility curve and a rightward shift in long-run aggregate supply.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-228",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Suppose that households increase the demand for U.S. Treasury bonds as financial assets. Which of the following accurately describes changes in the money market the interest rate and the value of the dollar in foreign currency markets? MONEY MARKET     INTEREST RATE     DOLLAR\nA. Increased supply     Rising     Appreciates\nB. Increased demand     Rising     Appreciates\nC. Decreased demand     Falling     Appreciates\nD. Decreased demand     Falling     Depreciates\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-229",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Expansionary fiscal policy would best be prescribed to\nA. eliminate a recessionary gap\nB. reduce inflation\nC. reduce the interest rate\nD. eliminate an inflationary gap\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-230",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following could cause the aggregate demand curve to shift to the left?\nA. An increase in the money supply.\nB. Contractionary demand management policies.\nC. Expansionary demand management policies.\nD. An increase in government spending.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-231",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "At the peak of a typical business cycle which of the following is likely the greatest threat to the macroeconomy?\nA. Unemployment\nB. Bankruptcy\nC. Declining labor productivity\nD. Inflation\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-232",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following choices is most likely to create the greatest decrease in real GDP?\nA. The government decreases spending matched with a decrease in taxes.\nB. The government increases spending with no increase in taxes.\nC. The government decreases spending with no change in taxes.\nD. The government holds spending constant while increasing taxes.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-233",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The CPI is calculated for each by\nA. week; The Bureau of Economic Analysis\nB. month; The Bureau of Economic Analysis\nC. month; The Bureau of Labor Statistics\nD. quarter; The Bureau of Economic Analysis\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-234",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following creates the trade-offdepicted by the Phillips curve?\nA. A rightward shift in the aggregate supply curve\nB. An increase in input costs that corresponds with an increase in unemployment\nC. An increase in output that corresponds with a decrease in the price level\nD. A rightward shift in the aggregate demand curve\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-235",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What will happen to the equilibrium price level and the equilibrium quantity of output if consumer confidence increases? Assume an upward sloping aggregate supply curve.\nA. The equilibrium price level increases while the equilibrium quantity of output decreases.\nB. The equilibrium price level decreases while the equilibrium quantity of output increases.\nC. The equilibrium price level and quantity of output increase.\nD. The equilibrium price level and quantity of output decrease.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-236",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "You buy 100 shares in XYZ Corporation on the Internet and your broker charges you $29.95.\nA. This will increase the investment component of GDP and therefore overall GDP.\nB. This has no effect on GDP.\nC. This will increase GDP by $29.95.\nD. This will increase GDP by the cost of the shares minus $29.95.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-237",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Higher levels of consumer wealth and optimism would likely have which of the following changes in the market for loanable funds? MARKET FOR LOANABLE FUNDS     INTEREST RATE\nA. Increase in supply     Rising\nB. Increase in demand     Buying Rising\nC. Decrease in demand     Falling\nD. Decrease in supply     Rising\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-238",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following is not an addition to national income?\nA. Wages\nB. Salaries\nC. Interest\nD. Depreciation of physical capital\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-239",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What will happen to the equilibrium price and the equilibrium quantity of good Z when the price of good X which is a close substitute for Z rises?\nA. The equilibrium price will rise and the equilibrium quantity will fall.\nB. The equilibrium price will fall and the equilibrium quantity will rise.\nC. The equilibrium price and the equilibrium quantity will both rise.\nD. The equilibrium price and the equilibrium quantity will both fall.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-240",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following is a predictable advantage of expansionary monetary policy in a recession?\nA. Decreases aggregate demand so that the price level falls.\nB. Increases aggregate demand which increases real GDP and increases employment.\nC. Increases unemployment but low prices negate this effect.\nD. It keeps interest rates high which attracts foreign investment.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-241",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "What is the main contrast between the short-run and long-run Phillips curve?\nA. In the short run there is a positive relationship between inflation and unemployment and in the long run the relationship is negative.\nB. In the short run there is a positive relationship between inflation and unemployment and in the long run the relationship is constant.\nC. In the short run there is a negative relationship between inflation and unemployment and in the long run the relationship is positive.\nD. In the short run there is a negative relationship between inflation and unemployment and in the long run the relationship is constant.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-242",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following likely results in a permanent increase in a nation's productive capacity?\nA. A decline in the birth rate\nB. Declining adult literacy rates\nC. Widespread relocation of manufacturing firms to low-wage nations\nD. National program of child immunization\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-243",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If the economy is experiencing a recession how will a plan to decrease taxes for consumers and increase spending on government purchases affect real gross domestic product (GDP) and the price level?\nA. real GDP rises and the price level falls.\nB. real GDP falls and the price level rises.\nC. real GDP rises and the price level rises.\nD. real GDP falls and the price level falls.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-244",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Sue loses her job at a shoe factory when the economy falls into a recession. Sue is\nA. frictionally unemployed.\nB. cyclically unemployed.\nC. seasonally unemployed.\nD. structurally unemployed.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-245",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "The United States produces rice in a competitive market. With free trade the world price is lower than the domestic price. What must be true?\nA. The United States begins to import rice to make up for a domestic shortage.\nB. The United States begins to export rice to make up for a domestic shortage.\nC. The United States begins to import rice to eliminate a domestic surplus.\nD. The United States begins to export rice to eliminate a domestic surplus.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "A"
+    },
+    {
+      "id": "mmlu-246",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Which of the following is NOT a major cost of inflation?\nA. Resources will be misallocated.\nB. Wealth will be redistributed.\nC. Savings will be discouraged.\nD. Real incomes will fall.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "D"
+    },
+    {
+      "id": "mmlu-247",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "Long-run aggregate supply is most likely to increase as the result of\nA. an increase in the real interest rate\nB. increased investment in capital\nC. an increase in aggregate demand\nD. an increase in the unemployment rate\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-248",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "According to monetarist analysis a decrease in the money supply would\nA. raise the price level and output in the economy.\nB. lower the price level and output in the economy.\nC. raise the price level in the economy.\nD. lower the price level in the economy.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "B"
+    },
+    {
+      "id": "mmlu-249",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "There is a strong demand for welders in California but Bill an unemployed welder lives in New York. Bill is\nA. frictionally unemployed.\nB. cyclically unemployed.\nC. structurally unemployed.\nD. considered to be a hidden worker.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
+    },
+    {
+      "id": "mmlu-250",
+      "sensitive": false,
+      "system": "You are answering a multiple-choice exam.",
+      "text": "If households are more optimistic about the future how would the consumption function be affected?\nA. The marginal propensity to consume would increase increasing the slope of the consumption function.\nB. The entire consumption function would shift downward.\nC. The entire consumption function would shift upward.\nD. The marginal propensity to consume would decrease increasing the slope of the consumption function.\n\nAnswer with ONLY the letter (A, B, C, or D).",
+      "reference": "C"
     }
   ]
 }

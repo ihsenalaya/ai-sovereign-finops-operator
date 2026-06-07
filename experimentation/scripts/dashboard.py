@@ -130,11 +130,15 @@ def main():
 
     # --- Recommended next actions (the user's plan) with auto-derived status ---
     contradiction_done = has("results/judge_vs_truth_summary.md")
+    he_pkg = has("human_eval/sheet.csv")
+    he_done = bool(glob.glob("human_eval/sheet_*.csv"))
     actions = [
         (contradiction_done, "Investigate exact-match vs judge contradiction",
          "RESOLVED — judge rates 81% of *wrong* answers acceptable (r=0.12); see results/judge_vs_truth_summary.md" if contradiction_done else "todo"),
-        (False, "Human evaluation on 100 examples", "TODO — needs human evaluators (package can be prepared)"),
-        (prompts >= 500, f"Increase dataset to >=500 prompts", f"{prompts} prompts now (40 synthetic + 300 public GSM8K/MMLU)"),
+        (he_done, "Human evaluation on 100 examples",
+         "scored — see human_eval/human_eval_summary.md" if he_done else
+         ("PACKAGE READY (100 blind items) — awaiting evaluators; see human_eval/README.md" if he_pkg else "TODO")),
+        (prompts >= 500, "Increase dataset to >=500 prompts", f"{prompts} prompts (40 synthetic + 500 public GSM8K/MMLU)"),
         (False, "Live gateway routing benchmark under load", "TODO — requires the cluster"),
         (False, "Artifact packaging (GitHub + Zenodo DOI)", "TODO — repo public step pending"),
     ]
