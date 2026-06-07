@@ -1,8 +1,8 @@
 strategy,correct,total,accuracy_pct,total_cost_eur,latency_p95_ms
-B1-premium-static,21,30,70.00,0.006705,1208.00
-B2-round-robin,13,30,43.33,0.003233,991.00
-B3-least-cost,10,30,33.33,0.000272,699.00
-B4-static-policy,21,30,70.00,0.006705,1208.00
-B5-budget-hard-block,21,30,70.00,0.006705,1208.00
-B7-difficulty-router,10,30,33.33,0.000272,699.00
-B6-ours,12,30,40.00,0.000474,758.00
+B1-premium-static,200,300,66.67,0.069380,781.00
+B2-round-robin,149,300,49.67,0.032903,780.00
+B3-least-cost,123,300,41.00,0.004182,962.00
+B4-static-policy,174,300,58.00,0.036003,773.00
+B5-budget-hard-block,200,300,66.67,0.069380,781.00
+B7-difficulty-router,126,300,42.00,0.003514,696.00
+B6-ours,135,300,45.00,0.004336,849.00

@@ -32,9 +32,14 @@ routing to the real EU provider (Mistral)** where the blind baseline commits 40 
 sustains **100% request availability with 0% budget overrun** under a tight budget where a hard-block
 policy drops to 60%. The managed-vs-self-hosted break-even (RQ6) remains a **modeled** prediction to be
 validated on real GPUs. A **30-repetition** run (temperature 0.7) confirms the cost reduction is highly
-significant (p ≈ 3×10⁻¹¹, Cohen d ≈ −43) with quality at least comparable, at a significant but bounded
-latency increase (§6). All code, datasets, cached responses, and analysis are released; we present this
-as preliminary evidence and a reproducible framework, not a universal claim.
+significant (p ≈ 3×10⁻¹¹, Cohen d ≈ −43) at a significant but bounded latency increase (§6). On
+**quality we are deliberately careful**: an LLM-judge finds Ours comparable on open-ended workloads,
+but on **300 objective public-benchmark items (GSM8K + MMLU)** Ours **trades accuracy for cost**
+(45.0% vs 66.7% premium, −94% cost); we further show the LLM-judge **over-rates incorrect answers**
+(81.1% of wrong answers rated "acceptable"), so we report exact-match where ground truth exists and do
+**not** claim universal quality preservation. We frame the contribution as a **governance layer**
+(sovereignty/budget/attribution) with a favourable cost/quality trade-off, not a quality-free lunch.
+All code, datasets, cached responses, and analysis are released as a reproducible framework.
 
 ## 1. Introduction
 
@@ -208,18 +213,24 @@ We therefore claim only that *quality remained comparable within the evaluated s
 statistically supported statement to the multi-repetition, multi-judge protocol
 (§8, `QUALITY_EVALUATION_PROTOCOL.md`).
 
-### RQ2b — Objective accuracy on a public benchmark (GSM8K)
-To remove judge bias and test generality beyond synthetic workloads, we also evaluate on **30 real
-GSM8K** grade-school math problems (`datasets-public/gsm8k.json`), scored by **objective exact-match**
-on the final integer (no LLM judge; `results-bench/rq_benchmark.csv`). Here the picture differs and we
-report it plainly: premium-static (gpt-4o) reaches **70%** accuracy at 0.0067 EUR, whereas **Ours drops
-to 40%** at 0.00047 EUR (−93% cost), and least-cost/difficulty-router to 33%. On a **hard reasoning**
-task the cheap models genuinely fail, so aggressive cost routing trades accuracy for cost — exposing
-that our static **quality priors do not capture task-specific reasoning difficulty**. This is an honest
-limitation, not a tuned result: it motivates (i) per-task quality calibration and (ii) grafting a
-**learned difficulty predictor** (Hybrid-LLM/RouteLLM, §9) onto our governance layer, and it shows the
-RQ2 quality-preservation result is **workload-dependent** (it holds for the open-ended enterprise
-workloads, not for hard math). Cost attribution, sovereignty and budget governance are unaffected.
+### RQ2b — Objective accuracy on public benchmarks + judge validity
+To remove judge bias and test generality, we evaluate on **300 real public-benchmark items** — 150
+**GSM8K** (math, numeric) and 150 **MMLU** (multiple-choice A–D) — scored by **objective exact-match**
+(no LLM judge; `datasets-public/`, `results-bench/rq_benchmark.csv`). Premium-static (gpt-4o) reaches
+**66.7%** accuracy at 0.069 EUR; **Ours 45.0%** at 0.0043 EUR (**−94% cost**); static-policy 58.0%;
+least-cost/difficulty-router 41–42%. On these objective tasks aggressive cost routing **trades accuracy
+for cost**.
+
+**Why this contradicts the judge (a methodological finding).** We re-scored 300 objective answers with
+*both* exact-match and the LLM judge (`results/judge_vs_truth_summary.md`): the judge rated **81.1% of
+objectively *incorrect* answers as "acceptable" (≥3)**, with nearly identical mean judge scores for
+correct (4.49) vs incorrect (4.14) answers and near-zero point-biserial correlation (r=0.12). **The
+LLM-as-judge over-estimates quality on objective tasks** — it cannot distinguish fluent-but-wrong from
+correct. This explains the RQ2-vs-RQ2b gap, and we adopt the consequence throughout: **report
+judge-based quality only for open-ended workloads, exact-match for tasks with ground truth, and never
+claim quality preservation from the judge alone.** The accuracy gap also shows our static **quality
+priors miss task-specific reasoning difficulty**, motivating a learned difficulty predictor (§9). Cost
+attribution, sovereignty and budget governance are unaffected. See `figures/fig_judge_vs_truth.png`.
 
 ### RQ3 — Latency and overhead (Figure 4, Table 3)
 The **routing decision adds tens of microseconds** (B6 ≈ 26.5 µs/request) — negligible vs network

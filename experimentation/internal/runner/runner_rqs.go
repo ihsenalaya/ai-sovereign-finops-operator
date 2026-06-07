@@ -424,20 +424,26 @@ func fpayback(r breakevenengine.Result) string {
 }
 
 var lastNumRe = regexp.MustCompile(`-?\d[\d,]*\.?\d*`)
+var letterRe = regexp.MustCompile(`\b([A-D])\b`)
 
-// numericCorrect checks whether the answer's last number equals the reference
-// (objective exact-match for numeric benchmarks like GSM8K; no LLM judge).
-func numericCorrect(answer, ref string) bool {
-	nums := lastNumRe.FindAllString(strings.ReplaceAll(answer, ",", ""), -1)
-	if len(nums) == 0 {
-		return false
+// AnswerCorrect does objective exact-match against the reference (no LLM judge):
+// numeric references (GSM8K) compare the answer's last number; single-letter
+// references (MMLU A-D) compare the first standalone capital letter.
+func AnswerCorrect(answer, ref string) bool {
+	ref = strings.TrimSpace(ref)
+	if r, err := strconv.ParseFloat(strings.ReplaceAll(ref, ",", ""), 64); err == nil {
+		nums := lastNumRe.FindAllString(strings.ReplaceAll(answer, ",", ""), -1)
+		if len(nums) == 0 {
+			return false
+		}
+		g, err1 := strconv.ParseFloat(strings.TrimRight(nums[len(nums)-1], "."), 64)
+		return err1 == nil && math.Abs(g-r) < 1e-6
 	}
-	g, err1 := strconv.ParseFloat(strings.TrimRight(nums[len(nums)-1], "."), 64)
-	r, err2 := strconv.ParseFloat(strings.ReplaceAll(ref, ",", ""), 64)
-	if err1 != nil || err2 != nil {
-		return false
+	// Letter (MCQ) reference.
+	if m := letterRe.FindString(strings.ToUpper(answer)); m != "" {
+		return strings.EqualFold(m, ref)
 	}
-	return math.Abs(g-r) < 1e-6
+	return false
 }
 
 // RunBenchmark routes each strategy over a public benchmark (ground-truth answers)
@@ -477,7 +483,7 @@ func (e *Engine) RunBenchmark(ctx context.Context, bws []workload.Workload) erro
 					a.total++
 					a.cost += e.cost(m, resp.Usage)
 					a.lat = append(a.lat, float64(resp.LatencyMS))
-					if numericCorrect(resp.Text, p.Reference) {
+					if AnswerCorrect(resp.Text, p.Reference) {
 						a.correct++
 					}
 				}

@@ -161,6 +161,7 @@ def main():
         ("fig_stats_cost.png", "Figure S1 — Cost per rep, mean ±95% CI (N=30)"),
         ("fig_stats_quality.png", "Figure S2 — Quality per rep, mean ±95% CI (N=30)"),
         ("fig_stats_latency.png", "Figure S3 — Latency per rep, mean ±95% CI (N=30)"),
+        ("fig_judge_vs_truth.png", "Figure S4 — LLM-judge score by objective correctness (judge over-rates wrong answers)"),
     ]
     pdf.add_page()
     pdf.set_font("DejaVu", "B", 14)
