@@ -77,19 +77,23 @@
       ]
     },
     {
-      "type": "barchart",
-      "title": "Requests violating sovereignty (by app / severity)",
-      "description": "Real number of requests each app routed to a non-compliant (forbidden-zone) provider.",
+      "type": "bargauge",
+      "title": "Requests violating sovereignty (by app)",
+      "description": "Current number of requests each app routed to a non-compliant (forbidden-zone) provider. Critical zone violations shown (warning count is identical).",
       "datasource": "${datasource}",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true },
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "red" },
           "thresholds": { "mode": "absolute", "steps": [ { "color": "orange", "value": 0 }, { "color": "red", "value": 1 } ] }
         }
       },
       "targets": [{
-        "expr": "sum by (namespace, application, severity) (ai_finops_sovereignty_requests_total{severity=~\"critical|warning\"})",
-        "legendFormat": "{{namespace}}/{{application}} — {{severity}}",
+        "expr": "sum by (namespace, application) (ai_finops_sovereignty_requests_total{severity=\"critical\"})",
+        "legendFormat": "{{namespace}}/{{application}}",
+        "instant": true,
         "refId": "A"
       }]
     },
