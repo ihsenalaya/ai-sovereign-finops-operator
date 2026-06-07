@@ -90,7 +90,7 @@ type recommendationJSON struct {
 func Assumptions() []string {
 	return []string{
 		"Usage is sourced from the configured telemetry collector; the fake collector returns demo data.",
-		"Costs use AIProvider pricing per million tokens; models without an AIProvider are reported as unpriced.",
+		"Costs use each model's AIProvider price per million tokens (the demo uses real published list prices, EUR = USD x 0.92); models without an AIProvider are reported as unpriced.",
 		"Mixed currencies are not converted; the dominant currency is reported as-is.",
 		"This report supports audit preparation; it is not a legal compliance attestation.",
 		"The MVP is reportOnly and never blocks or modifies gateway traffic.",

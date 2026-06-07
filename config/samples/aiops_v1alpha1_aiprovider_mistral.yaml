@@ -1,0 +1,23 @@
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: mistral-france
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+spec:
+  type: mistral
+  region: france
+  dataResidency: france
+  managed: true
+  # Real list price for Mistral Small (Mistral AI / EU): published USD 0.10 in /
+  # 0.30 out per 1M tokens (June 2026), converted to EUR at 1 USD = 0.92 EUR.
+  # Source: https://mistral.ai/pricing/
+  pricing:
+    currency: EUR
+    inputTokenPricePerMillion: "0.092"
+    outputTokenPricePerMillion: "0.276"
+  compliance:
+    allowedForSensitiveData: true
+    allowedCountries:
+      - FR
+      - EU

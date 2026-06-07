@@ -27,7 +27,7 @@ spec:
     team: rh
     application: chatbot-rh
   period: monthly
-  budgetEUR: 50          # rh spend (~60 EUR) exceeds this on purpose
+  budgetEUR: 35          # rh spend (~41 EUR at real prices) exceeds this on purpose
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100

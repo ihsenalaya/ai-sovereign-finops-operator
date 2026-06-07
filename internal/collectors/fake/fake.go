@@ -34,7 +34,14 @@ type Collector struct {
 // New returns a fake collector using the built-in demo profile.
 func New() *Collector { return &Collector{Samples: DemoSamples()} }
 
-// DemoSamples is the canonical demo dataset, aligned with config/samples.
+// DemoSamples is the canonical demo dataset, aligned with config/samples. The
+// token volumes are illustrative monthly figures; cost is computed from the real
+// per-model list prices declared on the AIProviders (see config/samples), so the
+// demo reflects genuine token economics rather than invented prices:
+//   - gpt-4o:        2.50 USD in / 10.00 USD out per 1M tokens (OpenAI / Azure)
+//   - mistral-small: 0.10 USD in /  0.30 USD out per 1M tokens (Mistral)
+// (EUR in the samples = USD list price x 0.92, June 2026.) Each sample's Provider
+// matches the model's cataloged AIProvider so sovereignty zones resolve correctly.
 func DemoSamples() []collectors.UsageSample {
 	return []collectors.UsageSample{
 		{
@@ -45,7 +52,7 @@ func DemoSamples() []collectors.UsageSample {
 		},
 		{
 			Namespace: "rh", Application: "chatbot-rh", Team: "rh",
-			Provider: "azure-openai-france", Model: "mistral-small",
+			Provider: "mistral-france", Model: "mistral-small",
 			Requests: 60000, InputTokens: 3_000_000, OutputTokens: 800_000,
 			LatencyMillis: 420, Errors: 30,
 		},
