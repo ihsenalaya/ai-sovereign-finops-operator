@@ -32,6 +32,8 @@ type Engine struct {
 	J          *journal.Journal
 	ResultsDir string
 	MaxTokens  int
+	Temp       float64 // answer temperature (0 = deterministic; >0 for multi-rep variation)
+	Bypass     bool    // when true, skip answer/judge caches (fresh calls each rep)
 
 	answerCache map[string]llm.Response // modelID|promptID -> response
 	acceptCache map[string]float64      // modelID|promptID -> 1..5
@@ -73,8 +75,10 @@ func estTokens(s string) int {
 // modeled cost/latency.
 func (e *Engine) callModel(ctx context.Context, m catalog.Model, p workload.Prompt) (llm.Response, bool, error) {
 	key := m.ID + "|" + p.ID
-	if r, ok := e.answerCache[key]; ok {
-		return r, m.Real, nil
+	if !e.Bypass {
+		if r, ok := e.answerCache[key]; ok {
+			return r, m.Real, nil
+		}
 	}
 	if !m.Real {
 		in := estTokens(p.System + p.Text)
@@ -83,7 +87,9 @@ func (e *Engine) callModel(ctx context.Context, m catalog.Model, p workload.Prom
 			Usage:     llm.Usage{InputTokens: in, OutputTokens: 80},
 			LatencyMS: int64(m.LatencyPriorMS), Model: m.ID, Provider: m.Provider,
 		}
-		e.answerCache[key] = r
+		if !e.Bypass {
+			e.answerCache[key] = r
+		}
 		return r, false, nil
 	}
 	msgs := []llm.Message{}
@@ -91,12 +97,14 @@ func (e *Engine) callModel(ctx context.Context, m catalog.Model, p workload.Prom
 		msgs = append(msgs, llm.Message{Role: "system", Content: p.System})
 	}
 	msgs = append(msgs, llm.Message{Role: "user", Content: p.Text})
-	r, err := e.clientFor(m).Chat(ctx, m.APIModel, msgs, e.MaxTokens, 0)
+	r, err := e.clientFor(m).Chat(ctx, m.APIModel, msgs, e.MaxTokens, e.Temp)
 	if err != nil {
 		return llm.Response{}, true, err
 	}
 	r.Model = m.ID
-	e.answerCache[key] = r
+	if !e.Bypass {
+		e.answerCache[key] = r
+	}
 	return r, true, nil
 }
 
@@ -110,14 +118,18 @@ func (e *Engine) acceptability(ctx context.Context, m catalog.Model, p workload.
 		return 1 + 4*m.QualityPrior, nil // modeled mapping to 1..5
 	}
 	key := m.ID + "|" + p.ID
-	if s, ok := e.acceptCache[key]; ok {
-		return s, nil
+	if !e.Bypass {
+		if s, ok := e.acceptCache[key]; ok {
+			return s, nil
+		}
 	}
 	s, err := e.Judge.Acceptability(ctx, p.Text, answer)
 	if err != nil {
 		return 0, err
 	}
-	e.acceptCache[key] = s
+	if !e.Bypass {
+		e.acceptCache[key] = s
+	}
 	return s, nil
 }
 
@@ -154,6 +166,7 @@ type callRecord struct {
 	Win                                                                        string
 	SovViolation                                                               bool
 	Reroute                                                                    bool
+	Rep                                                                        int
 }
 
 func percentile(v []float64, p float64) float64 {

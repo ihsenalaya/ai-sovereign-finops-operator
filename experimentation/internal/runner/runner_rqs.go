@@ -6,6 +6,7 @@ import (
 	"math"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/imperium/ai-sovereign-finops-operator/experimentation/internal/catalog"
 	"github.com/imperium/ai-sovereign-finops-operator/experimentation/internal/router"
@@ -417,6 +418,105 @@ func fpayback(r breakevenengine.Result) string {
 		return "n/a"
 	}
 	return f2(r.PaybackMonths)
+}
+
+// RunStatsMatrix runs the full strategy x workload x prompt matrix `reps` times
+// at temperature e.Temp with caches bypassed, so each repetition is an
+// independent sample. It records cost/latency/quality per call (acceptability
+// only; no pairwise) and writes results/calls_stats.csv with a `rep` column for
+// statistical analysis (CIs, significance, effect sizes via scripts/stats.py).
+func (e *Engine) RunStatsMatrix(ctx context.Context, reps int) error {
+	global := router.SovScenario{Name: "global", ExternalProvidersAllowed: true}
+	concurrency := 6
+	var all []callRecord
+
+	// task is a routing decision awaiting its (concurrent) API call.
+	type task struct {
+		w   workload.Workload
+		p   workload.Prompt
+		s   string
+		m   catalog.Model
+		rep int
+	}
+
+	for rep := 1; rep <= reps; rep++ {
+		rep := rep
+		err := e.J.Run("STATS-matrix", fmt.Sprintf("rep-%02d", rep), func() (map[string]any, error) {
+			// Phase 1 (sequential, CPU-only, safe for stateful round-robin): decide routes.
+			var tasks []task
+			for _, strat := range router.All() {
+				sname := strat.Name()
+				for wi := range e.Workloads {
+					w := e.Workloads[wi]
+					for _, p := range w.Prompts {
+						rctx := router.RequestContext{
+							Team: w.Team, Namespace: w.Namespace, Sensitive: p.Sensitive || w.DefaultSensitive,
+							AllowedModels: w.AllowedModels, PremiumModel: w.PremiumModel, MinQuality: w.MinQuality,
+							BudgetTotalEUR: w.MonthlyBudgetEUR, BudgetUsedEUR: 0, Scenario: global,
+							EstInputTokens: estTokens(p.System + p.Text), EstOutputTokens: 200,
+						}
+						dec := strat.Choose(rctx, e.Models)
+						if dec.Blocked {
+							continue
+						}
+						tasks = append(tasks, task{w: w, p: p, s: sname, m: e.Models[dec.ModelID], rep: rep})
+					}
+				}
+			}
+			// Phase 2 (concurrent): real API answer + judge per task.
+			recs := make([]callRecord, len(tasks))
+			errs := make([]error, len(tasks))
+			sem := make(chan struct{}, concurrency)
+			var wg sync.WaitGroup
+			for i := range tasks {
+				wg.Add(1)
+				sem <- struct{}{}
+				go func(i int) {
+					defer wg.Done()
+					defer func() { <-sem }()
+					t := tasks[i]
+					resp, _, err := e.callModel(ctx, t.m, t.p)
+					if err != nil {
+						errs[i] = err
+						return
+					}
+					q, err := e.acceptability(ctx, t.m, t.p, resp.Text)
+					if err != nil {
+						errs[i] = err
+						return
+					}
+					recs[i] = callRecord{
+						Strategy: t.s, Workload: t.w.Name, Team: t.w.Team, Namespace: t.w.Namespace,
+						PromptID: t.p.ID, ModelID: t.m.ID, Provider: t.m.Provider, Scenario: "global",
+						Real: t.m.Real, Modeled: !t.m.Real, InTok: resp.Usage.InputTokens, OutTok: resp.Usage.OutputTokens,
+						CostEUR: e.cost(t.m, resp.Usage), LatencyMS: resp.LatencyMS, Quality1to5: q,
+						Reroute: t.m.ID != t.w.PremiumModel, Rep: t.rep,
+					}
+				}(i)
+			}
+			wg.Wait()
+			for _, err := range errs {
+				if err != nil {
+					return nil, err
+				}
+			}
+			all = append(all, recs...)
+			return map[string]any{"rep": rep, "calls": len(recs)}, nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	rows := make([][]string, 0, len(all))
+	for _, r := range all {
+		rows = append(rows, []string{
+			itoa(r.Rep), r.Strategy, r.Workload, r.Team, r.Namespace, r.PromptID, r.ModelID, r.Provider,
+			b2s(r.Real), itoa(r.InTok), itoa(r.OutTok), f(r.CostEUR), itoa64(r.LatencyMS), f2(r.Quality1to5), b2s(r.Reroute),
+		})
+	}
+	return writeCSV(filepath.Join(e.ResultsDir, "calls_stats.csv"),
+		[]string{"rep", "strategy", "workload", "team", "namespace", "prompt", "model", "provider",
+			"real", "in_tokens", "out_tokens", "cost_eur", "latency_ms", "quality_1to5", "reroute"}, rows)
 }
 
 // RunAblation isolates the contribution of the scoring terms (Fig 8). Each

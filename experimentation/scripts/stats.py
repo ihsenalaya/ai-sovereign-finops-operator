@@ -54,10 +54,12 @@ def cohens_d(a, b):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default="results")
-    ap.add_argument("--metric", default="latency_ms", help="numeric column in calls.csv")
+    ap.add_argument("--calls", default="", help="explicit calls CSV (default: <results>/calls.csv)")
+    ap.add_argument("--metric", default="latency_ms", help="numeric column in the calls CSV")
     args = ap.parse_args()
 
-    calls = pd.read_csv(f"{args.results}/calls.csv")
+    path = args.calls or f"{args.results}/calls.csv"
+    calls = pd.read_csv(path)
     served = calls[(calls.get("blocked") == False)] if "blocked" in calls else calls
     metric = args.metric
     if metric not in served.columns:

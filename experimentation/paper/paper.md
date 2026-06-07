@@ -1,7 +1,7 @@
 # Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways
 
-**Draft v0.3 — two-provider (OpenAI US + Mistral EU) evaluation.** A complete write-up built from real
-measurements (`../results/`). Numbers are reproduced from the committed run; figures are in
+**Draft v0.4 — two-provider (OpenAI US + Mistral EU) evaluation with a 30-repetition statistical run.**
+A complete write-up built from real measurements (`../results/`, `../results-stats/`). Numbers are reproduced from the committed run; figures are in
 `../figures/`; citations use the verified `references.bib` (keys in brackets). Items explicitly
 labeled *modeled* are not real measurements (see §8). This is preliminary work toward a Q1 submission;
 the gap to camera-ready is tracked in `ROADMAP_Q1.md`.
@@ -31,8 +31,10 @@ for a sovereignty-blind baseline, and under an **EU-only** policy it keeps **100
 routing to the real EU provider (Mistral)** where the blind baseline commits 40 violations; and it
 sustains **100% request availability with 0% budget overrun** under a tight budget where a hard-block
 policy drops to 60%. The managed-vs-self-hosted break-even (RQ6) remains a **modeled** prediction to be
-validated on real GPUs. All code, datasets, cached responses, and analysis are released; we present
-this as preliminary evidence and a reproducible framework, not a universal claim.
+validated on real GPUs. A **30-repetition** run (temperature 0.7) confirms the cost reduction is highly
+significant (p ≈ 3×10⁻¹¹, Cohen d ≈ −43) with quality at least comparable, at a significant but bounded
+latency increase (§6). All code, datasets, cached responses, and analysis are released; we present this
+as preliminary evidence and a reproducible framework, not a universal claim.
 
 ## 1. Introduction
 
@@ -223,6 +225,25 @@ is what produces the saving. Removing the **quality term** drives spend to the f
 lowers quality to 0.863 — the quality term is what protects it. The latency term has negligible effect
 here. The full system attains the cost saving *and* the quality floor.
 
+### Statistical significance (N=30 repetitions)
+To move beyond the single deterministic pass, we re-ran the full matrix **30 times** at temperature
+0.7 with caches bypassed (independent samples; judge = gpt-4o-mini to bound cost), and tested each
+strategy against premium-static on the per-repetition distributions (Mann-Whitney U, Cliff's δ,
+Cohen's d, 95% CIs; `scripts/stats.py`, `scripts/analyze_stats.py`, `results-stats/stats_summary.md`).
+- **Cost.** Ours 0.0110 EUR/rep [0.0109, 0.0110] vs premium 0.0385 [0.0382, 0.0389] — a **71.4%
+  reduction**, p ≈ 3×10⁻¹¹, Cliff δ = −1.00, Cohen d = −43 (non-overlapping CIs): highly significant
+  with a maximal effect size.
+- **Quality.** Ours mean normalized quality 0.9587 [0.9564, 0.9611] vs premium 0.9362 — under this
+  judge Ours is **significantly higher** (p ≈ 6×10⁻¹¹, δ = +0.97, d = +3.4), while naïve least-cost is
+  significantly lower (0.869, d = −13). **Judge dependence:** the single-pass gpt-4o judge showed
+  *parity* (win-rate 50.0%); the *sign* of the small quality gap depends on the judge — exactly why a
+  multi-judge + human protocol is planned (§8). We thus claim quality is *at least comparable*.
+- **Latency.** Ours is **significantly higher** (1506 ms/rep [1459, 1553] vs 998, p ≈ 5×10⁻¹⁰,
+  d = +3.7) — confirming the routing-mix latency cost is **real, not single-pass noise** (resolving the
+  RQ3 TODO). Least-cost is lowest (707 ms); the latency/cost trade-off is now quantified.
+
+Figures `figures/fig_stats_{cost,quality,latency}.png` show means ±95% CI over the 30 repetitions.
+
 ## 7. Discussion
 
 Economic-aware routing is most valuable when a workload mixes easy and hard requests: the router sends
@@ -241,8 +262,12 @@ workloads; **modeled** self-hosting/GPU economics (RQ6); the Mistral EU model us
 DataZoneStandard (EU data zone) — strict France-only residency still relies on a modeled fallback;
 volatile cloud prices (isolated as configuration). **Construct:** acceptability/win-rate
 are quality proxies; declarative sovereignty simplifies legal reality — the system targets *audit
-preparation*, not legal compliance. **Conclusion:** one deterministic pass (temperature 0); the
-protocol supports ≥30 repetitions with significance tests and effect sizes for the camera-ready.
+preparation*, not legal compliance. **Conclusion:** beyond the deterministic single pass we now report
+a **30-repetition** run (temperature 0.7) with 95% CIs, Mann-Whitney U significance and Cliff's
+δ/Cohen's d effect sizes (§6); the cost reduction and the latency increase are highly significant with
+large effect sizes. The remaining caveat is **judge dependence** of the small quality gap (the N=30
+run used a gpt-4o-mini judge; the single-pass gpt-4o judge showed parity) — a multi-judge + human
+study is planned (`QUALITY_EVALUATION_PROTOCOL.md`).
 
 ## 9. Conclusion and Future Work
 
@@ -259,8 +284,8 @@ OpenAI+Mistral pair (`MULTI_PROVIDER_EVALUATION_PLAN.md`);
 (`GPU_SELF_HOSTING_VALIDATION_PLAN.md`);
 (3) **multi-judge + human** quality evaluation with agreement statistics
 (`QUALITY_EVALUATION_PROTOCOL.md`);
-(4) **≥30-repetition** runs with confidence intervals, significance tests and effect sizes
-(`scripts/stats.py`);
+(4) **multi-judge/human** quality evaluation to settle the judge-dependent quality sign — the
+**≥30-repetition** statistical run (CIs, significance, effect sizes) is **done** (§6);
 (5) **data-path enforcement in Envoy** with load testing and failover;
 (6) **RQ7 — human FinOps expert vs automated control plane** (`RQ7_HUMAN_EXPERT_PROTOCOL.md`), a
 planned human study comparing expert and automated routing/hosting decisions;

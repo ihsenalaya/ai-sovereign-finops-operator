@@ -158,6 +158,9 @@ def main():
         ("fig6_budget.png", "Figure 6 — Budget policy: availability vs overrun"),
         ("fig7_breakeven.png", "Figure 7 — Managed vs self-hosted break-even (modeled)"),
         ("fig8_ablation.png", "Figure 8 — Ablation of scoring terms"),
+        ("fig_stats_cost.png", "Figure S1 — Cost per rep, mean ±95% CI (N=30)"),
+        ("fig_stats_quality.png", "Figure S2 — Quality per rep, mean ±95% CI (N=30)"),
+        ("fig_stats_latency.png", "Figure S3 — Latency per rep, mean ±95% CI (N=30)"),
     ]
     pdf.add_page()
     pdf.set_font("DejaVu", "B", 14)

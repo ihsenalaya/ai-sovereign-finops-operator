@@ -28,6 +28,8 @@ func main() {
 	maxTokens := flag.Int("max-tokens", 256, "max completion tokens per answer")
 	timeoutMin := flag.Int("timeout-min", 40, "overall timeout in minutes")
 	smoke := flag.Bool("smoke", false, "run a single real call to validate the pipeline")
+	statsReps := flag.Int("stats-reps", 0, "if >0, run only the multi-repetition stats matrix with N reps (temperature>0, no cache)")
+	statsTemp := flag.Float64("stats-temp", 0.7, "answer temperature for the stats matrix")
 	// Second provider: Mistral (Azure AI Foundry serverless or Mistral La Plateforme).
 	mistralBase := flag.String("mistral-base", "", "Mistral OpenAI-compatible base URL ending in /v1 (enables 2nd provider)")
 	mistralKeyP := flag.String("mistral-key", "", "Mistral API key file (or set MISTRAL_API_KEY)")
@@ -101,6 +103,19 @@ func main() {
 
 	eng := runner.New(client, clients, quality.Judge{Client: client, Model: *judgeModel}, models, ws, j, *resultsDir)
 	eng.MaxTokens = *maxTokens
+
+	// Multi-repetition statistical run (RQ1/RQ2/RQ3 distributions) — independent
+	// samples at temperature>0 with caches bypassed; writes results/calls_stats.csv.
+	if *statsReps > 0 {
+		eng.Temp = *statsTemp
+		eng.Bypass = true
+		fmt.Printf("Stats matrix: %d reps, temp=%.2f, judge=%s -> %s/calls_stats.csv\n", *statsReps, *statsTemp, *judgeModel, *resultsDir)
+		if err := eng.RunStatsMatrix(ctx, *statsReps); err != nil {
+			die("stats-matrix", err)
+		}
+		report(j)
+		return
+	}
 
 	cachePath := *resultsDir + "/cache.json"
 	if err := eng.LoadCache(cachePath); err != nil {
