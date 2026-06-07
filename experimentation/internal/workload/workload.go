@@ -16,6 +16,9 @@ type Prompt struct {
 	Text      string `json:"text"`
 	Sensitive bool   `json:"sensitive"`
 	System    string `json:"system,omitempty"`
+	// Reference is the ground-truth answer for objective exact-match scoring
+	// (public benchmarks like GSM8K); empty for open-ended prompts (judge-scored).
+	Reference string `json:"reference,omitempty"`
 }
 
 // Workload is a family of realistic requests owned by a team/namespace.

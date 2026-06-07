@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/imperium/ai-sovereign-finops-operator/experimentation/internal/catalog"
@@ -418,6 +421,80 @@ func fpayback(r breakevenengine.Result) string {
 		return "n/a"
 	}
 	return f2(r.PaybackMonths)
+}
+
+var lastNumRe = regexp.MustCompile(`-?\d[\d,]*\.?\d*`)
+
+// numericCorrect checks whether the answer's last number equals the reference
+// (objective exact-match for numeric benchmarks like GSM8K; no LLM judge).
+func numericCorrect(answer, ref string) bool {
+	nums := lastNumRe.FindAllString(strings.ReplaceAll(answer, ",", ""), -1)
+	if len(nums) == 0 {
+		return false
+	}
+	g, err1 := strconv.ParseFloat(strings.TrimRight(nums[len(nums)-1], "."), 64)
+	r, err2 := strconv.ParseFloat(strings.ReplaceAll(ref, ",", ""), 64)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	return math.Abs(g-r) < 1e-6
+}
+
+// RunBenchmark routes each strategy over a public benchmark (ground-truth answers)
+// and scores correctness by objective exact-match — no LLM judge, so quality is
+// measured without judge bias. Writes results/rq_benchmark.csv (accuracy, cost).
+func (e *Engine) RunBenchmark(ctx context.Context, bws []workload.Workload) error {
+	global := router.SovScenario{Name: "global", ExternalProvidersAllowed: true}
+	type agg struct {
+		correct, total int
+		cost           float64
+		lat            []float64
+	}
+	rows := [][]string{}
+	for _, strat := range router.All() {
+		strat := strat
+		err := e.J.Run("BENCHMARK", strat.Name(), func() (map[string]any, error) {
+			a := &agg{}
+			for wi := range bws {
+				w := bws[wi]
+				for _, p := range w.Prompts {
+					rctx := router.RequestContext{
+						Team: w.Team, Namespace: w.Namespace, Sensitive: p.Sensitive || w.DefaultSensitive,
+						AllowedModels: w.AllowedModels, PremiumModel: w.PremiumModel, MinQuality: w.MinQuality,
+						BudgetTotalEUR: w.MonthlyBudgetEUR, Scenario: global,
+						EstInputTokens: estTokens(p.System + p.Text), EstOutputTokens: 200,
+					}
+					dec := strat.Choose(rctx, e.Models)
+					if dec.Blocked {
+						a.total++
+						continue
+					}
+					m := e.Models[dec.ModelID]
+					resp, _, err := e.callModel(ctx, m, p)
+					if err != nil {
+						return nil, err
+					}
+					a.total++
+					a.cost += e.cost(m, resp.Usage)
+					a.lat = append(a.lat, float64(resp.LatencyMS))
+					if numericCorrect(resp.Text, p.Reference) {
+						a.correct++
+					}
+				}
+			}
+			acc := 0.0
+			if a.total > 0 {
+				acc = float64(a.correct) / float64(a.total) * 100
+			}
+			rows = append(rows, []string{strat.Name(), itoa(a.correct), itoa(a.total), f2(acc), f(a.cost), f2(percentile(a.lat, 95))})
+			return map[string]any{"accuracyPct": round(acc), "correct": a.correct, "total": a.total, "costEUR": round(a.cost)}, nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return writeCSV(filepath.Join(e.ResultsDir, "rq_benchmark.csv"),
+		[]string{"strategy", "correct", "total", "accuracy_pct", "total_cost_eur", "latency_p95_ms"}, rows)
 }
 
 // RunStatsMatrix runs the full strategy x workload x prompt matrix `reps` times

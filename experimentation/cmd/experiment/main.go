@@ -30,6 +30,7 @@ func main() {
 	smoke := flag.Bool("smoke", false, "run a single real call to validate the pipeline")
 	statsReps := flag.Int("stats-reps", 0, "if >0, run only the multi-repetition stats matrix with N reps (temperature>0, no cache)")
 	statsTemp := flag.Float64("stats-temp", 0.7, "answer temperature for the stats matrix")
+	benchmarkDir := flag.String("benchmark", "", "if set, run only the public-benchmark exact-match eval over datasets in this dir")
 	// Second provider: Mistral (Azure AI Foundry serverless or Mistral La Plateforme).
 	mistralBase := flag.String("mistral-base", "", "Mistral OpenAI-compatible base URL ending in /v1 (enables 2nd provider)")
 	mistralKeyP := flag.String("mistral-key", "", "Mistral API key file (or set MISTRAL_API_KEY)")
@@ -120,6 +121,22 @@ func main() {
 	cachePath := *resultsDir + "/cache.json"
 	if err := eng.LoadCache(cachePath); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: cache load: %v\n", err)
+	}
+
+	// Public-benchmark exact-match evaluation (objective, no LLM judge).
+	if *benchmarkDir != "" {
+		bws, err := workload.Load(*benchmarkDir)
+		if err != nil {
+			die("benchmark-datasets", err)
+		}
+		fmt.Printf("Benchmark: %d workloads, %d prompts (exact-match, no judge)\n", len(bws), workload.TotalPrompts(bws))
+		if err := eng.RunBenchmark(ctx, bws); err != nil {
+			_ = eng.SaveCache(cachePath)
+			die("benchmark", err)
+		}
+		_ = eng.SaveCache(cachePath)
+		report(j)
+		return
 	}
 
 	fmt.Printf("Running experiments: %d workloads, %d prompts, judge=%s\n", len(ws), workload.TotalPrompts(ws), *judgeModel)

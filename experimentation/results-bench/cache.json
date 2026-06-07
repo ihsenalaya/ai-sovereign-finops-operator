@@ -1,0 +1,976 @@
+{
+ "answers": {
+  "gpt-4.1-nano|gsm8k-01": {
+   "Text": "4",
+   "Usage": {
+    "InputTokens": 91,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 540,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-02": {
+   "Text": "3",
+   "Usage": {
+    "InputTokens": 54,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 364,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-03": {
+   "Text": "$50,000",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 393,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-04": {
+   "Text": "81,000",
+   "Usage": {
+    "InputTokens": 62,
+    "OutputTokens": 3
+   },
+   "LatencyMS": 306,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-05": {
+   "Text": "15",
+   "Usage": {
+    "InputTokens": 135,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 295,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-06": {
+   "Text": "$68",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 452,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-07": {
+   "Text": "180",
+   "Usage": {
+    "InputTokens": 69,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 378,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-08": {
+   "Text": "160",
+   "Usage": {
+    "InputTokens": 94,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 368,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-09": {
+   "Text": "150",
+   "Usage": {
+    "InputTokens": 129,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 594,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-10": {
+   "Text": "474",
+   "Usage": {
+    "InputTokens": 85,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 314,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-11": {
+   "Text": "180",
+   "Usage": {
+    "InputTokens": 86,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 387,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-12": {
+   "Text": "$1,124",
+   "Usage": {
+    "InputTokens": 87,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 399,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-13": {
+   "Text": "4",
+   "Usage": {
+    "InputTokens": 93,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 413,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-14": {
+   "Text": "30",
+   "Usage": {
+    "InputTokens": 86,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 413,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-15": {
+   "Text": "50",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 312,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-16": {
+   "Text": "70",
+   "Usage": {
+    "InputTokens": 118,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 336,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-17": {
+   "Text": "80 + 150 = 230",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 7
+   },
+   "LatencyMS": 378,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-18": {
+   "Text": "10500",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 371,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-19": {
+   "Text": "56",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 306,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-20": {
+   "Text": "6",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 352,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-21": {
+   "Text": "16",
+   "Usage": {
+    "InputTokens": 88,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 288,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-22": {
+   "Text": "8",
+   "Usage": {
+    "InputTokens": 72,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 699,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-23": {
+   "Text": "7",
+   "Usage": {
+    "InputTokens": 82,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 675,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-24": {
+   "Text": "8",
+   "Usage": {
+    "InputTokens": 64,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 733,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-25": {
+   "Text": "$26",
+   "Usage": {
+    "InputTokens": 63,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 430,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-26": {
+   "Text": "2",
+   "Usage": {
+    "InputTokens": 91,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 392,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-27": {
+   "Text": "$258",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 281,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-28": {
+   "Text": "16",
+   "Usage": {
+    "InputTokens": 81,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 666,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-29": {
+   "Text": "25",
+   "Usage": {
+    "InputTokens": 75,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 326,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4.1-nano|gsm8k-30": {
+   "Text": "66",
+   "Usage": {
+    "InputTokens": 95,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 333,
+   "Model": "gpt-4.1-nano",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-01": {
+   "Text": "$18",
+   "Usage": {
+    "InputTokens": 91,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 442,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-02": {
+   "Text": "3",
+   "Usage": {
+    "InputTokens": 54,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 522,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-03": {
+   "Text": "$65,000",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 441,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-04": {
+   "Text": "540",
+   "Usage": {
+    "InputTokens": 62,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 430,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-05": {
+   "Text": "60",
+   "Usage": {
+    "InputTokens": 135,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 481,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-06": {
+   "Text": "Kylar needs to pay 68 dollars.",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 430,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-07": {
+   "Text": "Toulouse, Charleston, and Seattle have 104 sheep together.",
+   "Usage": {
+    "InputTokens": 69,
+    "OutputTokens": 14
+   },
+   "LatencyMS": 515,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-08": {
+   "Text": "120 minutes",
+   "Usage": {
+    "InputTokens": 94,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 549,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-09": {
+   "Text": "John is 50 miles from home at the end of those 4 hours.",
+   "Usage": {
+    "InputTokens": 129,
+    "OutputTokens": 16
+   },
+   "LatencyMS": 758,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-10": {
+   "Text": "Eliza's earnings for this week are $460.",
+   "Usage": {
+    "InputTokens": 85,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 544,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-11": {
+   "Text": "150",
+   "Usage": {
+    "InputTokens": 86,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 498,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-12": {
+   "Text": "The total cost is  1,188.",
+   "Usage": {
+    "InputTokens": 87,
+    "OutputTokens": 10
+   },
+   "LatencyMS": 598,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-13": {
+   "Text": "7",
+   "Usage": {
+    "InputTokens": 93,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 751,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-14": {
+   "Text": "Melanie started with 21 vacuum cleaners.",
+   "Usage": {
+    "InputTokens": 86,
+    "OutputTokens": 9
+   },
+   "LatencyMS": 529,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-15": {
+   "Text": "55",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 337,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-16": {
+   "Text": "Profit from jewelry: $125  \nProfit from electronic gadgets: $96  \nFinal answer: 125",
+   "Usage": {
+    "InputTokens": 118,
+    "OutputTokens": 20
+   },
+   "LatencyMS": 660,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-17": {
+   "Text": "230",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 545,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-18": {
+   "Text": "$39,000",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 423,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-19": {
+   "Text": "12",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 489,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-20": {
+   "Text": "6",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 380,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-21": {
+   "Text": "18",
+   "Usage": {
+    "InputTokens": 88,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 468,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-22": {
+   "Text": "Raymond's son was born 6 years ago.",
+   "Usage": {
+    "InputTokens": 72,
+    "OutputTokens": 11
+   },
+   "LatencyMS": 493,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-23": {
+   "Text": "Billy sold 7 DVDs on Tuesday.",
+   "Usage": {
+    "InputTokens": 82,
+    "OutputTokens": 8
+   },
+   "LatencyMS": 1089,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-24": {
+   "Text": "8",
+   "Usage": {
+    "InputTokens": 64,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 448,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-25": {
+   "Text": "26",
+   "Usage": {
+    "InputTokens": 63,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 389,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-26": {
+   "Text": "Marie ordered 4 boxes of pizza.",
+   "Usage": {
+    "InputTokens": 91,
+    "OutputTokens": 8
+   },
+   "LatencyMS": 456,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-27": {
+   "Text": "Mishka spent 189 dollars.",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 8
+   },
+   "LatencyMS": 693,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-28": {
+   "Text": "$16",
+   "Usage": {
+    "InputTokens": 81,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 465,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-29": {
+   "Text": "25",
+   "Usage": {
+    "InputTokens": 75,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 365,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o-mini|gsm8k-30": {
+   "Text": "The boots cost 73 dollars.",
+   "Usage": {
+    "InputTokens": 95,
+    "OutputTokens": 7
+   },
+   "LatencyMS": 505,
+   "Model": "gpt-4o-mini",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-01": {
+   "Text": "18",
+   "Usage": {
+    "InputTokens": 91,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 1208,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-02": {
+   "Text": "3",
+   "Usage": {
+    "InputTokens": 54,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 571,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-03": {
+   "Text": "$70,000",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 649,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-04": {
+   "Text": "540",
+   "Usage": {
+    "InputTokens": 62,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 539,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-05": {
+   "Text": "20",
+   "Usage": {
+    "InputTokens": 135,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 412,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-06": {
+   "Text": "$64",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 452,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-07": {
+   "Text": "180",
+   "Usage": {
+    "InputTokens": 69,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 406,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-08": {
+   "Text": "120",
+   "Usage": {
+    "InputTokens": 94,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 557,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-09": {
+   "Text": "60",
+   "Usage": {
+    "InputTokens": 129,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 773,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-10": {
+   "Text": "470",
+   "Usage": {
+    "InputTokens": 85,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 433,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-11": {
+   "Text": "198",
+   "Usage": {
+    "InputTokens": 86,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 353,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-12": {
+   "Text": "$794",
+   "Usage": {
+    "InputTokens": 87,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 806,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-13": {
+   "Text": "10",
+   "Usage": {
+    "InputTokens": 93,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 392,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-14": {
+   "Text": "18",
+   "Usage": {
+    "InputTokens": 86,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 507,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-15": {
+   "Text": "60",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 413,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-16": {
+   "Text": "125",
+   "Usage": {
+    "InputTokens": 118,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 1694,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-17": {
+   "Text": "230",
+   "Usage": {
+    "InputTokens": 77,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 390,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-18": {
+   "Text": "$47,500",
+   "Usage": {
+    "InputTokens": 80,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 438,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-19": {
+   "Text": "7",
+   "Usage": {
+    "InputTokens": 55,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 371,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-20": {
+   "Text": "6",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 398,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-21": {
+   "Text": "15",
+   "Usage": {
+    "InputTokens": 88,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 522,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-22": {
+   "Text": "18",
+   "Usage": {
+    "InputTokens": 72,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 429,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-23": {
+   "Text": "7",
+   "Usage": {
+    "InputTokens": 82,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 465,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-24": {
+   "Text": "8",
+   "Usage": {
+    "InputTokens": 64,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 703,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-25": {
+   "Text": "26",
+   "Usage": {
+    "InputTokens": 63,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 383,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-26": {
+   "Text": "2",
+   "Usage": {
+    "InputTokens": 91,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 345,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-27": {
+   "Text": "243",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 358,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-28": {
+   "Text": "16",
+   "Usage": {
+    "InputTokens": 81,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 630,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-29": {
+   "Text": "25",
+   "Usage": {
+    "InputTokens": 75,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 642,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "gpt-4o|gsm8k-30": {
+   "Text": "104",
+   "Usage": {
+    "InputTokens": 95,
+    "OutputTokens": 1
+   },
+   "LatencyMS": 409,
+   "Model": "gpt-4o",
+   "Provider": "openai"
+  },
+  "mistral-large|gsm8k-04": {
+   "Text": "540",
+   "Usage": {
+    "InputTokens": 57,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 991,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|gsm8k-08": {
+   "Text": "140",
+   "Usage": {
+    "InputTokens": 92,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 608,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|gsm8k-12": {
+   "Text": "1074",
+   "Usage": {
+    "InputTokens": 90,
+    "OutputTokens": 5
+   },
+   "LatencyMS": 288,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|gsm8k-16": {
+   "Text": "125",
+   "Usage": {
+    "InputTokens": 118,
+    "OutputTokens": 4
+   },
+   "LatencyMS": 282,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|gsm8k-20": {
+   "Text": "3",
+   "Usage": {
+    "InputTokens": 87,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 258,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|gsm8k-24": {
+   "Text": "8",
+   "Usage": {
+    "InputTokens": 63,
+    "OutputTokens": 2
+   },
+   "LatencyMS": 285,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  },
+  "mistral-large|gsm8k-28": {
+   "Text": "16",
+   "Usage": {
+    "InputTokens": 82,
+    "OutputTokens": 3
+   },
+   "LatencyMS": 273,
+   "Model": "mistral-large",
+   "Provider": "mistral-eu"
+  }
+ },
+ "accept": {},
+ "pair": {}
+}

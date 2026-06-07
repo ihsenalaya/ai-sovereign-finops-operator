@@ -208,6 +208,19 @@ We therefore claim only that *quality remained comparable within the evaluated s
 statistically supported statement to the multi-repetition, multi-judge protocol
 (§8, `QUALITY_EVALUATION_PROTOCOL.md`).
 
+### RQ2b — Objective accuracy on a public benchmark (GSM8K)
+To remove judge bias and test generality beyond synthetic workloads, we also evaluate on **30 real
+GSM8K** grade-school math problems (`datasets-public/gsm8k.json`), scored by **objective exact-match**
+on the final integer (no LLM judge; `results-bench/rq_benchmark.csv`). Here the picture differs and we
+report it plainly: premium-static (gpt-4o) reaches **70%** accuracy at 0.0067 EUR, whereas **Ours drops
+to 40%** at 0.00047 EUR (−93% cost), and least-cost/difficulty-router to 33%. On a **hard reasoning**
+task the cheap models genuinely fail, so aggressive cost routing trades accuracy for cost — exposing
+that our static **quality priors do not capture task-specific reasoning difficulty**. This is an honest
+limitation, not a tuned result: it motivates (i) per-task quality calibration and (ii) grafting a
+**learned difficulty predictor** (Hybrid-LLM/RouteLLM, §9) onto our governance layer, and it shows the
+RQ2 quality-preservation result is **workload-dependent** (it holds for the open-ended enterprise
+workloads, not for hard math). Cost attribution, sovereignty and budget governance are unaffected.
+
 ### RQ3 — Latency and overhead (Figure 4, Table 3)
 The **routing decision adds tens of microseconds** (B6 ≈ 26.5 µs/request) — negligible vs network
 latency. End-to-end latency tracks the chosen model and provider-side variance. Notably, **B6's p95
