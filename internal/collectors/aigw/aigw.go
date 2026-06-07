@@ -112,7 +112,7 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 		if h == nil {
 			continue
 		}
-		var model, provider, tokenType string
+		var model, provider, tokenType, hdrNS, hdrApp string
 		for _, l := range m.GetLabel() {
 			switch l.GetName() {
 			case "gen_ai_request_model":
@@ -121,6 +121,10 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 				provider = l.GetValue()
 			case "gen_ai_token_type":
 				tokenType = l.GetValue()
+			case "k8s_namespace": // from the request header x-greenops-namespace
+				hdrNS = l.GetValue()
+			case "k8s_app": // from the request header x-greenops-app
+				hdrApp = l.GetValue()
 			}
 		}
 		if model == "" || (tokenType != "input" && tokenType != "output") {
@@ -129,24 +133,39 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 		sum := int64(h.GetSampleSum())
 		count := int64(h.GetSampleCount())
 
-		s, ok := bySample[model]
+		// Attribution: prefer the real namespace/app carried by the request header
+		// (so two apps in different namespaces on the SAME model are separated);
+		// fall back to the AIModel catalog's serves* defaults when the header is
+		// absent (e.g. pre-header traffic).
+		a := attr[model]
+		ns, app, team := hdrNS, hdrApp, a.team
+		if ns == "" {
+			ns = a.namespace
+		}
+		if app == "" {
+			app = a.application
+		}
+		// Header-attributed traffic carries no team header; team follows the real
+		// namespace so per-team views match per-namespace (no merge into the model's
+		// default serves-team).
+		if hdrNS != "" {
+			team = hdrNS
+		}
+		prov := a.provider
+		if prov == "" {
+			prov = provider
+		}
+		key := ns + "\x1f" + app + "\x1f" + model
+		s, ok := bySample[key]
 		if !ok {
-			a := attr[model]
-			prov := a.provider
-			if prov == "" {
-				prov = provider // fall back to the gateway's provider name
-			}
-			s = &collectors.UsageSample{
-				Namespace: a.namespace, Application: a.application, Team: a.team,
-				Provider: prov, Model: model,
-			}
-			bySample[model] = s
+			s = &collectors.UsageSample{Namespace: ns, Application: app, Team: team, Provider: prov, Model: model}
+			bySample[key] = s
 		}
 		switch tokenType {
 		case "input":
 			s.InputTokens += sum
 			if count > s.Requests {
-				s.Requests = count // requests == per-request samples; same for in/out
+				s.Requests = count
 			}
 		case "output":
 			s.OutputTokens += sum

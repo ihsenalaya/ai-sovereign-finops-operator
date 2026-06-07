@@ -53,6 +53,26 @@ input/output ; `_sum` = tokens, `_count` = requêtes). Le collector **`aigw`**
 l'app qui le consomme via le catalogue `AIModel` (`providerRef` + `serves*`).
 Le coût = tokens réels × prix réel du modèle (sur l'`AIProvider`).
 
+## Attribution automatique PAR NAMESPACE (même modèle partagé)
+
+La métrique `gen_ai_*` de la gateway ne porte que le **modèle** ; deux apps sur le
+même modèle seraient donc fusionnées. La solution mise en place :
+
+1. Chaque app injecte son **namespace** via la **Downward API**
+   (`fieldRef: metadata.namespace`) et l'envoie dans l'en-tête
+   **`x-greenops-namespace`** (+ `x-greenops-app`).
+2. Envoy AI Gateway est configuré (helm `controller.metricsRequestHeaderAttributes=
+   x-greenops-namespace:k8s.namespace,x-greenops-app:k8s.app`) pour transformer ces
+   en-têtes en **labels de métrique** (`k8s_namespace`, `k8s_app`).
+3. Le collector **`aigw`** lit ces labels et attribue le coût **par namespace/app
+   réel** (fallback sur `AIModel.serves*` si l'en-tête est absent).
+
+➡️ Résultat : **`finance/risk-assistant` et `legal/contract-review` utilisent tous
+deux gpt-4o, mais sont comptabilisés séparément, par namespace** — automatiquement.
+Déployer une nouvelle app dans un nouveau namespace (avec l'en-tête) suffit : elle
+apparaît seule, sans rien déclarer. Les 3 apps de démo (`rh`, `finance`, `legal`)
+le démontrent.
+
 ## Grafana — dashboard « AI Sovereign FinOps — Overview »
 
 Ouvrir : `kubectl -n greenops-system port-forward svc/demo-grafana 3000:3000`

@@ -1,7 +1,12 @@
-# Stable data-path Service for the Envoy AI Gateway + two REAL consumer apps that
-# continuously call LLMs through the gateway. The gateway measures the tokens;
-# the operator reads them (telemetry mode aigw). No API key in the apps — the
-# gateway holds it.
+# Stable data-path Service for the Envoy AI Gateway + REAL consumer apps that
+# continuously call LLMs through the gateway. Each app sends its own Kubernetes
+# namespace (Downward API) in the `x-greenops-namespace` header; the AI Gateway
+# turns that header into a metric label, so the operator attributes token cost
+# PER NAMESPACE automatically — even when two apps in different namespaces use
+# the SAME model. No API key in the apps — the gateway holds it.
+#
+# `legal/contract-review` and `finance/risk-assistant` BOTH use gpt-4o yet are
+# attributed separately, by namespace.
 ---
 apiVersion: v1
 kind: Service
@@ -13,19 +18,19 @@ spec:
   selector:
     gateway.envoyproxy.io/owning-gateway-name: greenops-aigw
   ports:
-    - name: http
-      port: 80
-      targetPort: 10080
+    - { name: http, port: 80, targetPort: 10080 }
 ---
 apiVersion: v1
 kind: Namespace
-metadata:
-  name: rh
+metadata: { name: rh }
 ---
 apiVersion: v1
 kind: Namespace
-metadata:
-  name: finance
+metadata: { name: finance }
+---
+apiVersion: v1
+kind: Namespace
+metadata: { name: legal }
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,18 +42,18 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: chatbot-rh } }
   template:
-    metadata:
-      labels: { app: chatbot-rh, aiops.imperium.io/demo: "true" }
+    metadata: { labels: { app: chatbot-rh, aiops.imperium.io/demo: "true" } }
     spec:
       containers:
         - name: client
           image: curlimages/curl:8.10.1
-          resources:
-            requests: { cpu: 10m, memory: 16Mi }
-            limits: { cpu: 100m, memory: 64Mi }
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
           env:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "gpt-4o-mini" }
+            - { name: APP, value: "chatbot-rh" }
+            - name: NS
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -56,8 +61,8 @@ spec:
               PROMPTS='Explique la politique de conges en une phrase.|Redige un accueil pour un nouvel employe.|Comment soumettre une note de frais ?'
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
-                curl -s -m 60 -o /dev/null -w "chatbot-rh($MODEL): %{http_code}\n" \
-                  -H 'Content-Type: application/json' \
+                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":220}" \
                   "$GATEWAY" || true
                 sleep 3
@@ -73,18 +78,18 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: risk-assistant } }
   template:
-    metadata:
-      labels: { app: risk-assistant, aiops.imperium.io/demo: "true" }
+    metadata: { labels: { app: risk-assistant, aiops.imperium.io/demo: "true" } }
     spec:
       containers:
         - name: client
           image: curlimages/curl:8.10.1
-          resources:
-            requests: { cpu: 10m, memory: 16Mi }
-            limits: { cpu: 100m, memory: 64Mi }
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
           env:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "gpt-4o" }
+            - { name: APP, value: "risk-assistant" }
+            - name: NS
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -92,9 +97,47 @@ spec:
               PROMPTS='Summarize key counterparty risks for a new supplier.|List three liquidity-risk indicators.|Explain value-at-risk in two sentences.'
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
-                curl -s -m 60 -o /dev/null -w "risk-assistant($MODEL): %{http_code}\n" \
-                  -H 'Content-Type: application/json' \
+                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":320}" \
                   "$GATEWAY" || true
                 sleep 4
+              done
+---
+# Same model as finance (gpt-4o) but a different namespace -> proves per-namespace
+# attribution works even on a shared model.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contract-review
+  namespace: legal
+  labels: { app: contract-review, aiops.imperium.io/demo: "true" }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: contract-review } }
+  template:
+    metadata: { labels: { app: contract-review, aiops.imperium.io/demo: "true" } }
+    spec:
+      containers:
+        - name: client
+          image: curlimages/curl:8.10.1
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
+          env:
+            - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
+            - { name: MODEL, value: "gpt-4o" }
+            - { name: APP, value: "contract-review" }
+            - name: NS
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              PROMPTS='Summarize the liability clauses of a SaaS contract.|List risks in an auto-renewal clause.|Explain an indemnification clause simply.'
+              while true; do
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
+                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
+                  -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":300}" \
+                  "$GATEWAY" || true
+                sleep 5
               done

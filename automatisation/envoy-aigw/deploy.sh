@@ -26,7 +26,7 @@ CLUSTER="${CLUSTER:-greenops}"
 CTX="${KCTX:-kind-${CLUSTER}}"
 K="kubectl --context ${CTX}"
 NS_OP="${NS_OP:-greenops-system}"
-OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.5}"
+OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.7}"
 EG_VERSION="${EG_VERSION:-v1.5.0}"      # IMPORTANT: v1.3.0 is too old (extproc not injected)
 AIGW_VERSION="${AIGW_VERSION:-v0.7.0}"
 
@@ -68,8 +68,12 @@ ensure_envoy() {
   ${K} -n envoy-gateway-system rollout status deploy/envoy-gateway --timeout=180s
   helm upgrade -i aieg-crd oci://docker.io/envoyproxy/ai-gateway-crds-helm --version "${AIGW_VERSION}" \
     -n envoy-ai-gateway-system --create-namespace
+  # metricsRequestHeaderAttributes: map request headers -> metric labels so token
+  # usage is attributed PER NAMESPACE/APP (works even when two apps in different
+  # namespaces use the same model).
   helm upgrade -i aieg oci://docker.io/envoyproxy/ai-gateway-helm --version "${AIGW_VERSION}" \
-    -n envoy-ai-gateway-system --create-namespace
+    -n envoy-ai-gateway-system --create-namespace \
+    --set "controller.metricsRequestHeaderAttributes=x-greenops-namespace:k8s.namespace\,x-greenops-app:k8s.app"
   ${K} wait --timeout=180s -n envoy-ai-gateway-system deployment/ai-gateway-controller --for=condition=Available
 }
 
