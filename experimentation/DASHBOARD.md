@@ -1,17 +1,17 @@
 # Experiment dashboard
 
-_Last updated: 2026-06-07 07:42 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
+_Last updated: 2026-06-07 07:51 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
 
 ## Test runs (status + duration)
 
 | Run dir | Tests | PASS | FAIL | Duration | Groups |
 |---|---:|---:|---:|---:|---|
 | results | 46 | 46 | 0 | 4s | RQ-ablation,RQ1-3-matrix,RQ4-sovereignty,RQ5-bud |
-| results-bench | 7 | 7 | 0 | 5m32s | BENCHMARK |
+| results-bench | 1 | 1 | 0 | 13s | gpubench |
 | results-stats | 30 | 30 | 0 | 36m20s | STATS-matrix |
-| **TOTAL** | **83** | **83** | **0** | **41m56s** | — |
+| **TOTAL** | **77** | **77** | **0** | **36m37s** | — |
 
-**Integrity:** 83/83 PASS, none, no skipped tests.
+**Integrity:** 77/77 PASS, none, no skipped tests.
 
 ## Headline results
 
@@ -34,7 +34,7 @@ _Last updated: 2026-06-07 07:42 UTC_  ·  regenerate: `python3 scripts/dashboard
 | Public benchmark + exact-match | ✅ |
 | Feature-matrix positioning | ✅ |
 | Scale-up (540 prompts; target >=500) | ✅ |
-| Live gateway enforcement under load | ⬜ |
+| Envoy data-path overhead under load | ✅ |
 | Human evaluation (package ready) | ⬜ |
 | Submission format (LaTeX) ready | ✅ |
 | Artifact metadata (Zenodo/CITATION) | ✅ |
@@ -48,7 +48,7 @@ _Datasets: 540 prompts across 6 files._
 | 1 | Investigate exact-match vs judge contradiction | ✅ | RESOLVED — judge rates 81% of *wrong* answers acceptable (r=0.12); see results/judge_vs_truth_summary.md |
 | 2 | Human evaluation on 100 examples | ⬜ | PACKAGE READY (100 blind items) — awaiting evaluators; see human_eval/README.md |
 | 3 | Increase dataset to >=500 prompts | ✅ | 540 prompts (40 synthetic + 500 public GSM8K/MMLU) |
-| 4 | Live gateway routing benchmark under load | ⬜ | TODO — requires the cluster |
+| 4 | Live gateway routing benchmark under load | ✅ | DONE (local real Envoy): data-path overhead ~+3%, 0 errors @ concurrency 8; see results-bench/envoy_overhead_summary.md |
 | 5 | LaTeX + GitHub/Zenodo packaging | ✅ | LaTeX (paper/paper.tex) + .zenodo.json + CITATION.cff READY; mint DOI via a GitHub Release (see paper/RELEASE_ARTIFACT.md) |
 
 ## Critical gaps

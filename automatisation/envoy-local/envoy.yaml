@@ -1,0 +1,49 @@
+# Local Envoy data-path in front of the LLM provider, to measure real gateway
+# overhead under concurrent load (no cloud cost). Listens on :10000 and proxies
+# /v1/* to api.openai.com over TLS (SNI). The experiment's gpubench points
+# -base http://localhost:10000/v1 through Envoy and compares vs direct.
+static_resources:
+  listeners:
+    - name: llm_listener
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 10000 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: llm
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: llm
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: "/" }
+                          route:
+                            cluster: openai
+                            host_rewrite_literal: api.openai.com
+                            timeout: 120s
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: openai
+      type: STRICT_DNS
+      connect_timeout: 10s
+      load_assignment:
+        cluster_name: openai
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: api.openai.com, port_value: 443 }
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          sni: api.openai.com
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }

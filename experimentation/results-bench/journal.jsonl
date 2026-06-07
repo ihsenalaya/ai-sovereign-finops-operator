@@ -1,7 +1,1 @@
-{"name":"B1-premium-static","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:14:09.116925488+02:00","durationMs":98739,"details":{"accuracyPct":65.4,"correct":327,"costEUR":0.116388,"total":500}}
-{"name":"B2-round-robin","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:15:47.868306711+02:00","durationMs":88243,"details":{"accuracyPct":52.2,"correct":261,"costEUR":0.055803,"total":500}}
-{"name":"B3-least-cost","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:17:16.120818586+02:00","durationMs":63856,"details":{"accuracyPct":44,"correct":220,"costEUR":0.006435,"total":500}}
-{"name":"B4-static-policy","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:18:19.98567963+02:00","durationMs":39968,"details":{"accuracyPct":59.4,"correct":297,"costEUR":0.060491,"total":500}}
-{"name":"B5-budget-hard-block","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:18:59.962403633+02:00","durationMs":3,"details":{"accuracyPct":65.4,"correct":327,"costEUR":0.116388,"total":500}}
-{"name":"B7-difficulty-router","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:18:59.994815471+02:00","durationMs":3,"details":{"accuracyPct":45.8,"correct":229,"costEUR":0.006057,"total":500}}
-{"name":"B6-ours","group":"BENCHMARK","status":"PASS","startedAt":"2026-06-07T09:19:00.022357907+02:00","durationMs":41267,"details":{"accuracyPct":47.2,"correct":236,"costEUR":0.007286,"total":500}}
+{"name":"via-envoy","group":"gpubench","status":"PASS","startedAt":"2026-06-07T09:46:07.713021269+02:00","durationMs":13276,"details":{"errors":0,"gpuUtilAvg":0,"p95ms":1681,"reqPerSec":6.05,"served":48,"tokensPerSec":279.04}}

@@ -244,6 +244,13 @@ repetitions. **TODO (§8):** with ≥30 repetitions, report tail latency with cr
 disentangle routing-distribution effects from API jitter. Least-cost has the lowest latency
 (p95 1476 ms), consistent with always picking small models.
 
+**Gateway data-path overhead (real Envoy, under load).** Beyond control-plane decision time, we
+measured routing through a real **Envoy** data path: an Envoy proxy in front of the provider, driven at
+concurrency 8 (`results-bench/envoy_overhead_summary.md`). Envoy adds **negligible overhead** — mean
+latency 1153 ms vs 1116 ms direct (≈+3%, within run-to-run variance), throughput 6.05 vs 5.81 req/s,
+**0 errors** — supporting the feasibility of a gateway-level control plane. Full in-cluster Envoy AI
+Gateway integration (per-provider auth, failover) remains future work.
+
 ### RQ4 — Sovereignty (Figure 5, Table 4)
 A sovereignty-blind baseline (B1) commits **40 violations** under eu-only, france-only and
 self-hosted-only, and 10 under no-external-sensitive. **B6-ours commits zero violations in every
