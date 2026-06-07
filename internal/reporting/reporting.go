@@ -84,8 +84,10 @@ type findingJSON struct {
 }
 
 type recommendationJSON struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
+	Type       string  `json:"type"`
+	Severity   string  `json:"severity,omitempty"`
+	Message    string  `json:"message"`
+	SavingsEUR float64 `json:"estimatedSavingsEUR,omitempty"`
 }
 
 // Assumptions documents the MVP limitations surfaced in every report.
@@ -136,7 +138,11 @@ func RenderJSON(d Data) ([]byte, error) {
 		})
 	}
 	for _, rec := range d.Recommends {
-		r.Recommendations = append(r.Recommendations, recommendationJSON{Type: rec.Type, Message: rec.Message})
+		rj := recommendationJSON{Type: rec.Type, Severity: rec.Severity, Message: rec.Message}
+		if rec.EstimatedSavingsEUR != nil {
+			rj.SavingsEUR = rec.EstimatedSavingsEUR.AsApproximateFloat64()
+		}
+		r.Recommendations = append(r.Recommendations, rj)
 	}
 	return json.MarshalIndent(r, "", "  ")
 }
@@ -186,7 +192,15 @@ func RenderMarkdown(d Data) string {
 		sb.WriteString("_No recommendations._\n\n")
 	} else {
 		for _, rec := range d.Recommends {
-			fmt.Fprintf(&sb, "- _(%s)_ %s\n", rec.Type, rec.Message)
+			suffix := ""
+			if rec.EstimatedSavingsEUR != nil && !rec.EstimatedSavingsEUR.IsZero() {
+				suffix = fmt.Sprintf("  _(~%.4f %s saving)_", rec.EstimatedSavingsEUR.AsApproximateFloat64(), cur)
+			}
+			sev := rec.Severity
+			if sev == "" {
+				sev = rec.Type
+			}
+			fmt.Fprintf(&sb, "- **[%s]** _(%s)_ %s%s\n", strings.ToUpper(sev), rec.Type, rec.Message, suffix)
 		}
 		sb.WriteString("\n")
 	}

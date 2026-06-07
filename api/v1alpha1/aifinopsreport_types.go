@@ -71,9 +71,16 @@ type SovereigntyFinding struct {
 
 // Recommendation is an optimization suggestion surfaced by the engines.
 type Recommendation struct {
-	// Type categorizes the recommendation (e.g. self-hosting, routing, cache).
+	// Type categorizes the recommendation (cost-saving, sovereignty, data-quality, ...).
 	Type    string `json:"type"`
 	Message string `json:"message"`
+	// Severity ranks urgency (info, warning, critical).
+	// +optional
+	Severity string `json:"severity,omitempty"`
+	// EstimatedSavingsEUR is the projected saving of acting on this recommendation
+	// over the observation window (0 when not a cost saving).
+	// +optional
+	EstimatedSavingsEUR *resource.Quantity `json:"estimatedSavingsEUR,omitempty"`
 }
 
 // AIFinOpsReportSpec defines the desired state of AIFinOpsReport.

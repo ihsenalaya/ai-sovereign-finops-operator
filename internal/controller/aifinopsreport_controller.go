@@ -37,6 +37,7 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/costengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/recommendationengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/reporting"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
 )
@@ -114,6 +115,7 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	breakdown := costengine.Compute(samples, cat.priceBook())
 	r.applyCostToStatus(&report, breakdown)
 	r.applySovereigntyToStatus(ctx, &report, cat, samples)
+	r.applyRecommendations(ctx, &report, cat, samples, breakdown)
 
 	if err := r.writeReportConfigMap(ctx, &report, breakdown, collector.Name()); err != nil {
 		logger.Error(err, "failed to write report ConfigMap")
@@ -174,30 +176,6 @@ func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFin
 			CostEUR: moneyQuantity(li.CostTotal),
 		})
 	}
-
-	// Basic cost-driven recommendation; richer engines populate this in later sprints.
-	report.Status.Recommendations = nil
-	if len(top) > 0 && top[0].CostTotal > 0 {
-		report.Status.Recommendations = append(report.Status.Recommendations, aiopsv1alpha1.Recommendation{
-			Type: "cost-optimization",
-			Message: fmt.Sprintf("Model %q drives %.2f %s; review routing to a cheaper tier for low-stakes traffic.",
-				top[0].Key, top[0].CostTotal, b.Currency),
-		})
-	}
-	for _, m := range b.UnpricedModels {
-		report.Status.Recommendations = append(report.Status.Recommendations, aiopsv1alpha1.Recommendation{
-			Type:    "data-quality",
-			Message: fmt.Sprintf("No pricing found for model %q; create an AIModel/AIProvider to attribute its cost.", m),
-		})
-	}
-
-	byType := map[string]float64{}
-	for _, rec := range report.Status.Recommendations {
-		byType[rec.Type]++
-	}
-	for tp, n := range byType {
-		metrics.Recommendations.WithLabelValues(tp).Set(n)
-	}
 }
 
 // applySovereigntyToStatus verifies each observed flow (namespace/application →
@@ -238,6 +216,87 @@ func (r *AIFinOpsReportReconciler) applySovereigntyToStatus(ctx context.Context,
 		metrics.SovereigntyFindings.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(n))
 		metrics.SovereigntyRequests.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(reqs[k]))
 	}
+}
+
+// applyRecommendations runs the recommendation engine on the observed usage,
+// catalog and sovereignty findings, producing quantified, actionable suggestions
+// (cost-saving model swaps with EUR savings, sovereignty remediation, data quality).
+func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, report *aiopsv1alpha1.AIFinOpsReport, cat catalog, samples []collectors.UsageSample, b costengine.Breakdown) {
+	pb := cat.priceBook()
+
+	// Usage per (namespace, application, model) with its computed cost.
+	type uk struct{ ns, app, model string }
+	um := map[uk]*recommendationengine.Usage{}
+	for _, s := range samples {
+		k := uk{s.Namespace, s.Application, s.Model}
+		u := um[k]
+		if u == nil {
+			u = &recommendationengine.Usage{Namespace: s.Namespace, Application: s.Application, Model: s.Model}
+			um[k] = u
+		}
+		u.InputTokens += s.InputTokens
+		u.OutputTokens += s.OutputTokens
+		u.Requests += s.Requests
+	}
+	var usages []recommendationengine.Usage
+	costByApp := map[[2]string]float64{}
+	for _, u := range um {
+		if p, ok := pb[u.Model]; ok {
+			u.CostEUR = float64(u.InputTokens)/1e6*p.InputPerMillion + float64(u.OutputTokens)/1e6*p.OutputPerMillion
+		}
+		usages = append(usages, *u)
+		costByApp[[2]string{u.Namespace, u.Application}] += u.CostEUR
+	}
+
+	// Candidate models (anything priced in the catalog).
+	var candidates []recommendationengine.Candidate
+	for name, p := range pb {
+		candidates = append(candidates, recommendationengine.Candidate{
+			Name: name, InputPerMillion: p.InputPerMillion, OutputPerMillion: p.OutputPerMillion,
+		})
+	}
+
+	// Sovereignty risks from the critical findings already on the report.
+	var risks []recommendationengine.Risk
+	for _, f := range report.Status.SovereigntyFindings {
+		if string(f.Severity) != "critical" {
+			continue
+		}
+		risks = append(risks, recommendationengine.Risk{
+			Namespace: f.Namespace, Application: f.Application, Provider: f.Provider, Zone: f.Zone,
+			Requests: f.Requests, CostEUR: costByApp[[2]string{f.Namespace, f.Application}],
+		})
+	}
+
+	// Is there any allowed-zone model to route to?
+	hasCompliant := false
+	if policy := firstSovereigntyPolicy(ctx, r.Client, report.Namespace); policy != nil {
+		pe := policyToEngine(policy.Spec)
+		for _, p := range cat.providers {
+			if sovereigntyengine.IsZoneAllowed(pe, p.Spec.DataResidency) {
+				hasCompliant = true
+				break
+			}
+		}
+	}
+
+	recs, total := recommendationengine.Recommend(usages, candidates, risks, b.UnpricedModels, hasCompliant)
+
+	report.Status.Recommendations = make([]aiopsv1alpha1.Recommendation, 0, len(recs))
+	byType := map[string]float64{}
+	for _, rc := range recs {
+		item := aiopsv1alpha1.Recommendation{Type: rc.Type, Message: rc.Message, Severity: rc.Severity}
+		if rc.EstimatedSavingsEUR > 0 {
+			item.EstimatedSavingsEUR = moneyQuantityPtr(rc.EstimatedSavingsEUR)
+		}
+		report.Status.Recommendations = append(report.Status.Recommendations, item)
+		byType[rc.Type]++
+	}
+	metrics.Recommendations.Reset()
+	for tp, n := range byType {
+		metrics.Recommendations.WithLabelValues(tp).Set(n)
+	}
+	metrics.PotentialSavingsEUR.Set(total)
 }
 
 // writeReportConfigMap renders the report to Markdown + JSON and upserts a

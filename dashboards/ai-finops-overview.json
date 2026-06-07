@@ -39,11 +39,12 @@
       "targets": [{ "expr": "sum(ai_finops_requests_total)", "refId": "A" }]
     },
     {
-      "type": "gauge",
-      "title": "Budget usage (%) — finance",
-      "description": "Forecast monthly spend vs the monthly budget cap (AIBudgetPolicy).",
+      "type": "bargauge",
+      "title": "Budget usage (%) by policy",
+      "description": "Forecast monthly spend vs the monthly budget cap, per AIBudgetPolicy (one bar per budget).",
       "datasource": "${datasource}",
       "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true },
       "fieldConfig": {
         "defaults": {
           "unit": "percent", "min": 0, "max": 150,
@@ -53,7 +54,7 @@
           ] }
         }
       },
-      "targets": [{ "expr": "max(ai_finops_budget_usage_percent)", "refId": "A" }]
+      "targets": [{ "expr": "ai_finops_budget_usage_percent", "legendFormat": "{{namespace}}/{{policy}}", "instant": true, "refId": "A" }]
     },
     {
       "type": "timeseries",
@@ -81,7 +82,7 @@
       "title": "Requests violating sovereignty (by app)",
       "description": "Current number of requests each app routed to a non-compliant (forbidden-zone) provider. Critical zone violations shown (warning count is identical).",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 14 },
       "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true },
       "fieldConfig": {
         "defaults": {
@@ -100,10 +101,20 @@
     {
       "type": "piechart",
       "title": "Recommendations by type",
-      "description": "Optimization recommendations surfaced by the operator.",
+      "description": "Actionable recommendations from the recommendation engine, grouped by type (cost-saving, sovereignty, data-quality).",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
-      "targets": [{ "expr": "ai_finops_recommendations_total", "legendFormat": "{{type}}", "refId": "A" }]
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 14 },
+      "options": { "legend": { "displayMode": "list", "placement": "right", "values": ["value"] } },
+      "targets": [{ "expr": "ai_finops_recommendations_total", "legendFormat": "{{type}}", "instant": true, "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Potential savings (EUR)",
+      "description": "Total EUR the cost-saving recommendations would save over the observation window (real tokens x cheaper-model prices).",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4, "color": { "mode": "fixed", "fixedColor": "green" } } },
+      "targets": [{ "expr": "ai_finops_potential_savings_eur", "instant": true, "refId": "A" }]
     }
   ]
 }

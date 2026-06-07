@@ -166,11 +166,23 @@ spec:
                   description: Recommendation is an optimization suggestion surfaced
                     by the engines.
                   properties:
+                    estimatedSavingsEUR:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: |-
+                        EstimatedSavingsEUR is the projected saving of acting on this recommendation
+                        over the observation window (0 when not a cost saving).
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
                     message:
                       type: string
+                    severity:
+                      description: Severity ranks urgency (info, warning, critical).
+                      type: string
                     type:
-                      description: Type categorizes the recommendation (e.g. self-hosting,
-                        routing, cache).
+                      description: Type categorizes the recommendation (cost-saving,
+                        sovereignty, data-quality, ...).
                       type: string
                   required:
                   - message

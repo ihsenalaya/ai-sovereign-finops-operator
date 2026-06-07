@@ -52,6 +52,13 @@ var (
 		Help: "Spend in EUR actually observed for a namespace over the reporting window.",
 	}, []string{"namespace"})
 
+	// PotentialSavingsEUR is the total estimated saving from cost-saving
+	// recommendations over the observation window.
+	PotentialSavingsEUR = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "ai_finops_potential_savings_eur",
+		Help: "Total estimated saving from cost-saving recommendations over the observation window.",
+	})
+
 	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
 	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_projected_monthly_cost_eur",
@@ -97,6 +104,7 @@ func init() {
 		InputTokensTotal,
 		OutputTokensTotal,
 		CostEURTotal,
+		PotentialSavingsEUR,
 		ProjectedMonthlyCostEUR,
 		BudgetUsagePercent,
 		SovereigntyFindings,

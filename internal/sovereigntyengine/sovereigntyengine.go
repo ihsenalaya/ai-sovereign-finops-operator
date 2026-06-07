@@ -266,6 +266,17 @@ func EvaluateFlows(policy Policy, flows []Flow) []Finding {
 	return findings
 }
 
+// IsZoneAllowed reports whether a provider in the given raw zone is compliant
+// under the policy (not forbidden, and within the allowed zones; EU covers EU
+// members). Used to decide whether a compliant alternative exists.
+func IsZoneAllowed(policy Policy, rawZone string) bool {
+	zone := NormalizeZone(rawZone)
+	if toSet(policy.ForbiddenZones)[zone] {
+		return false
+	}
+	return zoneAllowed(zone, toSet(policy.AllowedZones))
+}
+
 // CountBySeverity tallies findings per severity level.
 func CountBySeverity(findings []Finding) map[string]int {
 	out := map[string]int{SeverityInfo: 0, SeverityWarning: 0, SeverityCritical: 0}
