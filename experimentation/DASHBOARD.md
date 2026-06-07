@@ -1,6 +1,6 @@
 # Experiment dashboard
 
-_Last updated: 2026-06-07 07:09 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
+_Last updated: 2026-06-07 07:12 UTC_  ·  regenerate: `python3 scripts/dashboard.py`
 
 ## Test runs (status + duration)
 
@@ -39,3 +39,20 @@ _Last updated: 2026-06-07 07:09 UTC_  ·  regenerate: `python3 scripts/dashboard
 | Submission format (LaTeX) + artifact DOI | ⬜ |
 
 _Datasets: 340 prompts across 6 files._
+
+## Recommended next actions (status)
+
+| # | Action | Status | Note |
+|--:|---|:--:|---|
+| 1 | Investigate exact-match vs judge contradiction | ✅ | RESOLVED — judge rates 81% of *wrong* answers acceptable (r=0.12); see results/judge_vs_truth_summary.md |
+| 2 | Human evaluation on 100 examples | ⬜ | TODO — needs human evaluators (package can be prepared) |
+| 3 | Increase dataset to >=500 prompts | ⬜ | 340 prompts now (40 synthetic + 300 public GSM8K/MMLU) |
+| 4 | Live gateway routing benchmark under load | ⬜ | TODO — requires the cluster |
+| 5 | Artifact packaging (GitHub + Zenodo DOI) | ⬜ | TODO — repo public step pending |
+
+## Critical gaps
+
+1. **Quality contradiction** — RESOLVED: LLM-judge over-rates wrong answers on objective tasks; we now report exact-match where ground truth exists.
+2. **Dataset scale** — 340 prompts (below 500 target).
+3. **Human validation** — still missing (needs evaluators).
+4. **Live gateway enforcement** — control-plane validated; data-path under load pending.

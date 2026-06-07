@@ -128,6 +128,27 @@ def main():
     out.append("")
     out.append(f"_Datasets: {prompts} prompts across {len(glob.glob('datasets/*.json'))+len(glob.glob('datasets-public/*.json'))} files._")
 
+    # --- Recommended next actions (the user's plan) with auto-derived status ---
+    contradiction_done = has("results/judge_vs_truth_summary.md")
+    actions = [
+        (contradiction_done, "Investigate exact-match vs judge contradiction",
+         "RESOLVED — judge rates 81% of *wrong* answers acceptable (r=0.12); see results/judge_vs_truth_summary.md" if contradiction_done else "todo"),
+        (False, "Human evaluation on 100 examples", "TODO — needs human evaluators (package can be prepared)"),
+        (prompts >= 500, f"Increase dataset to >=500 prompts", f"{prompts} prompts now (40 synthetic + 300 public GSM8K/MMLU)"),
+        (False, "Live gateway routing benchmark under load", "TODO — requires the cluster"),
+        (False, "Artifact packaging (GitHub + Zenodo DOI)", "TODO — repo public step pending"),
+    ]
+    out += ["", "## Recommended next actions (status)", "", "| # | Action | Status | Note |", "|--:|---|:--:|---|"]
+    for i, (done, name, note) in enumerate(actions, 1):
+        out.append(f"| {i} | {name} | {'✅' if done else '⬜'} | {note} |")
+
+    # --- Critical gaps (auto status) ---
+    out += ["", "## Critical gaps", "",
+            f"1. **Quality contradiction** — {'RESOLVED' if contradiction_done else 'OPEN'}: LLM-judge over-rates wrong answers on objective tasks; we now report exact-match where ground truth exists.",
+            f"2. **Dataset scale** — {prompts} prompts ({'>=500 OK' if prompts>=500 else 'below 500 target'}).",
+            "3. **Human validation** — still missing (needs evaluators).",
+            "4. **Live gateway enforcement** — control-plane validated; data-path under load pending."]
+
     open("DASHBOARD.md", "w").write("\n".join(out) + "\n")
     print("wrote DASHBOARD.md")
     print(f"  runs total: {total_tests} tests, {total_pass} PASS / {total_fail} FAIL, {fmt_dur(total_dur)}")
