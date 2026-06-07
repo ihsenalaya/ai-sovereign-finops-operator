@@ -100,6 +100,25 @@
       "datasource": "${datasource}",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "targets": [{ "expr": "ai_finops_recommendations_total", "legendFormat": "{{type}}", "refId": "A" }]
+    },
+    {
+      "type": "barchart",
+      "title": "Sovereignty findings by application / severity",
+      "description": "Flow-aware sovereignty verification: violations attributed to the namespace/application whose traffic triggered them.",
+      "datasource": "${datasource}",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": 0 }, { "color": "orange", "value": 1 }, { "color": "red", "value": 1 }
+          ] }
+        }
+      },
+      "targets": [{
+        "expr": "sum by (namespace, application, severity) (ai_finops_sovereignty_findings_total{severity!=\"info\"})",
+        "legendFormat": "{{namespace}}/{{application}} — {{severity}}",
+        "refId": "A"
+      }]
     }
   ]
 }

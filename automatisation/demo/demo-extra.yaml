@@ -1,0 +1,38 @@
+# Extra CRs that round out the demo on top of config/samples:
+#  - a report over ALL flows (no namespace filter) so the forbidden finance->US
+#    flow surfaces with full per-flow attribution;
+#  - a deliberately tight budget on the rh namespace (spend ~60 EUR > 50 EUR
+#    budget) so the budget engine shows a hard-limit breach + graceful
+#    degradation to the fallback model.
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIFinOpsReport
+metadata:
+  name: all-flows-report
+  namespace: default
+  labels: { aiops.imperium.io/demo: "true" }
+spec:
+  target:
+    period: monthly
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: rh-tight-budget
+  namespace: default
+  labels: { aiops.imperium.io/demo: "true" }
+spec:
+  target:
+    namespace: rh
+    team: rh
+    application: chatbot-rh
+  period: monthly
+  budgetEUR: 50          # rh spend (~60 EUR) exceeds this on purpose
+  warningThresholdPercent: 70
+  criticalThresholdPercent: 90
+  hardLimitPercent: 100
+  actions:
+    onWarning: [alert]
+    onCritical: [enableCache, routeToCheaperModel]
+    onHardLimit: [blockOrRequireApproval]
+  fallbackModelRef: mistral-small

@@ -221,7 +221,20 @@ synchronisation des secrets vers Kubernetes (`kv-to-k8s.sh`), déploiement de la
 **Mistral via Azure AI Foundry** (zone de données UE). `down.sh` arrête/supprime pour ne pas payer à
 l'arrêt. Cloud-agnostique par ailleurs : voir [`docs/INSTALL_AKS.md`](docs/INSTALL_AKS.md).
 
-### D. Envoy local
+### D. Démonstration complète (une commande)
+
+[`automatisation/demo/`](automatisation/demo/) montre **toutes les fonctionnalités** sur kind, avec
+**Prometheus + Grafana** déployés :
+
+```bash
+cd automatisation/demo && ./demo.sh up
+```
+
+Déploie l'opérateur + des CRs couvrant tous les moteurs, imprime un **tour guidé** (catalogue, coûts,
+souveraineté par flux, dépassement de budget, break-even, rapport), puis ouvre le dashboard Grafana
+sur `http://localhost:3000`. Détails : [`automatisation/demo/README.md`](automatisation/demo/README.md).
+
+### E. Envoy local
 
 [`automatisation/envoy-local/`](automatisation/envoy-local/) lance un **Envoy réel** en frontal du
 fournisseur pour mesurer le surcoût du plan de données (overhead négligeable, 0 erreur).
