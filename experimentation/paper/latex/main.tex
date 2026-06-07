@@ -488,6 +488,40 @@ makes explicit and auditable rather than hidden. For budget control, graceful
 degradation strictly dominates hard-blocking on availability and overrun.
 Self-hosting pays off only at high, sustained volume.
 
+Table~\ref{tab:recap} consolidates every research question into a single
+gains/losses ledger versus the always-premium baseline, so the trade-off is
+visible at a glance: large, statistically significant cost and governance gains,
+bought with a real latency increase and --- on objective tasks --- a real
+accuracy loss.
+
+\begin{table}[H]
+\centering\footnotesize
+\caption{Recap of gains and losses vs.\ the always-premium baseline.
+\cmark~=~net gain, \xmark~=~net loss, $\approx$~=~parity/neutral, $+$~=~new
+capability the baseline lacks.}
+\label{tab:recap}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm}
+                >{\raggedright\arraybackslash}p{2.3cm}
+                >{\raggedright\arraybackslash}p{2.3cm}
+                >{\raggedright\arraybackslash}p{3.0cm} c}
+\toprule
+Dimension & Premium baseline & Ours & Net effect & \\
+\midrule
+Total cost (40-prompt matrix) & 0.0389 EUR & 0.0114 EUR & $-70.8\%$ & \cmark \\
+Cost (N=30, significance)     & 0.0385 EUR & 0.0110 EUR & $-71.4\%$, $p{\approx}3{\times}10^{-11}$, $d{=}{-}43$ & \cmark \\
+Quality --- open-ended (judge) & 0.900 & 0.9125 & comparable / parity (win-rate 50\%) & $\approx$ \\
+Quality --- objective (exact-match, 500 items) & 65.4\% & 47.2\% & $-18.2$ pts (but $-94\%$ cost) & \xmark \\
+Latency (mean, N=30) & 998 ms & 1506 ms & $+51\%$, $d{=}{+}3.7$ & \xmark \\
+Routing decision overhead & --- & ${\approx}26.5\,\mu$s & negligible & $\approx$ \\
+Sovereignty violations (5 scenarios) & 40 & 0 & zero violations & \cmark \\
+EU-only availability & 0\% (blind) & 100\% & served via real EU provider & \cmark \\
+Budget availability / overrun & 60\% / overrun & 100\% / 0\% & graceful degradation & \cmark \\
+Cost attribution, budgets, break-even & none & present & governance layer & $+$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{When \emph{not} to use economic routing}
 Economic routing is not a universal win; our own results delimit where to avoid it:
 \begin{itemize}
@@ -517,6 +551,43 @@ Economic routing is not a universal win; our own results delimit where to avoid 
 In short, our approach targets \textbf{multi-tenant, governance-constrained,
 mixed-difficulty, sufficiently high-volume} settings; outside that envelope its
 benefits shrink or invert.
+
+% =====================================================================
+\section{Planned Study: Human FinOps Expert vs.\ Operator (RQ7)}
+\label{sec:rq7}
+The evaluation so far compares the operator against \emph{algorithmic} baselines.
+A complementary question --- reserved for a future version of this work and stated
+here for transparency --- is how close the control plane's decisions are to those
+of \emph{experienced human practitioners}. We have \textbf{not} run this study and
+report no results; we publish the protocol so the claim space is explicit and the
+study is pre-registered.
+
+\paragraph{Research question.} How closely do the control plane's routing and
+managed-vs-self-host recommendations match the decisions of experienced
+FinOps/cloud experts, and where do they diverge?
+
+\paragraph{Design.} $N\geq6$--$10$ practitioners (cloud/FinOps/platform engineers
+with LLM-ops experience) each work through a set of decision scenarios drawn from
+the testbed. Every scenario provides a workload profile, the model/provider
+catalog with prices, the sovereignty policy, the budget state, and recent usage
+telemetry. For each scenario the expert chooses (a) which model/provider to route
+to and (b) the managed-vs-self-host recommendation, with a short written
+rationale. The operator is run on the \emph{same} scenarios to produce the same
+two decisions.
+
+\paragraph{Metrics.} (i) \textbf{Agreement} between expert and system: exact-match
+rate on the model/provider choice and on the host/keep-managed recommendation,
+summarized with Cohen's $\kappa$ across experts and against the system; (ii)
+\textbf{decision time}, human vs.\ automated; (iii) \textbf{rationale overlap} ---
+which signals experts cite (cost, sovereignty, budget, quality) vs.\ the system's
+stated reasons; (iv) a qualitative \textbf{disagreement analysis} of where and why
+the two diverge.
+
+\paragraph{Threats and honesty.} The expert pool is small, scenario realism is
+imperfect, and experts may lack full price visibility; we mitigate with diverse
+recruitment, realistic telemetry, and pre-registration of the analysis. Until the
+study is run, no agreement scores or expert decisions are reported --- RQ7 remains
+explicitly future work (protocol: \texttt{RQ7\_HUMAN\_EXPERT\_PROTOCOL.md}).
 
 % =====================================================================
 \section{Threats to Validity}

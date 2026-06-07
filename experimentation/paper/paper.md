@@ -329,6 +329,24 @@ the system makes explicit and auditable rather than hidden. For budget control, 
 strictly dominates hard-blocking on availability and overrun. Self-hosting pays off only at high,
 sustained volume.
 
+**Recap of gains and losses (Table 8).** Consolidating every research question into a single ledger
+versus the always-premium baseline makes the trade-off explicit: large, statistically significant cost
+and governance gains, bought with a real latency increase and — on objective tasks — a real accuracy
+loss. (✓ = net gain, ✗ = net loss, ≈ = parity/neutral, + = new capability the baseline lacks.)
+
+| Dimension | Premium baseline | Ours | Net effect | |
+|---|---|---|---|:--:|
+| Total cost (40-prompt matrix) | 0.0389 EUR | 0.0114 EUR | −70.8% | ✓ |
+| Cost (N=30, significance) | 0.0385 EUR | 0.0110 EUR | −71.4%, p≈3×10⁻¹¹, d=−43 | ✓ |
+| Quality — open-ended (judge) | 0.900 | 0.9125 | comparable / parity (win-rate 50%) | ≈ |
+| Quality — objective (exact-match, 500 items) | 65.4% | 47.2% | −18.2 pts (but −94% cost) | ✗ |
+| Latency (mean, N=30) | 998 ms | 1506 ms | +51%, d=+3.7 | ✗ |
+| Routing decision overhead | — | ≈26.5 µs | negligible | ≈ |
+| Sovereignty violations (5 scenarios) | 40 | 0 | zero violations | ✓ |
+| EU-only availability | 0% (blind) | 100% | served via real EU provider | ✓ |
+| Budget availability / overrun | 60% / overrun | 100% / 0% | graceful degradation | ✓ |
+| Cost attribution, budgets, break-even | none | present | governance layer | + |
+
 ### When *not* to use economic routing
 Economic routing is not a universal win; our own results delimit where it should be avoided:
 - **High-stakes, correctness-critical tasks.** On objective reasoning (RQ2b: GSM8K/MMLU) cheaper models
@@ -348,6 +366,29 @@ Economic routing is not a universal win; our own results delimit where it should
   is nothing to route — the policy degenerates to premium-static.
 In short, our approach targets **multi-tenant, governance-constrained, mixed-difficulty, sufficiently
 high-volume** settings; outside that envelope its benefits shrink or invert.
+
+### RQ7 — Human FinOps expert vs operator (planned, future version)
+
+The evaluation above compares the operator against *algorithmic* baselines. A complementary question —
+reserved for a future version of this work and stated here for transparency — is how close the control
+plane's decisions are to those of *experienced human practitioners*. We have **not** run this study and
+report no results; we publish the protocol (`RQ7_HUMAN_EXPERT_PROTOCOL.md`) so the claim space is
+explicit and the study is pre-registered.
+- **Research question.** How closely do the operator's routing and managed-vs-self-host recommendations
+  match the decisions of experienced FinOps/cloud experts, and where do they diverge?
+- **Design.** N ≥ 6–10 practitioners (cloud/FinOps/platform engineers with LLM-ops experience) each
+  work through decision scenarios drawn from the testbed; each scenario gives a workload profile, the
+  model/provider catalog with prices, the sovereignty policy, the budget state, and recent telemetry.
+  For each, the expert chooses (a) the model/provider to route to and (b) the managed-vs-self-host
+  recommendation, with a short rationale. The operator is run on the **same** scenarios.
+- **Metrics.** (i) Agreement between expert and system — exact-match on model/provider choice and on the
+  host/keep-managed recommendation, summarized with Cohen's κ across experts and vs the system;
+  (ii) decision time (human vs automated); (iii) rationale overlap (which signals experts cite — cost,
+  sovereignty, budget, quality — vs the system's stated reasons); (iv) a qualitative disagreement
+  analysis of where and why the two diverge.
+- **Threats & honesty.** Small expert pool, imperfect scenario realism, limited price visibility;
+  mitigated by diverse recruitment, realistic telemetry, and pre-registration. Until the study is run,
+  no agreement scores or expert decisions are reported — RQ7 remains explicitly future work.
 
 ## 8. Threats to Validity
 
