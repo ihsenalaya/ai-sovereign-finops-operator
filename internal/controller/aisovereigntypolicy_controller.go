@@ -79,7 +79,7 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
-	findings := sovereigntyengine.Evaluate(policyToEngine(policy.Spec), cat.providerInfos(samples))
+	findings := sovereigntyengine.EvaluateFlows(policyToEngine(policy.Spec), cat.flows(samples))
 	counts := sovereigntyengine.CountBySeverity(findings)
 
 	policy.Status.FindingsCount = int32(len(findings))
@@ -87,8 +87,14 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 		fmt.Sprintf("Evaluated (%s): %d finding(s) — %d critical, %d warning",
 			policy.Spec.EnforcementMode, len(findings), counts[sovereigntyengine.SeverityCritical], counts[sovereigntyengine.SeverityWarning])))
 
-	for sev, n := range counts {
-		metrics.SovereigntyFindings.WithLabelValues(policy.Namespace, policy.Name, sev).Set(float64(n))
+	// Flow-aware metric: findings per namespace/application/severity.
+	type appSev struct{ ns, app, sev string }
+	perApp := map[appSev]int{}
+	for _, f := range findings {
+		perApp[appSev{f.Namespace, f.Application, f.Severity}]++
+	}
+	for k, n := range perApp {
+		metrics.SovereigntyFindings.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(n))
 	}
 
 	if err := r.Status().Update(ctx, &policy); err != nil {

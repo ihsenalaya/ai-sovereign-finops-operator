@@ -51,6 +51,70 @@ func TestEvaluate(t *testing.T) {
 	}
 }
 
+func TestEvaluateFlows(t *testing.T) {
+	policy := Policy{
+		AllowedZones:             []string{"FR", "EU"},
+		ForbiddenZones:           []string{"US", "CN"},
+		ExternalProvidersAllowed: false,
+		RequireAnonymization:     true,
+	}
+	flows := []Flow{
+		// Compliant EU flow, model cleared for sensitive data -> no zone/sensitive finding.
+		{Namespace: "rh", Application: "chatbot-rh", Model: "mistral-small", Provider: "azure-fr",
+			Zone: "france", Managed: true, ProviderAllowsSensitive: true, ModelAllowsSensitive: true, Requests: 5},
+		// Forbidden zone (US) -> critical, attributed to finance/risk-assistant.
+		{Namespace: "finance", Application: "risk-assistant", Model: "gpt-4o", Provider: "openai-us",
+			Zone: "us", Managed: true, ProviderAllowsSensitive: false, ModelAllowsSensitive: false, Requests: 3},
+		// Same forbidden flow again -> aggregated (requests summed), not a second finding.
+		{Namespace: "finance", Application: "risk-assistant", Model: "gpt-4o", Provider: "openai-us",
+			Zone: "us", Managed: true, ProviderAllowsSensitive: false, ModelAllowsSensitive: false, Requests: 4},
+	}
+
+	findings := EvaluateFlows(policy, flows)
+	counts := CountBySeverity(findings)
+
+	if counts[SeverityCritical] != 1 {
+		t.Errorf("critical = %d, want 1 (%+v)", counts[SeverityCritical], findings)
+	}
+	if counts[SeverityInfo] != 1 { // anonymization
+		t.Errorf("info = %d, want 1", counts[SeverityInfo])
+	}
+	// Critical sorts first and must carry flow attribution + aggregated requests.
+	first := findings[0]
+	if first.Severity != SeverityCritical {
+		t.Fatalf("first severity = %s, want critical", first.Severity)
+	}
+	if first.Namespace != "finance" || first.Application != "risk-assistant" || first.Provider != "openai-us" {
+		t.Errorf("attribution = %s/%s/%s, want finance/risk-assistant/openai-us", first.Namespace, first.Application, first.Provider)
+	}
+	if first.Requests != 7 { // 3 + 4 aggregated
+		t.Errorf("aggregated requests = %d, want 7", first.Requests)
+	}
+	// The compliant EU flow must NOT produce a zone/sensitive finding.
+	for _, f := range findings {
+		if f.Namespace == "rh" {
+			t.Errorf("compliant rh flow should not produce a finding: %+v", f)
+		}
+	}
+}
+
+func TestEvaluateFlowsSensitiveExternal(t *testing.T) {
+	// External managed provider not cleared for sensitive data, but in an allowed
+	// zone: no zone finding, but a sensitive-data warning attributed to the flow.
+	policy := Policy{AllowedZones: []string{"EU"}, ExternalProvidersAllowed: false}
+	flows := []Flow{
+		{Namespace: "rh", Application: "chatbot-rh", Model: "gpt-4o", Provider: "azure-eu",
+			Zone: "DE", Managed: true, ProviderAllowsSensitive: false, ModelAllowsSensitive: false, Requests: 2},
+	}
+	findings := EvaluateFlows(policy, flows)
+	if len(findings) != 1 || findings[0].Severity != SeverityWarning {
+		t.Fatalf("want 1 warning, got %+v", findings)
+	}
+	if findings[0].Application != "chatbot-rh" {
+		t.Errorf("application = %q, want chatbot-rh", findings[0].Application)
+	}
+}
+
 func TestZoneAllowedEUCoversFrance(t *testing.T) {
 	allowed := toSet([]string{"EU"})
 	if !zoneAllowed("FR", allowed) {

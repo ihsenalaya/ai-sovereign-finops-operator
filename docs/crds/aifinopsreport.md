@@ -18,7 +18,7 @@ rapport complet (Markdown + JSON) est écrit dans un **ConfigMap** `<nom>-report
 | `generatedAt` | Horodatage de génération. |
 | `totalCostEUR`, `totalInputTokens`, `totalOutputTokens` | Totaux sur la période. |
 | `topModels[]` | `{name, costEUR}` triés par coût. |
-| `sovereigntyFindings[]` | `{severity, message}`. |
+| `sovereigntyFindings[]` | `{severity, message, namespace, application, model, provider, zone, requests}` — vérification **par flux**, attribuée au namespace/app/modèle/fournisseur, avec le nombre de requêtes affectées. |
 | `recommendations[]` | `{type, message}`. |
 | `conditions[]` | `Ready` (`reason=ReportGenerated`). |
 

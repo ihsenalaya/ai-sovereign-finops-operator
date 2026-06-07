@@ -49,10 +49,24 @@ type ModelCost struct {
 	CostEUR resource.Quantity `json:"costEUR"`
 }
 
-// SovereigntyFinding is a sovereignty/compliance observation.
+// SovereigntyFinding is a sovereignty/compliance observation. When produced by
+// flow-aware evaluation it is attributed to the namespace/application/model whose
+// traffic triggered it, on which provider/zone, and how many requests were affected.
 type SovereigntyFinding struct {
 	Severity Severity `json:"severity"`
 	Message  string   `json:"message"`
+	// Namespace is the governed namespace whose flow triggered the finding.
+	Namespace string `json:"namespace,omitempty"`
+	// Application is the app whose flow triggered the finding.
+	Application string `json:"application,omitempty"`
+	// Model is the provider-side model used by the flow.
+	Model string `json:"model,omitempty"`
+	// Provider is the provider the flow was routed to.
+	Provider string `json:"provider,omitempty"`
+	// Zone is the resolved provider residency zone.
+	Zone string `json:"zone,omitempty"`
+	// Requests is the number of requests affected by this finding.
+	Requests int64 `json:"requests,omitempty"`
 }
 
 // Recommendation is an optimization suggestion surfaced by the engines.

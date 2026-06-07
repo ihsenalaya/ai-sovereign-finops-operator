@@ -182,20 +182,38 @@ func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFin
 	}
 }
 
-// applySovereigntyToStatus runs the sovereignty engine (if a policy exists in the
-// namespace) and records findings on the report.
+// applySovereigntyToStatus verifies each observed flow (namespace/application →
+// model → provider) against the namespace's sovereignty policy and records the
+// attributed findings on the report. Findings carry which namespace/app/model/
+// provider triggered them and how many requests were affected.
 func (r *AIFinOpsReportReconciler) applySovereigntyToStatus(ctx context.Context, report *aiopsv1alpha1.AIFinOpsReport, cat catalog, samples []collectors.UsageSample) {
 	policy := firstSovereigntyPolicy(ctx, r.Client, report.Namespace)
 	if policy == nil {
 		return
 	}
-	findings := sovereigntyengine.Evaluate(policyToEngine(policy.Spec), cat.providerInfos(samples))
+	findings := sovereigntyengine.EvaluateFlows(policyToEngine(policy.Spec), cat.flows(samples))
 	report.Status.SovereigntyFindings = make([]aiopsv1alpha1.SovereigntyFinding, 0, len(findings))
 	for _, f := range findings {
 		report.Status.SovereigntyFindings = append(report.Status.SovereigntyFindings, aiopsv1alpha1.SovereigntyFinding{
-			Severity: aiopsv1alpha1.Severity(f.Severity),
-			Message:  f.Message,
+			Severity:    aiopsv1alpha1.Severity(f.Severity),
+			Message:     f.Message,
+			Namespace:   f.Namespace,
+			Application: f.Application,
+			Model:       f.Model,
+			Provider:    f.Provider,
+			Zone:        f.Zone,
+			Requests:    f.Requests,
 		})
+	}
+
+	// Flow-aware metric: findings per namespace/application/severity.
+	type key struct{ ns, app, sev string }
+	counts := map[key]int{}
+	for _, f := range findings {
+		counts[key{f.Namespace, f.Application, f.Severity}]++
+	}
+	for k, n := range counts {
+		metrics.SovereigntyFindings.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(n))
 	}
 }
 

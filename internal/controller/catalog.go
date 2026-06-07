@@ -144,24 +144,44 @@ func filterByBudgetTarget(samples []collectors.UsageSample, t aiopsv1alpha1.Budg
 	return out
 }
 
-// providerInfos returns sovereignty ProviderInfo for each distinct provider seen
-// in the samples, resolving residency/managed flags from the catalog. Providers
-// absent from the catalog yield an entry with an empty zone (treated as unverified).
-func (cat catalog) providerInfos(samples []collectors.UsageSample) []sovereigntyengine.ProviderInfo {
-	seen := map[string]bool{}
-	var out []sovereigntyengine.ProviderInfo
+// modelSensitivityByProviderModel indexes whether each provider-side model name
+// is allowed for sensitive data, from the AIModel catalog.
+func (cat catalog) modelSensitivity(modelName string) (allowed bool, known bool) {
+	for i := range cat.models {
+		if cat.models[i].Spec.ModelName == modelName {
+			return cat.models[i].Spec.SensitiveDataAllowed, true
+		}
+	}
+	return false, false
+}
+
+// flows turns usage samples into sovereignty Flows, resolving each flow's
+// provider residency/managed/sensitivity and the model's sensitivity from the
+// catalog. This is what makes sovereignty verification per namespace/app rather
+// than per provider. Samples without a provider are skipped.
+func (cat catalog) flows(samples []collectors.UsageSample) []sovereigntyengine.Flow {
+	out := make([]sovereigntyengine.Flow, 0, len(samples))
 	for _, s := range samples {
-		if s.Provider == "" || seen[s.Provider] {
+		if s.Provider == "" {
 			continue
 		}
-		seen[s.Provider] = true
-		info := sovereigntyengine.ProviderInfo{Name: s.Provider}
-		if p, ok := cat.providers[s.Provider]; ok {
-			info.Zone = p.Spec.DataResidency
-			info.Managed = p.Spec.Managed
-			info.AllowedForSensitiveData = p.Spec.Compliance.AllowedForSensitiveData
+		fl := sovereigntyengine.Flow{
+			Namespace:   s.Namespace,
+			Application: s.Application,
+			Model:       s.Model,
+			Provider:    s.Provider,
+			Requests:    s.Requests,
 		}
-		out = append(out, info)
+		if p, ok := cat.providers[s.Provider]; ok {
+			fl.Zone = p.Spec.DataResidency
+			fl.Managed = p.Spec.Managed
+			fl.ProviderAllowsSensitive = p.Spec.Compliance.AllowedForSensitiveData
+		}
+		// A model unknown to the catalog defaults to not allowed for sensitive
+		// data (conservative: surface it rather than silently pass).
+		modelAllows, _ := cat.modelSensitivity(s.Model)
+		fl.ModelAllowsSensitive = modelAllows
+		out = append(out, fl)
 	}
 	return out
 }

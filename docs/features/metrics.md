@@ -11,7 +11,7 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 | `ai_finops_output_tokens_total` | gauge | `namespace` | AIFinOpsReport |
 | `ai_finops_cost_eur_total` | gauge | `namespace` | AIFinOpsReport |
 | `ai_finops_budget_usage_percent` | gauge | `namespace,policy` | AIBudgetPolicy |
-| `ai_finops_sovereignty_findings_total` | gauge | `namespace,policy,severity` | AISovereigntyPolicy |
+| `ai_finops_sovereignty_findings_total` | gauge | `namespace,application,policy,severity` | AISovereigntyPolicy, AIFinOpsReport |
 | `ai_finops_breakeven_savings_eur` | gauge | `namespace,analysis` | AIBreakEvenAnalysis |
 | `ai_finops_recommendations_total` | gauge | `type` | AIFinOpsReport |
 

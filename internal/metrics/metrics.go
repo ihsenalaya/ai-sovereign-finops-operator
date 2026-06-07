@@ -58,11 +58,12 @@ var (
 		Help: "Percent of budget consumed for an AIBudgetPolicy.",
 	}, []string{"namespace", "policy"})
 
-	// SovereigntyFindings is the count of findings per policy and severity.
+	// SovereigntyFindings is the count of findings per policy, namespace,
+	// application and severity (flow-aware attribution).
 	SovereigntyFindings = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_sovereignty_findings_total",
-		Help: "Sovereignty findings detected for an AISovereigntyPolicy, by severity.",
-	}, []string{"namespace", "policy", "severity"})
+		Help: "Sovereignty findings detected for an AISovereigntyPolicy, by namespace, application and severity.",
+	}, []string{"namespace", "application", "policy", "severity"})
 
 	// BreakevenSavingsEUR is the estimated monthly savings of self-hosting.
 	BreakevenSavingsEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{

@@ -33,12 +33,19 @@ const (
 	SeverityCritical = "critical"
 )
 
-// Finding is a single sovereignty observation.
+// Finding is a single sovereignty observation. For flow-aware evaluation it is
+// attributed to the namespace/application/model whose traffic triggered it and
+// carries the number of requests affected; provider-level evaluation leaves
+// those fields empty.
 type Finding struct {
-	Severity string
-	Message  string
-	Provider string
-	Zone     string
+	Severity    string
+	Message     string
+	Namespace   string
+	Application string
+	Model       string
+	Provider    string
+	Zone        string
+	Requests    int64
 }
 
 // ProviderInfo is the subset of an AIProvider needed to evaluate sovereignty.
@@ -47,6 +54,21 @@ type ProviderInfo struct {
 	Zone                    string // raw dataResidency (e.g. "france", "us")
 	Managed                 bool
 	AllowedForSensitiveData bool
+}
+
+// Flow is one observed traffic flow (a namespace/application calling a model on
+// a provider) enriched with the provider/model attributes needed to verify it
+// against a sovereignty policy. It is the unit of flow-aware evaluation.
+type Flow struct {
+	Namespace               string
+	Application             string
+	Model                   string
+	Provider                string
+	Zone                    string // raw provider dataResidency
+	Managed                 bool
+	ProviderAllowsSensitive bool
+	ModelAllowsSensitive    bool
+	Requests                int64
 }
 
 // Policy is the subset of an AISovereigntyPolicy needed for evaluation.
@@ -152,6 +174,94 @@ func Evaluate(policy Policy, providers []ProviderInfo) []Finding {
 			return ri > rj
 		}
 		return findings[i].Provider < findings[j].Provider
+	})
+	return findings
+}
+
+// EvaluateFlows verifies each observed flow (namespace/application → model →
+// provider) against the policy and returns findings attributed to the flow that
+// triggered them. Identical findings (same severity/namespace/app/model/provider)
+// are aggregated and their request counts summed, so the output is one line per
+// distinct violation rather than one per sample. Findings are sorted by
+// descending severity, then namespace, application, provider, model.
+func EvaluateFlows(policy Policy, flows []Flow) []Finding {
+	allowed := toSet(policy.AllowedZones)
+	forbidden := toSet(policy.ForbiddenZones)
+
+	agg := map[string]*Finding{}
+	var order []string
+	add := func(f Finding) {
+		key := strings.Join([]string{f.Severity, f.Namespace, f.Application, f.Model, f.Provider, f.Message}, "\x1f")
+		if existing, ok := agg[key]; ok {
+			existing.Requests += f.Requests
+			return
+		}
+		cp := f
+		agg[key] = &cp
+		order = append(order, key)
+	}
+
+	for _, fl := range flows {
+		zone := NormalizeZone(fl.Zone)
+		base := Finding{
+			Namespace: fl.Namespace, Application: fl.Application,
+			Model: fl.Model, Provider: fl.Provider, Zone: zone, Requests: fl.Requests,
+		}
+
+		switch {
+		case forbidden[zone]:
+			f := base
+			f.Severity = SeverityCritical
+			f.Message = fmt.Sprintf("Namespace %q app %q routed model %q to provider %q in forbidden zone %s.",
+				fl.Namespace, fl.Application, fl.Model, fl.Provider, zone)
+			add(f)
+		case !zoneAllowed(zone, allowed):
+			f := base
+			f.Severity = SeverityWarning
+			f.Message = fmt.Sprintf("Namespace %q app %q routed model %q to provider %q in zone %s, outside allowed zones %v.",
+				fl.Namespace, fl.Application, fl.Model, fl.Provider, zone, sortedKeys(allowed))
+			add(f)
+		}
+
+		// Sensitive-data rule: when the policy forbids external providers for
+		// sensitive data, flag flows on a managed external provider that is not
+		// cleared for sensitive data (provider or model not allowed).
+		if !policy.ExternalProvidersAllowed && fl.Managed && (!fl.ProviderAllowsSensitive || !fl.ModelAllowsSensitive) {
+			f := base
+			f.Severity = SeverityWarning
+			f.Message = fmt.Sprintf("Namespace %q app %q sent traffic (model %q) to external managed provider %q while external providers are disallowed for sensitive data.",
+				fl.Namespace, fl.Application, fl.Model, fl.Provider)
+			add(f)
+		}
+	}
+
+	findings := make([]Finding, 0, len(order))
+	for _, k := range order {
+		findings = append(findings, *agg[k])
+	}
+
+	if policy.RequireAnonymization {
+		findings = append(findings, Finding{
+			Severity: SeverityInfo,
+			Message:  "Policy requires prompt anonymization; ensure the gateway redacts sensitive fields before egress.",
+		})
+	}
+
+	sort.SliceStable(findings, func(i, j int) bool {
+		ri, rj := severityRank(findings[i].Severity), severityRank(findings[j].Severity)
+		if ri != rj {
+			return ri > rj
+		}
+		if findings[i].Namespace != findings[j].Namespace {
+			return findings[i].Namespace < findings[j].Namespace
+		}
+		if findings[i].Application != findings[j].Application {
+			return findings[i].Application < findings[j].Application
+		}
+		if findings[i].Provider != findings[j].Provider {
+			return findings[i].Provider < findings[j].Provider
+		}
+		return findings[i].Model < findings[j].Model
 	})
 	return findings
 }

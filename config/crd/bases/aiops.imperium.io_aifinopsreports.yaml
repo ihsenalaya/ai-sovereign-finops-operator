@@ -170,16 +170,41 @@ spec:
               sovereigntyFindings:
                 description: SovereigntyFindings surfaced during the period.
                 items:
-                  description: SovereigntyFinding is a sovereignty/compliance observation.
+                  description: |-
+                    SovereigntyFinding is a sovereignty/compliance observation. When produced by
+                    flow-aware evaluation it is attributed to the namespace/application/model whose
+                    traffic triggered it, on which provider/zone, and how many requests were affected.
                   properties:
+                    application:
+                      description: Application is the app whose flow triggered the
+                        finding.
+                      type: string
                     message:
                       type: string
+                    model:
+                      description: Model is the provider-side model used by the flow.
+                      type: string
+                    namespace:
+                      description: Namespace is the governed namespace whose flow
+                        triggered the finding.
+                      type: string
+                    provider:
+                      description: Provider is the provider the flow was routed to.
+                      type: string
+                    requests:
+                      description: Requests is the number of requests affected by
+                        this finding.
+                      format: int64
+                      type: integer
                     severity:
                       description: Severity ranks a finding.
                       enum:
                       - info
                       - warning
                       - critical
+                      type: string
+                    zone:
+                      description: Zone is the resolved provider residency zone.
                       type: string
                   required:
                   - message

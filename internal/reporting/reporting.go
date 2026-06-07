@@ -71,8 +71,14 @@ type lineJSON struct {
 }
 
 type findingJSON struct {
-	Severity string `json:"severity"`
-	Message  string `json:"message"`
+	Severity    string `json:"severity"`
+	Message     string `json:"message"`
+	Namespace   string `json:"namespace,omitempty"`
+	Application string `json:"application,omitempty"`
+	Model       string `json:"model,omitempty"`
+	Provider    string `json:"provider,omitempty"`
+	Zone        string `json:"zone,omitempty"`
+	Requests    int64  `json:"requests,omitempty"`
 }
 
 type recommendationJSON struct {
@@ -120,7 +126,11 @@ func RenderJSON(d Data) ([]byte, error) {
 		Assumptions:       Assumptions(),
 	}
 	for _, f := range d.Sovereignty {
-		r.Sovereignty = append(r.Sovereignty, findingJSON{Severity: string(f.Severity), Message: f.Message})
+		r.Sovereignty = append(r.Sovereignty, findingJSON{
+			Severity: string(f.Severity), Message: f.Message,
+			Namespace: f.Namespace, Application: f.Application, Model: f.Model,
+			Provider: f.Provider, Zone: f.Zone, Requests: f.Requests,
+		})
 	}
 	for _, rec := range d.Recommends {
 		r.Recommendations = append(r.Recommendations, recommendationJSON{Type: rec.Type, Message: rec.Message})
@@ -156,7 +166,11 @@ func RenderMarkdown(d Data) string {
 		sb.WriteString("_No findings._\n\n")
 	} else {
 		for _, f := range d.Sovereignty {
-			fmt.Fprintf(&sb, "- **%s** — %s\n", strings.ToUpper(string(f.Severity)), f.Message)
+			suffix := ""
+			if f.Requests > 0 {
+				suffix = fmt.Sprintf(" _(%d request(s) affected)_", f.Requests)
+			}
+			fmt.Fprintf(&sb, "- **%s** — %s%s\n", strings.ToUpper(string(f.Severity)), f.Message, suffix)
 		}
 		sb.WriteString("\n")
 	}
