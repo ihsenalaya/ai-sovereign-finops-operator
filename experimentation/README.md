@@ -57,10 +57,21 @@ Every test is journaled (status, **duration**, details) in `results/TEST_STATUS.
 silently missing. Unit tests cover the router/engines (`go test ./experimentation/...`).
 
 ## Headline result
-See `results/summary.md` (auto-generated). Latest run: **Ours −64.6% cost vs premium-static with
-~0% quality change** (win-rate ≈ parity), routing overhead ~17µs, **0 sovereignty violations** vs 40
-for the sovereignty-blind baseline, and **100% availability / 0% budget overrun** under graceful
-degradation.
+Two-provider run (OpenAI US + **Mistral EU** via Azure AI Foundry, DataZone EU):
+- **Cost −70.8%** vs premium; a 30-rep run confirms it (p≈3×10⁻¹¹, Cohen d≈−43, non-overlapping CIs).
+- **Quality ≥ comparable** (judge-dependent; two-judge agreement κ=0.40, ρ=0.61, within-1 94%).
+- **RQ4 sovereignty real**: under EU-only, **100% availability via Mistral EU, 0 violations** vs 40 for
+  the sovereignty-blind baseline.
+- **Latency** significantly higher for Ours (real trade-off, d≈+3.7).
+- vs a literature-style **difficulty router (B7)**: B7 saves 73% at quality 0.866; Ours 71% at 0.91 +
+  governance. See `results/summary.md`, `results-stats/stats_summary.md`, `results/judge_agreement_summary.md`.
+
+## Scripts
+- `scripts/run_experiment.sh` — deterministic RQ1–RQ6 + ablation.
+- `cmd/experiment -stats-reps 30 -stats-temp 0.7` — multi-repetition statistical run.
+- `cmd/judgeagree` + `scripts/judge_agreement.py` — two-judge agreement (κ/α/ρ).
+- `scripts/analyze_results.py`, `scripts/analyze_stats.py`, `scripts/stats.py`, `scripts/md_to_pdf.py`.
+- `cmd/gpubench` — GPU/vLLM bench (OpenAI-compatible; deferred real-GPU phase).
 
 ## Adding the second provider (next phase)
 1. Add a `llm.Client` implementation (or reuse `OpenAI` with a different base URL / provider label).
