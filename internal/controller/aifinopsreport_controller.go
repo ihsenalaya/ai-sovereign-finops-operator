@@ -139,14 +139,21 @@ func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFin
 	report.Status.TotalInputTokens = b.Total.InputTokens
 	report.Status.TotalOutputTokens = b.Total.OutputTokens
 
-	nsLabel := report.Spec.Target.Namespace
-	if nsLabel == "" {
-		nsLabel = report.Namespace
+	// Emit usage/cost metrics keyed by the real telemetry namespace (from the
+	// cost breakdown), not by the report scope. This keeps sum() correct even
+	// when several reports overlap (e.g. an all-namespaces report alongside a
+	// namespace-scoped one) — overlapping series resolve to the same per-namespace
+	// value (last-writer-wins) instead of double-counting.
+	for ns, li := range b.ByNamespace {
+		label := ns
+		if label == "" {
+			label = "(unknown)"
+		}
+		metrics.RequestsTotal.WithLabelValues(label).Set(float64(li.Requests))
+		metrics.InputTokensTotal.WithLabelValues(label).Set(float64(li.InputTokens))
+		metrics.OutputTokensTotal.WithLabelValues(label).Set(float64(li.OutputTokens))
+		metrics.CostEURTotal.WithLabelValues(label).Set(li.CostTotal)
 	}
-	metrics.RequestsTotal.WithLabelValues(nsLabel).Set(float64(b.Total.Requests))
-	metrics.InputTokensTotal.WithLabelValues(nsLabel).Set(float64(b.Total.InputTokens))
-	metrics.OutputTokensTotal.WithLabelValues(nsLabel).Set(float64(b.Total.OutputTokens))
-	metrics.CostEURTotal.WithLabelValues(nsLabel).Set(b.Total.CostTotal)
 
 	top := costengine.TopByCost(b.ByModel, 5)
 	report.Status.TopModels = make([]aiopsv1alpha1.ModelCost, 0, len(top))

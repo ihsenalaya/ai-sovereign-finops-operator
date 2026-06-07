@@ -6,7 +6,7 @@ cluster kind local, avec **Prometheus + Grafana** déployés pour visualiser les
 ## Prérequis
 - Un cluster **kind** nommé `greenops` (contexte `kind-greenops`) — créé via `automatisation/` (`make local`).
 - `kubectl`, et `helm` si l'opérateur n'est pas déjà installé (le script l'installe sinon).
-- L'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.0` (publique sur GHCR).
+- L'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.1` (publique sur GHCR).
 
 > Contexte différent ? `KCTX=<mon-context> ./demo.sh up`
 
