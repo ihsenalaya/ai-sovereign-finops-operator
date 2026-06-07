@@ -11,6 +11,7 @@
 | B3-least-cost        |         0.0007   |       40 |         0 |               1.7e-05  |                0     |                    98.2  |
 | B4-static-policy     |         0.021011 |       40 |         0 |               0.000525 |                5e-06 |                    46.03 |
 | B5-budget-hard-block |         0.03893  |       40 |         0 |               0.000973 |                7e-06 |                     0    |
+| B7-difficulty-router |         0.010486 |       40 |         0 |               0.000262 |                2e-06 |                    73.06 |
 | B6-ours              |         0.011353 |       40 |         0 |               0.000284 |                2e-06 |                    70.84 |
 
 ## RQ2 Quality
@@ -21,17 +22,19 @@
 | B3-least-cost        |             0.8575  |                 100   |                    42.5  |                     20 |
 | B4-static-policy     |             0.86875 |                  97.5 |                    35    |                     20 |
 | B5-budget-hard-block |             0.9     |                  97.5 |                     0    |                      0 |
+| B7-difficulty-router |             0.86625 |                  95   |                    55    |                     30 |
 | B6-ours              |             0.9125  |                  97.5 |                    50    |                     40 |
 
 ## RQ3 Latency
 | strategy             |   latency_p50_ms |   latency_p95_ms |   latency_p99_ms |   latency_mean_ms |   routing_decision_us |
 |:---------------------|-----------------:|-----------------:|-----------------:|------------------:|----------------------:|
-| B1-premium-static    |              906 |             2494 |             2646 |           1125.97 |                 10.68 |
-| B2-round-robin       |              797 |             2902 |             3576 |           1075.38 |                 13.6  |
-| B3-least-cost        |              700 |             1476 |             2815 |            753.98 |                  7.15 |
-| B4-static-policy     |              797 |             1911 |             2634 |            941.3  |                 13.21 |
-| B5-budget-hard-block |              906 |             2494 |             2646 |           1125.97 |                  9    |
-| B6-ours              |              946 |             3475 |             4265 |           1509.95 |                 14.66 |
+| B1-premium-static    |              906 |             2494 |             2646 |           1125.97 |                 10.47 |
+| B2-round-robin       |              797 |             2902 |             3576 |           1075.38 |                 12.93 |
+| B3-least-cost        |              700 |             1476 |             2815 |            753.98 |                 15.96 |
+| B4-static-policy     |              797 |             1911 |             2634 |            941.3  |                  9.5  |
+| B5-budget-hard-block |              906 |             2494 |             2646 |           1125.97 |                  9.38 |
+| B7-difficulty-router |              700 |             1912 |             2813 |            931.33 |                 13.67 |
+| B6-ours              |              946 |             3475 |             4265 |           1509.95 |                 10.83 |
 
 ## RQ4 Sovereignty
 | scenario              | strategy          |   total_cost_eur |   served |   blocked |   violations |   reroutes |   mean_quality_norm |

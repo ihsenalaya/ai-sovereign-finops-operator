@@ -101,6 +101,25 @@ both absolute and pairwise protocols while acknowledging its documented biases (
 EU AI Act [euaiact2024]; our system targets *audit preparation* for these regimes, not legal
 attestation.
 
+**Positioning (Table 0).** The following feature matrix makes the delta explicit: prior routing work
+optimizes the cost–quality trade-off; we add the governance dimensions (sovereignty, per-tenant
+budget, attribution) at the gateway/control-plane level, and the managed-vs-self-hosted decision.
+
+| Capability | FrugalGPT | Hybrid LLM | RouteLLM | AutoMix | **Ours** |
+|---|:--:|:--:|:--:|:--:|:--:|
+| Cost-aware routing | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Quality-aware routing | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Learned difficulty predictor | ✓ | ✓ | ✓ | ✓ | ✗ (priors; future: graft) |
+| **Hard sovereignty constraints** | ✗ | ✗ | ✗ | ✗ | **✓** |
+| **Per-team/namespace budgets** | ✗ | ✗ | ✗ | ✗ | **✓** |
+| **Budget-aware graceful degradation** | ✗ | ✗ | ✗ | ✗ | **✓** |
+| **Cost attribution (team/ns/app)** | ✗ | ✗ | ✗ | ✗ | **✓** |
+| **Managed-vs-self-hosted break-even** | ✗ | ✗ | ✗ | ✗ | **✓** |
+| Gateway/K8s control-plane artifact | ✗ | ✗ | ✗ | ✗ | **✓** |
+
+We do not claim to beat learned routers on the cost–quality frontier; rather, our governance layer is
+*orthogonal* and could wrap any of them (a planned integration, §9).
+
 ## 3. Problem Formulation and Algorithm
 
 A request $r$ carries metadata (team, namespace, sensitivity) and an estimated token footprint. Given
@@ -169,14 +188,20 @@ supports ≥30 repetitions (§8).
 ### RQ1 — Cost (Figure 2, Table 1)
 Relative to premium-static, **B6-ours cuts total cost by 70.8%** (0.01135 vs 0.03893 EUR over the
 40-prompt matrix; cost/request 0.000284 vs 0.000973). With the second provider available, Ours routes
-much traffic to the cheaper Mistral EU and OpenAI mid/cheap tiers. Naïve least-cost (B3) saves 98.2%
-but at a quality cost (RQ2); round-robin 62.3%; static policy 46.0%.
+much traffic to the cheaper Mistral EU and OpenAI mid/cheap tiers. We also compare a **literature-style
+difficulty router** (B7, a Hybrid-LLM/RouteLLM-style proxy that routes by estimated quality need): it
+saves slightly *more* (73.1%) but at lower quality (0.866, RQ2), and — unlike Ours — it has no
+sovereignty, budget, or attribution governance. Naïve least-cost (B3) saves 98.2% at the largest
+quality cost; round-robin 62.3%; static policy 46.0%.
 
 ### RQ2 — Quality (Figure 3, Table 2)
 Within this two-provider, single-pass scope, B6-ours's mean normalized quality is **comparable to —
 marginally above — premium** (0.9125 vs 0.900; acceptable-rate 97.5%), with a pairwise win-rate vs the
 premium reference of **50.0%** (statistical parity). The cross-provider mix helps: Mistral-Large-3
-sometimes matches or beats gpt-4o on the judge. Least-cost drops to 0.858 and static-policy to 0.869.
+sometimes matches or beats gpt-4o on the judge. Least-cost drops to 0.858, static-policy to 0.869, and
+the **difficulty router (B7) to 0.866 at 73.1% savings** — so against a literature-style router Ours
+trades ~2 points of savings for **higher quality plus the governance layer (sovereignty/budget/
+attribution)** that B7 lacks.
 Two caveats remain: (i) the **premium model is also the routing reference and the judge anchor**, which
 can bias pairwise results; (ii) we have **not yet run significance tests** (one deterministic pass).
 We therefore claim only that *quality remained comparable within the evaluated scope*, and defer a

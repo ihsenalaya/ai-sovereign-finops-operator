@@ -1,0 +1,8 @@
+# Python deps for the analysis/figures/stats scripts (scripts/*.py).
+# Install: python3 -m pip install -r requirements.txt
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
+matplotlib>=3.7
+tabulate>=0.9
+fpdf2>=2.7

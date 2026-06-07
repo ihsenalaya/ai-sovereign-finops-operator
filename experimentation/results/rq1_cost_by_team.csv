@@ -19,6 +19,10 @@ B5-budget-hard-block,analytics,0.008095
 B5-budget-hard-block,hr,0.015415
 B5-budget-hard-block,knowledge,0.003018
 B5-budget-hard-block,platform,0.012403
+B7-difficulty-router,analytics,0.000292
+B7-difficulty-router,hr,0.000055
+B7-difficulty-router,knowledge,0.000182
+B7-difficulty-router,platform,0.009958
 B6-ours,analytics,0.000497
 B6-ours,hr,0.000717
 B6-ours,knowledge,0.000182

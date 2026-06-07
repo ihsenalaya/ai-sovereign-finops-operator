@@ -319,10 +319,59 @@ func blockedNoCandidate(rejected []string) Decision {
 	return Decision{Blocked: true, Reason: "no sovereignty-compliant model available", RejectedModels: rejected, Findings: findingsFor(rejected)}
 }
 
+// ---------- B7 Difficulty router (Hybrid-LLM / RouteLLM-style proxy) ----------
+
+// DifficultyRouter routes by an estimated query difficulty/quality need, like the
+// learned difficulty routers in the literature — but using a transparent
+// heuristic (token length + the workload's minimum-quality requirement) rather
+// than a trained predictor. It is a stronger, literature-aligned baseline than
+// the naïve B1-B5, and it respects sovereignty (chooses among compliant models).
+type DifficultyRouter struct{}
+
+func (DifficultyRouter) Name() string { return "B7-difficulty-router" }
+
+func (DifficultyRouter) Choose(ctx RequestContext, models map[string]catalog.Model) Decision {
+	ok, rejected := candidates(ctx, models)
+	if len(ok) == 0 {
+		return blockedNoCandidate(rejected)
+	}
+	lenScore := float64(ctx.EstInputTokens) / 400.0
+	if lenScore > 1 {
+		lenScore = 1
+	}
+	// The quality requirement dominates (Hybrid-LLM-style: quality-needy/long
+	// queries -> stronger models), so it does not collapse to always-cheapest.
+	difficulty := ctx.MinQuality
+	if lenScore > difficulty {
+		difficulty = lenScore
+	}
+	var best catalog.Model
+	found := false
+	for _, m := range ok {
+		if m.QualityPrior >= difficulty {
+			if !found || estCost(m, ctx.EstInputTokens, ctx.EstOutputTokens) < estCost(best, ctx.EstInputTokens, ctx.EstOutputTokens) {
+				best, found = m, true
+			}
+		}
+	}
+	if !found {
+		best = ok[0]
+		for _, m := range ok[1:] {
+			if m.QualityPrior > best.QualityPrior {
+				best = m
+			}
+		}
+	}
+	return Decision{ModelID: best.ID, Reason: fmt.Sprintf("difficulty=%.2f", difficulty),
+		ExpectedCostEUR: estCost(best, ctx.EstInputTokens, ctx.EstOutputTokens),
+		RejectedModels:  rejected, Findings: findingsFor(rejected), Fallback: best.ID != ctx.PremiumModel}
+}
+
 // All returns the full strategy set in canonical order. RoundRobin is stateful,
 // so a fresh instance is created per call site.
 func All() []Strategy {
 	return []Strategy{
-		PremiumStatic{}, &RoundRobin{}, LeastCost{}, StaticPolicy{}, BudgetHardBlock{}, Ours{W: DefaultWeights()},
+		PremiumStatic{}, &RoundRobin{}, LeastCost{}, StaticPolicy{}, BudgetHardBlock{},
+		DifficultyRouter{}, Ours{W: DefaultWeights()},
 	}
 }
