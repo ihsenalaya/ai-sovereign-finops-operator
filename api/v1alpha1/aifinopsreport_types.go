@@ -77,6 +77,14 @@ type Recommendation struct {
 	// Severity ranks urgency (info, warning, critical).
 	// +optional
 	Severity string `json:"severity,omitempty"`
+	// Namespace is the workload namespace this recommendation targets (empty for
+	// catalog-wide recommendations such as data-quality).
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+	// Application is the workload this recommendation targets (empty for
+	// catalog-wide recommendations).
+	// +optional
+	Application string `json:"application,omitempty"`
 	// EstimatedSavingsEUR is the projected saving of acting on this recommendation
 	// over the observation window (0 when not a cost saving).
 	// +optional

@@ -1,80 +1,212 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "schemaVersion": 39,
-  "title": "AI Sovereign FinOps — Overview",
-  "tags": ["ai-finops", "sovereignty", "cncf"],
+  "title": "AI Sovereign FinOps \u2014 Overview",
+  "tags": [
+    "ai-finops",
+    "sovereignty",
+    "cncf"
+  ],
   "templating": {
     "list": [
-      { "name": "datasource", "type": "datasource", "query": "prometheus", "current": {} }
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {}
+      }
     ]
   },
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "refresh": "30s",
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR) — observed",
+      "title": "Total cost (EUR) \u2014 observed",
       "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4 } },
-      "targets": [{ "expr": "sum(ai_finops_cost_eur_total)", "refId": "A" }]
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 4
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(ai_finops_cost_eur_total)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Tokens (total in + out)",
       "description": "Real total tokens measured by the gateway across all apps.",
       "datasource": "${datasource}",
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
-      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } } },
-      "targets": [{ "expr": "sum(ai_finops_input_tokens_total) + sum(ai_finops_output_tokens_total)", "refId": "A" }]
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(ai_finops_input_tokens_total) + sum(ai_finops_output_tokens_total)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Requests (total)",
       "description": "Total LLM requests routed through the gateway and accounted by the operator.",
       "datasource": "${datasource}",
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
-      "targets": [{ "expr": "sum(ai_finops_requests_total)", "refId": "A" }]
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(ai_finops_requests_total)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "bargauge",
       "title": "Budget usage (%) by policy",
       "description": "Forecast monthly spend vs the monthly budget cap, per AIBudgetPolicy (one bar per budget).",
       "datasource": "${datasource}",
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
-      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent", "min": 0, "max": 150,
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": 0 }, { "color": "yellow", "value": 70 },
-            { "color": "orange", "value": 90 }, { "color": "red", "value": 100 }
-          ] }
+          "unit": "percent",
+          "min": 0,
+          "max": 150,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 90
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
         }
       },
-      "targets": [{ "expr": "ai_finops_budget_usage_percent", "legendFormat": "{{namespace}}/{{policy}}", "instant": true, "refId": "A" }]
+      "targets": [
+        {
+          "expr": "ai_finops_budget_usage_percent",
+          "legendFormat": "{{namespace}}/{{policy}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "Cost (EUR) by namespace",
       "description": "Real per-namespace spend over time.",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [{ "expr": "ai_finops_cost_eur_total", "legendFormat": "{{namespace}}", "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 4,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "ai_finops_cost_eur_total",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "Tokens by namespace (input / output)",
       "description": "Real token volume measured by the gateway, per namespace.",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
-      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10
+          }
+        }
+      },
       "targets": [
-        { "expr": "ai_finops_input_tokens_total", "legendFormat": "in {{namespace}}", "refId": "A" },
-        { "expr": "ai_finops_output_tokens_total", "legendFormat": "out {{namespace}}", "refId": "B" }
+        {
+          "expr": "ai_finops_input_tokens_total",
+          "legendFormat": "in {{namespace}}",
+          "refId": "A"
+        },
+        {
+          "expr": "ai_finops_output_tokens_total",
+          "legendFormat": "out {{namespace}}",
+          "refId": "B"
+        }
       ]
     },
     {
@@ -82,39 +214,231 @@
       "title": "Requests violating sovereignty (by app)",
       "description": "Current number of requests each app routed to a non-compliant (forbidden-zone) provider. Critical zone violations shown (warning count is identical).",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 14 },
-      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": { "mode": "fixed", "fixedColor": "red" },
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "orange", "value": 0 }, { "color": "red", "value": 1 } ] }
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
         }
       },
-      "targets": [{
-        "expr": "sum by (namespace, application) (ai_finops_sovereignty_requests_total{severity=\"critical\"})",
-        "legendFormat": "{{namespace}}/{{application}}",
-        "instant": true,
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "expr": "sum by (namespace, application) (ai_finops_sovereignty_requests_total{severity=\"critical\"})",
+          "legendFormat": "{{namespace}}/{{application}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     },
     {
-      "type": "piechart",
-      "title": "Recommendations by type",
-      "description": "Actionable recommendations from the recommendation engine, grouped by type (cost-saving, sovereignty, data-quality).",
+      "type": "table",
+      "title": "Recommendations (actions, by app)",
+      "description": "Each row is one actionable recommendation the operator emits from real traffic, with the workload it targets, its type (sovereignty / cost-saving / data-quality) and severity. Read it as a to-do list: critical = fix now (compliance), info = optional saving. EUR amounts of cost-saving rows are in the 'Potential savings' panel.",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 14 },
-      "options": { "legend": { "displayMode": "list", "placement": "right", "values": ["value"] } },
-      "targets": [{ "expr": "ai_finops_recommendations_total", "legendFormat": "{{type}}", "instant": true, "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "pluginVersion": "11.2.2",
+      "targets": [
+        {
+          "expr": "ai_finops_recommendations_total",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
+            "renameByName": {
+              "namespace": "Namespace",
+              "application": "Application",
+              "type": "Type",
+              "severity": "Severity"
+            },
+            "indexByName": {
+              "namespace": 0,
+              "application": 1,
+              "type": 2,
+              "severity": 3
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": "",
+            "sort": [
+              {
+                "field": "Severity",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "critical": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "critical"
+                      },
+                      "warning": {
+                        "color": "orange",
+                        "index": 1,
+                        "text": "warning"
+                      },
+                      "info": {
+                        "color": "green",
+                        "index": 2,
+                        "text": "info"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Type"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "sovereignty": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "sovereignty"
+                      },
+                      "cost-saving": {
+                        "color": "green",
+                        "index": 1,
+                        "text": "cost-saving"
+                      },
+                      "data-quality": {
+                        "color": "orange",
+                        "index": 2,
+                        "text": "data-quality"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "type": "stat",
       "title": "Potential savings (EUR)",
       "description": "Total EUR the cost-saving recommendations would save over the observation window (real tokens x cheaper-model prices).",
       "datasource": "${datasource}",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR", "decimals": 4, "color": { "mode": "fixed", "fixedColor": "green" } } },
-      "targets": [{ "expr": "ai_finops_potential_savings_eur", "instant": true, "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 4,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "ai_finops_potential_savings_eur",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
     }
   ]
 }

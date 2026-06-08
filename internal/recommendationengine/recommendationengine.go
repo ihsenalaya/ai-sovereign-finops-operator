@@ -65,9 +65,14 @@ type Risk struct {
 // Recommendation is one actionable suggestion. EstimatedSavingsEUR is over the
 // same observation window as the input usage (0 when not a saving).
 type Recommendation struct {
-	Type                string
-	Severity            string
-	Message             string
+	Type    string
+	Severity string
+	Message string
+	// Namespace and Application identify the workload the recommendation targets
+	// (empty for catalog-wide recommendations such as data-quality). They let
+	// consumers attribute each action to an owner without parsing the message.
+	Namespace           string
+	Application         string
 	EstimatedSavingsEUR float64
 }
 
@@ -101,6 +106,7 @@ func Recommend(usages []Usage, candidates []Candidate, risks []Risk, unpricedMod
 		if best != "" && saving >= u.CostEUR*minSavingFraction {
 			recs = append(recs, Recommendation{
 				Type: TypeCostSaving, Severity: SeverityInfo,
+				Namespace: u.Namespace, Application: u.Application,
 				EstimatedSavingsEUR: saving,
 				Message: fmt.Sprintf("%s/%s: routing low-stakes %q traffic to %q would save ~%.4f EUR over the window (-%.0f%%).",
 					u.Namespace, u.Application, u.Model, best, saving, saving/u.CostEUR*100),
@@ -120,6 +126,7 @@ func Recommend(usages []Usage, candidates []Candidate, risks []Risk, unpricedMod
 		}
 		recs = append(recs, Recommendation{
 			Type: TypeSovereignty, Severity: SeverityCritical,
+			Namespace: r.Namespace, Application: r.Application,
 			Message: fmt.Sprintf("%s/%s: %d request(s) (~%.4f EUR) sent to non-compliant provider %q in zone %s — %s.",
 				r.Namespace, r.Application, r.Requests, r.CostEUR, r.Provider, r.Zone, fix),
 		})

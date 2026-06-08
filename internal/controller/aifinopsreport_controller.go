@@ -283,18 +283,25 @@ func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, rep
 	recs, total := recommendationengine.Recommend(usages, candidates, risks, b.UnpricedModels, hasCompliant)
 
 	report.Status.Recommendations = make([]aiopsv1alpha1.Recommendation, 0, len(recs))
-	byType := map[string]float64{}
+	metrics.Recommendations.Reset()
+	metrics.PotentialSavingsByAppEUR.Reset()
 	for _, rc := range recs {
-		item := aiopsv1alpha1.Recommendation{Type: rc.Type, Message: rc.Message, Severity: rc.Severity}
+		item := aiopsv1alpha1.Recommendation{
+			Type: rc.Type, Message: rc.Message, Severity: rc.Severity,
+			Namespace: rc.Namespace, Application: rc.Application,
+		}
 		if rc.EstimatedSavingsEUR > 0 {
 			item.EstimatedSavingsEUR = moneyQuantityPtr(rc.EstimatedSavingsEUR)
 		}
 		report.Status.Recommendations = append(report.Status.Recommendations, item)
-		byType[rc.Type]++
-	}
-	metrics.Recommendations.Reset()
-	for tp, n := range byType {
-		metrics.Recommendations.WithLabelValues(tp).Set(n)
+		// One metric series per recommendation, labelled by its target workload so
+		// a dashboard can list each action (app / type / severity) — not just a
+		// count per type. Each Recommend() output is already a distinct workload
+		// suggestion, so Set(1) per series.
+		metrics.Recommendations.WithLabelValues(rc.Type, rc.Namespace, rc.Application, rc.Severity).Set(1)
+		if rc.EstimatedSavingsEUR > 0 {
+			metrics.PotentialSavingsByAppEUR.WithLabelValues(rc.Namespace, rc.Application).Add(rc.EstimatedSavingsEUR)
+		}
 	}
 	metrics.PotentialSavingsEUR.Set(total)
 }

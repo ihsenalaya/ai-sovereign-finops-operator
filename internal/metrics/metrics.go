@@ -59,6 +59,13 @@ var (
 		Help: "Total estimated saving from cost-saving recommendations over the observation window.",
 	})
 
+	// PotentialSavingsByAppEUR is the estimated cost-saving per namespace/app,
+	// so a dashboard can show which workload each saving belongs to.
+	PotentialSavingsByAppEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_potential_savings_by_app_eur",
+		Help: "Estimated cost-saving in EUR per namespace/application over the observation window.",
+	}, []string{"namespace", "application"})
+
 	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
 	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_projected_monthly_cost_eur",
@@ -91,11 +98,14 @@ var (
 		Help: "Estimated monthly EUR savings from self-hosting for an AIBreakEvenAnalysis.",
 	}, []string{"namespace", "analysis"})
 
-	// Recommendations is the number of recommendations emitted, by type.
+	// Recommendations is the number of recommendations emitted, by type and (when
+	// the recommendation targets a workload) namespace, application and severity.
+	// The per-app labels let a dashboard list each actionable recommendation with
+	// its owner instead of only a count per type.
 	Recommendations = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_recommendations_total",
-		Help: "Recommendations emitted by the operator, by type.",
-	}, []string{"type"})
+		Help: "Recommendations emitted by the operator, by type, namespace, application and severity.",
+	}, []string{"type", "namespace", "application", "severity"})
 )
 
 func init() {
@@ -105,6 +115,7 @@ func init() {
 		OutputTokensTotal,
 		CostEURTotal,
 		PotentialSavingsEUR,
+		PotentialSavingsByAppEUR,
 		ProjectedMonthlyCostEUR,
 		BudgetUsagePercent,
 		SovereigntyFindings,
