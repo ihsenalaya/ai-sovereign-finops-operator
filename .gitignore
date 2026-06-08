@@ -35,5 +35,7 @@ go.work
 *.key
 *secret*
 docs/openaikey.txt
+docs/mistralkey.txt
 *apikey*
 *openaikey*
+*mistralkey*

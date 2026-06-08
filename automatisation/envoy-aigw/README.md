@@ -41,8 +41,13 @@ Prérequis : cluster kind `greenops`, `kubectl`, `helm`, `docs/openaikey.txt`.
   `AIGateway` en **mode `aigw`**, `AIProvider`/`AIModel` (prix réels par modèle,
   attribution `servesNamespace/Application/Team`), `AISovereigntyPolicy` (EU-only),
   `AIFinOpsReport`, `AIBudgetPolicy`.
-- `03-consumer-apps.yaml` — Service data stable + 2 Deployments (rh-chatbot,
-  risk-assistant) qui appellent la gateway en boucle.
+- `03-consumer-apps.yaml` — Service data stable + 3 Deployments (rh/chatbot-rh,
+  finance/risk-assistant, legal/contract-review) qui appellent la gateway en boucle.
+- `05-mistral-eu.yaml` — **2ᵉ provider EU** : route Mistral (Azure AI Foundry, zone EU)
+  via le schéma `AzureOpenAI` + catalogue `mistral-eu`/`mistral-large` + 4ᵉ app
+  `marketing/content-writer`. Sert à **vérifier la souveraineté zone-aware** (l'app EU
+  ne produit aucune violation, contrairement aux apps OpenAI US). Voir [`CRITERES.md` §6](CRITERES.md).
+  Prérequis : clé Mistral dans `docs/mistralkey.txt` (récupérée depuis Azure Foundry/Key Vault).
 - `deploy.sh` — installe et câble le tout (versions épinglées).
 
 ## Comment l'opérateur lit les vrais tokens
@@ -73,6 +78,12 @@ Déployer une nouvelle app dans un nouveau namespace (avec l'en-tête) suffit : 
 apparaît seule, sans rien déclarer. Les 3 apps de démo (`rh`, `finance`, `legal`)
 le démontrent.
 
+## Comprendre les critères qui pilotent la démo
+
+Pour savoir **quels paramètres** (prix, zones, budgets, politiques, apps/modèles)
+produisent chaque chiffre des panneaux, voir **[`CRITERES.md`](CRITERES.md)** —
+il relie chaque critère de configuration à la signification de chaque chart.
+
 ## Grafana — dashboard « AI Sovereign FinOps — Overview »
 
 Ouvrir : `kubectl -n greenops-system port-forward svc/demo-grafana 3000:3000`
@@ -91,15 +102,44 @@ proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 | 5 | **Cost (EUR) by namespace** | Coût réel par namespace dans le temps | `ai_finops_cost_eur_total` (par `namespace`) | Compare la dépense des équipes ; courbes croissantes. |
 | 6 | **Tokens by namespace (input / output)** | Tokens entrée/sortie réels par namespace | `ai_finops_input_tokens_total`, `ai_finops_output_tokens_total` | Profil de consommation par équipe (out ≫ in pour les générations). |
 | 7 | **Requests violating sovereignty (by app)** | Nb de requêtes envoyées par chaque app vers un fournisseur **non conforme** (zone interdite) | `sum by (namespace, application) (ai_finops_sovereignty_requests_total{severity="critical"})` | Volume réel **à risque** par app. 0 = conforme ; >0 = violation (rouge). |
-| 8 | **Recommendations by type** | Nombre de recommandations actionnables émises, par type | `ai_finops_recommendations_total` (par `type`) | `cost-saving` = opportunité d'économie ; `sovereignty` = remédiation ; `data-quality` = modèle sans prix. |
-| 9 | **Potential savings (EUR)** | Économie **potentielle** si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. Le détail chiffré par app est dans le `.status` du report. |
+| 8 | **Recommendations (actions, by app)** | **Table** : une ligne = une recommandation actionnable, attribuée à son app (`Namespace · Application · Type · Severity`) | `ai_finops_recommendations_total` (labels `type`, `namespace`, `application`, `severity`) | Liste de tâches priorisée — voir « Comment lire la table » ci-dessous. |
+| 9 | **Potential savings (EUR)** | Économie **potentielle** si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. Détail par app dans la métrique `_by_app_eur` et le `.status` du report. |
+
+#### Comment lire la table « Recommendations (actions, by app) »
+
+Ce panneau a remplacé l'ancien **camembert** « Recommendations by type » : un camembert ne
+montrait qu'un *compte par type* (« sovereignty: 3 / cost-saving: 2 »), sans dire **quelle
+app** ni **quoi faire**. La table répond à ces questions — **chaque ligne = une action**.
+
+| Colonne | Question | Sens |
+|---------|----------|------|
+| **Namespace / Application** | **QUI ?** | L'équipe / l'app concernée — qui doit agir. |
+| **Type** | **QUOI ?** | `sovereignty` 🔴 = conformité (fournisseur hors zone autorisée) · `cost-saving` 🟢 = économie (modèle cher remplaçable) · `data-quality` 🟠 = modèle sans prix (coût incalculable). |
+| **Severity** | **Urgence ?** | `critical` 🔴 = à traiter en priorité (risque de conformité réel) · `warning` 🟠 · `info` 🟢 = opportunité optionnelle. |
+
+Exemple typique avec les 3 apps de démo (`rh`, `finance`, `legal`) qui tapent toutes sur
+OpenAI **US** alors que la politique exige l'**EU** :
+
+| Namespace | Application | Type | Severity |
+|-----------|-------------|------|----------|
+| rh | chatbot-rh | sovereignty | 🔴 critical |
+| legal | contract-review | sovereignty | 🔴 critical |
+| finance | risk-assistant | sovereignty | 🔴 critical |
+| legal | contract-review | cost-saving | 🟢 info |
+| finance | risk-assistant | cost-saving | 🟢 info |
+
+- **3 lignes `sovereignty`** : les 3 apps violent la zone autorisée → 1 reco critique chacune.
+- **2 lignes `cost-saving`** : seules `finance` et `legal` utilisent `gpt-4o` (cher) ;
+  `rh` utilise déjà `gpt-4o-mini` (le moins cher) → aucune économie possible, donc pas de
+  ligne pour elle. Le montant € de ces économies est dans le panneau **#9 Potential savings**.
 
 ### Métriques sous-jacentes
 Émises par l'opérateur sur `/metrics` (:8080), scrapées par Prometheus :
 `ai_finops_cost_eur_total`, `ai_finops_input/output_tokens_total`,
 `ai_finops_requests_total`, `ai_finops_budget_usage_percent`,
 `ai_finops_sovereignty_findings_total` / `ai_finops_sovereignty_requests_total`,
-`ai_finops_recommendations_total`, `ai_finops_potential_savings_eur`,
+`ai_finops_recommendations_total` (labels `type`/`namespace`/`application`/`severity`),
+`ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
 `ai_finops_projected_monthly_cost_eur`. Détail dans
 [`docs/features/metrics.md`](../../docs/features/metrics.md).
 

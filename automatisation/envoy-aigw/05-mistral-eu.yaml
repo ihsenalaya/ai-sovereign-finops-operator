@@ -1,0 +1,168 @@
+# Second provider — Mistral on Azure AI Foundry (EU data zone), routed THROUGH
+# the same Envoy AI Gateway. Goal: prove the sovereignty engine is zone-aware —
+# an app on an EU provider produces NO sovereignty violation, while the OpenAI
+# (US) apps do. Same real-traffic path: the app posts OpenAI-format to the
+# gateway, which translates to Azure (schema AzureOpenAI) and measures real
+# tokens; the operator reads them and attributes cost/zone PER NAMESPACE.
+#
+# Foundry endpoint:  https://greenops-foundry.services.ai.azure.com
+#   Azure-OpenAI path /openai/deployments/<deploy>/chat/completions?api-version=…
+#   deployment:       mistral-large-latest  (model Mistral-Large-3, DataZoneStandard = EU)
+#   auth:             Authorization: Bearer <key>  (API key from Azure, in a Secret)
+# The key is NOT in this file — it is created as a Secret from docs/mistralkey.txt
+# at deploy time (see deploy.sh / the apply commands).
+---
+# Route mistral-large-latest (by the model header) to the Azure/Foundry backend.
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: greenops-mistral
+  namespace: default
+spec:
+  parentRefs:
+    - name: greenops-aigw
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: mistral-large-latest
+      backendRefs:
+        - name: greenops-mistral
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: greenops-mistral
+  namespace: default
+spec:
+  # AzureOpenAI translator → /openai/deployments/{model}/chat/completions?api-version=…
+  schema:
+    name: AzureOpenAI
+    version: "2024-05-01-preview"
+  backendRef:
+    name: greenops-mistral
+    kind: Backend
+    group: gateway.envoyproxy.io
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: BackendSecurityPolicy
+metadata:
+  name: greenops-mistral-apikey
+  namespace: default
+spec:
+  targetRefs:
+    - group: aigateway.envoyproxy.io
+      kind: AIServiceBackend
+      name: greenops-mistral
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: greenops-mistral-apikey
+      namespace: default
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: greenops-mistral
+  namespace: default
+spec:
+  endpoints:
+    - fqdn:
+        hostname: greenops-foundry.services.ai.azure.com
+        port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha3
+kind: BackendTLSPolicy
+metadata:
+  name: greenops-mistral-tls
+  namespace: default
+spec:
+  targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-mistral
+  validation:
+    wellKnownCACertificates: "System"
+    hostname: greenops-foundry.services.ai.azure.com
+---
+# Catalogue : fournisseur EU (zone eu) + modèle. dataResidency=eu => conforme à
+# la AISovereigntyPolicy (zones autorisées FR, EU) => AUCUNE violation de zone.
+# allowedForSensitiveData=true => pas de warning "external managed provider".
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: mistral-eu
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: mistral
+  region: francecentral
+  dataResidency: eu
+  managed: true
+  # Prix de liste Azure Mistral Large (USD 2.00/6.00 par M de tokens -> EUR x0.92).
+  pricing: { currency: EUR, inputTokenPricePerMillion: "1.84", outputTokenPricePerMillion: "5.52" }
+  compliance: { allowedForSensitiveData: true, allowedCountries: [FR] }
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: mistral-large
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  providerRef: mistral-eu
+  # MUST match the request model the gateway labels its metrics with.
+  modelName: mistral-large-latest
+  type: llm
+  qualityTier: high
+  costTier: high
+  sensitiveDataAllowed: true
+  # Attribute this model's gateway telemetry to the marketing content-writer app.
+  servesNamespace: marketing
+  servesApplication: content-writer
+  servesTeam: marketing
+---
+apiVersion: v1
+kind: Namespace
+metadata: { name: marketing }
+---
+# REAL consumer app in a NEW namespace, calling Mistral (EU) through the gateway.
+# Deliberately frugal (1 call / 30s, max_tokens 60) — Mistral Large is pricey.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-writer
+  namespace: marketing
+  labels: { app: content-writer, aiops.imperium.io/demo: "true" }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: content-writer } }
+  template:
+    metadata: { labels: { app: content-writer, aiops.imperium.io/demo: "true" } }
+    spec:
+      containers:
+        - name: client
+          image: curlimages/curl:8.10.1
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
+          env:
+            - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
+            - { name: MODEL, value: "mistral-large-latest" }
+            - { name: APP, value: "content-writer" }
+            - name: NS
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              PROMPTS='Ecris un slogan court pour une campagne ete.|Resume les avantages d un produit en une phrase.|Propose un titre d article de blog marketing.'
+              while true; do
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
+                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
+                  -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":60}" \
+                  "$GATEWAY" || true
+                sleep 30
+              done
