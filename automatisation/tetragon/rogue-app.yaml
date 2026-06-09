@@ -1,0 +1,40 @@
+# A deliberately non-compliant "shadow-AI" workload: it calls OpenAI (US) DIRECTLY,
+# bypassing the Envoy AI Gateway entirely. The gateway-based collectors can't see it
+# — only the eBPF (Tetragon) sovereignty plane catches it. Use it to demo that
+# greenops flags shadow-AI. It needs no API key (the TLS connect alone is what the
+# egress plane observes); the request can 401 and the detection still fires.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shadow-ai-rogue
+  namespace: finance
+  labels:
+    app: rogue-script
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rogue-script
+  template:
+    metadata:
+      labels:
+        app: rogue-script
+    spec:
+      containers:
+        - name: caller
+          image: curlimages/curl:8.10.1
+          # Hit OpenAI (US) directly every 30s — this is the forbidden-zone shadow flow.
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while true; do
+                curl -s -o /dev/null -m 10 https://api.openai.com/v1/models || true
+                sleep 30
+              done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi

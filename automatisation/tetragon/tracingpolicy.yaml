@@ -1,0 +1,28 @@
+# Tetragon TracingPolicy: observe per-pod egress TCP connects (port 443) so the
+# forwarder can attribute "which workload talked to which LLM endpoint" — entirely
+# in the kernel (eBPF), independent of the AI gateway. This is the sovereignty plane
+# that catches shadow-AI: traffic that never goes through the governed gateway.
+#
+# Apply with: kubectl apply -f tracingpolicy.yaml
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: greenops-egress-connect
+spec:
+  kprobes:
+    - call: "tcp_connect"
+      syscall: false
+      args:
+        - index: 0
+          type: "sock"
+      selectors:
+        - matchArgs:
+            # IPv4, destination port 443 (TLS) — where LLM API calls go.
+            - index: 0
+              operator: "DPort"
+              values:
+                - "443"
+            - index: 0
+              operator: "Family"
+              values:
+                - "AF_INET"

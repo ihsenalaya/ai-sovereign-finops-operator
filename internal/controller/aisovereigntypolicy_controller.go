@@ -80,6 +80,7 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 				logger.Error(err, "reverting gateway reroutes on delete")
 			}
 			enforcementMetrics.forget(policy.UID)
+			shadowMetrics.forget(policy.UID)
 			controllerutil.RemoveFinalizer(&policy, sovereigntyFinalizer)
 			if err := r.Update(ctx, &policy); err != nil {
 				return ctrl.Result{}, err
@@ -185,6 +186,16 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}
 	enforcementMetrics.retire(policy.UID, enfSeries)
+
+	// Gateway-INDEPENDENT shadow-AI detection: classify observed egress (eBPF /
+	// Tetragon, surfaced via the shadow-egress ConfigMap) against this policy, so a
+	// pod calling an LLM directly — bypassing the gateway — is still caught.
+	shadowFindings := r.detectShadowAI(ctx, policy.UID, policy.Namespace, policyToEngine(policy.Spec))
+	if r.Recorder != nil {
+		for _, f := range shadowFindings {
+			r.Recorder.Eventf(&policy, "Warning", "ShadowAI", "%s", f.Message)
+		}
+	}
 
 	actionCounts := enforcementengine.CountByAction(decisions)
 	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation,

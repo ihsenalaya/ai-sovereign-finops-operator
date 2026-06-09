@@ -138,6 +138,15 @@ var (
 		Name: "ai_finops_enforcement_actions",
 		Help: "Enforcement decisions by policy, namespace, application, mode, action and actuated.",
 	}, []string{"policy", "namespace", "application", "mode", "action", "actuated"})
+
+	// ShadowAIEgress is gateway-INDEPENDENT sovereignty: per-workload egress to a
+	// known LLM endpoint observed directly (eBPF/Tetragon) in a non-compliant zone,
+	// i.e. shadow-AI that bypasses the governed gateway. The value is the observed
+	// connection count for that namespace/app/zone/provider at the given severity.
+	ShadowAIEgress = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_shadow_ai_egress",
+		Help: "Shadow-AI egress (connections) to known LLM endpoints bypassing the gateway, by namespace, application, zone, provider and severity.",
+	}, []string{"namespace", "application", "zone", "provider", "severity"})
 )
 
 // all is every collector this package owns. init() registers them and Names()
@@ -159,6 +168,7 @@ var all = []prometheus.Collector{
 	BreakevenSavingsEUR,
 	Recommendations,
 	EnforcementActions,
+	ShadowAIEgress,
 }
 
 func init() {

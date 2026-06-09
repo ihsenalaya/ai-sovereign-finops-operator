@@ -4,7 +4,7 @@
   },
   "editable": true,
   "schemaVersion": 39,
-  "title": "AI Sovereign FinOps — Overview",
+  "title": "AI Sovereign FinOps \u2014 Overview",
   "tags": [
     "ai-finops",
     "sovereignty",
@@ -28,7 +28,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR) — observed",
+      "title": "Total cost (EUR) \u2014 observed",
       "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
       "gridPos": {
@@ -258,7 +258,7 @@
     },
     {
       "type": "table",
-      "title": "Cost-saving recommendations (action + gain €)",
+      "title": "Cost-saving recommendations (action + gain \u20ac)",
       "description": "Only cost-saving recommendations. Each row is one concrete action: route an app's traffic from its current model to a cheaper one, and the EUR saved over the observed window. Source: ai_finops_cost_saving_eur (labels current_model/recommended_model).",
       "datasource": "${datasource}",
       "gridPos": {
@@ -302,9 +302,9 @@
             "renameByName": {
               "namespace": "Namespace",
               "application": "Application",
-              "current_model": "Modèle actuel",
-              "recommended_model": "Recommandé",
-              "Value": "Gain (€)"
+              "current_model": "Mod\u00e8le actuel",
+              "recommended_model": "Recommand\u00e9",
+              "Value": "Gain (\u20ac)"
             },
             "indexByName": {
               "namespace": 0,
@@ -321,7 +321,7 @@
             "fields": "",
             "sort": [
               {
-                "field": "Gain (€)",
+                "field": "Gain (\u20ac)",
                 "desc": true
               }
             ]
@@ -338,7 +338,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Gain (€)"
+              "options": "Gain (\u20ac)"
             },
             "properties": [
               {
@@ -367,7 +367,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Recommandé"
+              "options": "Recommand\u00e9"
             },
             "properties": [
               {
@@ -504,7 +504,7 @@
     {
       "type": "table",
       "title": "Enforcement actions (sovereignty)",
-      "description": "Ce que l'opérateur DÉCIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (modèle interdit -> backend conforme, RÉÉCRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqué de bout en bout : warn/report toujours, et reroute désormais ACTUÉ dans le plan de données (slice 2). Source: ai_finops_enforcement_actions.",
+      "description": "Ce que l'op\u00e9rateur D\u00c9CIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (mod\u00e8le interdit -> backend conforme, R\u00c9\u00c9CRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqu\u00e9 de bout en bout : warn/report toujours, et reroute d\u00e9sormais ACTU\u00c9 dans le plan de donn\u00e9es (slice 2). Source: ai_finops_enforcement_actions.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -608,7 +608,7 @@
     {
       "type": "bargauge",
       "title": "Enforcement decisions by action",
-      "description": "Nombre de décisions d'enforcement actives, par action. reroute actué = trafic du modèle interdit réellement redirigé vers le backend conforme (EU) à l'Envoy AI Gateway. Source: ai_finops_enforcement_actions.",
+      "description": "Nombre de d\u00e9cisions d'enforcement actives, par action. reroute actu\u00e9 = trafic du mod\u00e8le interdit r\u00e9ellement redirig\u00e9 vers le backend conforme (EU) \u00e0 l'Envoy AI Gateway. Source: ai_finops_enforcement_actions.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -635,6 +635,146 @@
           "expr": "sum by (action) (ai_finops_enforcement_actions)",
           "legendFormat": "{{action}}",
           "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Shadow-AI egress (namespace \u2192 zone)",
+      "description": "Pods reaching a known LLM endpoint DIRECTLY (eBPF/Tetragon), bypassing the gateway, in a non-compliant zone. 0 rows = no shadow-AI.",
+      "datasource": "${datasource}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "pluginVersion": "11.2.2",
+      "targets": [
+        {
+          "datasource": null,
+          "expr": "ai_finops_shadow_ai_egress",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Value": true
+            },
+            "renameByName": {
+              "policy": "Policy",
+              "namespace": "Namespace",
+              "application": "Application",
+              "mode": "Mode",
+              "action": "Action",
+              "actuated": "Actuated"
+            },
+            "indexByName": {
+              "namespace": 0,
+              "application": 1,
+              "mode": 2,
+              "action": 3,
+              "actuated": 4,
+              "policy": 5
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Action"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "block": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "reroute": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "warn": {
+                        "color": "yellow",
+                        "index": 2
+                      },
+                      "report": {
+                        "color": "blue",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Shadow-AI egress by zone",
+      "description": "Connections to LLM endpoints bypassing the gateway, summed by sovereignty zone.",
+      "datasource": "${datasource}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": null,
+          "expr": "sum by (zone) (ai_finops_shadow_ai_egress)",
+          "legendFormat": "{{zone}}",
           "refId": "A"
         }
       ]
