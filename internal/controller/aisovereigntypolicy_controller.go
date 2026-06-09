@@ -100,6 +100,18 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// Gateway-INDEPENDENT shadow-AI detection runs FIRST and unconditionally — it must
+	// work even with NO AIGateway telemetry source, which is exactly the shadow-AI case:
+	// traffic that never touches the gateway. It classifies observed egress (eBPF /
+	// Tetragon, surfaced via the shadow-egress ConfigMap) by sovereignty zone.
+	shadowFindings := r.detectShadowAI(ctx, policy.UID, policy.Namespace, policyToEngine(policy.Spec))
+	if r.Recorder != nil {
+		for _, f := range shadowFindings {
+			r.Recorder.Eventf(&policy, "Warning", "ShadowAI", "%s", f.Message)
+		}
+	}
+
 	collector, err := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
 	if err != nil {
 		meta.SetStatusCondition(&policy.Status.Conditions,
@@ -186,16 +198,6 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 	}
 	enforcementMetrics.retire(policy.UID, enfSeries)
-
-	// Gateway-INDEPENDENT shadow-AI detection: classify observed egress (eBPF /
-	// Tetragon, surfaced via the shadow-egress ConfigMap) against this policy, so a
-	// pod calling an LLM directly — bypassing the gateway — is still caught.
-	shadowFindings := r.detectShadowAI(ctx, policy.UID, policy.Namespace, policyToEngine(policy.Spec))
-	if r.Recorder != nil {
-		for _, f := range shadowFindings {
-			r.Recorder.Eventf(&policy, "Warning", "ShadowAI", "%s", f.Message)
-		}
-	}
 
 	actionCounts := enforcementengine.CountByAction(decisions)
 	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation,
