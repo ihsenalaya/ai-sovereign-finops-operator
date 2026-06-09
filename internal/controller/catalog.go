@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	catalogdefaults "github.com/imperium/ai-sovereign-finops-operator/internal/catalog"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
 	aigwcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/aigw"
 	cmcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/configmap"
@@ -56,10 +57,12 @@ func loadCatalog(ctx context.Context, c client.Client, namespace string) (catalo
 	return cat, nil
 }
 
-// priceBook builds a costengine.PriceBook keyed by model name, resolving each
-// AIModel to its provider's pricing.
+// priceBook builds a costengine.PriceBook keyed by model name. It seeds the book
+// with the built-in default catalog (well-known public list prices) so spend is
+// computed out of the box, then overlays user AIModel/AIProvider pricing on top —
+// user CRs always win; defaults only fill the gaps.
 func (cat catalog) priceBook() costengine.PriceBook {
-	pb := costengine.PriceBook{}
+	pb := catalogdefaults.DefaultPriceBook()
 	for i := range cat.models {
 		m := cat.models[i]
 		prov, ok := cat.providers[m.Spec.ProviderRef]
@@ -96,7 +99,8 @@ func (cat catalog) zoneForModel(modelName string) string {
 			return sovereigntyengine.NormalizeZone(prov.Spec.DataResidency)
 		}
 	}
-	return ""
+	// No user catalog entry — fall back to the built-in default zone for the model.
+	return catalogdefaults.ZoneForModel(modelName)
 }
 
 // cheapestCompliantModelName returns the provider-side model name of the cheapest
