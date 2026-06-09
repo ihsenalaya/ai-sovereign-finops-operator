@@ -57,6 +57,7 @@ const reportFinalizer = "aiops.imperium.io/report-metrics"
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aifinopsreports/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aifinopsreports/finalizers,verbs=update
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aigateways;aimodels;aiproviders,verbs=get;list;watch
+//+kubebuilder:rbac:groups=aiops.imperium.io,resources=aimodels,verbs=create
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch
 
 // periodWindow maps a report period to a collection window.
@@ -143,6 +144,14 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 	samples = filterByNamespace(samples, report.Spec.Target.Namespace)
+
+	// Surface models the operator cannot price (unknown to user catalog AND
+	// defaults) as labeled stub AIModels, so they appear in `kubectl get aimodel`
+	// for the user to complete — the visible counterpart of the data-quality
+	// recommendation. Best-effort: a failure here must not block the report.
+	if err := ensureModelStubs(ctx, r.Client, report.Namespace, cat.unknownModels(samples)); err != nil {
+		logger.Error(err, "creating stub AIModels for unknown models")
+	}
 
 	breakdown := costengine.Compute(samples, cat.priceBook())
 	r.applyCostToStatus(&report, cat, breakdown, series)

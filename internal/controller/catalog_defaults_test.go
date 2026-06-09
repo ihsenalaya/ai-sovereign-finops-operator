@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
 )
 
 // TestEmptyCatalogResolvesDefaults is the TASK #2 acceptance: with NO AIProvider /
@@ -70,5 +71,45 @@ func TestUserCROverridesDefault(t *testing.T) {
 	p := cat.priceBook()["gpt-4o"]
 	if p.InputPerMillion != 99 || p.OutputPerMillion != 123 {
 		t.Errorf("user CR did not override default: got %+v", p)
+	}
+}
+
+// TestFlowsAutonomousZone proves sovereignty works WITHOUT any AIProvider CR: the
+// flow's zone is derived from the model via the default catalog.
+func TestFlowsAutonomousZone(t *testing.T) {
+	cat := catalog{providers: map[string]aiopsv1alpha1.AIProvider{}, models: nil}
+
+	// Provider name present in telemetry but no matching AIProvider CR → zone must
+	// still resolve from the model default (gpt-4o → US).
+	got := cat.flows([]collectors.UsageSample{
+		{Namespace: "rh", Application: "chatbot", Provider: "openai-us", Model: "gpt-4o", Requests: 5},
+	})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 flow, got %d", len(got))
+	}
+	if got[0].Zone != "US" {
+		t.Errorf("flow zone = %q, want US (from default catalog)", got[0].Zone)
+	}
+	if !got[0].Managed {
+		t.Error("default-catalog model should be marked managed")
+	}
+
+	// Provider-less telemetry with a known model → still classified, provider filled.
+	got = cat.flows([]collectors.UsageSample{
+		{Namespace: "legal", Application: "rev", Model: "mistral-large-latest", Requests: 2},
+	})
+	if len(got) != 1 || got[0].Zone != "EU" {
+		t.Fatalf("provider-less known model: got %+v, want one EU flow", got)
+	}
+	if got[0].Provider != "mistral" {
+		t.Errorf("provider not filled from default: %q", got[0].Provider)
+	}
+
+	// Unknown model AND no provider → unplaceable → skipped (no spurious finding).
+	got = cat.flows([]collectors.UsageSample{
+		{Namespace: "x", Application: "y", Model: "mystery-model", Requests: 1},
+	})
+	if len(got) != 0 {
+		t.Errorf("unplaceable flow should be skipped, got %+v", got)
 	}
 }

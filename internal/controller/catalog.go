@@ -78,6 +78,30 @@ func (cat catalog) priceBook() costengine.PriceBook {
 	return pb
 }
 
+// unknownModels returns the distinct provider-side model ids in samples that are
+// priced by neither a user AIModel nor the built-in default catalog — models the
+// operator cannot cost. They drive the data-quality recommendation and an auto
+// stub AIModel. Returned in first-seen order.
+func (cat catalog) unknownModels(samples []collectors.UsageSample) []string {
+	userModels := map[string]bool{}
+	for i := range cat.models {
+		userModels[cat.models[i].Spec.ModelName] = true
+	}
+	seen := map[string]bool{}
+	var out []string
+	for _, s := range samples {
+		if s.Model == "" || seen[s.Model] {
+			continue
+		}
+		seen[s.Model] = true
+		if userModels[s.Model] || catalogdefaults.Known(s.Model) {
+			continue
+		}
+		out = append(out, s.Model)
+	}
+	return out
+}
+
 // modelByName returns the AIModel with the given metadata name.
 func (cat catalog) modelByName(name string) (aiopsv1alpha1.AIModel, bool) {
 	for i := range cat.models {
@@ -219,9 +243,6 @@ func (cat catalog) modelSensitivity(modelName string) (allowed bool, known bool)
 func (cat catalog) flows(samples []collectors.UsageSample) []sovereigntyengine.Flow {
 	out := make([]sovereigntyengine.Flow, 0, len(samples))
 	for _, s := range samples {
-		if s.Provider == "" {
-			continue
-		}
 		fl := sovereigntyengine.Flow{
 			Namespace:   s.Namespace,
 			Application: s.Application,
@@ -233,6 +254,24 @@ func (cat catalog) flows(samples []collectors.UsageSample) []sovereigntyengine.F
 			fl.Zone = p.Spec.DataResidency
 			fl.Managed = p.Spec.Managed
 			fl.ProviderAllowsSensitive = p.Spec.Compliance.AllowedForSensitiveData
+		}
+		// Autonomy: with no AIProvider CR (or one without a residency), derive the
+		// zone from the built-in default catalog by model — so sovereignty works out
+		// of the box. Default-catalog models are managed external APIs. This also
+		// fixes the case of provider-only telemetry whose provider has no CR.
+		if sovereigntyengine.NormalizeZone(fl.Zone) == "" {
+			if dz := catalogdefaults.ZoneForModel(s.Model); dz != "" {
+				fl.Zone = dz
+				fl.Managed = true
+				if fl.Provider == "" {
+					fl.Provider = catalogdefaults.ProviderForModel(s.Model)
+				}
+			}
+		}
+		// Nothing to assert about a flow we can place neither by provider nor by
+		// model — skip it rather than emit a spurious "unknown zone" finding.
+		if sovereigntyengine.NormalizeZone(fl.Zone) == "" && s.Provider == "" {
+			continue
 		}
 		// A model unknown to the catalog defaults to not allowed for sensitive
 		// data (conservative: surface it rather than silently pass).

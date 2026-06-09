@@ -147,6 +147,15 @@ func ZoneForModel(model string) string {
 	return ""
 }
 
+// ProviderForModel returns the default provider family for a model id ("" if
+// unknown). Used to label a flow whose telemetry carried only the model.
+func ProviderForModel(model string) string {
+	if d, ok := lookup(model); ok {
+		return d.Provider
+	}
+	return ""
+}
+
 // DefaultPriceBook is every default model keyed by model id, ready to seed a
 // costengine.PriceBook. Callers overlay user AIModel/AIProvider prices on top.
 func DefaultPriceBook() costengine.PriceBook {
