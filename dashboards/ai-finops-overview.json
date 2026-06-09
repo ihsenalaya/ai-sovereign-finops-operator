@@ -606,9 +606,9 @@
       }
     },
     {
-      "type": "bargauge",
+      "type": "table",
       "title": "Enforcement decisions by action",
-      "description": "Nombre de d\u00e9cisions d'enforcement actives, par action. reroute actu\u00e9 = trafic du mod\u00e8le interdit r\u00e9ellement redirig\u00e9 vers le backend conforme (EU) \u00e0 l'Envoy AI Gateway. Source: ai_finops_enforcement_actions.",
+      "description": "How many enforcement decisions the operator took, by policy / action / actuated. report=observed, reroute/block=acted at the gateway.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -617,27 +617,98 @@
         "y": 30
       },
       "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "showUnfilled": true
+        "showHeader": true,
+        "cellHeight": "sm"
       },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "orange"
-          }
-        }
-      },
+      "pluginVersion": "11.2.2",
       "targets": [
         {
-          "expr": "sum by (action) (ai_finops_enforcement_actions)",
-          "legendFormat": "{{action}}",
+          "datasource": null,
+          "expr": "ai_finops_enforcement_actions",
+          "format": "table",
           "instant": true,
           "refId": "A"
         }
-      ]
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Value": true
+            },
+            "renameByName": {
+              "policy": "Policy",
+              "namespace": "Namespace",
+              "application": "Application",
+              "mode": "Mode",
+              "action": "Action",
+              "actuated": "Actuated"
+            },
+            "indexByName": {
+              "namespace": 0,
+              "application": 1,
+              "mode": 2,
+              "action": 3,
+              "actuated": 4,
+              "policy": 5
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Action"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "block": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "reroute": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "warn": {
+                        "color": "yellow",
+                        "index": 2
+                      },
+                      "report": {
+                        "color": "blue",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "type": "table",
@@ -746,9 +817,9 @@
       }
     },
     {
-      "type": "bargauge",
+      "type": "piechart",
       "title": "Shadow-AI egress by zone",
-      "description": "Connections to LLM endpoints bypassing the gateway, summed by sovereignty zone.",
+      "description": "Connections to LLM endpoints bypassing the gateway, by sovereignty zone (US = forbidden here). Empty = no shadow-AI.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -757,27 +828,78 @@
         "y": 38
       },
       "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "showUnfilled": true
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "orange"
-          }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": null,
           "expr": "sum by (zone) (ai_finops_shadow_ai_egress)",
           "legendFormat": "{{zone}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 4,
+          "color": {
+            "mode": "fixed"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "US"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
