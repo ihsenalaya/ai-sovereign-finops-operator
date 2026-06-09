@@ -22,20 +22,23 @@
 | Fonctionnalité | Doc |
 |----------------|-----|
 | Collecte de télémétrie | [features/collectors.md](features/collectors.md) |
+| Catalogue par défaut (prix/zones out-of-the-box) | [features/catalog.md](features/catalog.md) |
 | Moteur de coût | [features/costengine.md](features/costengine.md) |
 | Moteur de budget | [features/budgetengine.md](features/budgetengine.md) |
 | Moteur de souveraineté | [features/sovereigntyengine.md](features/sovereigntyengine.md) |
 | Moteur break-even | [features/breakevenengine.md](features/breakevenengine.md) |
 | Moteur de recommandation (souveraineté-aware) | [features/recommendationengine.md](features/recommendationengine.md) |
 | Moteur d'enforcement (warn / reroute / block) | [features/enforcementengine.md](features/enforcementengine.md) |
+| Plan eBPF / Shadow-AI (indépendant de la gateway) | [features/shadowengine.md](features/shadowengine.md) |
 | Reporting (MD/JSON) | [features/reporting.md](features/reporting.md) |
 | Observabilité (métriques) | [features/metrics.md](features/metrics.md) |
 
 ## Déploiement & exploitation
 - [Helm chart](../charts/ai-sovereign-finops-operator) — packaging.
 - [automatisation/](../automatisation) — kind + ArgoCD end-to-end, et chemin offline Helm.
+- [automatisation/tetragon/](../automatisation/tetragon/README.md) — plan eBPF Shadow-AI (Tetragon).
 - [Installation AKS](INSTALL_AKS.md).
-- [Dashboard Grafana](../dashboards/ai-finops-overview.json).
+- [**Dashboards — valeurs & exigences**](DASHBOARDS.md) · [Dashboard Grafana (JSON)](../dashboards/ai-finops-overview.json).
 
 ## Guides
 - [Développement](DEVELOPMENT.md).

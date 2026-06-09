@@ -21,9 +21,12 @@ func TopByCost(m map[string]LineItem, n int) []LineItem
 - `UnpricedModels` — modèles vus sans pricing (coût 0 + recommandation data-quality).
 
 ## Construction du price-book
-Le controller (`catalog.priceBook`) résout chaque [AIModel](../crds/aimodel.md) vers le pricing de
-son [AIProvider](../crds/aiprovider.md). Devise prise du premier modèle pricé ; **pas de conversion
-multi-devise** en MVP (documenté dans le rapport).
+Le controller (`catalog.priceBook`) **seed** d'abord le [catalogue par défaut](catalog.md) (prix
+de liste publics des modèles connus) puis **superpose** le pricing de chaque
+[AIModel](../crds/aimodel.md)→[AIProvider](../crds/aiprovider.md) : le CR utilisateur gagne, les
+défauts comblent les trous → le coût se calcule **out-of-the-box** sans déclarer chaque modèle.
+Devise prise du premier modèle pricé ; **pas de conversion multi-devise** en MVP (documenté dans
+le rapport).
 
 Consommé par : [AIFinOpsReport](../crds/aifinopsreport.md), [budgetengine](budgetengine.md),
 [breakevenengine](breakevenengine.md).

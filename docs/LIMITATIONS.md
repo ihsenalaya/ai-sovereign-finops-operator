@@ -19,8 +19,12 @@
   sans source réelle, l'opérateur remonte `NoTelemetrySource` au lieu d'inventer des chiffres. Le mode
   télémétrie `litellm` (stub) a été retiré. À durcir : latence/erreurs et détection de reset des
   compteurs gateway (la prévision mensuelle est faussée juste après un redémarrage de la gateway).
-- **Coûts** : basés sur le pricing `AIProvider` par million de tokens ; modèles sans `AIProvider`
-  comptés comme non pricés (recommandation data-quality).
+- **Coûts** : un [catalogue par défaut intégré](features/catalog.md) fournit prix + zone des
+  modèles publics connus (OpenAI/Anthropic/Mistral/Gemini), donc le coût se calcule sans déclarer
+  d'`AIProvider` ; un `AIProvider`/`AIModel` utilisateur **override** ces défauts. Un modèle
+  **inconnu du catalogue par défaut ET sans CR** reste non pricé (recommandation data-quality).
+  Les prix par défaut sont des **tarifs de liste publics** (best-effort, `PriceDate=2026-01`), pas
+  une source de facturation.
 - **Devise** : pas de conversion multi-devise ; la devise dominante est rapportée telle quelle.
 - **Break-even** : modèle simple (extrapolation linéaire de l'usage observé ; coûts GPU/ops fournis
   par l'utilisateur). Seuil de payback par défaut : 6 mois.

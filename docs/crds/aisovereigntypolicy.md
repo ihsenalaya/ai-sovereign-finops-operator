@@ -43,5 +43,14 @@ Renseigne `findingsCount`, expose `ai_finops_sovereignty_findings{severity}` et,
 d'enforcement de la policy à sa suppression. Les findings détaillés apparaissent dans
 [AIFinOpsReport](aifinopsreport.md).
 
+### Plan Shadow-AI (eBPF, indépendant de la gateway)
+Le reconciler exécute **aussi**, et **inconditionnellement** (même sans AIGateway), une détection
+de **shadow-AI** : il lit l'egress par pod observé par eBPF (Tetragon) dans le ConfigMap
+conventionnel **`shadow-egress`** du namespace de la policy (clé `egress.json`), classe chaque
+destination par zone via le [catalogue](../features/catalog.md) et expose
+`ai_finops_shadow_ai_egress{namespace,application,zone,provider,severity}` + des Events `ShadowAI`.
+Cela capte les appels LLM qui **contournent** la gateway. Détails :
+[shadowengine](../features/shadowengine.md) · [DASHBOARDS](../DASHBOARDS.md).
+
 ## Exemple
 [`..._aisovereigntypolicy.yaml`](../../config/samples/aiops_v1alpha1_aisovereigntypolicy.yaml).

@@ -15,6 +15,7 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 | `ai_finops_sovereignty_findings` | gauge | `namespace,application,policy,severity` | AISovereigntyPolicy, AIFinOpsReport |
 | `ai_finops_sovereignty_requests` | gauge | `namespace,application,policy,severity` | AIFinOpsReport |
 | `ai_finops_enforcement_actions` | gauge | `policy,namespace,application,mode,action,actuated` | AISovereigntyPolicy |
+| `ai_finops_shadow_ai_egress` | gauge | `namespace,application,zone,provider,severity` | AISovereigntyPolicy (plan eBPF) |
 | `ai_finops_breakeven_savings_eur` | gauge | `namespace,analysis` | AIBreakEvenAnalysis |
 | `ai_finops_recommendations` | gauge | `type,namespace,application,severity` | AIFinOpsReport |
 | `ai_finops_potential_savings_eur` | gauge | (none) | AIFinOpsReport (recommendation engine) |
@@ -31,6 +32,10 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 > par-UID + finalizer), au lieu d'un `Reset()` global qui effaçait les séries des autres objets.
 > `ai_finops_enforcement_actions` (mode `report`/`warn`/`reroute`/`block`, `actuated` true/false) reflète
 > la **décision d'enforcement** prise pour chaque workload non conforme — voir `docs/crds/aisovereigntypolicy.md`.
+>
+> `ai_finops_shadow_ai_egress` est le **plan de souveraineté indépendant de la gateway** : il compte les
+> connexions egress (observées par eBPF/Tetragon) vers un endpoint LLM connu dans une zone non conforme —
+> c.-à-d. le **shadow-AI** qui contourne la gateway. Voir [`shadowengine.md`](shadowengine.md).
 
 ## Accès
 ```bash

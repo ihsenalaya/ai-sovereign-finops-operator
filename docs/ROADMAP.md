@@ -56,6 +56,19 @@ Statut : ✅ fait · 🛠️ en cours · ⬜ à venir
 - [x] RBAC `aigateway.envoyproxy.io/aigatewayroutes` ; `actuated=true` reflète l'état réel de la route
 - [x] Validé en réel sur kind (la route gpt-4o bascule vers le backend Mistral EU, puis revert)
 
+## Sprint 9 — Autonomie : catalogue par défaut + zone-par-endpoint ✅
+- [x] `internal/catalog` (pur, testé) : catalogue intégré (OpenAI/Anthropic/Mistral/Gemini, prix publics datés USD→EUR, surchargeables) + `EndpointToZone(host)→(zone,provider)`
+- [x] Câblé en **fallback** dans `catalog.go` : `priceBook()`/`zoneForModel()`/`flows()` → coût **et** souveraineté out-of-the-box **sans** AIProvider/AIModel ; CR override toujours
+- [x] **Auto-stub** AIModel (`auto-stub=true`, unpriced) + reco `data-quality` sur modèle inconnu
+- [x] Métrique budget d'enforcement (`ai_finops_enforcement_actions` côté AIBudgetPolicy) + finalizer
+
+## Sprint 10 — Plan eBPF / Shadow-AI ✅ (validé live AKS)
+- [x] `internal/shadowengine` (pur, testé) : egress + `EndpointToZone` → findings shadow-AI (zone interdite=critical)
+- [x] Métrique `ai_finops_shadow_ai_egress` + tracker par-UID + Events `ShadowAI` ; détection **inconditionnelle** (marche sans gateway)
+- [x] `automatisation/tetragon/` : install Tetragon (DaemonSet eBPF, **pas Cilium**), TracingPolicy `tcp_connect`, forwarder eBPF→ConfigMap, rogue app
+- [x] 2 panneaux Grafana « Shadow-AI egress » ; doc [DASHBOARDS.md](DASHBOARDS.md)
+- [x] **Validé bout-en-bout sur AKS** : `finance/shadow-ai-rogue → api.openai.com (US)` ⇒ `severity=critical`
+
 > Ce fichier est mis à jour au fil de l'avancement par l'agent.
 
 ## Post-MVP (engagé / en cours)

@@ -9,11 +9,13 @@ moteurs** purs (sans dépendance Kubernetes), donc testables en isolation et ré
 
 ```
 api/v1alpha1            types CRD + conditions communes
-internal/controller     reconcilers (orchestration k8s)
+internal/controller     reconcilers (orchestration k8s) + gatewayactuator/gatewayreroute, shadow, modelstubs
+internal/catalog        catalogue par défaut (prix/zones intégrés) + EndpointToZone (pur)
 internal/collectors     TelemetryCollector: aigw (Envoy/OTel, réel) | prometheus | configmap | fake (opt-in)
 internal/costengine     coûts (pur)
 internal/budgetengine   budgets & seuils (pur)
-internal/sovereigntyengine  findings souveraineté (pur)
+internal/sovereigntyengine  findings souveraineté — plan gateway (pur)
+internal/shadowengine   findings shadow-AI — plan eBPF, indépendant de la gateway (pur)
 internal/breakevenengine    point mort managé vs GPU (pur)
 internal/recommendationengine  recommandations chiffrées, souveraineté-aware (pur)
 internal/enforcementengine  décisions d'enforcement report/warn/reroute/block (pur)
@@ -31,8 +33,16 @@ dashboards/             Grafana
   **réellement actué** dans Envoy AI Gateway via mutation réversible de l'`AIGatewayRoute` —
   `internal/controller/gatewayactuator.go`, client unstructured). Décision dans le moteur pur
   `enforcementengine` ; actuation + revert (annotation, finalizer) dans le controller.
-- **Moteurs purs** : `costengine`, `budgetengine`, `enforcementengine`, etc. ne dépendent pas de
-  controller-runtime. Ils prennent des structs et renvoient des résultats → tests unitaires rapides.
+- **Deux plans de souveraineté** : (1) **gateway** — `sovereigntyengine` sur la télémétrie de la
+  gateway ; (2) **eBPF / shadow-AI** — `shadowengine` sur l'egress par pod observé par **Tetragon**
+  (ConfigMap `shadow-egress`), **indépendant de la gateway**, donc capte le trafic qui la contourne.
+  Les deux partagent le « cerveau » `internal/catalog` (`EndpointToZone` + zones/prix).
+- **Autonomie (catalogue intégré)** : `internal/catalog` fournit prix + zone des modèles connus et
+  `EndpointToZone(host)` ; câblé en fallback (`priceBook`/`zoneForModel`/`flows`) → l'opérateur est
+  utile **dès l'installation**, sans CR ; un CR override toujours. Modèle inconnu → AIModel stub.
+- **Moteurs purs** : `costengine`, `budgetengine`, `enforcementengine`, `shadowengine`, etc. ne
+  dépendent pas de controller-runtime. Ils prennent des structs et renvoient des résultats → tests
+  unitaires rapides.
 - **Monnaie en `resource.Quantity`** : décimaux exacts, idiomatique k8s, pas de float dans le schéma.
 - **Télémétrie réelle, sans fake silencieux** : `TelemetryCollector` découple les moteurs de la source.
   Le chemin réel de production est `aigw` (**Envoy AI Gateway / OpenTelemetry**, lit `gen_ai_*`) ;

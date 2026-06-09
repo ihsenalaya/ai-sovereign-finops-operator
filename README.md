@@ -88,6 +88,15 @@ Six moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les c
 
 Transverse :
 
+- **Catalogue par défaut (autonomie)** — catalogue intégré des providers/modèles connus (prix de liste
+  publics + zone) et `EndpointToZone(host)` : l'opérateur produit coût **et** souveraineté **dès
+  l'installation**, sans écrire un seul `AIProvider`/`AIModel` (les CRs ne font qu'affiner/override). Un
+  modèle inconnu génère un **AIModel stub** + une reco `data-quality`. Voir
+  [`docs/features/catalog.md`](docs/features/catalog.md).
+- **Plan eBPF / Shadow-AI (indépendant de la gateway)** — un plan de souveraineté qui capte le trafic
+  **contournant** la gateway : **Tetragon** (eBPF) observe l'egress par pod, l'opérateur classe la
+  destination par zone (`EndpointToZone`) et expose `ai_finops_shadow_ai_egress`. C'est l'angle mort que
+  les collecteurs gateway ne voient pas. Voir [`docs/features/shadowengine.md`](docs/features/shadowengine.md).
 - **Collecteurs de télémétrie** : `aigw` (Envoy AI Gateway / OpenTelemetry — chemin réel de production,
   lit `gen_ai_client_token_usage`), `prometheus` et `configmap` opérationnels. **Aucun repli `fake`
   silencieux** : sans source de télémétrie réelle, l'opérateur remonte une condition `NoTelemetrySource`
