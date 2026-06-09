@@ -7,13 +7,17 @@
 # Prometheus + Grafana show truthful values.
 #
 # Brings up, in order and idempotently:
-#   1. kind cluster (created if missing)
-#   2. the operator (Helm chart + CRDs, image OPERATOR_IMG)
-#   3. Envoy Gateway v1.5.0 (with AI Gateway values) + Envoy AI Gateway v0.7.0
-#   4. Gateway + OpenAI route (+ key Secret) + catalog + 2 consumer apps
-#   5. Prometheus + Grafana with the AI-FinOps dashboard
+#   1.  kind cluster (created if missing)
+#   2a. operator image — built from THIS source (default) and loaded into kind, so
+#       the deployed operator always matches the repo/dashboard (GHCR is private)
+#   2.  the operator (Helm chart + CRDs)
+#   3.  Envoy Gateway v1.5.0 (with AI Gateway values) + Envoy AI Gateway v0.7.0
+#   4.  Gateway + OpenAI route (+ key Secret) + catalog + 3 OpenAI/US consumer apps
+#   4b. optional Mistral EU app (Azure Foundry) — sovereignty zone test (needs key)
+#   5.  Prometheus + Grafana with the AI-FinOps dashboard
 #
-# Pinned versions are deliberate (see EG_VERSION / AIGW_VERSION below).
+# Pinned versions are deliberate (see EG_VERSION / AIGW_VERSION below). The operator
+# tag is derived from the chart appVersion (no drifting hardcoded tag).
 #
 # Usage: ./deploy.sh up | test | grafana | down
 # ============================================================================
