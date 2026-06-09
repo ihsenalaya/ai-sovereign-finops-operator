@@ -28,8 +28,8 @@ func TestRecommend(t *testing.T) {
 			InputTokens: 1_000_000, OutputTokens: 1_000_000, Requests: 100, CostEUR: 11.50}, // 2.30+9.20
 	}
 	candidates := []Candidate{
-		{Name: "gpt-4o", InputPerMillion: 2.30, OutputPerMillion: 9.20},
-		{Name: "gpt-4o-mini", InputPerMillion: 0.14, OutputPerMillion: 0.55},
+		{Name: "gpt-4o", InputPerMillion: 2.30, OutputPerMillion: 9.20, Compliant: true},
+		{Name: "gpt-4o-mini", InputPerMillion: 0.14, OutputPerMillion: 0.55, Compliant: true},
 	}
 	risks := []Risk{
 		{Namespace: "finance", Application: "risk-assistant", Provider: "openai-us", Zone: "US", Requests: 100, CostEUR: 11.50},
@@ -67,9 +67,50 @@ func TestRecommend(t *testing.T) {
 
 func TestRecommendNoCheaperNoRisk(t *testing.T) {
 	usages := []Usage{{Namespace: "rh", Application: "a", Model: "cheap", InputTokens: 1000, OutputTokens: 1000, CostEUR: 0.001}}
-	candidates := []Candidate{{Name: "cheap", InputPerMillion: 0.1, OutputPerMillion: 0.1}}
+	candidates := []Candidate{{Name: "cheap", InputPerMillion: 0.1, OutputPerMillion: 0.1, Compliant: true}}
 	recs, total := Recommend(usages, candidates, nil, nil, true)
 	if len(recs) != 0 || total != 0 {
 		t.Errorf("expected no recommendations, got %+v (total %.4f)", recs, total)
+	}
+}
+
+// A cheaper-but-non-compliant model must NOT be recommended: the sovereign
+// product can't tell a user to save money by routing into a forbidden zone.
+func TestRecommendSkipsNonCompliantCheaperModel(t *testing.T) {
+	// marketing runs on a compliant EU model (mistral-large). The only cheaper
+	// candidate (gpt-4o-mini) is US/non-compliant — so no cost-saving swap exists.
+	usages := []Usage{
+		{Namespace: "marketing", Application: "content-writer", Model: "mistral-large",
+			InputTokens: 1_000_000, OutputTokens: 1_000_000, Requests: 50, CostEUR: 8.00},
+	}
+	candidates := []Candidate{
+		{Name: "mistral-large", InputPerMillion: 2.00, OutputPerMillion: 6.00, Compliant: true},
+		{Name: "gpt-4o-mini", InputPerMillion: 0.14, OutputPerMillion: 0.55, Compliant: false}, // US, forbidden
+	}
+	recs, total := Recommend(usages, candidates, nil, nil, true)
+	for _, r := range recs {
+		if r.Type == TypeCostSaving {
+			t.Fatalf("recommended a cost-saving swap to a non-compliant model: %+v", r)
+		}
+	}
+	if total != 0 {
+		t.Errorf("totalSavings = %.4f, want 0 (no compliant cheaper model)", total)
+	}
+
+	// Add a compliant cheaper model and the swap reappears (proves the filter, not
+	// a blanket suppression).
+	candidates = append(candidates, Candidate{Name: "mistral-small", InputPerMillion: 0.20, OutputPerMillion: 0.60, Compliant: true})
+	recs, total = Recommend(usages, candidates, nil, nil, true)
+	var swapped bool
+	for _, r := range recs {
+		if r.Type == TypeCostSaving {
+			swapped = true
+			if r.RecommendedModel != "mistral-small" {
+				t.Errorf("recommended %q, want mistral-small (the compliant cheaper model)", r.RecommendedModel)
+			}
+		}
+	}
+	if !swapped || total <= 0 {
+		t.Errorf("expected a compliant cost-saving swap, got recs=%+v total=%.4f", recs, total)
 	}
 }

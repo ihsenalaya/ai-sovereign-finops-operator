@@ -26,6 +26,8 @@
 | Moteur de budget | [features/budgetengine.md](features/budgetengine.md) |
 | Moteur de souveraineté | [features/sovereigntyengine.md](features/sovereigntyengine.md) |
 | Moteur break-even | [features/breakevenengine.md](features/breakevenengine.md) |
+| Moteur de recommandation (souveraineté-aware) | [features/recommendationengine.md](features/recommendationengine.md) |
+| Moteur d'enforcement (warn / reroute / block) | [features/enforcementengine.md](features/enforcementengine.md) |
 | Reporting (MD/JSON) | [features/reporting.md](features/reporting.md) |
 | Observabilité (métriques) | [features/metrics.md](features/metrics.md) |
 

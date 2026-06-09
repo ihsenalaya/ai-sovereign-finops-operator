@@ -6,22 +6,31 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 ## Métriques exposées
 | Métrique | Type | Labels | Source |
 |----------|------|--------|--------|
-| `ai_finops_requests_total` | gauge | `namespace` | AIFinOpsReport |
-| `ai_finops_input_tokens_total` | gauge | `namespace` | AIFinOpsReport |
-| `ai_finops_output_tokens_total` | gauge | `namespace` | AIFinOpsReport |
-| `ai_finops_cost_eur_total` | gauge | `namespace` | AIFinOpsReport |
+| `ai_finops_requests` | gauge | `namespace` | AIFinOpsReport |
+| `ai_finops_input_tokens` | gauge | `namespace` | AIFinOpsReport |
+| `ai_finops_output_tokens` | gauge | `namespace` | AIFinOpsReport |
+| `ai_finops_cost_eur` | gauge | `namespace` | AIFinOpsReport |
+| `ai_finops_cost_by_zone_eur` | gauge | `zone` | AIFinOpsReport |
 | `ai_finops_budget_usage_percent` | gauge | `namespace,policy` | AIBudgetPolicy |
-| `ai_finops_sovereignty_findings_total` | gauge | `namespace,application,policy,severity` | AISovereigntyPolicy, AIFinOpsReport |
+| `ai_finops_sovereignty_findings` | gauge | `namespace,application,policy,severity` | AISovereigntyPolicy, AIFinOpsReport |
+| `ai_finops_sovereignty_requests` | gauge | `namespace,application,policy,severity` | AIFinOpsReport |
+| `ai_finops_enforcement_actions` | gauge | `policy,namespace,application,mode,action,actuated` | AISovereigntyPolicy |
 | `ai_finops_breakeven_savings_eur` | gauge | `namespace,analysis` | AIBreakEvenAnalysis |
-| `ai_finops_recommendations_total` | gauge | `type,namespace,application,severity` | AIFinOpsReport |
+| `ai_finops_recommendations` | gauge | `type,namespace,application,severity` | AIFinOpsReport |
 | `ai_finops_potential_savings_eur` | gauge | (none) | AIFinOpsReport (recommendation engine) |
 | `ai_finops_potential_savings_by_app_eur` | gauge | `namespace,application` | AIFinOpsReport (recommendation engine) |
+| `ai_finops_cost_saving_eur` | gauge | `namespace,application,current_model,recommended_model` | AIFinOpsReport |
 | `ai_finops_projected_monthly_cost_eur` | gauge | `namespace` | AIFinOpsReport |
-| `ai_finops_sovereignty_requests_total` | gauge | `namespace,application,policy,severity` | AIFinOpsReport |
 
-> Ce sont des **agrégats dérivés** (positionnés à chaque réconciliation), modélisés en gauges même
-> quand le nom porte `_total` (conservé pour coller à la spec produit et refléter les compteurs
-> côté gateway).
+> Ce sont des **agrégats dérivés par fenêtre de reporting** (positionnés à chaque réconciliation),
+> donc des **gauges** — et non des compteurs monotones. Les noms évitent désormais le suffixe `_total`
+> (convention Prometheus : `_total` = counter ; l'apposer sur une gauge casse `rate()`/`increase()`).
+> Les compteurs cumulés côté gateway gardent `_total` dans leurs propres exporters.
+>
+> **Pas de séries fantômes** : chaque report/policy ne purge que **ses propres** séries (via un tracker
+> par-UID + finalizer), au lieu d'un `Reset()` global qui effaçait les séries des autres objets.
+> `ai_finops_enforcement_actions` (mode `report`/`warn`/`reroute`/`block`, `actuated` true/false) reflète
+> la **décision d'enforcement** prise pour chaque workload non conforme — voir `docs/crds/aisovereigntypolicy.md`.
 
 ## Accès
 ```bash
@@ -31,5 +40,6 @@ curl -s localhost:8080/metrics | grep ai_finops_
 
 ## Dashboard
 [`dashboards/ai-finops-overview.json`](../../dashboards/ai-finops-overview.json) : coût total, budget
-%, findings critiques, coût/tokens par namespace, économies break-even, recommandations par type.
+%, findings critiques, coût/tokens par namespace, dépense par zone de souveraineté, recommandations
+cost-saving (action + gain €) et **décisions d'enforcement** (par workload / mode / action).
 Un `ServiceMonitor` (Prometheus Operator) est activable via `metrics.serviceMonitor.enabled` du chart.

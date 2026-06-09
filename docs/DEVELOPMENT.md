@@ -15,8 +15,8 @@ make run                  # exécute le manager localement contre le cluster cou
 ## Organisation
 - Types CRD : `api/v1alpha1/*_types.go` (+ `common.go` pour conditions/Secret partagés).
 - Controllers : `internal/controller/*_controller.go` (+ `status.go`, `money.go`, `catalog.go`).
-- Moteurs **purs** (testables sans k8s) : `internal/{costengine,budgetengine,sovereigntyengine,breakevenengine,reporting}`.
-- Collecte : `internal/collectors/{fake,prometheus,litellm}`.
+- Moteurs **purs** (testables sans k8s) : `internal/{costengine,budgetengine,sovereigntyengine,breakevenengine,recommendationengine,enforcementengine,reporting}`.
+- Collecte : `internal/collectors/{aigw,prometheus,configmap,fake}` (mode `litellm` retiré).
 - Métriques : `internal/metrics`.
 
 ## Conventions

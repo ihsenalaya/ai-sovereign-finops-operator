@@ -26,7 +26,16 @@ CLUSTER="${CLUSTER:-greenops}"
 CTX="${KCTX:-kind-${CLUSTER}}"
 K="kubectl --context ${CTX}"
 NS_OP="${NS_OP:-greenops-system}"
-OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.7}"
+# Image tag is DERIVED from the chart's appVersion so the deployed operator always
+# matches this repo (and thus the dashboard's metric names) — never a hardcoded,
+# drifting tag again. Override OPERATOR_IMG to pin a specific image.
+CHART_APPVER="$(sed -nE 's/^appVersion:[[:space:]]*"?([0-9][0-9.]*)"?.*/\1/p' \
+  "${REPO}/charts/ai-sovereign-finops-operator/Chart.yaml" | head -1)"
+OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:${CHART_APPVER:-dev}}"
+# BUILD_OPERATOR=true (default) builds the image from the current source and loads
+# it into kind — the most reliable path (no GHCR pull, always matches this repo's
+# code). Set BUILD_OPERATOR=false to instead pull/use a prebuilt OPERATOR_IMG.
+BUILD_OPERATOR="${BUILD_OPERATOR:-true}"
 EG_VERSION="${EG_VERSION:-v1.5.0}"      # IMPORTANT: v1.3.0 is too old (extproc not injected)
 AIGW_VERSION="${AIGW_VERSION:-v0.7.0}"
 
@@ -50,8 +59,23 @@ ensure_cluster() {
   ${K} cluster-info >/dev/null
 }
 
+ensure_operator_image() {
+  step "2a/6 operator image ${OPERATOR_IMG} (build=${BUILD_OPERATOR})"
+  # The GHCR package is private, so a fresh kind node cannot pull it; we therefore
+  # make the image available locally and load it into kind (pullPolicy:IfNotPresent
+  # then finds it without any registry access). Build from source by default so the
+  # operator always matches this repo's metrics/dashboard.
+  if [ "${BUILD_OPERATOR}" = "true" ]; then
+    DOCKER_CONFIG="${HOME}/.docker" docker build -t "${OPERATOR_IMG}" "${REPO}"
+  elif ! docker image inspect "${OPERATOR_IMG}" >/dev/null 2>&1; then
+    DOCKER_CONFIG="${HOME}/.docker" docker pull "${OPERATOR_IMG}" \
+      || { echo "cannot pull ${OPERATOR_IMG}; 'docker login ghcr.io' or set BUILD_OPERATOR=true" >&2; exit 1; }
+  fi
+  kind load docker-image "${OPERATOR_IMG}" --name "${CLUSTER}"
+}
+
 ensure_operator() {
-  step "2/5 operator (Helm, ${OPERATOR_IMG})"
+  step "2/6 operator (Helm, ${OPERATOR_IMG})"
   helm --kube-context "${CTX}" upgrade --install greenops "${REPO}/charts/ai-sovereign-finops-operator" \
     --namespace "${NS_OP}" --create-namespace \
     --set image.repository="${OPERATOR_IMG%:*}" --set image.tag="${OPERATOR_IMG##*:}" \
@@ -91,6 +115,23 @@ deploy_gateway_and_apps() {
   ${K} apply -f "${HERE}/03-consumer-apps.yaml"
 }
 
+deploy_mistral_eu() {
+  # Optional 2nd provider: Mistral on Azure AI Foundry (EU zone) — proves the
+  # sovereignty engine is zone-aware (the EU app yields ZERO violation). Skipped
+  # cleanly if no key is present, so the OpenAI-only demo still works.
+  step "4b/6 Mistral EU app (sovereignty zone test)"
+  if [ ! -f "${REPO}/docs/mistralkey.txt" ]; then
+    echo "no docs/mistralkey.txt — skipping the Mistral EU app."
+    echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > docs/mistralkey.txt"
+    return 0
+  fi
+  local mkey; mkey="$(tr -d '\r\n' < "${REPO}/docs/mistralkey.txt")"
+  [ -n "${mkey}" ] || { echo "docs/mistralkey.txt is empty — skipping Mistral EU app." >&2; return 0; }
+  ${K} -n default create secret generic greenops-mistral-apikey \
+    --from-literal=apiKey="${mkey}" --dry-run=client -o yaml | ${K} apply -f - >/dev/null
+  ${K} apply -f "${HERE}/05-mistral-eu.yaml"
+}
+
 deploy_observability() {
   step "5/5 Prometheus + Grafana (dashboard)"
   ${K} -n "${NS_OP}" create configmap demo-grafana-dashboard \
@@ -103,7 +144,8 @@ deploy_observability() {
 }
 
 up() {
-  preflight; ensure_cluster; ensure_operator; ensure_envoy; deploy_gateway_and_apps; deploy_observability
+  preflight; ensure_cluster; ensure_operator_image; ensure_operator; ensure_envoy
+  deploy_gateway_and_apps; deploy_mistral_eu; deploy_observability
   step "Done — real demo is live"
   echo "Apps in ns rh/finance call OpenAI through Envoy AI Gateway; the operator"
   echo "reads real token usage and computes cost/sovereignty/budget per app."
@@ -128,10 +170,11 @@ test_call() {
 
 down() {
   step "Removing the real demo"
+  ${K} delete -f "${HERE}/05-mistral-eu.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/03-consumer-apps.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/02-metrics-and-catalog.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/01-gateway-openai.yaml" --ignore-not-found
-  ${K} -n default delete secret greenops-openai-apikey --ignore-not-found
+  ${K} -n default delete secret greenops-openai-apikey greenops-mistral-apikey --ignore-not-found
   ${K} -n "${NS_OP}" delete deploy,svc,configmap -l aiops.imperium.io/demo=true --ignore-not-found
   echo "Operator + Envoy control planes kept (helm uninstall greenops / eg / aieg to remove)."
 }

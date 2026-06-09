@@ -4,7 +4,7 @@
   },
   "editable": true,
   "schemaVersion": 39,
-  "title": "AI Sovereign FinOps \u2014 Overview",
+  "title": "AI Sovereign FinOps — Overview",
   "tags": [
     "ai-finops",
     "sovereignty",
@@ -28,7 +28,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR) \u2014 observed",
+      "title": "Total cost (EUR) — observed",
       "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
       "gridPos": {
@@ -45,7 +45,7 @@
       },
       "targets": [
         {
-          "expr": "sum(ai_finops_cost_eur_total)",
+          "expr": "sum(ai_finops_cost_eur)",
           "refId": "A"
         }
       ]
@@ -72,7 +72,7 @@
       },
       "targets": [
         {
-          "expr": "sum(ai_finops_input_tokens_total) + sum(ai_finops_output_tokens_total)",
+          "expr": "sum(ai_finops_input_tokens) + sum(ai_finops_output_tokens)",
           "refId": "A"
         }
       ]
@@ -90,7 +90,7 @@
       },
       "targets": [
         {
-          "expr": "sum(ai_finops_requests_total)",
+          "expr": "sum(ai_finops_requests)",
           "refId": "A"
         }
       ]
@@ -171,7 +171,7 @@
       },
       "targets": [
         {
-          "expr": "ai_finops_cost_eur_total",
+          "expr": "ai_finops_cost_eur",
           "legendFormat": "{{namespace}}",
           "refId": "A"
         }
@@ -198,12 +198,12 @@
       },
       "targets": [
         {
-          "expr": "ai_finops_input_tokens_total",
+          "expr": "ai_finops_input_tokens",
           "legendFormat": "in {{namespace}}",
           "refId": "A"
         },
         {
-          "expr": "ai_finops_output_tokens_total",
+          "expr": "ai_finops_output_tokens",
           "legendFormat": "out {{namespace}}",
           "refId": "B"
         }
@@ -249,7 +249,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (namespace, application) (ai_finops_sovereignty_requests_total{severity=\"critical\"})",
+          "expr": "sum by (namespace, application) (ai_finops_sovereignty_requests{severity=\"critical\"})",
           "legendFormat": "{{namespace}}/{{application}}",
           "instant": true,
           "refId": "A"
@@ -258,8 +258,8 @@
     },
     {
       "type": "table",
-      "title": "Recommendations (actions, by app)",
-      "description": "Each row is one actionable recommendation the operator emits from real traffic, with the workload it targets, its type (sovereignty / cost-saving / data-quality) and severity. Read it as a to-do list: critical = fix now (compliance), info = optional saving. EUR amounts of cost-saving rows are in the 'Potential savings' panel.",
+      "title": "Cost-saving recommendations (action + gain €)",
+      "description": "Only cost-saving recommendations. Each row is one concrete action: route an app's traffic from its current model to a cheaper one, and the EUR saved over the observed window. Source: ai_finops_cost_saving_eur (labels current_model/recommended_model).",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -271,13 +271,19 @@
         "showHeader": true,
         "cellHeight": "sm",
         "footer": {
-          "show": false
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "fields": [
+            "Value"
+          ]
         }
       },
       "pluginVersion": "11.2.2",
       "targets": [
         {
-          "expr": "ai_finops_recommendations_total",
+          "expr": "ai_finops_cost_saving_eur",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -289,7 +295,6 @@
           "options": {
             "excludeByName": {
               "Time": true,
-              "Value": true,
               "__name__": true,
               "instance": true,
               "job": true
@@ -297,14 +302,16 @@
             "renameByName": {
               "namespace": "Namespace",
               "application": "Application",
-              "type": "Type",
-              "severity": "Severity"
+              "current_model": "Modèle actuel",
+              "recommended_model": "Recommandé",
+              "Value": "Gain (€)"
             },
             "indexByName": {
               "namespace": 0,
               "application": 1,
-              "type": 2,
-              "severity": 3
+              "current_model": 2,
+              "recommended_model": 3,
+              "Value": 4
             }
           }
         },
@@ -314,8 +321,8 @@
             "fields": "",
             "sort": [
               {
-                "field": "Severity",
-                "desc": false
+                "field": "Gain (€)",
+                "desc": true
               }
             ]
           }
@@ -324,55 +331,43 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": "left",
-            "filterable": true
+            "align": "left"
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Severity"
+              "options": "Gain (€)"
             },
             "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              },
               {
                 "id": "custom.cellOptions",
                 "value": {
                   "type": "color-background",
-                  "mode": "basic"
+                  "mode": "gradient"
                 }
               },
               {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "critical": {
-                        "color": "red",
-                        "index": 0,
-                        "text": "critical"
-                      },
-                      "warning": {
-                        "color": "orange",
-                        "index": 1,
-                        "text": "warning"
-                      },
-                      "info": {
-                        "color": "green",
-                        "index": 2,
-                        "text": "info"
-                      }
-                    }
-                  }
-                ]
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Type"
+              "options": "Recommandé"
             },
             "properties": [
               {
@@ -382,29 +377,11 @@
                 }
               },
               {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "sovereignty": {
-                        "color": "red",
-                        "index": 0,
-                        "text": "sovereignty"
-                      },
-                      "cost-saving": {
-                        "color": "green",
-                        "index": 1,
-                        "text": "cost-saving"
-                      },
-                      "data-quality": {
-                        "color": "orange",
-                        "index": 2,
-                        "text": "data-quality"
-                      }
-                    }
-                  }
-                ]
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
               }
             ]
           }
@@ -435,6 +412,228 @@
       "targets": [
         {
           "expr": "ai_finops_potential_savings_eur",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Spend by sovereignty zone (EUR)",
+      "description": "How much real spend goes to each sovereignty zone (provider data residency). EU = compliant (allowed); US = forbidden by the policy. The share leaving the EU is the sovereign-spend exposure. Source: ai_finops_cost_by_zone_eur.",
+      "datasource": "${datasource}",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.2.2",
+      "targets": [
+        {
+          "expr": "ai_finops_cost_by_zone_eur",
+          "legendFormat": "{{zone}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 4,
+          "color": {
+            "mode": "fixed"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "US"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Enforcement actions (sovereignty)",
+      "description": "Ce que l'opérateur DÉCIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (modèle interdit -> backend conforme, RÉÉCRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqué de bout en bout : warn/report toujours, et reroute désormais ACTUÉ dans le plan de données (slice 2). Source: ai_finops_enforcement_actions.",
+      "datasource": "${datasource}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "pluginVersion": "11.2.2",
+      "targets": [
+        {
+          "expr": "ai_finops_enforcement_actions",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Value": true
+            },
+            "renameByName": {
+              "policy": "Policy",
+              "namespace": "Namespace",
+              "application": "Application",
+              "mode": "Mode",
+              "action": "Action",
+              "actuated": "Actuated"
+            },
+            "indexByName": {
+              "namespace": 0,
+              "application": 1,
+              "mode": 2,
+              "action": 3,
+              "actuated": 4,
+              "policy": 5
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Action"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "block": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "reroute": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "warn": {
+                        "color": "yellow",
+                        "index": 2
+                      },
+                      "report": {
+                        "color": "blue",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Enforcement decisions by action",
+      "description": "Nombre de décisions d'enforcement actives, par action. reroute actué = trafic du modèle interdit réellement redirigé vers le backend conforme (EU) à l'Envoy AI Gateway. Source: ai_finops_enforcement_actions.",
+      "datasource": "${datasource}",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (action) (ai_finops_enforcement_actions)",
+          "legendFormat": "{{action}}",
           "instant": true,
           "refId": "A"
         }

@@ -84,8 +84,8 @@ spec:
                 type: object
               enforcementMode:
                 default: reportOnly
-                description: 'EnforcementMode controls reactions. MVP: reportOnly
-                  (no blocking).'
+                description: 'EnforcementMode controls reactions: reportOnly | warn
+                  | enforce.'
                 enum:
                 - reportOnly
                 - warn

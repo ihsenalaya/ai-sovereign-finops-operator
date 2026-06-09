@@ -28,7 +28,7 @@ rapport complet (Markdown + JSON) est écrit dans un **ConfigMap** `<nom>-report
 3. Évalue la souveraineté via [sovereigntyengine](../features/sovereigntyengine.md).
 4. Écrit le `.status` + un **ConfigMap** `<nom>-report` (clés `report.md`, `report.json`) en
    owner-reference (GC avec le rapport) — voir [reporting](../features/reporting.md).
-5. Expose `ai_finops_cost_eur_total`, `ai_finops_requests_total`, etc. Re-réconcilie toutes les 10 min.
+5. Expose `ai_finops_cost_eur`, `ai_finops_requests`, etc. (gauges, sans `_total`). Re-réconcilie toutes les 10 min.
 
 ## Exemple
 [`..._aifinopsreport.yaml`](../../config/samples/aiops_v1alpha1_aifinopsreport.yaml).

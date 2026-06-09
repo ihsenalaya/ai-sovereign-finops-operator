@@ -45,6 +45,10 @@ rules:
   - aiproviders/status
   - aisovereigntypolicies/status
   verbs: ["get", "patch", "update"]
+# Enforcement slice 2: reroute forbidden models at the Envoy AI Gateway data plane.
+- apiGroups: ["aigateway.envoyproxy.io"]
+  resources: ["aigatewayroutes"]
+  verbs: ["get", "list", "watch", "update", "patch"]
 {{- if .Values.leaderElection.enabled }}
 - apiGroups: ["coordination.k8s.io"]
   resources: ["leases"]

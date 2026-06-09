@@ -55,7 +55,10 @@ type AuditRule struct {
 }
 
 // EnforcementMode controls how the sovereignty engine reacts to violations.
-// MVP supports reportOnly only; warn/enforce are reserved for later sprints.
+// reportOnly records findings only; warn raises differentiated alerts (Kubernetes
+// Events + enforcement metric) without blocking; enforce additionally decides to
+// block or reroute non-compliant traffic to a compliant model (the decision is
+// produced and surfaced now; gateway-level actuation lands in a later slice).
 // +kubebuilder:validation:Enum=reportOnly;warn;enforce
 type EnforcementMode string
 
@@ -79,7 +82,7 @@ type AISovereigntyPolicySpec struct {
 	// +optional
 	Audit AuditRule `json:"audit,omitempty"`
 
-	// EnforcementMode controls reactions. MVP: reportOnly (no blocking).
+	// EnforcementMode controls reactions: reportOnly | warn | enforce.
 	// +kubebuilder:default=reportOnly
 	EnforcementMode EnforcementMode `json:"enforcementMode"`
 }

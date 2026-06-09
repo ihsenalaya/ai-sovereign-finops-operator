@@ -24,6 +24,16 @@ rules:
   - list
   - watch
 - apiGroups:
+  - aigateway.envoyproxy.io
+  resources:
+  - aigatewayroutes
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - aiops.imperium.io
   resources:
   - aibreakevenanalyses

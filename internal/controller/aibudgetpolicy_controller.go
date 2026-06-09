@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
@@ -34,6 +35,10 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/costengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
 )
+
+// budgetEnforcementFinalizer lets a deleted budget policy prune exactly its own
+// enforcement series (same mechanism as the sovereignty policy finalizer).
+const budgetEnforcementFinalizer = "aiops.imperium.io/budget-enforcement-metrics"
 
 // AIBudgetPolicyReconciler reconciles a AIBudgetPolicy object.
 type AIBudgetPolicyReconciler struct {
@@ -56,13 +61,37 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, &policy); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	// Deletion: prune this policy's enforcement series, then drop the finalizer.
+	if !policy.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(&policy, budgetEnforcementFinalizer) {
+			enforcementMetrics.forget(policy.UID)
+			controllerutil.RemoveFinalizer(&policy, budgetEnforcementFinalizer)
+			if err := r.Update(ctx, &policy); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+	if controllerutil.AddFinalizer(&policy, budgetEnforcementFinalizer) {
+		if err := r.Update(ctx, &policy); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	policy.Status.ObservedGeneration = policy.Generation
 
 	cat, err := loadCatalog(ctx, r.Client, policy.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	collector := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
+	collector, err := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
+	if err != nil {
+		meta.SetStatusCondition(&policy.Status.Conditions,
+			readyFalse(policy.Generation, aiopsv1alpha1.ReasonNoTelemetry, err.Error()))
+		_ = r.Status().Update(ctx, &policy)
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
 	samples, err := collector.Collect(ctx, periodWindow(policy.Spec.Period))
 	if err != nil {
 		meta.SetStatusCondition(&policy.Status.Conditions,
@@ -108,12 +137,33 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	metrics.BudgetUsagePercent.WithLabelValues(policy.Namespace, policy.Name).Set(float64(result.UsagePercent))
 
+	// Enforcement signal: surface each tripped action on the shared EnforcementActions
+	// vector so one dashboard/alert sees both sovereignty AND budget control decisions.
+	// Budget actions are ADVISORY (this reconciler never blocks traffic — see doc above),
+	// so actuated="false": honest about the fact that the operator recommends but does
+	// not yet actuate budget actions at the gateway. mode carries the budget phase.
+	// retire() prunes series this policy emitted before (e.g. when it drops back under a
+	// threshold) without Reset()-ing the shared vector. FallbackModelRef, when set, is
+	// surfaced as the recommended target via the BudgetThreshold event below.
+	var enfSeries [][]string
+	for _, action := range result.TriggeredActions {
+		metrics.EnforcementActions.
+			WithLabelValues(policy.Name, policy.Spec.Target.Namespace, policy.Spec.Target.Application, result.Phase, action, "false").
+			Set(1)
+		enfSeries = append(enfSeries,
+			[]string{policy.Name, policy.Spec.Target.Namespace, policy.Spec.Target.Application, result.Phase, action, "false"})
+	}
+	enforcementMetrics.retire(policy.UID, enfSeries)
+
 	if err := r.Status().Update(ctx, &policy); err != nil {
 		return ctrl.Result{}, err
 	}
 	if r.Recorder != nil && len(result.TriggeredActions) > 0 {
-		r.Recorder.Eventf(&policy, "Warning", "BudgetThreshold",
-			"%s — recommended actions: %s", result.Phase, strings.Join(result.TriggeredActions, ", "))
+		msg := fmt.Sprintf("%s — recommended actions: %s", result.Phase, strings.Join(result.TriggeredActions, ", "))
+		if policy.Spec.FallbackModelRef != "" && result.Phase == budgetengine.PhaseExceeded {
+			msg += fmt.Sprintf("; consider rerouting to cheaper fallback model %q", policy.Spec.FallbackModelRef)
+		}
+		r.Recorder.Eventf(&policy, "Warning", "BudgetThreshold", "%s", msg)
 	}
 	logger.V(1).Info("reconciled AIBudgetPolicy", "phase", result.Phase, "usagePercent", result.UsagePercent)
 	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil

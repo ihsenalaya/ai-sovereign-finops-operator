@@ -44,4 +44,4 @@ membres** (FR, DE, …). Findings triés par sévérité décroissante puis name
 Les controllers [AISovereigntyPolicy](../crds/aisovereigntypolicy.md) et
 [AIFinOpsReport](../crds/aifinopsreport.md) construisent les `Flow` depuis la télémétrie + le catalogue
 (`catalog.flows`), appellent `EvaluateFlows`, et renseignent `findingsCount`, les findings détaillés du
-rapport, et la métrique `ai_finops_sovereignty_findings_total{namespace,application,policy,severity}`.
+rapport, et la métrique `ai_finops_sovereignty_findings{namespace,application,policy,severity}`.

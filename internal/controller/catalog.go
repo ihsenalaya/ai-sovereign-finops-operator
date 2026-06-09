@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"math"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -83,6 +85,37 @@ func (cat catalog) modelByName(name string) (aiopsv1alpha1.AIModel, bool) {
 	return aiopsv1alpha1.AIModel{}, false
 }
 
+// zoneForModel returns the normalized sovereignty zone of the provider serving
+// the given model name (empty if the model or its provider is unknown).
+func (cat catalog) zoneForModel(modelName string) string {
+	for i := range cat.models {
+		if cat.models[i].Spec.ModelName != modelName {
+			continue
+		}
+		if prov, ok := cat.providers[cat.models[i].Spec.ProviderRef]; ok {
+			return sovereigntyengine.NormalizeZone(prov.Spec.DataResidency)
+		}
+	}
+	return ""
+}
+
+// cheapestCompliantModelName returns the provider-side model name of the cheapest
+// catalog model whose provider sits in a sovereignty-allowed zone (empty if none).
+// It is the reroute target enforcement proposes when blocking forbidden-zone traffic.
+func (cat catalog) cheapestCompliantModelName(pe sovereigntyengine.Policy) string {
+	best := ""
+	bestPrice := math.MaxFloat64
+	for name, p := range cat.priceBook() {
+		if !sovereigntyengine.IsZoneAllowed(pe, cat.zoneForModel(name)) {
+			continue
+		}
+		if price := p.InputPerMillion + p.OutputPerMillion; price < bestPrice {
+			bestPrice, best = price, name
+		}
+	}
+	return best
+}
+
 // providerFixedMonthly returns the provider's flat monthly fee (0 if unset).
 func (cat catalog) providerFixedMonthly(providerRef string) float64 {
 	if p, ok := cat.providers[providerRef]; ok && p.Spec.Pricing.FixedMonthlyCost != nil {
@@ -99,29 +132,36 @@ func orDefault(v, def string) string {
 }
 
 // collectorFor returns the TelemetryCollector implied by a gateway's telemetry
-// mode. The MVP defaults to the fake collector when no gateway is found or the
-// mode is fake, so reports are always demonstrable without a live gateway. The
-// configmap mode reads real measured usage from a ConfigMap in the gateway's
-// namespace (see internal/collectors/configmap).
-func collectorFor(c client.Client, namespace string, gw *aiopsv1alpha1.AIGateway) collectors.TelemetryCollector {
+// mode. There is deliberately NO silent fake fallback: a sovereign-FinOps product
+// whose whole value is "real, verifiable numbers" must never serve fabricated
+// figures that a reader could mistake for actual spend. The fake collector is
+// returned ONLY when a gateway explicitly opts in with mode "fake"; every other
+// path that lacks a real source returns an error so the caller can surface a clear
+// status condition instead of inventing data.
+func collectorFor(c client.Client, namespace string, gw *aiopsv1alpha1.AIGateway) (collectors.TelemetryCollector, error) {
 	if gw == nil {
-		return fake.New()
+		return nil, fmt.Errorf("no AIGateway / telemetry source configured for namespace %q; "+
+			"set spec.gatewayRef or create an AIGateway with a telemetry mode (prometheus|configmap|aigw), "+
+			"or mode \"fake\" to explicitly opt into demo data", namespace)
 	}
 	switch gw.Spec.Telemetry.Mode {
 	case aiopsv1alpha1.TelemetryModePrometheus:
 		endpoint := gw.Spec.Endpoint + gw.Spec.Telemetry.MetricsEndpoint
-		return promcollector.New(endpoint)
+		return promcollector.New(endpoint), nil
 	case aiopsv1alpha1.TelemetryModeConfigMap:
 		name := gw.Spec.Telemetry.SourceConfigMap
 		if name == "" {
-			return fake.New()
+			return nil, fmt.Errorf("gateway %q uses configmap telemetry but spec.telemetry.sourceConfigMap is empty", gw.Name)
 		}
-		return cmcollector.New(c, namespace, name)
+		return cmcollector.New(c, namespace, name), nil
 	case aiopsv1alpha1.TelemetryModeAIGW:
 		endpoint := gw.Spec.Endpoint + gw.Spec.Telemetry.MetricsEndpoint
-		return aigwcollector.New(c, namespace, endpoint)
+		return aigwcollector.New(c, namespace, endpoint), nil
+	case aiopsv1alpha1.TelemetryModeFake:
+		// Explicit, opt-in demo data only.
+		return fake.New(), nil
 	default:
-		return fake.New()
+		return nil, fmt.Errorf("gateway %q has unknown telemetry mode %q", gw.Name, gw.Spec.Telemetry.Mode)
 	}
 }
 

@@ -499,14 +499,14 @@ Le rapport doit contenir :
 
 Exposer des métriques Prometheus :
 
-* `ai_finops_requests_total`
-* `ai_finops_input_tokens_total`
-* `ai_finops_output_tokens_total`
-* `ai_finops_cost_eur_total`
+* `ai_finops_requests`
+* `ai_finops_input_tokens`
+* `ai_finops_output_tokens`
+* `ai_finops_cost_eur`
 * `ai_finops_budget_usage_percent`
-* `ai_finops_sovereignty_findings_total`
+* `ai_finops_sovereignty_findings`
 * `ai_finops_breakeven_savings_eur`
-* `ai_finops_recommendations_total`
+* `ai_finops_recommendations`
 
 Créer un dashboard Grafana simple.
 

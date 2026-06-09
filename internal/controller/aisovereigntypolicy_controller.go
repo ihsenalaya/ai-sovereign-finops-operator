@@ -26,12 +26,18 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/enforcementengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
 )
+
+// sovereigntyFinalizer guards a policy's enforcement Prometheus series so they are
+// pruned when the policy is deleted (no dead series left behind).
+const sovereigntyFinalizer = "aiops.imperium.io/enforcement-metrics"
 
 // AISovereigntyPolicyReconciler reconciles a AISovereigntyPolicy object.
 type AISovereigntyPolicyReconciler struct {
@@ -44,6 +50,7 @@ type AISovereigntyPolicyReconciler struct {
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aisovereigntypolicies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aisovereigntypolicies/finalizers,verbs=update
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aigateways;aimodels;aiproviders,verbs=get;list;watch
+//+kubebuilder:rbac:groups=aigateway.envoyproxy.io,resources=aigatewayroutes,verbs=get;list;watch;update;patch
 
 // policyToEngine maps the CRD spec to the pure engine policy.
 func policyToEngine(p aiopsv1alpha1.AISovereigntyPolicySpec) sovereigntyengine.Policy {
@@ -64,13 +71,41 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err := r.Get(ctx, req.NamespacedName, &policy); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	// Deletion: revert any gateway reroute this policy applied, prune its enforcement
+	// series, then drop the finalizer (so deleting the policy un-enforces cleanly).
+	if !policy.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(&policy, sovereigntyFinalizer) {
+			if _, err := actuateReroutes(ctx, r.Client, policy.Namespace, nil); err != nil {
+				logger.Error(err, "reverting gateway reroutes on delete")
+			}
+			enforcementMetrics.forget(policy.UID)
+			controllerutil.RemoveFinalizer(&policy, sovereigntyFinalizer)
+			if err := r.Update(ctx, &policy); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+	if controllerutil.AddFinalizer(&policy, sovereigntyFinalizer) {
+		if err := r.Update(ctx, &policy); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	policy.Status.ObservedGeneration = policy.Generation
 
 	cat, err := loadCatalog(ctx, r.Client, policy.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	collector := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
+	collector, err := collectorFor(r.Client, policy.Namespace, firstGateway(ctx, r.Client, policy.Namespace))
+	if err != nil {
+		meta.SetStatusCondition(&policy.Status.Conditions,
+			readyFalse(policy.Generation, aiopsv1alpha1.ReasonNoTelemetry, err.Error()))
+		_ = r.Status().Update(ctx, &policy)
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
 	samples, err := collector.Collect(ctx, 30*24*time.Hour)
 	if err != nil {
 		meta.SetStatusCondition(&policy.Status.Conditions,
@@ -83,9 +118,6 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 	counts := sovereigntyengine.CountBySeverity(findings)
 
 	policy.Status.FindingsCount = int32(len(findings))
-	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation,
-		fmt.Sprintf("Evaluated (%s): %d finding(s) — %d critical, %d warning",
-			policy.Spec.EnforcementMode, len(findings), counts[sovereigntyengine.SeverityCritical], counts[sovereigntyengine.SeverityWarning])))
 
 	// Flow-aware metric: findings per namespace/application/severity.
 	type appSev struct{ ns, app, sev string }
@@ -97,14 +129,75 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 		metrics.SovereigntyFindings.WithLabelValues(k.ns, k.app, policy.Name, k.sev).Set(float64(n))
 	}
 
+	// Enforcement: turn the critical (forbidden-zone) findings into decisions for
+	// this policy's mode. reportOnly records only; warn raises alerts; enforce
+	// additionally ACTUATES in the real Envoy AI Gateway data plane (slice 2):
+	// each forbidden model's route is rerouted to the compliant backend.
+	mode := string(policy.Spec.EnforcementMode)
+	fallback := cat.cheapestCompliantModelName(policyToEngine(policy.Spec))
+	var violations []enforcementengine.Violation
+	for _, f := range findings {
+		if f.Severity != sovereigntyengine.SeverityCritical {
+			continue
+		}
+		violations = append(violations, enforcementengine.Violation{
+			Namespace: f.Namespace, Application: f.Application, Provider: f.Provider,
+			Zone: f.Zone, Model: f.Model, Requests: f.Requests,
+		})
+	}
+	decisions := enforcementengine.DecideSovereignty(mode, violations, fallback)
+
+	// Actuate reroute decisions at the gateway. In enforce mode, reroute each
+	// forbidden model to its compliant target; in any other mode `desired` is empty,
+	// so actuateReroutes reverts any reroute this policy previously applied.
+	desired := map[string]string{}
+	if mode == enforcementengine.ModeEnforce {
+		for _, d := range decisions {
+			if d.Action == enforcementengine.ActionReroute && d.RerouteTo != "" {
+				desired[d.Model] = d.RerouteTo
+			}
+		}
+	}
+	gwActuated, err := actuateReroutes(ctx, r.Client, policy.Namespace, desired)
+	if err != nil {
+		logger.Error(err, "gateway reroute actuation failed")
+	}
+
+	var enfSeries [][]string
+	for _, d := range decisions {
+		// A reroute is actuated only once the gateway route was actually patched.
+		if d.Action == enforcementengine.ActionReroute {
+			d.Actuated = gwActuated[d.Model]
+		}
+		actuated := "false"
+		msg := d.Message
+		if d.Actuated {
+			actuated = "true"
+			if d.Action == enforcementengine.ActionReroute {
+				msg = fmt.Sprintf("enforce: %s/%s — rerouted %q to compliant %q at the Envoy AI Gateway",
+					d.Namespace, d.Application, d.Model, d.RerouteTo)
+			}
+		}
+		metrics.EnforcementActions.WithLabelValues(policy.Name, d.Namespace, d.Application, d.Mode, string(d.Action), actuated).Set(1)
+		enfSeries = append(enfSeries, []string{policy.Name, d.Namespace, d.Application, d.Mode, string(d.Action), actuated})
+		if r.Recorder != nil && d.Action != enforcementengine.ActionReport {
+			r.Recorder.Eventf(&policy, "Warning", "Enforcement", "%s", msg)
+		}
+	}
+	enforcementMetrics.retire(policy.UID, enfSeries)
+
+	actionCounts := enforcementengine.CountByAction(decisions)
+	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation,
+		fmt.Sprintf("Evaluated (%s): %d finding(s) — %d critical, %d warning; enforcement: %d warn, %d reroute, %d block",
+			policy.Spec.EnforcementMode, len(findings),
+			counts[sovereigntyengine.SeverityCritical], counts[sovereigntyengine.SeverityWarning],
+			actionCounts[enforcementengine.ActionWarn], actionCounts[enforcementengine.ActionReroute], actionCounts[enforcementengine.ActionBlock])))
+
 	if err := r.Status().Update(ctx, &policy); err != nil {
 		return ctrl.Result{}, err
 	}
-	if r.Recorder != nil && counts[sovereigntyengine.SeverityCritical] > 0 {
-		r.Recorder.Eventf(&policy, "Warning", "SovereigntyViolation",
-			"%d critical sovereignty finding(s) detected", counts[sovereigntyengine.SeverityCritical])
-	}
-	logger.V(1).Info("reconciled AISovereigntyPolicy", "findings", len(findings))
+	logger.V(1).Info("reconciled AISovereigntyPolicy", "findings", len(findings),
+		"mode", mode, "decisions", len(decisions))
 	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil
 }
 

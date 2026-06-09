@@ -18,14 +18,22 @@ type TelemetryCollector interface {
 ## Implémentations
 | Impl | Package | État | Description |
 |------|---------|------|-------------|
-| `fake` | `collectors/fake` | ✔ | Jeu de données déterministe (démo/tests), aucune gateway requise. Profil par défaut aligné sur `config/samples`. |
-| `prometheus` | `collectors/prometheus` | ✔ | Scrute un endpoint au format text-exposition, parse les compteurs `ai_finops_*` labellisés `namespace/application/team/provider/model`. `Parse(io.Reader)` testable hors HTTP. |
-| `litellm` | `collectors/litellm` | stub | Surface prête (endpoint + clé) ; intégration HTTP `/spend/logs` à venir (`ErrNotImplemented`). |
+| `aigw` | `collectors/aigw` | ✔ | **Chemin réel de production.** Scrute l'endpoint OpenTelemetry/Prometheus d'**Envoy AI Gateway** et lit l'histogramme `gen_ai_client_token_usage` (tokens mesurés sur les réponses fournisseur). Attribue chaque modèle au workload via les headers `x-greenops-*` puis, à défaut, le catalogue `AIModel` (`serves*`). Testé (`aigw_test.go`). |
+| `prometheus` | `collectors/prometheus` | ✔ | Scrute un endpoint text-exposition, parse des compteurs `ai_finops_*` labellisés `namespace/application/team/provider/model`. `Parse(io.Reader)` testable hors HTTP. |
+| `configmap` | `collectors/configmap` | ✔ | Lit des échantillons d'usage réels depuis une `ConfigMap` (clé `usage.json`) dans le namespace de la gateway. |
+| `fake` | `collectors/fake` | opt-in | Jeu de données déterministe pour démo/tests **uniquement sur `mode: fake` explicite** — jamais un repli silencieux. |
 
-## Sélection
-Le controller choisit le collector via `AIGateway.spec.telemetry.mode` (`collectorFor`). Sans
-gateway ou en mode `fake`, le collector `fake` est utilisé → toujours démontrable.
+> Le mode télémétrie `litellm` (collecteur stub `ErrNotImplemented`) a été **retiré** : annoncer une
+> non-feature induisait en erreur. Le `Type` de gateway `litellm` (techno réelle) reste valide.
+
+## Sélection — pas de repli `fake` silencieux
+Le controller choisit le collector via `AIGateway.spec.telemetry.mode` (`collectorFor`). **Il n'y a aucun
+repli `fake` par défaut** : un produit dont la valeur est « des chiffres réels et vérifiables » ne doit
+jamais servir des données fabriquées qu'on pourrait prendre pour de la vraie dépense. Sans source réelle
+(pas de gateway, mode inconnu, `configmap` sans `sourceConfigMap`), `collectorFor` renvoie une **erreur**
+et le controller pose une condition de status explicite (`NoTelemetrySource`). Le collector `fake` n'est
+retourné que sur `mode: fake` explicite (démo).
 
 ## Évolutions
-Collecteur **Envoy/OpenTelemetry** (CNCF) ; LiteLLM complet (auth, pagination).
+Durcir le chemin Envoy/OTel (latence, erreurs, détection de reset des compteurs gateway).
 Lié : [AIGateway](../crds/aigateway.md), [costengine](costengine.md).

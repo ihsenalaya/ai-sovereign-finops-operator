@@ -25,9 +25,12 @@ L'opérateur transforme ces décisions ad hoc en **politiques Kubernetes version
 réconciliées en continu**.
 
 > ⚠️ **Le produit ne promet pas la conformité juridique.** Il produit une **traçabilité exploitable et
-> un dossier de préparation à l'audit** (RGPD, AI Act, politiques internes). En l'état il est
-> **non-bloquant** (`reportOnly`) : il observe, calcule et signale, sans jamais modifier le trafic de la
-> gateway.
+> un dossier de préparation à l'audit** (RGPD, AI Act, politiques internes). L'`enforcementMode` d'une
+> `AISovereigntyPolicy` pilote la réaction : `reportOnly` (constat seul), `warn` (alerte différenciée —
+> Events Kubernetes + métrique `ai_finops_enforcement_actions`, sans blocage), `enforce` (**agit
+> réellement** : reroute le trafic du modèle non conforme vers le backend conforme **dans le plan de
+> données Envoy AI Gateway** — mutation réversible de l'`AIGatewayRoute` : backend conforme + réécriture
+> du champ `model`). C'est un vrai **plan de contrôle**, pas un simple observateur.
 
 ---
 
@@ -42,7 +45,7 @@ coûts, constats de souveraineté, états de budget et rapports.
    Applications ───► │   Gateway IA (Envoy / LiteLLM / Gateway API)  │ ───► Fournisseurs LLM
                      │                 [ plan de données ]           │      (OpenAI, Mistral/Foundry,
                      └───────────────┬──────────────────────────────┘       auto-hébergé, …)
-                                     │ télémétrie (Prometheus / API / fake)
+                                     │ télémétrie (aigw/OTel · Prometheus · configmap)
                                      ▼
    CRDs (déclaratif)   ┌──────────────────────────────────────────────┐
    AIGateway           │        AI Sovereign FinOps Operator           │
@@ -60,7 +63,7 @@ coûts, constats de souveraineté, états de budget et rapports.
 
 ## 3. Fonctionnalités
 
-Cinq moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les controllers :
+Six moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les controllers :
 
 - **Cost engine** — calcule le coût (EUR) par requête/modèle/équipe/namespace à partir des prix par
   million de tokens déclarés sur chaque `AIProvider` ; agrège les tokens d'entrée/sortie et le % d'économies.
@@ -74,11 +77,21 @@ Cinq moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les 
   mensuel comparé, économie, **payback** en mois) et émet une recommandation.
 - **Reporting engine** — consolide coûts, top modèles, constats de souveraineté et recommandations dans
   un **rapport Markdown/JSON** publié en `ConfigMap`, et dans le `.status` des CRDs.
+- **Recommendation engine** — produit des recommandations chiffrées et **conscientes de la souveraineté** :
+  un swap cost-saving n'est **jamais** proposé vers un modèle en zone interdite, si bon marché soit-il
+  (il reroute uniquement vers le modèle conforme le moins cher).
+- **Enforcement engine** — transforme les constats critiques en **décisions d'enforcement** selon
+  l'`enforcementMode` (`report` / `warn` / `reroute` / `block`), portées par des Events Kubernetes et la
+  métrique `ai_finops_enforcement_actions`. En mode `enforce`, l'opérateur **actue réellement** le reroute
+  dans **Envoy AI Gateway** (mutation réversible de l'`AIGatewayRoute` : bascule vers le backend conforme
+  + réécriture du `model` via `bodyMutation`). C'est le passage d'**observateur** à **plan de contrôle**.
 
 Transverse :
 
-- **Collecteurs de télémétrie** : `prometheus` et `fake` opérationnels, `litellm` préparé — l'opérateur
-  s'enfiche en **lecture seule** sur une gateway existante.
+- **Collecteurs de télémétrie** : `aigw` (Envoy AI Gateway / OpenTelemetry — chemin réel de production,
+  lit `gen_ai_client_token_usage`), `prometheus` et `configmap` opérationnels. **Aucun repli `fake`
+  silencieux** : sans source de télémétrie réelle, l'opérateur remonte une condition `NoTelemetrySource`
+  explicite plutôt que d'inventer des chiffres. Le mode `fake` n'existe que sur opt-in explicite (démo).
 - **Observabilité** : famille de métriques `ai_finops_*` (§7) + **dashboard Grafana** fourni
   ([`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json)) + `ServiceMonitor`
   optionnel (Prometheus Operator).
@@ -141,17 +154,26 @@ Tout est CNCF/OSS.
 
 Métriques exposées (`/metrics`, par défaut `:8080`) :
 
+> **Convention de nommage** — ces métriques sont des **agrégats par fenêtre de reporting** (gauges), pas
+> des compteurs monotones : elles n'ont donc **pas** le suffixe `_total` (qui, par convention Prometheus,
+> casse `rate()`/`increase()` sur une gauge). Les compteurs cumulés côté gateway gardent `_total` dans
+> leurs propres exporters.
+
 | Métrique | Description |
 |---|---|
-| `ai_finops_cost_eur_total` | coût cumulé (EUR) |
-| `ai_finops_input_tokens_total` / `ai_finops_output_tokens_total` | tokens entrée / sortie |
-| `ai_finops_requests_total` / `ai_finops_errors_total` | volume de requêtes / erreurs |
+| `ai_finops_cost_eur` | coût observé (EUR) par namespace |
+| `ai_finops_input_tokens` / `ai_finops_output_tokens` | tokens entrée / sortie par namespace |
+| `ai_finops_requests` | volume de requêtes par namespace |
+| `ai_finops_cost_by_zone_eur` | dépense par zone de souveraineté (UE vs US…) |
 | `ai_finops_budget_usage_percent` | % d'usage d'un budget |
-| `ai_finops_sovereignty_findings_total` | constats de souveraineté |
+| `ai_finops_sovereignty_findings` / `ai_finops_sovereignty_requests` | constats / requêtes à risque |
+| `ai_finops_recommendations` | recommandations émises (par type/app/sévérité) |
+| `ai_finops_cost_saving_eur` / `ai_finops_potential_savings_eur` | économie d'un swap / total potentiel |
+| `ai_finops_enforcement_actions` | **décisions d'enforcement** (policy, namespace, app, mode, action, actuated) |
 | `ai_finops_breakeven_savings_eur` | économie estimée managé vs auto-hébergé |
-| `ai_finops_recommendations_total` | recommandations émises |
 
-Dashboard Grafana prêt à l'emploi : [`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json).
+Dashboard Grafana prêt à l'emploi : [`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json)
+(inclut le tableau **Enforcement actions** et la dépense par zone de souveraineté).
 
 ---
 
@@ -258,10 +280,15 @@ Conventions et architecture : [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) ·
 
 ## 11. Statut & limites
 
-MVP complet (Sprints 1→6), **validé de bout en bout sur kind via l'image déployée par Helm** : 7 CRDs,
-7 controllers, 5 moteurs, collecteurs, observabilité, reporting, chart, automatisation. Mode **non-bloquant
-(`reportOnly`)** : l'opérateur **n'altère pas** le trafic de la gateway. L'application des politiques dans
-le plan de données Envoy (enforcement, failover) est la prochaine étape.
+MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image déployée par Helm** : 7 CRDs,
+7 controllers, 6 moteurs, collecteurs, observabilité, reporting, chart, automatisation.
+
+**Enforcement livré (slices 1 & 2)** : l'opérateur **agit** selon l'`enforcementMode` — Events Kubernetes
+différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les violations US. En mode
+`enforce`, le reroute est **actué dans le plan de données** Envoy AI Gateway (mutation réversible de
+l'`AIGatewayRoute` : backend conforme + réécriture du `model`), `actuated=true`. Le revert est automatique
+au retour en `reportOnly`/`warn` ou à la suppression de la policy (finalizer). Reste : enforcement budget,
+action `block` au gateway (sans fallback conforme), durcissement télémétrie (latence/erreurs, reset compteurs).
 
 Détails : [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) · toute la
 doc : [`docs/README.md`](docs/README.md).

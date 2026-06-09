@@ -27,7 +27,7 @@ bloquantes sont marquées **(hyp.)** comme demandé au §9.
         │          │ lit            │          │
         │  ┌───────┴────────────────┴───────┐ │
         │  │ collectors.TelemetryCollector  │ │
-        │  │  fake | prometheus | litellm   │ │
+        │  │  aigw | prometheus | configmap   │ │
         │  └───────┬─────────────────────────┘ │
         │          │ metrics Prometheus (/metrics)
         └──────────┼──────────────────────────┘
@@ -48,7 +48,7 @@ en `resource.Quantity` **(hyp.)** pour des décimaux exacts et idiomatiques k8s 
 Tous les Status portent `observedGeneration` + `conditions[]` (type `Ready`).
 
 - **AIGateway** : `spec.type` (litellm|envoy|kong|gateway-api|custom), `endpoint`, `namespaceSelector`,
-  `telemetry{mode(fake|prometheus|litellm), metricsEndpoint}`, `auth.secretRef`. Status : `governedNamespaces[]`.
+  `telemetry{mode(aigw|prometheus|configmap|fake), metricsEndpoint, sourceConfigMap}`, `auth.secretRef`. Status : `governedNamespaces[]`.
 - **AIProvider** : `type`, `region`, `dataResidency`, `managed`, `pricing{currency, inputTokenPricePerMillion,
   outputTokenPricePerMillion, fixedMonthlyCost?}`, `compliance{allowedForSensitiveData, allowedCountries[]}`.
 - **AIModel** : `providerRef`, `modelName`, `type(llm|embedding|…)`, `contextWindow`, `qualityTier`,
@@ -72,7 +72,7 @@ Tous les Status portent `observedGeneration` + `conditions[]` (type `Ready`).
 |---------|--------|------|
 | `api/v1alpha1` | 1 ✅ | types CRD, deepcopy, conditions communes |
 | `internal/controller` | 1 ✅ | 7 reconcilers + helpers status |
-| `internal/collectors/{fake,prometheus,litellm}` | 2 | `TelemetryCollector` |
+| `internal/collectors/{aigw,prometheus,configmap,fake}` | 2 | `TelemetryCollector` |
 | `internal/costengine` | 2 | coûts par modèle/équipe/namespace/requête/token |
 | `internal/budgetengine` | 3 | conso vs budget, seuils, recommandations |
 | `internal/sovereigntyengine` | 4 | findings de souveraineté |

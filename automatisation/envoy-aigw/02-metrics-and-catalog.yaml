@@ -151,3 +151,20 @@ spec:
   hardLimitPercent: 100
   actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
   fallbackModelRef: gpt-4o-mini
+---
+# legal budget — tight cap; legal runs gpt-4o (expensive) like finance.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: legal-budget
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: legal, team: legal, application: contract-review }
+  period: monthly
+  budgetEUR: "0.30"
+  warningThresholdPercent: 70
+  criticalThresholdPercent: 90
+  hardLimitPercent: 100
+  actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
+  fallbackModelRef: gpt-4o-mini

@@ -157,10 +157,10 @@ Exemple typique :
 - Le panneau **#9 Potential savings** est un *potentiel* (et-si), **pas un gain réalisé**.
 - Réconciliation de l'opérateur **toutes les ~60 s** → le dashboard est vivant.
 
-> Métriques exposées : `ai_finops_cost_eur_total`, `ai_finops_input/output_tokens_total`,
-> `ai_finops_requests_total`, `ai_finops_budget_usage_percent`,
-> `ai_finops_sovereignty_requests_total`,
-> `ai_finops_recommendations_total` (labels `type`/`namespace`/`application`/`severity`),
+> Métriques exposées : `ai_finops_cost_eur`, `ai_finops_input/output_tokens`,
+> `ai_finops_requests`, `ai_finops_budget_usage_percent`,
+> `ai_finops_sovereignty_requests`,
+> `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
 > `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`.
 > Détail : [`docs/features/metrics.md`](../../docs/features/metrics.md).
 

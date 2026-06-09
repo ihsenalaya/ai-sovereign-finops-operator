@@ -140,7 +140,6 @@ spec:
                     description: Mode selects the TelemetryCollector implementation.
                     enum:
                     - prometheus
-                    - litellm
                     - fake
                     - configmap
                     - aigw

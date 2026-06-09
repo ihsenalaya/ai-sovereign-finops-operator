@@ -69,7 +69,13 @@ func (r *AIBreakEvenAnalysisReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	collector := collectorFor(r.Client, analysis.Namespace, firstGateway(ctx, r.Client, analysis.Namespace))
+	collector, err := collectorFor(r.Client, analysis.Namespace, firstGateway(ctx, r.Client, analysis.Namespace))
+	if err != nil {
+		meta.SetStatusCondition(&analysis.Status.Conditions,
+			readyFalse(analysis.Generation, aiopsv1alpha1.ReasonNoTelemetry, err.Error()))
+		_ = r.Status().Update(ctx, &analysis)
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
 	samples, err := collector.Collect(ctx, periodWindow("monthly"))
 	if err != nil {
 		meta.SetStatusCondition(&analysis.Status.Conditions,

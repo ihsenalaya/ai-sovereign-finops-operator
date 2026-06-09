@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +36,35 @@ const testNamespace = "default"
 
 func reqFor(name string) reconcile.Request {
 	return reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: testNamespace}}
+}
+
+// seedEmptyTelemetry registers a REAL but empty telemetry source so reconcilers
+// that read measured spend have a source to read (and find zero usage) rather than
+// failing with NoTelemetrySource. It is deliberately NOT the fake collector: an
+// AIGateway in configmap mode pointed at a ConfigMap whose usage.json is an empty
+// JSON array — a genuine, verifiable "no traffic yet" reading. This keeps the
+// suite honest (no fabricated numbers) while exercising the happy path.
+func seedEmptyTelemetry(ctx context.Context, prefix string) {
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: prefix + "-usage", Namespace: testNamespace},
+		Data:       map[string]string{"usage.json": "[]"},
+	}
+	Expect(k8sClient.Create(ctx, cm)).To(Succeed())
+	DeferCleanup(func() { _ = k8sClient.Delete(ctx, cm) })
+
+	gw := &aiopsv1alpha1.AIGateway{
+		ObjectMeta: metav1.ObjectMeta{Name: prefix + "-gw", Namespace: testNamespace},
+		Spec: aiopsv1alpha1.AIGatewaySpec{
+			Type:     "litellm",
+			Endpoint: "http://unused.local",
+			Telemetry: aiopsv1alpha1.TelemetrySpec{
+				Mode:            aiopsv1alpha1.TelemetryModeConfigMap,
+				SourceConfigMap: prefix + "-usage",
+			},
+		},
+	}
+	Expect(k8sClient.Create(ctx, gw)).To(Succeed())
+	DeferCleanup(func() { _ = k8sClient.Delete(ctx, gw) })
 }
 
 var _ = Describe("aiops reconcilers", func() {
@@ -146,6 +176,7 @@ var _ = Describe("aiops reconcilers", func() {
 
 	Context("AIBudgetPolicy", func() {
 		It("evaluates spend against budget and becomes Ready", func() {
+			seedEmptyTelemetry(ctx, "budget-x")
 			policy := &aiopsv1alpha1.AIBudgetPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "budget-x", Namespace: testNamespace},
 				Spec: aiopsv1alpha1.AIBudgetPolicySpec{
@@ -175,6 +206,7 @@ var _ = Describe("aiops reconcilers", func() {
 
 	Context("AISovereigntyPolicy", func() {
 		It("registers in reportOnly mode and becomes Ready", func() {
+			seedEmptyTelemetry(ctx, "sov-x")
 			policy := &aiopsv1alpha1.AISovereigntyPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "sov-x", Namespace: testNamespace},
 				Spec: aiopsv1alpha1.AISovereigntyPolicySpec{
@@ -197,6 +229,7 @@ var _ = Describe("aiops reconcilers", func() {
 
 	Context("AIBreakEvenAnalysis", func() {
 		It("computes a recommendation and becomes Ready", func() {
+			seedEmptyTelemetry(ctx, "be-x")
 			analysis := &aiopsv1alpha1.AIBreakEvenAnalysis{
 				ObjectMeta: metav1.ObjectMeta{Name: "be-x", Namespace: testNamespace},
 				Spec: aiopsv1alpha1.AIBreakEvenAnalysisSpec{
@@ -230,6 +263,7 @@ var _ = Describe("aiops reconcilers", func() {
 
 	Context("AIFinOpsReport", func() {
 		It("stamps GeneratedAt and becomes Ready", func() {
+			seedEmptyTelemetry(ctx, "report-x")
 			report := &aiopsv1alpha1.AIFinOpsReport{
 				ObjectMeta: metav1.ObjectMeta{Name: "report-x", Namespace: testNamespace},
 				Spec: aiopsv1alpha1.AIFinOpsReportSpec{

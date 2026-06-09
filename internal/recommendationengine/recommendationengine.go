@@ -49,9 +49,13 @@ type Usage struct {
 }
 
 // Candidate is an alternative model the router could use, with its prices.
+// Compliant reports whether the model's provider sits in a sovereignty-allowed
+// zone: a sovereign-FinOps product must never recommend routing to a model that
+// violates the active sovereignty policy, however cheap it is.
 type Candidate struct {
 	Name                              string
 	InputPerMillion, OutputPerMillion float64
+	Compliant                         bool
 }
 
 // Risk is sovereignty exposure for an app: requests/cost sent to a non-compliant
@@ -71,8 +75,12 @@ type Recommendation struct {
 	// Namespace and Application identify the workload the recommendation targets
 	// (empty for catalog-wide recommendations such as data-quality). They let
 	// consumers attribute each action to an owner without parsing the message.
-	Namespace           string
-	Application         string
+	Namespace   string
+	Application string
+	// CurrentModel and RecommendedModel describe a cost-saving model swap (empty
+	// for other types), so a dashboard can show the concrete action.
+	CurrentModel        string
+	RecommendedModel    string
 	EstimatedSavingsEUR float64
 }
 
@@ -98,6 +106,11 @@ func Recommend(usages []Usage, candidates []Candidate, risks []Risk, unpricedMod
 			if c.Name == u.Model {
 				continue
 			}
+			// Never recommend a swap to a non-compliant (forbidden-zone) model:
+			// saving money by breaking sovereignty contradicts the product's purpose.
+			if !c.Compliant {
+				continue
+			}
 			if cc := candidateCost(u, c); cc < bestCost {
 				bestCost, best = cc, c.Name
 			}
@@ -107,6 +120,7 @@ func Recommend(usages []Usage, candidates []Candidate, risks []Risk, unpricedMod
 			recs = append(recs, Recommendation{
 				Type: TypeCostSaving, Severity: SeverityInfo,
 				Namespace: u.Namespace, Application: u.Application,
+				CurrentModel: u.Model, RecommendedModel: best,
 				EstimatedSavingsEUR: saving,
 				Message: fmt.Sprintf("%s/%s: routing low-stakes %q traffic to %q would save ~%.4f EUR over the window (-%.0f%%).",
 					u.Namespace, u.Application, u.Model, best, saving, saving/u.CostEUR*100),

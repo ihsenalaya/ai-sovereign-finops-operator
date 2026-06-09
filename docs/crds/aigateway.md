@@ -11,8 +11,9 @@ observe en **lecture seule**, et indique comment collecter la télémétrie + qu
 | `type` | enum `litellm\|envoy\|kong\|gateway-api\|custom` | ✔ | Technologie de la gateway. |
 | `endpoint` | string | ✔ | URL de base de la gateway. |
 | `namespaceSelector` | LabelSelector | | Namespaces gouvernés. `nil` ⇒ aucun (défaut sûr). |
-| `telemetry.mode` | enum `prometheus\|litellm\|fake` | ✔ (défaut `fake`) | Implémentation de collecte. |
-| `telemetry.metricsEndpoint` | string | | Chemin métriques (mode prometheus), défaut `/metrics`. |
+| `telemetry.mode` | enum `prometheus\|aigw\|configmap\|fake` | ✔ (défaut `fake`) | Implémentation de collecte. `aigw` = Envoy AI Gateway/OTel (réel) ; `fake` = opt-in démo (pas de repli silencieux). Mode `litellm` retiré. |
+| `telemetry.metricsEndpoint` | string | | Chemin métriques (modes `prometheus`/`aigw`), défaut `/metrics`. |
+| `telemetry.sourceConfigMap` | string | | Nom de la `ConfigMap` (mode `configmap`, clé `usage.json`). |
 | `auth.secretRef.name` | string | | Secret portant le token d'admin de la gateway. |
 | `auth.secretRef.key` | string | | Clé dans le Secret. |
 

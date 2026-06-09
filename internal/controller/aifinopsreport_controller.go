@@ -49,6 +49,10 @@ type AIFinOpsReportReconciler struct {
 	Recorder record.EventRecorder
 }
 
+// reportFinalizer guards a report's Prometheus series so they are pruned when the
+// report is deleted, instead of lingering as dead data.
+const reportFinalizer = "aiops.imperium.io/report-metrics"
+
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aifinopsreports,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aifinopsreports/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aifinopsreports/finalizers,verbs=update
@@ -76,7 +80,29 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, &report); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	// Deletion: prune this report's Prometheus series, then drop the finalizer.
+	if !report.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(&report, reportFinalizer) {
+			reportMetrics.forget(report.UID)
+			controllerutil.RemoveFinalizer(&report, reportFinalizer)
+			if err := r.Update(ctx, &report); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+	// Ensure the finalizer is present, then continue this same reconcile.
+	if controllerutil.AddFinalizer(&report, reportFinalizer) {
+		if err := r.Update(ctx, &report); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	report.Status.ObservedGeneration = report.Generation
+	// series accumulates the per-report metric tuples written this reconcile so the
+	// tracker can prune exactly this report's stale series (no vector-wide Reset).
+	series := &reportSeriesSet{}
 
 	// Resolve the optional gateway to pick the telemetry collector.
 	var gw *aiopsv1alpha1.AIGateway
@@ -101,7 +127,13 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if gw == nil {
 		gw = firstGateway(ctx, r.Client, report.Namespace)
 	}
-	collector := collectorFor(r.Client, report.Namespace, gw)
+	collector, err := collectorFor(r.Client, report.Namespace, gw)
+	if err != nil {
+		meta.SetStatusCondition(&report.Status.Conditions,
+			readyFalse(report.Generation, aiopsv1alpha1.ReasonNoTelemetry, err.Error()))
+		_ = r.Status().Update(ctx, &report)
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
 	samples, err := collector.Collect(ctx, periodWindow(report.Spec.Target.Period))
 	if err != nil {
 		meta.SetStatusCondition(&report.Status.Conditions,
@@ -113,9 +145,13 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	samples = filterByNamespace(samples, report.Spec.Target.Namespace)
 
 	breakdown := costengine.Compute(samples, cat.priceBook())
-	r.applyCostToStatus(&report, breakdown)
+	r.applyCostToStatus(&report, cat, breakdown, series)
 	r.applySovereigntyToStatus(ctx, &report, cat, samples)
-	r.applyRecommendations(ctx, &report, cat, samples, breakdown)
+	r.applyRecommendations(ctx, &report, cat, samples, breakdown, series)
+	// Prune the series this report emitted before but not now (and never the ones
+	// it still emits, so persistent series don't flap). Cleanup on delete is the
+	// finalizer's job above.
+	reportMetrics.retire(report.UID, series)
 
 	if err := r.writeReportConfigMap(ctx, &report, breakdown, collector.Name()); err != nil {
 		logger.Error(err, "failed to write report ConfigMap")
@@ -141,7 +177,7 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 // applyCostToStatus writes the cost breakdown into the report status.
-func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFinOpsReport, b costengine.Breakdown) {
+func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFinOpsReport, cat catalog, b costengine.Breakdown, series *reportSeriesSet) {
 	report.Status.TotalCostEUR = moneyQuantityPtr(b.Total.CostTotal)
 	report.Status.TotalInputTokens = b.Total.InputTokens
 	report.Status.TotalOutputTokens = b.Total.OutputTokens
@@ -166,6 +202,23 @@ func (r *AIFinOpsReportReconciler) applyCostToStatus(report *aiopsv1alpha1.AIFin
 		metrics.OutputTokensTotal.WithLabelValues(label).Set(float64(li.OutputTokens))
 		metrics.CostEURTotal.WithLabelValues(label).Set(li.CostTotal)
 		metrics.ProjectedMonthlyCostEUR.WithLabelValues(label).Set(li.CostTotal * factor)
+	}
+
+	// Spend per sovereignty zone: resolve each model's provider data-residency
+	// and sum its cost, so a dashboard can show compliant (EU) vs forbidden (US)
+	// spend. Models with no catalog provider fall under "(unknown)". The series are
+	// recorded so the tracker prunes only this report's stale zones (no Reset()).
+	zoneCost := map[string]float64{}
+	for model, li := range b.ByModel {
+		zone := cat.zoneForModel(model)
+		if zone == "" {
+			zone = "(unknown)"
+		}
+		zoneCost[zone] += li.CostTotal
+	}
+	for zone, c := range zoneCost {
+		metrics.CostByZoneEUR.WithLabelValues(zone).Set(c)
+		series.addZone(zone)
 	}
 
 	top := costengine.TopByCost(b.ByModel, 5)
@@ -221,7 +274,7 @@ func (r *AIFinOpsReportReconciler) applySovereigntyToStatus(ctx context.Context,
 // applyRecommendations runs the recommendation engine on the observed usage,
 // catalog and sovereignty findings, producing quantified, actionable suggestions
 // (cost-saving model swaps with EUR savings, sovereignty remediation, data quality).
-func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, report *aiopsv1alpha1.AIFinOpsReport, cat catalog, samples []collectors.UsageSample, b costengine.Breakdown) {
+func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, report *aiopsv1alpha1.AIFinOpsReport, cat catalog, samples []collectors.UsageSample, b costengine.Breakdown, series *reportSeriesSet) {
 	pb := cat.priceBook()
 
 	// Usage per (namespace, application, model) with its computed cost.
@@ -248,11 +301,29 @@ func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, rep
 		costByApp[[2]string{u.Namespace, u.Application}] += u.CostEUR
 	}
 
-	// Candidate models (anything priced in the catalog).
+	// Load the sovereignty policy once: it drives both whether each candidate model
+	// is allowed to receive traffic and whether any compliant target exists at all.
+	var pe sovereigntyengine.Policy
+	hasPolicy := false
+	if policy := firstSovereigntyPolicy(ctx, r.Client, report.Namespace); policy != nil {
+		pe = policyToEngine(policy.Spec)
+		hasPolicy = true
+	}
+
+	// Candidate models (anything priced in the catalog), each flagged compliant when
+	// its provider sits in a sovereignty-allowed zone (always so when no policy is
+	// set). The engine refuses to recommend routing to a non-compliant model — so a
+	// cost-saving swap can never push traffic into a forbidden zone.
 	var candidates []recommendationengine.Candidate
+	hasCompliant := false
 	for name, p := range pb {
+		compliant := !hasPolicy || sovereigntyengine.IsZoneAllowed(pe, cat.zoneForModel(name))
+		if compliant {
+			hasCompliant = true
+		}
 		candidates = append(candidates, recommendationengine.Candidate{
 			Name: name, InputPerMillion: p.InputPerMillion, OutputPerMillion: p.OutputPerMillion,
+			Compliant: compliant,
 		})
 	}
 
@@ -268,23 +339,13 @@ func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, rep
 		})
 	}
 
-	// Is there any allowed-zone model to route to?
-	hasCompliant := false
-	if policy := firstSovereigntyPolicy(ctx, r.Client, report.Namespace); policy != nil {
-		pe := policyToEngine(policy.Spec)
-		for _, p := range cat.providers {
-			if sovereigntyengine.IsZoneAllowed(pe, p.Spec.DataResidency) {
-				hasCompliant = true
-				break
-			}
-		}
-	}
-
 	recs, total := recommendationengine.Recommend(usages, candidates, risks, b.UnpricedModels, hasCompliant)
 
 	report.Status.Recommendations = make([]aiopsv1alpha1.Recommendation, 0, len(recs))
-	metrics.Recommendations.Reset()
-	metrics.PotentialSavingsByAppEUR.Reset()
+	// No vector-wide Reset() here: every series is recorded into `series` and the
+	// tracker prunes exactly this report's stale series after the reconcile, so two
+	// overlapping reports no longer wipe each other (see reportMetricTracker).
+	savingsByApp := map[[2]string]float64{}
 	for _, rc := range recs {
 		item := aiopsv1alpha1.Recommendation{
 			Type: rc.Type, Message: rc.Message, Severity: rc.Severity,
@@ -299,9 +360,23 @@ func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, rep
 		// count per type. Each Recommend() output is already a distinct workload
 		// suggestion, so Set(1) per series.
 		metrics.Recommendations.WithLabelValues(rc.Type, rc.Namespace, rc.Application, rc.Severity).Set(1)
+		series.addRecommendation(rc.Type, rc.Namespace, rc.Application, rc.Severity)
 		if rc.EstimatedSavingsEUR > 0 {
-			metrics.PotentialSavingsByAppEUR.WithLabelValues(rc.Namespace, rc.Application).Add(rc.EstimatedSavingsEUR)
+			// Accumulate per app locally, then Set() once below — an idempotent value
+			// the tracker can prune, unlike a running Add() that would only stay bounded
+			// thanks to a Reset().
+			savingsByApp[[2]string{rc.Namespace, rc.Application}] += rc.EstimatedSavingsEUR
 		}
+		// Concrete cost-saving action (current → recommended model) with its gain,
+		// so the dashboard shows what to do and what it saves.
+		if rc.Type == recommendationengine.TypeCostSaving {
+			metrics.CostSavingEUR.WithLabelValues(rc.Namespace, rc.Application, rc.CurrentModel, rc.RecommendedModel).Set(rc.EstimatedSavingsEUR)
+			series.addCostSaving(rc.Namespace, rc.Application, rc.CurrentModel, rc.RecommendedModel)
+		}
+	}
+	for app, saving := range savingsByApp {
+		metrics.PotentialSavingsByAppEUR.WithLabelValues(app[0], app[1]).Set(saving)
+		series.addSavingsByApp(app[0], app[1])
 	}
 	metrics.PotentialSavingsEUR.Set(total)
 }

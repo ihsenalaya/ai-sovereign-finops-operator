@@ -91,54 +91,53 @@ Ouvrir : `kubectl -n greenops-system port-forward svc/demo-grafana 3000:3000`
 Réconciliation opérateur toutes les **60 s** (dashboard vivant). Toutes les valeurs
 proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 
-### Les 9 panneaux, un par un
+### Les 10 panneaux, un par un
 
 | # | Panneau | Ce qu'il montre | Requête PromQL | Comment le lire |
 |---|---------|-----------------|----------------|-----------------|
-| 1 | **Total cost (EUR) — observed** | Dépense réelle cumulée depuis le démarrage de la gateway (tous apps) | `sum(ai_finops_cost_eur_total)` | Coût réel = tokens mesurés × prix de liste réels. Croît dans le temps. |
-| 2 | **Tokens (total in + out)** | Volume total de tokens mesurés par la gateway | `sum(ai_finops_input_tokens_total) + sum(ai_finops_output_tokens_total)` | Le « carburant » consommé ; croît avec le trafic. |
-| 3 | **Requests (total)** | Nombre total de requêtes LLM routées et comptabilisées | `sum(ai_finops_requests_total)` | Volume d'appels réels. |
+| 1 | **Total cost (EUR) — observed** | Dépense réelle cumulée depuis le démarrage de la gateway (tous apps) | `sum(ai_finops_cost_eur)` | Coût réel = tokens mesurés × prix de liste réels. Croît dans le temps. |
+| 2 | **Tokens (total in + out)** | Volume total de tokens mesurés par la gateway | `sum(ai_finops_input_tokens) + sum(ai_finops_output_tokens)` | Le « carburant » consommé ; croît avec le trafic. |
+| 3 | **Requests (total)** | Nombre total de requêtes LLM routées et comptabilisées | `sum(ai_finops_requests)` | Volume d'appels réels. |
 | 4 | **Budget usage (%) by policy** | Prévision mensuelle de dépense ÷ plafond mensuel, **une barre par AIBudgetPolicy** | `ai_finops_budget_usage_percent` | Vert <70%, jaune ≥70, orange ≥90, **rouge ≥100 (dépassé)**. Ex. finance 162% (dépassé) / rh 21% (ok). |
-| 5 | **Cost (EUR) by namespace** | Coût réel par namespace dans le temps | `ai_finops_cost_eur_total` (par `namespace`) | Compare la dépense des équipes ; courbes croissantes. |
-| 6 | **Tokens by namespace (input / output)** | Tokens entrée/sortie réels par namespace | `ai_finops_input_tokens_total`, `ai_finops_output_tokens_total` | Profil de consommation par équipe (out ≫ in pour les générations). |
-| 7 | **Requests violating sovereignty (by app)** | Nb de requêtes envoyées par chaque app vers un fournisseur **non conforme** (zone interdite) | `sum by (namespace, application) (ai_finops_sovereignty_requests_total{severity="critical"})` | Volume réel **à risque** par app. 0 = conforme ; >0 = violation (rouge). |
-| 8 | **Recommendations (actions, by app)** | **Table** : une ligne = une recommandation actionnable, attribuée à son app (`Namespace · Application · Type · Severity`) | `ai_finops_recommendations_total` (labels `type`, `namespace`, `application`, `severity`) | Liste de tâches priorisée — voir « Comment lire la table » ci-dessous. |
-| 9 | **Potential savings (EUR)** | Économie **potentielle** si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. Détail par app dans la métrique `_by_app_eur` et le `.status` du report. |
+| 5 | **Cost (EUR) by namespace** | Coût réel par namespace dans le temps | `ai_finops_cost_eur` (par `namespace`) | Compare la dépense des équipes ; courbes croissantes. |
+| 6 | **Tokens by namespace (input / output)** | Tokens entrée/sortie réels par namespace | `ai_finops_input_tokens`, `ai_finops_output_tokens` | Profil de consommation par équipe (out ≫ in pour les générations). |
+| 7 | **Requests violating sovereignty (by app)** | Nb de requêtes envoyées par chaque app vers un fournisseur **non conforme** (zone interdite) | `sum by (namespace, application) (ai_finops_sovereignty_requests{severity="critical"})` | Volume réel **à risque** par app. 0 = conforme ; >0 = violation (rouge). |
+| 8 | **Cost-saving recommendations (action + gain €)** | **Table** : une ligne = une action cost-saving concrète, avec le **modèle actuel → modèle recommandé** et le **gain €** par app | `ai_finops_cost_saving_eur` (labels `namespace`, `application`, `current_model`, `recommended_model` ; valeur = € économisables) | « To-do » d'économies : *qui*, *quel swap de modèle*, *combien*. Voir « Comment lire la table » ci-dessous. |
+| 9 | **Potential savings (EUR)** | Économie **potentielle** totale si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. |
+| 10 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs **US interdit** | `ai_finops_cost_by_zone_eur` (label `zone`) | La part qui **quitte l'UE** = exposition souveraineté. US (rouge) ≫ EU (vert) tant que les apps tapent OpenAI. |
 
-#### Comment lire la table « Recommendations (actions, by app) »
+#### Comment lire la table « Cost-saving recommendations (action + gain €) »
 
 Ce panneau a remplacé l'ancien **camembert** « Recommendations by type » : un camembert ne
-montrait qu'un *compte par type* (« sovereignty: 3 / cost-saving: 2 »), sans dire **quelle
-app** ni **quoi faire**. La table répond à ces questions — **chaque ligne = une action**.
+montrait qu'un *compte par type*, sans dire **quelle app**, **quoi faire**, ni **combien on
+gagne**. La table répond aux trois — **chaque ligne = une action d'économie chiffrée**.
 
 | Colonne | Question | Sens |
 |---------|----------|------|
-| **Namespace / Application** | **QUI ?** | L'équipe / l'app concernée — qui doit agir. |
-| **Type** | **QUOI ?** | `sovereignty` 🔴 = conformité (fournisseur hors zone autorisée) · `cost-saving` 🟢 = économie (modèle cher remplaçable) · `data-quality` 🟠 = modèle sans prix (coût incalculable). |
-| **Severity** | **Urgence ?** | `critical` 🔴 = à traiter en priorité (risque de conformité réel) · `warning` 🟠 · `info` 🟢 = opportunité optionnelle. |
+| **Namespace / Application** | **QUI ?** | L'équipe / l'app concernée. |
+| **Modèle actuel → Recommandé** | **QUOI ?** | Le swap de modèle proposé (ex. `gpt-4o → gpt-4o-mini`). |
+| **Gain (€)** | **COMBIEN ?** | Économie estimée sur la fenêtre observée si on applique le swap. |
 
-Exemple typique avec les 3 apps de démo (`rh`, `finance`, `legal`) qui tapent toutes sur
-OpenAI **US** alors que la politique exige l'**EU** :
+Exemple typique (apps `finance`/`legal` sur `gpt-4o`, app `marketing` sur `mistral-large`) :
 
-| Namespace | Application | Type | Severity |
-|-----------|-------------|------|----------|
-| rh | chatbot-rh | sovereignty | 🔴 critical |
-| legal | contract-review | sovereignty | 🔴 critical |
-| finance | risk-assistant | sovereignty | 🔴 critical |
-| legal | contract-review | cost-saving | 🟢 info |
-| finance | risk-assistant | cost-saving | 🟢 info |
+| Namespace | Application | Modèle actuel | Recommandé | Gain (€) |
+|-----------|-------------|---------------|-----------|---------:|
+| finance | risk-assistant | gpt-4o | gpt-4o-mini | 0,26 |
+| legal | contract-review | gpt-4o | gpt-4o-mini | 0,23 |
+| marketing | content-writer | mistral-large-latest | *(modèle conforme le moins cher)* | … |
 
-- **3 lignes `sovereignty`** : les 3 apps violent la zone autorisée → 1 reco critique chacune.
-- **2 lignes `cost-saving`** : seules `finance` et `legal` utilisent `gpt-4o` (cher) ;
-  `rh` utilise déjà `gpt-4o-mini` (le moins cher) → aucune économie possible, donc pas de
-  ligne pour elle. Le montant € de ces économies est dans le panneau **#9 Potential savings**.
+- `rh` n'apparaît pas : elle utilise déjà `gpt-4o-mini` (le moins cher) → aucune économie.
+- Le moteur de recos est désormais **zone-aware** : le modèle proposé reste dans une **zone
+  autorisée** (il ne recommandera pas un provider qui violerait la souveraineté).
+- Le **total** € est dans le panneau **#9 Potential savings** ; la répartition zone EU/US
+  dans le panneau **#10 Spend by sovereignty zone**.
 
 ### Métriques sous-jacentes
 Émises par l'opérateur sur `/metrics` (:8080), scrapées par Prometheus :
-`ai_finops_cost_eur_total`, `ai_finops_input/output_tokens_total`,
-`ai_finops_requests_total`, `ai_finops_budget_usage_percent`,
-`ai_finops_sovereignty_findings_total` / `ai_finops_sovereignty_requests_total`,
-`ai_finops_recommendations_total` (labels `type`/`namespace`/`application`/`severity`),
+`ai_finops_cost_eur`, `ai_finops_input/output_tokens`,
+`ai_finops_requests`, `ai_finops_budget_usage_percent`,
+`ai_finops_sovereignty_findings` / `ai_finops_sovereignty_requests`,
+`ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
 `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
 `ai_finops_projected_monthly_cost_eur`. Détail dans
 [`docs/features/metrics.md`](../../docs/features/metrics.md).

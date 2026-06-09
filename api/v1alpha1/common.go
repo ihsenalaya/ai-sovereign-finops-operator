@@ -37,6 +37,9 @@ const (
 	ReasonValidationFailed  = "ValidationFailed"
 	ReasonReferenceNotFound = "ReferenceNotFound"
 	ReasonReportGenerated   = "ReportGenerated"
+	// ReasonNoTelemetry signals that no real telemetry source is configured, so the
+	// operator refuses to fabricate numbers (no silent fake-data fallback).
+	ReasonNoTelemetry = "NoTelemetrySource"
 )
 
 // SecretReference points to a Kubernetes Secret holding credentials needed to
