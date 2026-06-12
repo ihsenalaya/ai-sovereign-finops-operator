@@ -6,8 +6,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 require kubectl
 
 log "registering repository in ArgoCD: ${REPO_URL}"
-# Repo credentials secret (in-cluster Gitea uses basic auth over HTTP).
-kubectl apply -f - <<EOF
+# Repo credentials secret is only needed for authenticated remotes.
+if [ "${USE_GITEA}" = "true" ]; then
+  kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
@@ -21,6 +22,25 @@ stringData:
   username: ${GIT_USER}
   password: ${GIT_PASSWORD}
 EOF
+elif [ -n "${REPO_USERNAME}" ] && [ -n "${REPO_PASSWORD}" ]; then
+  kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: greenops-repo
+  namespace: ${ARGOCD_NAMESPACE}
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: git
+  url: ${REPO_URL}
+  username: ${REPO_USERNAME}
+  password: ${REPO_PASSWORD}
+EOF
+else
+  kubectl -n "${ARGOCD_NAMESPACE}" delete secret greenops-repo --ignore-not-found >/dev/null
+  log "repository is treated as public/read-only; no ArgoCD repo secret created."
+fi
 
 render() {
   sed -e "s|__REPO_URL__|${REPO_URL}|g" \

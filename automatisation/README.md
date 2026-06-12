@@ -11,11 +11,14 @@ via ArgoCD (GitOps)** — plus un chemin **offline** (Helm direct) sans ArgoCD.
 
 ### A. GitOps avec ArgoCD (recommandé pour la démo « plateforme »)
 
-ArgoCD tire la configuration depuis un dépôt Git. Poussez d'abord ce repo sur un remote
-accessible par le cluster, puis :
+ArgoCD tire la configuration depuis un dépôt Git. Par défaut, `make up` utilise le
+remote `origin` du workspace courant. Vous pouvez aussi surcharger `REPO_URL` /
+`REVISION` explicitement :
 
 ```bash
 cd automatisation
+make up
+# ou:
 make up REPO_URL=https://github.com/<vous>/greenops REVISION=main
 ```
 
@@ -26,6 +29,13 @@ make up REPO_URL=https://github.com/<vous>/greenops REVISION=main
 4. `04-bootstrap-apps.sh` — crée l'`AppProject` + 2 `Application` :
    - `greenops-operator` → chart Helm `charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: Never`),
    - `greenops-samples` → `config/samples` (catalogue + policies, sync-wave 1).
+
+Si vous voulez malgré tout un dépôt Git in-cluster auto-contenu :
+
+```bash
+cd automatisation
+make up-gitea
+```
 
 Mot de passe admin ArgoCD :
 ```bash
@@ -82,9 +92,11 @@ Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 | Variable | Défaut | Rôle |
 |----------|--------|------|
 | `CLUSTER_NAME` | `greenops` | nom du cluster kind |
+| `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
 | `IMAGE_REPO` / `IMAGE_TAG` | `greenops` / `dev` | image de l'opérateur |
-| `REPO_URL` | remote `origin` ou placeholder | source Git pour ArgoCD |
+| `REPO_URL` | remote `origin` ou repo Gitea in-cluster | source Git pour ArgoCD |
 | `REVISION` | branche courante | révision Git ciblée |
+| `GITOPS_SOURCE` | `auto` | `auto` (origin), `gitea` (repo in-cluster) |
 | `ARGOCD_MANIFEST` | v2.13.2 install.yaml | version d'ArgoCD |
 
 ## Teardown

@@ -9,8 +9,8 @@ require kubectl
 if kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"; then
   log "kind cluster '${CLUSTER_NAME}' already exists; reusing it."
 else
-  log "creating kind cluster '${CLUSTER_NAME}'..."
-  kind create cluster --name "${CLUSTER_NAME}" --config "${AUTOMATISATION_DIR}/kind/kind-config.yaml"
+  log "creating kind cluster '${CLUSTER_NAME}' with node image ${KIND_NODE_IMAGE}..."
+  kind create cluster --name "${CLUSTER_NAME}" --image "${KIND_NODE_IMAGE}" --config "${AUTOMATISATION_DIR}/kind/kind-config.yaml"
 fi
 
 kind export kubeconfig --name "${CLUSTER_NAME}"

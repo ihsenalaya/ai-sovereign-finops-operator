@@ -7,7 +7,7 @@ require docker
 require kind
 
 log "building image ${IMAGE_REPO}:${IMAGE_TAG}..."
-docker build -t "${IMAGE_REPO}:${IMAGE_TAG}" "${REPO_ROOT}"
+DOCKER_BUILDKIT=0 docker build -t "${IMAGE_REPO}:${IMAGE_TAG}" "${REPO_ROOT}"
 
 log "loading image into kind cluster '${CLUSTER_NAME}'..."
 kind load docker-image "${IMAGE_REPO}:${IMAGE_TAG}" --name "${CLUSTER_NAME}"

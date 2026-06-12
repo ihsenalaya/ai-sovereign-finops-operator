@@ -4,13 +4,16 @@
 SHELL := /usr/bin/env bash
 SCRIPTS := scripts
 
-.PHONY: up down cluster image argocd gitea apps wait local help real-demo real-demo-test real-demo-down full-demo
+.PHONY: up up-gitea down cluster image argocd gitea apps wait local help real-demo real-demo-test real-demo-down full-demo
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-up: ## Full self-contained GitOps bring-up (kind + image + ArgoCD + Gitea + Apps + wait)
+up: ## GitOps bring-up from the workspace origin/REPO_URL (kind + image + ArgoCD + Apps + wait)
 	@$(SCRIPTS)/up.sh
+
+up-gitea: ## Self-contained GitOps bring-up with in-cluster Gitea
+	@GITOPS_SOURCE=gitea $(SCRIPTS)/up.sh
 
 local: ## Offline bring-up (kind + image + Helm, no ArgoCD)
 	@$(SCRIPTS)/install-local.sh

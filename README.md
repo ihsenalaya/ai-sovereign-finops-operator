@@ -220,11 +220,13 @@ Guide de démo détaillé : [`docs/DEMO_KIND.md`](docs/DEMO_KIND.md).
 
 Déploiement **de bout en bout, sans bricolage** — voir [`automatisation/README.md`](automatisation/README.md).
 
-### A. GitOps avec ArgoCD (auto-contenu)
+### A. GitOps avec ArgoCD
 
 ```bash
 cd automatisation
-make up        # kind → image → ArgoCD → Gitea (repo in-cluster) → AppProject+Applications → wait sync
+make up        # kind → image → ArgoCD → Applications depuis le repo GitHub/origin → wait sync
+# ou:
+make up-gitea  # même chaîne, avec dépôt Gitea in-cluster auto-contenu
 ```
 
 `make up` enchaîne des étapes scriptées et idempotentes :
@@ -234,9 +236,8 @@ make up        # kind → image → ArgoCD → Gitea (repo in-cluster) → AppPr
 | 1 | `cluster` | crée le cluster **kind** ([`kind/kind-config.yaml`](automatisation/kind/kind-config.yaml)) |
 | 2 | `image` | build l'image de l'opérateur et la **charge dans kind** |
 | 3 | `argocd` | installe **ArgoCD** (UI sur `:30080`) |
-| 4 | `gitea` | déploie un **Gitea in-cluster** et y sème le repo (GitOps sans remote externe) |
-| 5 | `apps` | crée l'`AppProject` + 2 `Application` : opérateur (chart Helm) + samples (catalogue/policies) |
-| 6 | `wait` | attend que les Applications soient **Synced + Healthy** |
+| 4 | `apps` | crée l'`AppProject` + 2 `Application` : opérateur (chart Helm) + samples (catalogue/policies) |
+| 5 | `wait` | attend que les Applications soient **Synced + Healthy** |
 
 `make down` détruit le cluster. Manifests ArgoCD : [`automatisation/argocd/`](automatisation/argocd/).
 
