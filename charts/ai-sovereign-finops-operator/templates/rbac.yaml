@@ -10,11 +10,14 @@ rules:
   resources: ["configmaps"]
   verbs: ["create", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
-  resources: ["namespaces"]
+  resources: ["namespaces", "pods"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create", "patch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["create", "get", "list", "patch", "update", "watch"]
 - apiGroups: ["aiops.imperium.io"]
   resources:
   - aibreakevenanalyses

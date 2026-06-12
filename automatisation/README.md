@@ -7,7 +7,7 @@ via ArgoCD (GitOps)** — plus un chemin **offline** (Helm direct) sans ArgoCD.
 
 `docker`, `kind`, `kubectl`, `helm`, et (pour le mode GitOps) `git`. Tout est CNCF/OSS.
 
-## Deux chemins
+## Trois chemins
 
 ### A. GitOps avec ArgoCD (recommandé pour la démo « plateforme »)
 
@@ -47,6 +47,30 @@ make local
 ```
 
 → kind + image + `helm install` + samples, puis affiche les commandes d'inspection.
+
+### C. Démo réelle AI Gateway (même infra que la démonstration actuelle)
+
+Ce chemin ne seed rien et ne simule rien: de vraies apps tournent dans le cluster,
+passent par Envoy AI Gateway, le webhook de l'opérateur injecte les sidecars
+d’attribution, et Grafana affiche les vraies métriques `ai_finops_*`.
+
+```bash
+cd automatisation
+make real-demo
+make real-demo-test
+make real-demo-down
+```
+
+Pour reproduire aussi le plan **shadow-AI** (Tetragon + rogue workload + refresh du
+ConfigMap `shadow-egress`) avec la même infra:
+
+```bash
+cd automatisation
+make full-demo
+```
+
+Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
+[`tetragon/demo.sh`](tetragon/demo.sh).
 
 ## Variables (override possible)
 

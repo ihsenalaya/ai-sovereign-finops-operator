@@ -19,6 +19,8 @@ spec:
     metadata:
       labels:
         app: rogue-script
+      annotations:
+        aiops.imperium.io/sidecar-injection: "false"
     spec:
       containers:
         - name: caller

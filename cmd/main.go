@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"os"
+	"path/filepath"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -29,13 +30,17 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/controller"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/webhook/bootstrap"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/webhook/podinjector"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -89,12 +94,15 @@ func main() {
 	if !enableHTTP2 {
 		tlsOpts = append(tlsOpts, disableHTTP2)
 	}
+	webhookCertDir := filepath.Join(os.TempDir(), "k8s-webhook-server", "serving-certs")
+	cfg := ctrl.GetConfigOrDie()
 
 	webhookServer := webhook.NewServer(webhook.Options{
+		CertDir: webhookCertDir,
 		TLSOpts: tlsOpts,
 	})
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress:   metricsAddr,
@@ -119,6 +127,11 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+	bootstrapClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		setupLog.Error(err, "unable to create bootstrap client")
 		os.Exit(1)
 	}
 
@@ -180,6 +193,14 @@ func main() {
 	}
 	//+kubebuilder:scaffold:builder
 
+	mgr.GetWebhookServer().Register("/mutate-v1-pod", &admission.Webhook{
+		Handler: podinjector.New(mgr.GetAPIReader(), mgr.GetScheme(), &podinjector.ManagerPodImageResolver{
+			Client:       mgr.GetAPIReader(),
+			PodName:      os.Getenv("POD_NAME"),
+			PodNamespace: os.Getenv("POD_NAMESPACE"),
+		}),
+	})
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -188,9 +209,21 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+	ctx := ctrl.SetupSignalHandler()
+	if err := bootstrap.Ensure(ctx, bootstrap.Options{
+		Client:           bootstrapClient,
+		Name:             "aiops-sidecar-injector",
+		ServiceName:      os.Getenv("WEBHOOK_SERVICE_NAME"),
+		ServiceNamespace: os.Getenv("POD_NAMESPACE"),
+		Path:             "/mutate-v1-pod",
+		CertDir:          webhookCertDir,
+	}); err != nil {
+		setupLog.Error(err, "unable to bootstrap mutating webhook")
+		os.Exit(1)
+	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

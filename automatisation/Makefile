@@ -4,7 +4,7 @@
 SHELL := /usr/bin/env bash
 SCRIPTS := scripts
 
-.PHONY: up down cluster image argocd gitea apps wait local help
+.PHONY: up down cluster image argocd gitea apps wait local help real-demo real-demo-test real-demo-down full-demo
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -14,6 +14,18 @@ up: ## Full self-contained GitOps bring-up (kind + image + ArgoCD + Gitea + Apps
 
 local: ## Offline bring-up (kind + image + Helm, no ArgoCD)
 	@$(SCRIPTS)/install-local.sh
+
+real-demo: ## Real AI Gateway demo (kind + operator + Envoy + apps + Grafana)
+	@envoy-aigw/deploy.sh up
+
+real-demo-test: ## Sanity call through the real AI Gateway demo
+	@envoy-aigw/deploy.sh test
+
+real-demo-down: ## Remove real AI Gateway demo workloads (keeps control planes)
+	@envoy-aigw/deploy.sh down
+
+full-demo: ## Real AI Gateway demo + Tetragon shadow-AI plane
+	@tetragon/demo.sh
 
 cluster: ## Create the kind cluster
 	@$(SCRIPTS)/01-create-cluster.sh

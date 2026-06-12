@@ -31,6 +31,14 @@ cd automatisation/envoy-aigw
 ./deploy.sh down      # retire la démo (laisse les control planes)
 ```
 
+Depuis la racine `automatisation/`, le même scénario est disponible via :
+
+```bash
+make real-demo
+make real-demo-test
+make real-demo-down
+```
+
 Prérequis : cluster kind `greenops`, `kubectl`, `helm`, `docs/openaikey.txt`.
 
 ## Fichiers
@@ -58,14 +66,14 @@ input/output ; `_sum` = tokens, `_count` = requêtes). Le collector **`aigw`**
 l'app qui le consomme via le catalogue `AIModel` (`providerRef` + `serves*`).
 Le coût = tokens réels × prix réel du modèle (sur l'`AIProvider`).
 
-## Attribution automatique PAR NAMESPACE (même modèle partagé)
+## Attribution automatique PAR NAMESPACE / APP (même modèle partagé)
 
 La métrique `gen_ai_*` de la gateway ne porte que le **modèle** ; deux apps sur le
 même modèle seraient donc fusionnées. La solution mise en place :
 
-1. Chaque app injecte son **namespace** via la **Downward API**
-   (`fieldRef: metadata.namespace`) et l'envoie dans l'en-tête
-   **`x-greenops-namespace`** (+ `x-greenops-app`).
+1. Le webhook de l'opérateur injecte un **sidecar HTTP proxy** dans les namespaces
+   labellisés `aiops.imperium.io/sidecar-injection: "true"`. Le proxy ajoute
+   automatiquement **`x-greenops-namespace`** et **`x-greenops-app`**.
 2. Envoy AI Gateway est configuré (helm `controller.metricsRequestHeaderAttributes=
    x-greenops-namespace:k8s.namespace,x-greenops-app:k8s.app`) pour transformer ces
    en-têtes en **labels de métrique** (`k8s_namespace`, `k8s_app`).
@@ -73,10 +81,11 @@ même modèle seraient donc fusionnées. La solution mise en place :
    réel** (fallback sur `AIModel.serves*` si l'en-tête est absent).
 
 ➡️ Résultat : **`finance/risk-assistant` et `legal/contract-review` utilisent tous
-deux gpt-4o, mais sont comptabilisés séparément, par namespace** — automatiquement.
-Déployer une nouvelle app dans un nouveau namespace (avec l'en-tête) suffit : elle
-apparaît seule, sans rien déclarer. Les 3 apps de démo (`rh`, `finance`, `legal`)
-le démontrent.
+deux gpt-4o, mais sont comptabilisés séparément, par namespace/app** — automatiquement.
+Déployer une nouvelle app dans un namespace opt-in suffit : aucune modification du
+code applicatif ni ajout manuel d'en-têtes n'est nécessaire. Dans la démo, les pods
+restreignent l'injection au host de la gateway via
+`aiops.imperium.io/target-hosts=greenops-aigw.envoy-gateway-system.svc.cluster.local`.
 
 ## Comprendre les critères qui pilotent la démo
 

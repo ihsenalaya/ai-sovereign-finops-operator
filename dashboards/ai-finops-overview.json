@@ -712,8 +712,8 @@
     },
     {
       "type": "table",
-      "title": "Shadow-AI egress (namespace \u2192 zone)",
-      "description": "Pods reaching a known LLM endpoint DIRECTLY (eBPF/Tetragon), bypassing the gateway, in a non-compliant zone. 0 rows = no shadow-AI.",
+      "title": "Shadow-AI egress details",
+      "description": "Direct LLM egress detected outside the gateway. This is the operational panel: who bypassed the gateway, which provider/zone was hit, and how many connections were observed.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -744,24 +744,23 @@
               "Time": true,
               "__name__": true,
               "instance": true,
-              "job": true,
-              "Value": true
+              "job": true
             },
             "renameByName": {
-              "policy": "Policy",
               "namespace": "Namespace",
               "application": "Application",
-              "mode": "Mode",
-              "action": "Action",
-              "actuated": "Actuated"
+              "provider": "Provider",
+              "zone": "Zone",
+              "severity": "Severity",
+              "Value": "Connections"
             },
             "indexByName": {
               "namespace": 0,
               "application": 1,
-              "mode": 2,
-              "action": 3,
-              "actuated": 4,
-              "policy": 5
+              "provider": 2,
+              "zone": 3,
+              "severity": 4,
+              "Value": 5
             }
           }
         }
@@ -776,7 +775,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Action"
+              "options": "Severity"
             },
             "properties": [
               {
@@ -791,25 +790,37 @@
                   {
                     "type": "value",
                     "options": {
-                      "block": {
+                      "critical": {
                         "color": "red",
                         "index": 0
                       },
-                      "reroute": {
+                      "warning": {
                         "color": "orange",
                         "index": 1
                       },
-                      "warn": {
-                        "color": "yellow",
-                        "index": 2
-                      },
-                      "report": {
+                      "info": {
                         "color": "blue",
-                        "index": 3
+                        "index": 2
                       }
                     }
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Connections"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
               }
             ]
           }
@@ -817,9 +828,9 @@
       }
     },
     {
-      "type": "piechart",
-      "title": "Shadow-AI egress by zone",
-      "description": "Connections to LLM endpoints bypassing the gateway, by sovereignty zone (US = forbidden here). Empty = no shadow-AI.",
+      "type": "bargauge",
+      "title": "Shadow-AI hotspots by workload",
+      "description": "Most actionable Shadow-AI view: which workload bypasses the gateway, in which zone, and with how many direct connections.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -828,6 +839,8 @@
         "y": 38
       },
       "options": {
+        "displayMode": "basic",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -835,70 +848,47 @@
           "fields": "",
           "values": false
         },
-        "pieType": "donut",
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "values": [
-            "value",
-            "percent"
-          ]
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showUnfilled": false,
+        "text": {},
+        "valueMode": "color"
       },
       "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": null,
-          "expr": "sum by (zone) (ai_finops_shadow_ai_egress)",
-          "legendFormat": "{{zone}}",
+          "expr": "sum by (namespace, application, zone) (ai_finops_shadow_ai_egress)",
+          "legendFormat": "{{namespace}} / {{application}} \u2192 {{zone}}",
           "refId": "A",
           "instant": true
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyEUR",
-          "decimals": 4,
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
           "color": {
-            "mode": "fixed"
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "US"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "EU"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       }
     }
   ]

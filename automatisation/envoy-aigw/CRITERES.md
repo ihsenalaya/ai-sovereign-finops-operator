@@ -15,8 +15,9 @@ proviennent des manifestes de `automatisation/envoy-aigw/` — rien n'est invent
 ## 1. Le flux (qui produit les chiffres)
 
 ```
-apps (rh, finance, legal)  ──►  Envoy AI Gateway  ──►  OpenAI (US)
-   en-têtes x-greenops-*          mesure gen_ai_* (tokens réels)
+ apps (rh, finance, legal)  ──►  Envoy AI Gateway  ──►  OpenAI (US)
+   sidecar webhook injecte        mesure gen_ai_* (tokens réels)
+   les en-têtes x-greenops-*               │
         │                                │
         └──────────► Opérateur (collector "aigw") lit les tokens
                           applique les critères (§2)
@@ -31,8 +32,9 @@ apps (rh, finance, legal)  ──►  Envoy AI Gateway  ──►  OpenAI (US)
 ### 2.1 Apps consommatrices (`03-consumer-apps.yaml`)
 
 Chaque app tourne dans **son namespace** et appelle **un modèle** en boucle. Elle
-injecte son namespace/app dans les en-têtes `x-greenops-namespace` / `x-greenops-app`
-→ c'est ce qui permet l'**attribution par namespace même sur un modèle partagé**.
+reçoit un **sidecar proxy injecté par le webhook** qui ajoute automatiquement
+`x-greenops-namespace` / `x-greenops-app` → c'est ce qui permet l'**attribution
+par namespace/app même sur un modèle partagé**, sans changer le code applicatif.
 
 | Namespace | Application | Modèle appelé | Fournisseur (zone) | Particularité |
 |-----------|-------------|---------------|--------------------|---------------|

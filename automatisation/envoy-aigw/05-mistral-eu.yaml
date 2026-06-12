@@ -3,7 +3,8 @@
 # an app on an EU provider produces NO sovereignty violation, while the OpenAI
 # (US) apps do. Same real-traffic path: the app posts OpenAI-format to the
 # gateway, which translates to Azure (schema AzureOpenAI) and measures real
-# tokens; the operator reads them and attributes cost/zone PER NAMESPACE.
+# tokens; the operator reads them and attributes cost/zone PER NAMESPACE. The
+# app itself does not add attribution headers — the webhook-injected sidecar does.
 #
 # Foundry endpoint:  https://greenops-foundry.services.ai.azure.com
 #   Azure-OpenAI path /openai/deployments/<deploy>/chat/completions?api-version=…
@@ -127,7 +128,10 @@ spec:
 ---
 apiVersion: v1
 kind: Namespace
-metadata: { name: marketing }
+metadata:
+  name: marketing
+  labels:
+    aiops.imperium.io/sidecar-injection: "true"
 ---
 # REAL consumer app in a NEW namespace, calling Mistral (EU) through the gateway.
 # Deliberately frugal (1 call / 30s, max_tokens 60) — Mistral Large is pricey.
@@ -141,7 +145,10 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: content-writer } }
   template:
-    metadata: { labels: { app: content-writer, aiops.imperium.io/demo: "true" } }
+    metadata:
+      labels: { app: content-writer, aiops.imperium.io/demo: "true" }
+      annotations:
+        aiops.imperium.io/target-hosts: greenops-aigw.envoy-gateway-system.svc.cluster.local
     spec:
       containers:
         - name: client
@@ -161,7 +168,7 @@ spec:
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
-                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
+                  -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":60}" \
                   "$GATEWAY" || true
                 sleep 30

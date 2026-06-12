@@ -1,9 +1,9 @@
 # Stable data-path Service for the Envoy AI Gateway + REAL consumer apps that
-# continuously call LLMs through the gateway. Each app sends its own Kubernetes
-# namespace (Downward API) in the `x-greenops-namespace` header; the AI Gateway
-# turns that header into a metric label, so the operator attributes token cost
-# PER NAMESPACE automatically — even when two apps in different namespaces use
-# the SAME model. No API key in the apps — the gateway holds it.
+# continuously call LLMs through the gateway. The operator's mutating webhook
+# injects a sidecar HTTP proxy into opted-in namespaces; that proxy adds the
+# `x-greenops-namespace` / `x-greenops-app` headers automatically, so token cost
+# is attributed PER NAMESPACE / APP even when two apps in different namespaces
+# use the SAME model. No API key in the apps — the gateway holds it.
 #
 # `legal/contract-review` and `finance/risk-assistant` BOTH use gpt-4o yet are
 # attributed separately, by namespace.
@@ -22,15 +22,24 @@ spec:
 ---
 apiVersion: v1
 kind: Namespace
-metadata: { name: rh }
+metadata:
+  name: rh
+  labels:
+    aiops.imperium.io/sidecar-injection: "true"
 ---
 apiVersion: v1
 kind: Namespace
-metadata: { name: finance }
+metadata:
+  name: finance
+  labels:
+    aiops.imperium.io/sidecar-injection: "true"
 ---
 apiVersion: v1
 kind: Namespace
-metadata: { name: legal }
+metadata:
+  name: legal
+  labels:
+    aiops.imperium.io/sidecar-injection: "true"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -42,7 +51,10 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: chatbot-rh } }
   template:
-    metadata: { labels: { app: chatbot-rh, aiops.imperium.io/demo: "true" } }
+    metadata:
+      labels: { app: chatbot-rh, aiops.imperium.io/demo: "true" }
+      annotations:
+        aiops.imperium.io/target-hosts: greenops-aigw.envoy-gateway-system.svc.cluster.local
     spec:
       containers:
         - name: client
@@ -62,7 +74,7 @@ spec:
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
-                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
+                  -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":220}" \
                   "$GATEWAY" || true
                 sleep 3
@@ -78,7 +90,10 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: risk-assistant } }
   template:
-    metadata: { labels: { app: risk-assistant, aiops.imperium.io/demo: "true" } }
+    metadata:
+      labels: { app: risk-assistant, aiops.imperium.io/demo: "true" }
+      annotations:
+        aiops.imperium.io/target-hosts: greenops-aigw.envoy-gateway-system.svc.cluster.local
     spec:
       containers:
         - name: client
@@ -98,7 +113,7 @@ spec:
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
-                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
+                  -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":320}" \
                   "$GATEWAY" || true
                 sleep 4
@@ -116,7 +131,10 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: contract-review } }
   template:
-    metadata: { labels: { app: contract-review, aiops.imperium.io/demo: "true" } }
+    metadata:
+      labels: { app: contract-review, aiops.imperium.io/demo: "true" }
+      annotations:
+        aiops.imperium.io/target-hosts: greenops-aigw.envoy-gateway-system.svc.cluster.local
     spec:
       containers:
         - name: client
@@ -136,7 +154,7 @@ spec:
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
-                  -H 'Content-Type: application/json' -H "x-greenops-namespace: $NS" -H "x-greenops-app: $APP" \
+                  -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":300}" \
                   "$GATEWAY" || true
                 sleep 5

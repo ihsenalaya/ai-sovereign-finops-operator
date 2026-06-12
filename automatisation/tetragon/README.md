@@ -13,7 +13,7 @@ pod ──TLS──▶ api.openai.com (US)        ❌ never touches the gateway
                                                               │
                               operator: shadowengine.Detect( endpoint→zone )
                                                               │
-                          ai_finops_shadow_ai_egress + Grafana "Shadow-AI egress"
+                          ai_finops_shadow_ai_egress + Grafana shadow-AI
 ```
 
 This stays true to the project rule: **the data is real** (eBPF-observed
@@ -30,8 +30,29 @@ backend later).
 ## Requirements
 
 A cluster with a BPF-capable kernel + BTF (`/sys/kernel/btf/vmlinux`). **AKS** (or
-any standard managed k8s) is ideal. A memory-starved kind/WSL usually lacks room for
-the Tetragon DaemonSet — prefer AKS for this plane.
+any standard managed k8s) is ideal. kind/WSL is also supported for the demo: if
+`tcp_connect` kprobe events are not exported there, `forwarder.sh` falls back to
+real Tetragon `process_exec` events containing direct LLM URLs.
+
+## One-shot demo
+
+Depuis la racine `automatisation/` :
+
+```bash
+make full-demo
+```
+
+Ou directement depuis ce dossier :
+
+```bash
+./demo.sh
+```
+
+Cela :
+1. déploie la démo réelle Envoy AI Gateway,
+2. installe Tetragon,
+3. applique le workload `shadow-ai-rogue`,
+4. rafraîchit `shadow-egress` pour que l'opérateur publie les métriques shadow-AI.
 
 ## Run it
 
@@ -47,7 +68,7 @@ NS=default ./forwarder.sh      # NS = the namespace of your AISovereigntyPolicy
 
 # 4. Observe
 #    - operator metric:  ai_finops_shadow_ai_egress{namespace,application,zone,provider,severity}
-#    - Grafana:          "Shadow-AI egress (namespace → zone)" + "Shadow-AI egress by zone"
+#    - Grafana:          "Shadow-AI egress details" + "Shadow-AI hotspots by workload"
 #    - K8s events:       kubectl describe aisovereigntypolicy <name>  (Warning/ShadowAI)
 ```
 
@@ -62,5 +83,8 @@ With an `EU`-allowed / `US`-forbidden policy, the rogue `finance/rogue-script` f
   stay simple and portable).
 - **Event schema.** The `jq` paths follow Tetragon's `process_kprobe` schema; tune
   them to your Tetragon version if fields differ (`tetra getevents -o json` to inspect).
+- **Fallback mode on kind/WSL.** If `process_kprobe/tcp_connect` is absent, the
+  forwarder uses `process_exec` lines such as `curl https://api.openai.com/...`.
+  This keeps the demo deterministic without any manual ConfigMap patch.
 - **ECH.** SNI is cleartext today but Encrypted Client Hello may erode SNI-based
   visibility over time; IP/destination observation still holds.
