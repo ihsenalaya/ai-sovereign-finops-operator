@@ -86,9 +86,28 @@ spec:
                 maximum: 100
                 minimum: 0
                 type: integer
+              enforcementMode:
+                default: reportOnly
+                description: |-
+                  EnforcementMode controls whether the fallback stays advisory or may be
+                  actuated at the gateway when the budget is under pressure.
+                enum:
+                - reportOnly
+                - warn
+                - enforce
+                type: string
               fallbackModelRef:
                 description: FallbackModelRef names a cheaper AIModel to recommend
                   on overspend.
+                type: string
+              fallbackOnPhase:
+                default: Exceeded
+                description: |-
+                  FallbackOnPhase is the earliest budget phase that may activate the
+                  fallback when EnforcementMode=enforce.
+                enum:
+                - Critical
+                - Exceeded
                 type: string
               hardLimitPercent:
                 default: 100
@@ -97,6 +116,30 @@ spec:
                 maximum: 200
                 minimum: 0
                 type: integer
+              maxFallbackErrorPercent:
+                description: |-
+                  MaxFallbackErrorPercent is a guardrail on the fallback model's observed
+                  error rate, in percent. 0 disables the error-rate guardrail.
+                format: int32
+                maximum: 100
+                minimum: 0
+                type: integer
+              maxFallbackLatencyMillis:
+                description: |-
+                  MaxFallbackLatencyMillis is a guardrail on the fallback model's observed
+                  mean latency. 0 disables the latency guardrail.
+                format: int32
+                minimum: 0
+                type: integer
+              minFallbackQualityTier:
+                description: |-
+                  MinFallbackQualityTier is the minimum catalog quality tier a fallback
+                  model must satisfy to be actuated. Empty disables the quality guardrail.
+                enum:
+                - low
+                - medium
+                - high
+                type: string
               period:
                 default: monthly
                 description: Period is the budget window.
@@ -136,6 +179,11 @@ spec:
           status:
             description: AIBudgetPolicyStatus defines the observed state of AIBudgetPolicy.
             properties:
+              activeFallbackModel:
+                description: |-
+                  ActiveFallbackModel is the provider-side model currently selected as the
+                  budget fallback target when live actuation is active.
+                type: string
               conditions:
                 description: Conditions represent the latest available observations
                   of the budget state.
@@ -205,6 +253,15 @@ spec:
                   period.
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
+              fallbackActuated:
+                description: |-
+                  FallbackActuated reports whether the fallback reroute was applied to the
+                  gateway on the last reconcile.
+                type: boolean
+              fallbackReason:
+                description: FallbackReason summarizes why the fallback was or was
+                  not actuated.
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the .metadata.generation last reconciled.
                 format: int64

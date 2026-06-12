@@ -32,7 +32,9 @@ import (
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/budgetengine"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/costengine"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/enforcementengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
 )
 
@@ -51,9 +53,12 @@ type AIBudgetPolicyReconciler struct {
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aibudgetpolicies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aibudgetpolicies/finalizers,verbs=update
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aigateways;aimodels;aiproviders,verbs=get;list;watch
+//+kubebuilder:rbac:groups=aigateway.envoyproxy.io,resources=aigatewayroutes,verbs=get;list;watch;update;patch
 
 // Reconcile computes spend for the policy target, evaluates it against the budget
-// and writes phase/usage to status. Recommendation-only: no traffic is blocked.
+// and writes phase/usage to status. When explicitly configured with
+// EnforcementMode=enforce and a managed fallback model, it may reroute traffic to
+// that fallback at the gateway under safe, measured guardrails.
 func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -65,6 +70,9 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// Deletion: prune this policy's enforcement series, then drop the finalizer.
 	if !policy.DeletionTimestamp.IsZero() {
 		if controllerutil.ContainsFinalizer(&policy, budgetEnforcementFinalizer) {
+			if _, err := actuateReroutesWithAnnotation(ctx, r.Client, policy.Namespace, nil, budgetRerouteAnnotation); err != nil {
+				logger.Error(err, "reverting budget fallback reroutes on delete")
+			}
 			enforcementMetrics.forget(policy.UID)
 			controllerutil.RemoveFinalizer(&policy, budgetEnforcementFinalizer)
 			if err := r.Update(ctx, &policy); err != nil {
@@ -80,6 +88,9 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	policy.Status.ObservedGeneration = policy.Generation
+	policy.Status.ActiveFallbackModel = ""
+	policy.Status.FallbackActuated = false
+	policy.Status.FallbackReason = ""
 
 	cat, err := loadCatalog(ctx, r.Client, policy.Namespace)
 	if err != nil {
@@ -99,6 +110,7 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		_ = r.Status().Update(ctx, &policy)
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
+	allSamples := append([]collectors.UsageSample(nil), samples...)
 	samples = filterByBudgetTarget(samples, policy.Spec.Target)
 	breakdown := costengine.Compute(samples, cat.priceBook())
 
@@ -133,18 +145,15 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		msg = fmt.Sprintf("projected %.2f / %.2f EUR monthly (%d%%) — %s [observed %.4f over %s window]",
 			projected, policy.Spec.BudgetEUR.AsApproximateFloat64(), result.UsagePercent, result.Phase, observed, policy.Spec.Period)
 	}
-	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation, msg))
-
 	metrics.BudgetUsagePercent.WithLabelValues(policy.Namespace, policy.Name).Set(float64(result.UsagePercent))
 
 	// Enforcement signal: surface each tripped action on the shared EnforcementActions
 	// vector so one dashboard/alert sees both sovereignty AND budget control decisions.
-	// Budget actions are ADVISORY (this reconciler never blocks traffic — see doc above),
-	// so actuated="false": honest about the fact that the operator recommends but does
-	// not yet actuate budget actions at the gateway. mode carries the budget phase.
-	// retire() prunes series this policy emitted before (e.g. when it drops back under a
-	// threshold) without Reset()-ing the shared vector. FallbackModelRef, when set, is
-	// surfaced as the recommended target via the BudgetThreshold event below.
+	// Budget actions remain ADVISORY, so their series always carry actuated="false".
+	// Managed fallback reroutes, when explicitly configured and safe, are emitted as a
+	// separate reroute action below with the real actuation outcome. mode carries the
+	// budget phase. retire() prunes series this policy emitted before (e.g. when it
+	// drops back under a threshold) without Reset()-ing the shared vector.
 	var enfSeries [][]string
 	for _, action := range result.TriggeredActions {
 		metrics.EnforcementActions.
@@ -153,15 +162,65 @@ func (r *AIBudgetPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		enfSeries = append(enfSeries,
 			[]string{policy.Name, policy.Spec.Target.Namespace, policy.Spec.Target.Application, result.Phase, action, "false"})
 	}
+
+	sovEnforced := false
+	if sov := firstSovereigntyPolicy(ctx, r.Client, policy.Namespace); sov != nil && sov.Spec.EnforcementMode == aiopsv1alpha1.EnforcementEnforce {
+		sovEnforced = true
+	}
+	decision := budgetFallbackDesired(cat, allSamples, samples, policy.Spec, result.Phase, collector.Name(), sovEnforced)
+	desired := decision.desired
+	policy.Status.ActiveFallbackModel = decision.activeModel
+	policy.Status.FallbackReason = decision.reason
+
+	gwActuated, actErr := actuateReroutesWithAnnotation(ctx, r.Client, policy.Namespace, desired, budgetRerouteAnnotation)
+	if actErr != nil {
+		logger.Error(actErr, "budget fallback actuation failed")
+		if policy.Status.FallbackReason != "" {
+			policy.Status.FallbackReason += "; "
+		}
+		policy.Status.FallbackReason += fmt.Sprintf("gateway actuation failed: %v", actErr)
+	}
+	if len(desired) > 0 {
+		allActuated := actErr == nil
+		for model := range desired {
+			if !gwActuated[model] {
+				allActuated = false
+			}
+		}
+		policy.Status.FallbackActuated = allActuated
+		actuated := "false"
+		if allActuated {
+			actuated = "true"
+		}
+		enfSeries = append(enfSeries,
+			[]string{policy.Name, policy.Spec.Target.Namespace, policy.Spec.Target.Application, result.Phase, string(enforcementengine.ActionReroute), actuated})
+		if !allActuated && actErr == nil {
+			if policy.Status.FallbackReason != "" {
+				policy.Status.FallbackReason += "; "
+			}
+			policy.Status.FallbackReason += "gateway reroute was only partially actuated"
+		}
+	} else if policy.Spec.FallbackModelRef != "" && budgetFallbackPhaseReached(result.Phase, policy.Spec.FallbackOnPhase) {
+		enfSeries = append(enfSeries,
+			[]string{policy.Name, policy.Spec.Target.Namespace, policy.Spec.Target.Application, result.Phase, string(enforcementengine.ActionReroute), "false"})
+	}
 	enforcementMetrics.retire(policy.UID, enfSeries)
+
+	if policy.Status.FallbackReason != "" {
+		msg += " — " + policy.Status.FallbackReason
+	}
+	meta.SetStatusCondition(&policy.Status.Conditions, readyTrue(policy.Generation, msg))
 
 	if err := r.Status().Update(ctx, &policy); err != nil {
 		return ctrl.Result{}, err
 	}
 	if r.Recorder != nil && len(result.TriggeredActions) > 0 {
 		msg := fmt.Sprintf("%s — recommended actions: %s", result.Phase, strings.Join(result.TriggeredActions, ", "))
-		if policy.Spec.FallbackModelRef != "" && result.Phase == budgetengine.PhaseExceeded {
+		if policy.Spec.FallbackModelRef != "" && budgetFallbackPhaseReached(result.Phase, policy.Spec.FallbackOnPhase) {
 			msg += fmt.Sprintf("; consider rerouting to cheaper fallback model %q", policy.Spec.FallbackModelRef)
+		}
+		if policy.Status.FallbackReason != "" {
+			msg += "; " + policy.Status.FallbackReason
 		}
 		r.Recorder.Eventf(&policy, "Warning", "BudgetThreshold", "%s", msg)
 	}

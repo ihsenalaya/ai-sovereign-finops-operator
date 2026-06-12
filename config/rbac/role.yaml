@@ -18,6 +18,13 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
   - namespaces
   - pods
   verbs:
@@ -25,21 +32,21 @@ rules:
   - list
   - watch
 - apiGroups:
-  - aigateway.envoyproxy.io
+  - admissionregistration.k8s.io
   resources:
-  - aigatewayroutes
+  - mutatingwebhookconfigurations
   verbs:
+  - create
   - get
   - list
   - patch
   - update
   - watch
 - apiGroups:
-  - admissionregistration.k8s.io
+  - aigateway.envoyproxy.io
   resources:
-  - mutatingwebhookconfigurations
+  - aigatewayroutes
   verbs:
-  - create
   - get
   - list
   - patch

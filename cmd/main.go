@@ -49,6 +49,10 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+//+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=create;get;list;patch;update;watch
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 

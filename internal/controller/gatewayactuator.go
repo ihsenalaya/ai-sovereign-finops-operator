@@ -39,7 +39,7 @@ import (
 // is deleted). We use the unstructured client so the operator needs no compile-time
 // dependency on the Envoy AI Gateway Go API.
 
-const rerouteAnnotation = "aiops.imperium.io/enforced-reroutes"
+const sovereigntyRerouteAnnotation = "aiops.imperium.io/enforced-reroutes"
 
 func aigwRouteListGVK() schema.GroupVersionKind {
 	return schema.GroupVersionKind{Group: "aigateway.envoyproxy.io", Version: "v1beta1", Kind: "AIGatewayRouteList"}
@@ -98,7 +98,7 @@ func modelBackends(ctx context.Context, c client.Client, namespace string) (map[
 // request body `model` to the target. Models previously rerouted but absent from
 // `desired` are reverted to their original backend. Passing an empty/nil `desired`
 // reverts everything. Returns the set of models actually actuated at the gateway.
-func actuateReroutes(ctx context.Context, c client.Client, namespace string, desired map[string]string) (map[string]bool, error) {
+func actuateReroutesWithAnnotation(ctx context.Context, c client.Client, namespace string, desired map[string]string, annotationKey string) (map[string]bool, error) {
 	mb, err := modelBackends(ctx, c, namespace)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func actuateReroutes(ctx context.Context, c client.Client, namespace string, des
 			ann = map[string]string{}
 		}
 		saved := map[string]string{} // model -> original backend name
-		if s := ann[rerouteAnnotation]; s != "" {
+		if s := ann[annotationKey]; s != "" {
 			_ = json.Unmarshal([]byte(s), &saved)
 		}
 		rules, _, _ := unstructured.NestedSlice(route.Object, "spec", "rules")
@@ -130,10 +130,10 @@ func actuateReroutes(ctx context.Context, c client.Client, namespace string, des
 		}
 		_ = unstructured.SetNestedSlice(route.Object, rules, "spec", "rules")
 		if len(saved) == 0 {
-			delete(ann, rerouteAnnotation)
+			delete(ann, annotationKey)
 		} else {
 			b, _ := json.Marshal(saved)
-			ann[rerouteAnnotation] = string(b)
+			ann[annotationKey] = string(b)
 		}
 		route.SetAnnotations(ann)
 		if err := c.Update(ctx, route); err != nil {
@@ -141,4 +141,8 @@ func actuateReroutes(ctx context.Context, c client.Client, namespace string, des
 		}
 	}
 	return actuated, nil
+}
+
+func actuateReroutes(ctx context.Context, c client.Client, namespace string, desired map[string]string) (map[string]bool, error) {
+	return actuateReroutesWithAnnotation(ctx, c, namespace, desired, sovereigntyRerouteAnnotation)
 }

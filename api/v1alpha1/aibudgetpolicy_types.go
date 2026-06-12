@@ -46,6 +46,15 @@ type BudgetActions struct {
 	OnHardLimit []string `json:"onHardLimit,omitempty"`
 }
 
+// BudgetFallbackPhase decides when a live fallback may be actuated.
+// +kubebuilder:validation:Enum=Critical;Exceeded
+type BudgetFallbackPhase string
+
+const (
+	BudgetFallbackOnCritical BudgetFallbackPhase = "Critical"
+	BudgetFallbackOnExceeded BudgetFallbackPhase = "Exceeded"
+)
+
 // AIBudgetPolicySpec defines the desired state of AIBudgetPolicy.
 type AIBudgetPolicySpec struct {
 	// Target scopes the budget.
@@ -85,6 +94,34 @@ type AIBudgetPolicySpec struct {
 	// FallbackModelRef names a cheaper AIModel to recommend on overspend.
 	// +optional
 	FallbackModelRef string `json:"fallbackModelRef,omitempty"`
+
+	// EnforcementMode controls whether the fallback stays advisory or may be
+	// actuated at the gateway when the budget is under pressure.
+	// +kubebuilder:default=reportOnly
+	EnforcementMode EnforcementMode `json:"enforcementMode,omitempty"`
+
+	// FallbackOnPhase is the earliest budget phase that may activate the
+	// fallback when EnforcementMode=enforce.
+	// +kubebuilder:default=Exceeded
+	FallbackOnPhase BudgetFallbackPhase `json:"fallbackOnPhase,omitempty"`
+
+	// MaxFallbackLatencyMillis is a guardrail on the fallback model's observed
+	// mean latency. 0 disables the latency guardrail.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	MaxFallbackLatencyMillis int32 `json:"maxFallbackLatencyMillis,omitempty"`
+
+	// MaxFallbackErrorPercent is a guardrail on the fallback model's observed
+	// error rate, in percent. 0 disables the error-rate guardrail.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=100
+	MaxFallbackErrorPercent int32 `json:"maxFallbackErrorPercent,omitempty"`
+
+	// MinFallbackQualityTier is the minimum catalog quality tier a fallback
+	// model must satisfy to be actuated. Empty disables the quality guardrail.
+	// +optional
+	MinFallbackQualityTier Tier `json:"minFallbackQualityTier,omitempty"`
 }
 
 // AIBudgetPolicyStatus defines the observed state of AIBudgetPolicy.
@@ -110,6 +147,20 @@ type AIBudgetPolicyStatus struct {
 	// +kubebuilder:validation:Enum=Unknown;WithinBudget;Warning;Critical;Exceeded
 	// +optional
 	Phase string `json:"phase,omitempty"`
+
+	// ActiveFallbackModel is the provider-side model currently selected as the
+	// budget fallback target when live actuation is active.
+	// +optional
+	ActiveFallbackModel string `json:"activeFallbackModel,omitempty"`
+
+	// FallbackActuated reports whether the fallback reroute was applied to the
+	// gateway on the last reconcile.
+	// +optional
+	FallbackActuated bool `json:"fallbackActuated,omitempty"`
+
+	// FallbackReason summarizes why the fallback was or was not actuated.
+	// +optional
+	FallbackReason string `json:"fallbackReason,omitempty"`
 
 	// Conditions represent the latest available observations of the budget state.
 	// +optional

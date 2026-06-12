@@ -24,4 +24,9 @@ spec:
       - routeToCheaperModel
     onHardLimit:
       - blockOrRequireApproval
-  fallbackModelRef: mistral-large
+  fallbackModelRef: mistral-small
+  enforcementMode: enforce
+  fallbackOnPhase: Critical
+  minFallbackQualityTier: medium
+  maxFallbackLatencyMillis: 1200
+  maxFallbackErrorPercent: 2
