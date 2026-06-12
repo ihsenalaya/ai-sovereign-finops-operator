@@ -22,5 +22,7 @@ func Evaluate(spend, budget float64, t Thresholds, a Actions) Result
 ## Intégration
 Le controller [AIBudgetPolicy](../crds/aibudgetpolicy.md) calcule la dépense de la cible via
 [costengine](costengine.md), appelle `Evaluate`, écrit `phase/usagePercent/currentSpendEUR`, expose
-`ai_finops_budget_usage_percent`, émet un Event listant les actions. **Recommandation seulement —
-aucun blocage en MVP** (mode `enforce` = post-MVP).
+`ai_finops_budget_usage_percent`, émet un Event listant les actions. Quand un `fallbackModelRef`
+managé est configuré avec `enforcementMode=enforce`, le controller peut aussi **actuer** un reroute
+gateway vers ce fallback sous garde-fous (qualité, télémétrie disponible, modèle non partagé,
+coût réellement inférieur). Le moteur de budget, lui, reste pur et ne décide que la phase.

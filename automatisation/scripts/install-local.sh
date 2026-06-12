@@ -11,6 +11,9 @@ require kubectl
 "${DIR}/01-create-cluster.sh"
 "${DIR}/02-build-load-image.sh"
 
+log "applying CRDs (upgrade-safe)..."
+kubectl apply -f "${REPO_ROOT}/charts/ai-sovereign-finops-operator/crds"
+
 log "installing the operator Helm chart..."
 helm upgrade --install greenops "${REPO_ROOT}/charts/ai-sovereign-finops-operator" \
   -n greenops-system --create-namespace \

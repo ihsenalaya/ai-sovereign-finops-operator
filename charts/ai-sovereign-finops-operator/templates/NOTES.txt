@@ -1,6 +1,7 @@
 AI Sovereign FinOps Operator installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
 
-The operator runs read-only and non-blocking (reportOnly). Next steps:
+The operator is read-mostly by default. It only mutates the data plane or webhook
+objects when an explicit enforcement path is configured. Next steps:
 
 1. Check the controller is running:
    kubectl -n {{ .Release.Namespace }} get deploy {{ include "operator.fullname" . }}

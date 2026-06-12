@@ -69,7 +69,8 @@ Six moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les c
   million de tokens déclarés sur chaque `AIProvider` ; agrège les tokens d'entrée/sortie et le % d'économies.
 - **Budget engine** — suit la dépense par cible (namespace/équipe/app) sur une période, calcule le %
   d'usage et la **phase** (`ok` → `warning` → `critical` → `hardLimit`), avec actions par seuil et
-  **modèle de repli** (graceful degradation plutôt que blocage sec).
+  **modèle de repli**. En mode `enforce`, l'opérateur peut **rerouter réellement** vers un fallback
+  **managé** moins cher au gateway, sous garde-fous mesurés.
 - **Sovereignty engine** — confronte chaque appel aux règles de **résidence** (zones autorisées /
   interdites, l'UE couvrant les États membres) et de **données sensibles** (fournisseurs externes
   autorisés ou non), et remonte les **constats de violation**.
@@ -113,7 +114,9 @@ Transverse :
 
 - **Déclaratif et GitOps-natif** : toute la gouvernance (budgets, souveraineté, catalogue) est en YAML
   versionné, réconcilié en continu, déployable via ArgoCD.
-- **Non-intrusif** : observe la gateway en lecture seule ; aucun risque sur le plan de données en MVP.
+- **Intrusion contrôlée** : lecture seule par défaut ; l'opérateur ne mute le plan de données que
+  dans des chemins d'enforcement explicitement déclarés (`AISovereigntyPolicy` ou fallback budget
+  managé sur `AIBudgetPolicy`).
 - **Souveraineté de premier plan** : contraintes dures de résidence et de données sensibles — absentes
   des routeurs cost/quality classiques et des gateways génériques.
 - **FinOps actionnable** : attribution fine + budgets avec dégradation gracieuse + point mort
@@ -132,7 +135,7 @@ Transverse :
 | **AIGateway** | `aigw` | Gateway IA observée + mode de télémétrie | `type`, `endpoint`, `telemetry.mode`, `namespaceSelector` | `governedNamespaces` |
 | **AIProvider** | `aiprov` | Fournisseur (managé/auto-hébergé), pricing, conformité | `region`, `dataResidency`, `managed`, `pricing.{input,output}TokenPricePerMillion`, `compliance.{allowedForSensitiveData,allowedCountries}` | conditions |
 | **AIModel** | — | Modèle catalogué, lié à un provider | `providerRef`, `modelName`, `qualityTier`, `costTier`, `contextWindow`, `sensitiveDataAllowed` | `resolvedProvider` |
-| **AIBudgetPolicy** | `aibudget` | Budget par namespace/équipe/app + seuils + actions | `target`, `period`, `budgetEUR`, `warning/critical/hardLimitPercent`, `actions`, `fallbackModelRef` | `currentSpendEUR`, `usagePercent`, `phase` |
+| **AIBudgetPolicy** | `aibudget` | Budget par namespace/équipe/app + seuils + fallback managé optionnel | `target`, `period`, `budgetEUR`, `warning/critical/hardLimitPercent`, `actions`, `fallbackModelRef`, `enforcementMode`, `fallbackOnPhase` | `currentSpendEUR`, `usagePercent`, `phase`, `activeFallbackModel`, `fallbackActuated` |
 | **AISovereigntyPolicy** | `aisov` | Règles de résidence / données sensibles / audit | `dataResidency.{allowed,forbidden}Zones`, `sensitiveData.externalProvidersAllowed`, `audit`, `enforcementMode` | `findingsCount` |
 | **AIBreakEvenAnalysis** | `aibreakeven` | Point mort API managée vs auto-hébergement | `currentModelRef`, `alternativeSelfHosted`, `analysisWindowDays` | `managed/selfHostedMonthlyCostEUR`, `monthlySavingsEUR`, `paybackMonths`, `recommendation` |
 | **AIFinOpsReport** | `aireport` | Rapport consolidé généré | `target`, `period`, `gatewayRef` | `totalCostEUR`, `totalInput/OutputTokens`, `topModels`, `sovereigntyFindings`, `recommendations` |
@@ -292,12 +295,13 @@ Conventions et architecture : [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) ·
 MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image déployée par Helm** : 7 CRDs,
 7 controllers, 6 moteurs, collecteurs, observabilité, reporting, chart, automatisation.
 
-**Enforcement livré (slices 1 & 2)** : l'opérateur **agit** selon l'`enforcementMode` — Events Kubernetes
-différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les violations US. En mode
-`enforce`, le reroute est **actué dans le plan de données** Envoy AI Gateway (mutation réversible de
-l'`AIGatewayRoute` : backend conforme + réécriture du `model`), `actuated=true`. Le revert est automatique
-au retour en `reportOnly`/`warn` ou à la suppression de la policy (finalizer). Reste : enforcement budget,
-action `block` au gateway (sans fallback conforme), durcissement télémétrie (latence/erreurs, reset compteurs).
+**Enforcement livré (slices 1, 2 et budget fallback managé)** : l'opérateur **agit** selon l'`enforcementMode`
+— Events Kubernetes différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les
+violations US et les reroutes budgétaires. En mode `enforce`, le reroute est **actué dans le plan de
+données** Envoy AI Gateway (mutation réversible de l'`AIGatewayRoute` : backend conforme ou fallback budgétaire
++ réécriture du `model`), `actuated=true`. Le revert est automatique au retour en `reportOnly`/`warn` ou à la
+suppression de la policy (finalizer). Reste : action `block` au gateway (sans fallback conforme), budget
+reroute plus fin qu'au niveau modèle partagé, durcissement télémétrie (latence/erreurs, reset compteurs).
 
 Détails : [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) · toute la
 doc : [`docs/README.md`](docs/README.md).

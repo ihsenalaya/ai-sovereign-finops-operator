@@ -42,6 +42,8 @@ OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:${
 BUILD_OPERATOR="${BUILD_OPERATOR:-true}"
 EG_VERSION="${EG_VERSION:-v1.5.0}"      # IMPORTANT: v1.3.0 is too old (extproc not injected)
 AIGW_VERSION="${AIGW_VERSION:-v0.7.0}"
+SKIP_PROVIDER_PREFLIGHT="${SKIP_PROVIDER_PREFLIGHT:-false}"
+MISTRAL_READY="false"
 
 # helm OCI pulls fail when the WSL docker credential helper is used -> anonymous.
 export DOCKER_CONFIG="${DOCKER_CONFIG:-/tmp/emptydockercfg}"
@@ -50,7 +52,69 @@ mkdir -p "${DOCKER_CONFIG}"; [ -f "${DOCKER_CONFIG}/config.json" ] || echo '{}' 
 step() { printf '\n\033[1;36m== %s\033[0m\n' "$*"; }
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing required tool: $1" >&2; exit 1; }; }
 
-preflight() { for t in kubectl helm kind docker; do need "$t"; done; }
+probe_openai() {
+  local key body code
+  [ -f "${REPO}/docs/openaikey.txt" ] || { echo "missing docs/openaikey.txt" >&2; return 1; }
+  key="$(grep -oE 'sk-[A-Za-z0-9_-]+' "${REPO}/docs/openaikey.txt" | head -1)"
+  [ -n "${key}" ] || { echo "no OpenAI key found in docs/openaikey.txt" >&2; return 1; }
+  body="$(mktemp)"
+  code="$(
+    curl -sS -o "${body}" -w '%{http_code}' https://api.openai.com/v1/chat/completions \
+      -H "Authorization: Bearer ${key}" \
+      -H 'Content-Type: application/json' \
+      -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"ping"}],"max_tokens":1}'
+  )"
+  if [ "${code}" = "200" ]; then
+    rm -f "${body}"
+    return 0
+  fi
+  echo "OpenAI preflight failed (HTTP ${code})." >&2
+  if grep -q 'insufficient_quota' "${body}"; then
+    echo "The key is valid but has no usable quota/billing. Refresh docs/openaikey.txt before running the real demo." >&2
+  fi
+  sed -n '1,20p' "${body}" >&2
+  rm -f "${body}"
+  return 1
+}
+
+probe_mistral() {
+  local key body code
+  [ -f "${REPO}/docs/mistralkey.txt" ] || return 1
+  key="$(tr -d '\r\n' < "${REPO}/docs/mistralkey.txt")"
+  [ -n "${key}" ] || return 1
+  body="$(mktemp)"
+  code="$(
+    curl -sS -o "${body}" -w '%{http_code}' \
+      'https://greenops-foundry.services.ai.azure.com/openai/deployments/mistral-large-latest/chat/completions?api-version=2024-05-01-preview' \
+      -H "Authorization: Bearer ${key}" \
+      -H 'Content-Type: application/json' \
+      -d '{"messages":[{"role":"user","content":"ping"}],"max_tokens":1}'
+  )"
+  if [ "${code}" = "200" ]; then
+    rm -f "${body}"
+    return 0
+  fi
+  echo "Mistral Foundry preflight failed (HTTP ${code}); skipping the optional EU app." >&2
+  sed -n '1,20p' "${body}" >&2
+  rm -f "${body}"
+  return 1
+}
+
+preflight() {
+  for t in kubectl helm kind docker curl; do need "$t"; done
+  if [ "${SKIP_PROVIDER_PREFLIGHT}" = "true" ]; then
+    echo "provider preflight skipped (SKIP_PROVIDER_PREFLIGHT=true)"
+    return 0
+  fi
+  step "0/5 provider preflight"
+  probe_openai || exit 1
+  if probe_mistral; then
+    MISTRAL_READY="true"
+    echo "Mistral Foundry probe OK."
+  else
+    MISTRAL_READY="false"
+  fi
+}
 
 ensure_cluster() {
   step "1/5 kind cluster '${CLUSTER}'"
@@ -80,6 +144,9 @@ ensure_operator_image() {
 
 ensure_operator() {
   step "2/6 operator (Helm, ${OPERATOR_IMG})"
+  # Helm does not upgrade CRDs from charts/ on `upgrade`; apply them explicitly so
+  # reusing an existing kind cluster still picks up new API fields.
+  ${K} apply -f "${REPO}/charts/ai-sovereign-finops-operator/crds" >/dev/null
   helm --kube-context "${CTX}" upgrade --install greenops "${REPO}/charts/ai-sovereign-finops-operator" \
     --namespace "${NS_OP}" --create-namespace \
     --set image.repository="${OPERATOR_IMG%:*}" --set image.tag="${OPERATOR_IMG##*:}" \
@@ -124,13 +191,12 @@ deploy_mistral_eu() {
   # sovereignty engine is zone-aware (the EU app yields ZERO violation). Skipped
   # cleanly if no key is present, so the OpenAI-only demo still works.
   step "4b/6 Mistral EU app (sovereignty zone test)"
-  if [ ! -f "${REPO}/docs/mistralkey.txt" ]; then
-    echo "no docs/mistralkey.txt — skipping the Mistral EU app."
+  if [ "${MISTRAL_READY}" != "true" ]; then
+    echo "Mistral Foundry not preflight-ready — skipping the optional EU app."
     echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > docs/mistralkey.txt"
     return 0
   fi
   local mkey; mkey="$(tr -d '\r\n' < "${REPO}/docs/mistralkey.txt")"
-  [ -n "${mkey}" ] || { echo "docs/mistralkey.txt is empty — skipping Mistral EU app." >&2; return 0; }
   ${K} -n default create secret generic greenops-mistral-apikey \
     --from-literal=apiKey="${mkey}" --dry-run=client -o yaml | ${K} apply -f - >/dev/null
   ${K} apply -f "${HERE}/05-mistral-eu.yaml"
@@ -151,8 +217,9 @@ up() {
   preflight; ensure_cluster; ensure_operator_image; ensure_operator; ensure_envoy
   deploy_gateway_and_apps; deploy_mistral_eu; deploy_observability
   step "Done — real demo is live"
-  echo "Apps in ns rh/finance call OpenAI through Envoy AI Gateway; the operator"
+  echo "Apps in ns rh/finance/legal call OpenAI through Envoy AI Gateway; the operator"
   echo "reads real token usage and computes cost/sovereignty/budget per app."
+  echo "finance-budget can reroute gpt-4o -> gpt-4o-mini live once the budget turns Critical."
   echo
   echo "Open Grafana:  ./deploy.sh grafana   (then http://localhost:3000)"
   echo "Watch cost:    ${K} -n default get aifinopsreport ai-report-all -o yaml | grep -A4 'status:'"

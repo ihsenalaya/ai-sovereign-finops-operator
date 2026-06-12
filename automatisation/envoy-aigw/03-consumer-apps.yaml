@@ -5,8 +5,9 @@
 # is attributed PER NAMESPACE / APP even when two apps in different namespaces
 # use the SAME model. No API key in the apps — the gateway holds it.
 #
-# `legal/contract-review` and `finance/risk-assistant` BOTH use gpt-4o yet are
-# attributed separately, by namespace.
+# `rh/chatbot-rh` and `legal/contract-review` BOTH use gpt-4o-mini yet are
+# attributed separately, by namespace/app. `finance/risk-assistant` stays on the
+# more expensive gpt-4o so the budget fallback can reroute it live.
 ---
 apiVersion: v1
 kind: Service
@@ -119,8 +120,8 @@ spec:
                 sleep 4
               done
 ---
-# Same model as finance (gpt-4o) but a different namespace -> proves per-namespace
-# attribution works even on a shared model.
+# Same model as rh (gpt-4o-mini) but a different namespace -> proves
+# per-namespace attribution works even on a shared model.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -142,7 +143,7 @@ spec:
           resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
           env:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
-            - { name: MODEL, value: "gpt-4o" }
+            - { name: MODEL, value: "gpt-4o-mini" }
             - { name: APP, value: "contract-review" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }

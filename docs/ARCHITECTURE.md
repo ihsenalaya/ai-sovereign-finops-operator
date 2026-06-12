@@ -33,6 +33,10 @@ dashboards/             Grafana
   **réellement actué** dans Envoy AI Gateway via mutation réversible de l'`AIGatewayRoute` —
   `internal/controller/gatewayactuator.go`, client unstructured). Décision dans le moteur pur
   `enforcementengine` ; actuation + revert (annotation, finalizer) dans le controller.
+- **Fallback budget managé** : `AIBudgetPolicy` peut, en `enforce`, rerouter un modèle trop cher vers
+  un fallback managé moins cher au gateway. La décision reste prudente : pas de modèle partagé hors
+  cible, pas de conflit avec une policy souveraineté déjà en `enforce`, et garde-fous qualité /
+  télémétrie explicites (`internal/controller/budgetfallback.go`).
 - **Deux plans de souveraineté** : (1) **gateway** — `sovereigntyengine` sur la télémétrie de la
   gateway ; (2) **eBPF / shadow-AI** — `shadowengine` sur l'egress par pod observé par **Tetragon**
   (ConfigMap `shadow-egress`), **indépendant de la gateway**, donc capte le trafic qui la contourne.
@@ -69,6 +73,7 @@ findings souveraineté, économies break-even, recommandations. Un dashboard Gra
 
 ## Sécurité
 
-RBAC minimal généré par les markers `+kubebuilder:rbac`. Accès lecture seule aux ressources externes ;
-les secrets de gateway sont référencés via `secretRef` (jamais copiés dans le status). Le manager
-tourne en non-root via le `config/manager` standard de Kubebuilder.
+RBAC minimal généré par les markers `+kubebuilder:rbac`. Lecture majoritaire, avec écriture limitée aux
+ressources explicitement pilotées par l'opérateur (CRDs/status, `AIGatewayRoute`, webhook config, Events) ;
+les secrets de gateway sont référencés via `secretRef` (jamais copiés dans le status). Le manager tourne
+en non-root via le `config/manager` standard de Kubebuilder.

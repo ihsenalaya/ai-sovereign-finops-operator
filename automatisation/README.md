@@ -61,6 +61,11 @@ make real-demo-test
 make real-demo-down
 ```
 
+Important : ce chemin requiert une **clé OpenAI réellement utilisable** (quota /
+billing actif), pas seulement un fichier `docs/openaikey.txt` présent. Le script
+fait un **préflight fournisseur** et échoue immédiatement si l'amont renvoie
+`insufficient_quota`, pour éviter une “démo verte” avec des apps en `429`.
+
 Pour reproduire aussi le plan **shadow-AI** (Tetragon + rogue workload + refresh du
 ConfigMap `shadow-egress`) avec la même infra:
 

@@ -9,7 +9,13 @@
   du `model` ; `actuated=true`). Revert automatique au retour en `reportOnly`/`warn` ou à la suppression
   (finalizer). **Limites actuelles** : l'action `block` (modèle interdit *sans* fallback conforme) reste
   décidée mais non actuée ; le reroute est **par modèle** (pas par namespace/app — le routage gateway
-  matche sur `x-ai-eg-model`) ; l'enforcement **budget** reste en recommandation (prochaine itération).
+  matche sur `x-ai-eg-model`).
+- **Enforcement budget** : le fallback managé est réellement actué depuis `AIBudgetPolicy`, mais avec
+  un périmètre volontairement prudent : uniquement vers un `AIProvider.managed=true`, uniquement si le
+  fallback est réellement moins cher sur le mix de tokens observé, uniquement sur des modèles **non
+  partagés** hors cible, et jamais si une policy de souveraineté est déjà en `enforce`. Les garde-fous
+  latence/erreur exigent une télémétrie qui expose ces signaux ; le collector `aigw` ne les porte pas
+  encore aujourd'hui.
 - **Pas d'attestation juridique.** Le produit prépare un dossier d'audit (RGPD, AI Act, politiques
   internes) ; il ne garantit pas la conformité.
 
@@ -37,7 +43,9 @@
   (`automatisation/scripts/install-local.sh`).
 
 ## Sécurité
-- Manager non-root, RBAC minimal généré, secrets de gateway référencés (jamais copiés en status).
+- Manager non-root, RBAC minimal généré ; écriture limitée aux objets pilotés par l'opérateur
+  (`AIGatewayRoute`, webhook config, Events, status/CRDs). Secrets de gateway référencés seulement
+  (jamais copiés en status).
 - Métriques exposées en clair (`:8080`) en MVP ; `--metrics-secure` disponible pour durcir.
 
 Voir la [Roadmap](ROADMAP.md) pour le post-MVP.

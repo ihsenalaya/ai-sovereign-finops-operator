@@ -69,11 +69,18 @@ Statut : ✅ fait · 🛠️ en cours · ⬜ à venir
 - [x] 2 panneaux Grafana « Shadow-AI egress » ; doc [DASHBOARDS.md](DASHBOARDS.md)
 - [x] **Validé bout-en-bout sur AKS** : `finance/shadow-ai-rogue → api.openai.com (US)` ⇒ `severity=critical`
 
+## Sprint 11 — Enforcement budget : fallback managé ✅
+- [x] Extension de `AIBudgetPolicy` : `enforcementMode`, `fallbackOnPhase`, garde-fous qualité/latence/erreur, status de fallback
+- [x] Décision pure `budgetfallback` : fallback moins cher, provider managé, modèle non partagé, télémétrie honnête
+- [x] Actuation réelle au gateway via annotation dédiée `aiops.imperium.io/budget-fallback-reroutes`
+- [x] Anti-conflit : skip si une policy souveraineté est déjà en `enforce`
+- [x] CRD/RBAC/Helm/chart sync + sample mis à jour
+- [x] Validation live sur kind via `automatisation/envoy-aigw/`
+
 > Ce fichier est mis à jour au fil de l'avancement par l'agent.
 
 ## Post-MVP (engagé / en cours)
 - **Enforcement `block`** au gateway pour un modèle interdit **sans** fallback conforme (retrait/deny de la route).
-- **Enforcement budget** : même moteur, déclenché par dépassement de seuil (warning/critical/hardLimit + repli).
 - **Télémétrie** : durcir le chemin Envoy/OTel — latence, erreurs, **détection de reset** des compteurs gateway.
 - Multi-devise, FX ; persistance historique ; export S3/PDF du dossier d'audit.
 - Webhooks de validation/défaut, conversion de versions d'API.

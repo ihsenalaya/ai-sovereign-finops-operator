@@ -6,7 +6,7 @@ cluster kind local, avec **Prometheus + Grafana** déployés pour visualiser les
 ## Prérequis
 - Un cluster **kind** nommé `greenops` (contexte `kind-greenops`) — créé via `automatisation/` (`make local`).
 - `kubectl`, et `helm` si l'opérateur n'est pas déjà installé (le script l'installe sinon).
-- L'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.2.2` (publique sur GHCR).
+- L'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7` (publique sur GHCR une fois la release poussée).
 
 > Contexte différent ? `KCTX=<mon-context> ./demo.sh up`
 
@@ -18,7 +18,7 @@ cd automatisation/demo
 ```
 
 `./demo.sh up` enchaîne :
-1. **Opérateur** — vérifie/installe le déploiement (Helm, image 0.2.0).
+1. **Opérateur** — vérifie/installe le déploiement (Helm, image 0.3.7).
 2. **CRs** — applique `config/samples/` + `demo-extra.yaml` (catalogue, providers FR/US, policy de
    souveraineté, budgets, break-even, rapports) et déclenche les réconciliations.
 3. **Observabilité** — déploie un **Prometheus** (scrape l'opérateur) + une **Grafana** légers, avec le
@@ -51,4 +51,4 @@ recommandations, et **violations de souveraineté par application** (nouveau pan
 ## Notes
 - Stack volontairement **légère** (faibles requests CPU/mémoire) pour tenir sur un petit cluster kind.
 - La télémétrie provient du **fake collector** (données de démo) — aucune clé API requise pour la démo.
-- Tout est **reportOnly** : l'opérateur n'altère jamais le trafic.
+- Ce scénario `demo/` reste **reportOnly** : l'opérateur n'altère pas le trafic ici.

@@ -126,13 +126,18 @@ metadata:
   labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
 spec:
   target: { namespace: finance, team: finance, application: risk-assistant }
-  period: monthly        # real month-to-date spend vs monthly cap (truthful)
-  budgetEUR: "0.50"      # small real monthly cap so demo-scale spend is a meaningful %
+  period: monthly
+  # Tight real cap so the live demo reaches Critical/Exceeded in a couple of
+  # minutes and actuates the managed fallback.
+  budgetEUR: "0.02"
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100
   actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
   fallbackModelRef: gpt-4o-mini
+  enforcementMode: enforce
+  fallbackOnPhase: Critical
+  minFallbackQualityTier: medium
 ---
 # rh budget — comfortable cap (rh runs cheap gpt-4o-mini) => stays WithinBudget,
 # contrasting with finance (tight cap, over budget).
@@ -152,7 +157,8 @@ spec:
   actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
   fallbackModelRef: gpt-4o-mini
 ---
-# legal budget — tight cap; legal runs gpt-4o (expensive) like finance.
+# legal budget — comfortable cap; legal also runs the cheap gpt-4o-mini, in a
+# different namespace, which keeps the shared-model attribution demo alive.
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIBudgetPolicy
 metadata:
@@ -162,7 +168,7 @@ metadata:
 spec:
   target: { namespace: legal, team: legal, application: contract-review }
   period: monthly
-  budgetEUR: "0.30"
+  budgetEUR: "0.20"
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100

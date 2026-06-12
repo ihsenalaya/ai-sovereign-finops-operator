@@ -1,16 +1,18 @@
 # Démo réelle — vraies apps consommant des tokens via Envoy AI Gateway
 
-Exemple end-to-end **100 % réel** : deux applications déployées dans le cluster
+Exemple end-to-end **100 % réel** : des applications déployées dans le cluster
 appellent en boucle de vrais LLM **à travers Envoy AI Gateway** (projet CNCF).
 La gateway **mesure les vrais tokens** ; l'opérateur les **lit** et calcule
-**coût, souveraineté et budget par application**, exposés dans **Grafana**.
+**coût, souveraineté et budget par application**, exposés dans **Grafana**. Le scénario
+valide aussi le **fallback budgétaire managé** : l'app finance démarre sur `gpt-4o`
+et peut être reroutée en live vers `gpt-4o-mini` quand son budget passe en `Critical`.
 
 ```
- app rh-chatbot (ns rh) ─────┐                                   ┌─► OpenAI gpt-4o-mini (US)
-                             ├─► Envoy AI Gateway (compte tokens) ┤
- app risk-assistant (finance)┘            │ gen_ai_* metrics      └─► OpenAI gpt-4o (US)
-                                          ▼
-                       Opérateur (collector "aigw") ─► coût/souveraineté/budget par app
+ app rh/legal (gpt-4o-mini) ─┐                                  ┌─► OpenAI gpt-4o-mini (US)
+                              ├─► Envoy AI Gateway (compte tokens)┤
+ app finance (gpt-4o) ───────┘            │ gen_ai_* metrics      └─► OpenAI gpt-4o (US)
+                                           ▼
+                       Opérateur (collector "aigw") ─► coût/souveraineté/budget/enforcement par app
                                           ▼
                           Prometheus ─► Grafana (dashboard véridique)
 ```
@@ -39,7 +41,11 @@ make real-demo-test
 make real-demo-down
 ```
 
-Prérequis : cluster kind `greenops`, `kubectl`, `helm`, `docs/openaikey.txt`.
+Prérequis : cluster kind `greenops`, `kubectl`, `helm`, `docs/openaikey.txt` avec
+**quota/billing actif**. La présence d'une clé seule ne suffit pas : `deploy.sh up`
+fait désormais un **préflight fournisseur** et s'arrête immédiatement si OpenAI
+répond `insufficient_quota`. `docs/mistralkey.txt` reste optionnel ; s'il est
+présent, il est aussi préflighté avant de déployer l'app EU.
 
 ## Fichiers
 - `01-gateway-openai.yaml` — GatewayClass/Gateway/EnvoyProxy + AIGatewayRoute
@@ -48,7 +54,8 @@ Prérequis : cluster kind `greenops`, `kubectl`, `helm`, `docs/openaikey.txt`.
 - `02-metrics-and-catalog.yaml` — Service métriques de l'extproc (`:1064`),
   `AIGateway` en **mode `aigw`**, `AIProvider`/`AIModel` (prix réels par modèle,
   attribution `servesNamespace/Application/Team`), `AISovereigntyPolicy` (EU-only),
-  `AIFinOpsReport`, `AIBudgetPolicy`.
+  `AIFinOpsReport`, `AIBudgetPolicy`. `finance-budget` est configuré en
+  `enforcementMode=enforce` avec fallback `gpt-4o-mini`.
 - `03-consumer-apps.yaml` — Service data stable + 3 Deployments (rh/chatbot-rh,
   finance/risk-assistant, legal/contract-review) qui appellent la gateway en boucle.
 - `05-mistral-eu.yaml` — **2ᵉ provider EU** : route Mistral (Azure AI Foundry, zone EU)
@@ -80,12 +87,20 @@ même modèle seraient donc fusionnées. La solution mise en place :
 3. Le collector **`aigw`** lit ces labels et attribue le coût **par namespace/app
    réel** (fallback sur `AIModel.serves*` si l'en-tête est absent).
 
-➡️ Résultat : **`finance/risk-assistant` et `legal/contract-review` utilisent tous
-deux gpt-4o, mais sont comptabilisés séparément, par namespace/app** — automatiquement.
+➡️ Résultat : **`rh/chatbot-rh` et `legal/contract-review` utilisent tous deux
+gpt-4o-mini, mais sont comptabilisés séparément, par namespace/app** — automatiquement.
 Déployer une nouvelle app dans un namespace opt-in suffit : aucune modification du
 code applicatif ni ajout manuel d'en-têtes n'est nécessaire. Dans la démo, les pods
 restreignent l'injection au host de la gateway via
 `aiops.imperium.io/target-hosts=greenops-aigw.envoy-gateway-system.svc.cluster.local`.
+
+## Ce que la démo vérifie en plus
+
+- **Souveraineté** : les apps OpenAI US produisent des violations critiques ; l'app Mistral EU n'en produit aucune.
+- **Budget** : `finance-budget` franchit vite `Critical` puis `Exceeded`, et le contrôleur peut
+  **actuer** une reroute `gpt-4o -> gpt-4o-mini` au niveau de l'`AIGatewayRoute`.
+- **Honnêteté des garde-fous** : la démo n'active pas de garde-fous latence/erreur, car le collector
+  `aigw` ne publie pas encore ces signaux.
 
 ## Comprendre les critères qui pilotent la démo
 

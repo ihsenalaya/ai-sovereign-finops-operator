@@ -12,7 +12,8 @@ Merci de contribuer à l'AI Sovereign FinOps Operator.
 ## Standards de code
 - Go idiomatique, packages cohérents, commentaires sur les exports.
 - Pas de logique métier dans les controllers : la mettre dans un moteur pur.
-- Respecter le principe **lecture seule / non-bloquant** du MVP.
+- Par défaut, rester **lecture seule** ; toute mutation du plan de données doit passer par un chemin
+  d'enforcement explicite, testé et documenté.
 - Garder le stack **CNCF/OSS** (pas de dépendance propriétaire).
 
 ## Tests

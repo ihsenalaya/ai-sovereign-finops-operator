@@ -7,8 +7,9 @@ proviennent des manifestes de `automatisation/envoy-aigw/` — rien n'est invent
 
 > Principe : de vraies apps appellent OpenAI **à travers Envoy AI Gateway**, qui
 > **mesure les vrais tokens**. L'opérateur lit ces tokens et applique les critères
-> ci-dessous pour calculer **coût / souveraineté / budget / recommandations**.
-> Tout est `reportOnly` : on **mesure et alerte**, on ne bloque jamais le trafic.
+> ci-dessous pour calculer **coût / souveraineté / budget / recommandations**. Dans
+> cette démo, la souveraineté reste `reportOnly`, mais le budget finance peut
+> **rerouter réellement** `gpt-4o -> gpt-4o-mini`.
 
 ---
 
@@ -40,7 +41,7 @@ par namespace/app même sur un modèle partagé**, sans changer le code applicat
 |-----------|-------------|---------------|--------------------|---------------|
 | `rh` | chatbot-rh | **gpt-4o-mini** | OpenAI (US) | modèle le moins cher |
 | `finance` | risk-assistant | **gpt-4o** | OpenAI (US) | modèle cher |
-| `legal` | contract-review | **gpt-4o** | OpenAI (US) | **même modèle que finance**, autre namespace → prouve l'attribution par namespace |
+| `legal` | contract-review | **gpt-4o-mini** | OpenAI (US) | **même modèle que rh**, autre namespace → prouve l'attribution par namespace |
 | `marketing` | content-writer | **mistral-large-latest** | Mistral / Azure Foundry (**EU**) | **provider EU** → prouve que la souveraineté est *zone-aware* (aucune violation, cf. §6) |
 
 > Les 3 premières apps tapent sur OpenAI **US** (zone interdite) ; `marketing` tape sur
@@ -60,7 +61,7 @@ sont les **tarifs publics OpenAI** convertis en EUR (USD × 0,92).
 | Modèle (`AIModel`) | Provider | Tier coût | Données sensibles ? | Sert (ns/app) |
 |--------------------|----------|-----------|---------------------|---------------|
 | `gpt-4o` | openai-us | high | non | finance/risk-assistant |
-| `gpt-4o-mini` | openai-us-mini | low | non | rh/chatbot-rh |
+| `gpt-4o-mini` | openai-us-mini | low | non | rh/chatbot-rh (fallback réel pour finance ; aussi utilisé par legal via headers) |
 | `mistral-large` (`mistral-large-latest`) | mistral-eu | high | oui | marketing/content-writer |
 
 > gpt-4o est **~16× plus cher en sortie** que gpt-4o-mini (9,20 vs 0,55) — c'est ce
@@ -77,7 +78,7 @@ sont les **tarifs publics OpenAI** convertis en EUR (USD × 0,92).
 | Zones **autorisées** | `FR`, `EU` | seules ces zones sont conformes |
 | Zones **interdites** | `US`, `CN` | toute requête vers ces zones = **violation critique** |
 | Providers externes pour données sensibles | **interdits** | génère un *warning* en plus |
-| Mode | `reportOnly` | on alerte, on ne bloque pas |
+| Mode | `reportOnly` | on alerte, on ne bloque pas (pas de conflit avec le fallback budget) |
 
 ➡️ Comme les **3 apps** tapent sur OpenAI **US** (zone interdite), chacune produit une
 **violation critique**. C'est la source des panneaux #6 et des lignes `sovereignty`.
@@ -86,12 +87,14 @@ sont les **tarifs publics OpenAI** convertis en EUR (USD × 0,92).
 
 | Budget | Cible | Plafond mensuel | Modèle utilisé | Résultat attendu |
 |--------|-------|----------------:|----------------|------------------|
-| `finance-budget` | finance/risk-assistant | **0,50 €** | gpt-4o (cher) | dépasse → **Exceeded** |
+| `finance-budget` | finance/risk-assistant | **0,02 €** | gpt-4o (cher) | atteint vite `Critical` puis **reroute live** vers `gpt-4o-mini` |
 | `rh-budget` | rh/chatbot-rh | **0,20 €** | gpt-4o-mini (peu cher) | reste **WithinBudget** |
+| `legal-budget` | legal/contract-review | **0,20 €** | gpt-4o-mini (peu cher) | reste **WithinBudget** |
 
 Seuils communs : **warning ≥ 70 %**, **critical ≥ 90 %**, **hard limit ≥ 100 %**.
-Le pourcentage affiché = **prévision mensuelle (run-rate)** ÷ plafond. Le run-rate
-extrapole la dépense observée sur le mois complet (× ~30,4 si période journalière).
+Le pourcentage affiché = **dépense mensuelle observée** ÷ plafond. Pour `finance-budget`,
+`enforcementMode=enforce`, `fallbackOnPhase=Critical` et `minFallbackQualityTier=medium`
+autorisent le reroute live vers `gpt-4o-mini` dès que le budget entre en zone critique.
 
 ### 2.5 Règles du moteur de recommandations
 
@@ -110,8 +113,8 @@ extrapole la dépense observée sur le mois complet (× ~30,4 si période journa
 | 1 | **Total cost (EUR)** | tokens réels × prix §2.2 | somme du coût de toutes les apps |
 | 2 | **Tokens (in+out)** | trafic réel des apps §2.1 | volume mesuré par la gateway |
 | 3 | **Requests (total)** | boucles d'appel des apps | nombre d'appels réellement routés |
-| 4 | **Budget usage (%)** | budgets §2.4 + run-rate | finance dépasse (gpt-4o cher, plafond 0,50 €) ; rh reste sous (gpt-4o-mini) |
-| 5 | **Cost by namespace** | prix §2.2 par namespace | finance/legal coûtent plus que rh (gpt-4o vs mini) |
+| 4 | **Budget usage (%)** | budgets §2.4 | finance dépasse vite (gpt-4o cher, plafond 0,02 €) ; rh/legal restent sous (gpt-4o-mini) |
+| 5 | **Cost by namespace** | prix §2.2 par namespace | finance coûte plus que rh/legal tant que le fallback n'a pas encore basculé sur `gpt-4o-mini` |
 | 6 | **Requests violating sovereignty (by app)** | politique §2.3 (US interdit) | **volume** de requêtes fautives par app : rh/finance/legal (US) >0 ; **`marketing` (Mistral EU) absent = 0** (cf. §6) |
 | 7 | *(idem #6 selon disposition)* | — | — |
 | 8 | **Recommendations (actions, by app)** | règles §2.5 | 3 lignes `sovereignty` (les 3 apps US) ; **aucune pour `marketing`** (EU, conforme) + lignes `cost-saving` (gpt-4o & mistral-large, chers) |
@@ -133,7 +136,7 @@ Exemple typique :
 | legal | contract-review | sovereignty | 🔴 critical |
 | finance | risk-assistant | sovereignty | 🔴 critical |
 | legal | contract-review | cost-saving | 🟢 info |
-| finance | risk-assistant | cost-saving | 🟢 info |
+| finance | risk-assistant | cost-saving / reroute | 🟢 info / enforcement |
 
 ---
 
@@ -142,7 +145,7 @@ Exemple typique :
 1. **Catalogue & gateway** — `AIGateway` / `AIProvider` / `AIModel` (§2.2).
 2. **Attribution des coûts** — coût réel par namespace/app, même modèle partagé (§2.1).
 3. **Souveraineté par flux** — violations US réelles, par app (§2.3, panneau #6).
-4. **Budget & dégradation** — finance Exceeded vs rh WithinBudget (§2.4, panneau #4).
+4. **Budget & dégradation** — finance passe `Critical` puis reroute vers le fallback ; rh/legal restent WithinBudget (§2.4, panneau #4).
 5. **Break-even** managé vs auto-hébergé — `AIBreakEvenAnalysis`.
 6. **Reporting** — ConfigMap `ai-report-all-report` (`report.md` / `report.json`).
 7. **Observabilité** — métriques `ai_finops_*` → Prometheus → Grafana (ce dashboard).
