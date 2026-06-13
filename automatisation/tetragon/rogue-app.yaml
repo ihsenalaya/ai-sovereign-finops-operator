@@ -25,14 +25,27 @@ spec:
       containers:
         - name: caller
           image: curlimages/curl:8.10.1
-          # Hit OpenAI (US) directly every 30s — this is the forbidden-zone shadow flow.
+          # Hit OpenAI (US) directly a bounded number of times. This uses no API
+          # key and the 401/connection itself is the real egress evidence.
           command: ["/bin/sh", "-c"]
           args:
             - |
-              while true; do
-                curl -s -o /dev/null -m 10 https://api.openai.com/v1/models || true
-                sleep 30
+              set -eu
+              attempts="${ATTEMPT_LIMIT:-4}"
+              i=0
+              while [ "$i" -lt "$attempts" ]; do
+                i=$((i + 1))
+                code="$(curl -s -o /dev/null -w "%{http_code}" -m 10 https://api.openai.com/v1/models || true)"
+                [ -n "$code" ] || code="000"
+                echo "finance/rogue-script(api.openai.com): $code"
+                [ "$i" -ge "$attempts" ] && break
+                sleep "${ATTEMPT_SLEEP_SECONDS:-5}"
               done
+              echo "finance/rogue-script(api.openai.com): attempts=$i; idling"
+              tail -f /dev/null
+          env:
+            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: ATTEMPT_SLEEP_SECONDS, value: "5" }
           resources:
             requests:
               cpu: 10m

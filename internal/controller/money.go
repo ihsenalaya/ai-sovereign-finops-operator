@@ -23,10 +23,10 @@ import (
 )
 
 // moneyQuantity converts a float monetary amount to a resource.Quantity with
-// 2-decimal precision (currency cents). Engines compute in float64; the API
-// surface stores exact decimals.
+// micro-currency precision. Demo and per-request LLM costs are often below one
+// cent; rounding to cents would turn real measured spend into a misleading zero.
 func moneyQuantity(v float64) resource.Quantity {
-	return resource.MustParse(fmt.Sprintf("%.2f", v))
+	return resource.MustParse(fmt.Sprintf("%.6f", v))
 }
 
 // moneyQuantityPtr is the pointer form for optional status fields.

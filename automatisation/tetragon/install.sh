@@ -23,7 +23,11 @@ helm repo update >/dev/null
 helm upgrade --install tetragon cilium/tetragon \
   "${HELM_CTX[@]}" \
   -n "${TETRAGON_NS}" \
-  --set tetragon.enableProcessCred=true
+  --set tetragon.enableProcessCred=true \
+  --set tetragon.enableProcessNs=true \
+  --set tetragon.exportRateLimit=-1 \
+  --set tetragon.exportFilename=tetragon.log \
+  --set export.mode=stdout
 
 echo "==> Waiting for Tetragon DaemonSet to be ready"
 "${K[@]}" -n "${TETRAGON_NS}" rollout status ds/tetragon --timeout=180s

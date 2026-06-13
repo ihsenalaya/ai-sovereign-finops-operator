@@ -55,11 +55,18 @@ TETRAGON_NS="${TETRAGON_NS:-kube-system}"
 SHADOW_WAIT="${SHADOW_WAIT:-20}"
 SHADOW_REFRESH_RETRIES="${SHADOW_REFRESH_RETRIES:-6}"
 SHADOW_REFRESH_INTERVAL="${SHADOW_REFRESH_INTERVAL:-15}"
+EVIDENCE_DIR="${EVIDENCE_DIR:-}"
+AUTO_STOP_APPS="${AUTO_STOP_APPS:-false}"
+DELETE_CLUSTER_ON_EXIT="${DELETE_CLUSTER_ON_EXIT:-false}"
 FOUNDRY_ENDPOINT="${FOUNDRY_ENDPOINT:-https://greenops-foundry.services.ai.azure.com}"
 FOUNDRY_HOST="${FOUNDRY_HOST:-greenops-foundry.services.ai.azure.com}"
 FOUNDRY_API_VERSION="${FOUNDRY_API_VERSION:-2024-05-01-preview}"
 FOUNDRY_PRIMARY_DEPLOYMENT="${FOUNDRY_PRIMARY_DEPLOYMENT:-cohere-command-a-latest}"
 MISTRAL_READY="false"
+
+if [ -n "${EVIDENCE_DIR}" ] && [[ "${EVIDENCE_DIR}" != /* ]]; then
+  EVIDENCE_DIR="${REPO}/${EVIDENCE_DIR}"
+fi
 
 # helm OCI pulls fail when the WSL docker credential helper is used -> anonymous.
 export DOCKER_CONFIG="${DOCKER_CONFIG:-/tmp/emptydockercfg}"
@@ -67,6 +74,10 @@ mkdir -p "${DOCKER_CONFIG}"; [ -f "${DOCKER_CONFIG}/config.json" ] || echo '{}' 
 
 step() { printf '\n\033[1;36m== %s\033[0m\n' "$*"; }
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing required tool: $1" >&2; exit 1; }; }
+
+cluster_exists() {
+  kind get clusters 2>/dev/null | grep -qx "${CLUSTER}"
+}
 
 apply_file() {
   local file="$1" attempt
@@ -82,6 +93,86 @@ apply_file() {
 
 apply_stdin() {
   ${K} apply --request-timeout=2m -f -
+}
+
+capture_cmd() {
+  local file="$1"
+  shift
+  mkdir -p "$(dirname "${file}")"
+  "$@" >"${file}" 2>&1 || true
+}
+
+collect_evidence() {
+  local status="${1:-0}" dir pod
+  [ -n "${EVIDENCE_DIR}" ] || return 0
+  dir="${EVIDENCE_DIR}"
+  mkdir -p "${dir}/logs" "${dir}/yaml" "${dir}/metrics"
+  {
+    echo "status=${status}"
+    echo "timestamp=$(date -Is)"
+    echo "cluster=${CLUSTER}"
+    echo "context=${CTX}"
+    echo "operator_image=${OPERATOR_IMG}"
+    echo "build_operator=${BUILD_OPERATOR}"
+    echo "enable_mistral_demo=${ENABLE_MISTRAL_DEMO}"
+    echo "enable_tetragon=${ENABLE_TETRAGON}"
+    echo "enable_shadow_rogue=${ENABLE_SHADOW_ROGUE}"
+  } >"${dir}/run.env"
+
+  if ! cluster_exists; then
+    echo "cluster ${CLUSTER} not found; no Kubernetes evidence collected" >"${dir}/NO_CLUSTER.txt"
+    return 0
+  fi
+
+  step "collect evidence -> ${dir}"
+  capture_cmd "${dir}/kubectl_pods.txt" kubectl --context "${CTX}" get pods -A -o wide
+  capture_cmd "${dir}/kubectl_deployments.txt" kubectl --context "${CTX}" get deploy -A
+  capture_cmd "${dir}/kubectl_services.txt" kubectl --context "${CTX}" get svc -A
+  capture_cmd "${dir}/kubectl_events.txt" kubectl --context "${CTX}" get events -A --sort-by=.lastTimestamp
+  capture_cmd "${dir}/kubectl_aiops.txt" kubectl --context "${CTX}" get aigw,aiprov,aimodel,aisov,aibudget,aireport -A
+  capture_cmd "${dir}/yaml/aiops.yaml" kubectl --context "${CTX}" get aigw,aiprov,aimodel,aisov,aibudget,aireport -A -o yaml
+  capture_cmd "${dir}/yaml/aigateway-envoy.yaml" kubectl --context "${CTX}" get gateway,gatewayclass,aigatewayroute,aiservicebackend,backend,backendtlspolicy -A -o yaml
+  capture_cmd "${dir}/shadow-egress.json" kubectl --context "${CTX}" -n "${SHADOW_NS}" get configmap shadow-egress -o jsonpath='{.data.egress\.json}'
+  capture_cmd "${dir}/logs/operator.log" kubectl --context "${CTX}" -n "${NS_OP}" logs deploy/greenops-ai-sovereign-finops-operator --tail=500
+  capture_cmd "${dir}/logs/chatbot-rh.log" kubectl --context "${CTX}" -n rh logs deploy/chatbot-rh --all-containers --tail=200
+  capture_cmd "${dir}/logs/risk-assistant.log" kubectl --context "${CTX}" -n finance logs deploy/risk-assistant --all-containers --tail=200
+  capture_cmd "${dir}/logs/contract-review.log" kubectl --context "${CTX}" -n legal logs deploy/contract-review --all-containers --tail=200
+  capture_cmd "${dir}/logs/content-writer.log" kubectl --context "${CTX}" -n marketing logs deploy/content-writer --all-containers --tail=200
+  capture_cmd "${dir}/logs/shadow-ai-rogue.log" kubectl --context "${CTX}" -n finance logs deploy/shadow-ai-rogue --all-containers --tail=200
+  capture_cmd "${dir}/logs/envoy-gateway.log" kubectl --context "${CTX}" -n envoy-gateway-system logs deploy/envoy-gateway --tail=300
+  capture_cmd "${dir}/logs/aigw-controller.log" kubectl --context "${CTX}" -n envoy-ai-gateway-system logs deploy/ai-gateway-controller --tail=300
+  capture_cmd "${dir}/metrics/gateway_metrics.txt" kubectl --context "${CTX}" -n default run metrics-scrape --rm -i --restart=Never --image=curlimages/curl:8.10.1 --quiet -- curl -s -m 20 http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+
+  pod="$(kubectl --context "${CTX}" -n "${TETRAGON_NS}" get pods -l app.kubernetes.io/name=tetragon -o name 2>/dev/null | head -1 || true)"
+  if [ -n "${pod}" ]; then
+    capture_cmd "${dir}/logs/tetragon-export-file.jsonl" kubectl --context "${CTX}" -n "${TETRAGON_NS}" exec "${pod}" -c tetragon -- sh -c "tail -n 2000 /var/run/cilium/tetragon/tetragon.log"
+    capture_cmd "${dir}/logs/tetragon-export-stdout.log" kubectl --context "${CTX}" -n "${TETRAGON_NS}" logs "${pod}" -c export-stdout --tail=2000
+    capture_cmd "${dir}/logs/tetragon.log" kubectl --context "${CTX}" -n "${TETRAGON_NS}" logs "${pod}" -c tetragon --tail=500
+  fi
+}
+
+stop_consuming_apps() {
+  cluster_exists || return 0
+  step "stop consuming apps"
+  kubectl --context "${CTX}" -n rh scale deploy/chatbot-rh --replicas=0 >/dev/null 2>&1 || true
+  kubectl --context "${CTX}" -n finance scale deploy/risk-assistant --replicas=0 >/dev/null 2>&1 || true
+  kubectl --context "${CTX}" -n legal scale deploy/contract-review --replicas=0 >/dev/null 2>&1 || true
+  kubectl --context "${CTX}" -n marketing scale deploy/content-writer --replicas=0 >/dev/null 2>&1 || true
+  kubectl --context "${CTX}" -n finance scale deploy/shadow-ai-rogue --replicas=0 >/dev/null 2>&1 || true
+}
+
+verify_cleanup() {
+  local status=$?
+  trap - EXIT
+  collect_evidence "${status}"
+  if [ "${AUTO_STOP_APPS}" = "true" ]; then
+    stop_consuming_apps
+  fi
+  if [ "${DELETE_CLUSTER_ON_EXIT}" = "true" ]; then
+    step "delete kind cluster '${CLUSTER}'"
+    kind delete cluster --name "${CLUSTER}" >/dev/null 2>&1 || true
+  fi
+  exit "${status}"
 }
 
 load_foundry_key() {
@@ -166,7 +257,7 @@ ensure_cluster() {
     echo "RESET_CLUSTER=true: deleting any existing kind cluster '${CLUSTER}' first."
     kind delete cluster --name "${CLUSTER}" >/dev/null 2>&1 || true
   fi
-  if kind get clusters 2>/dev/null | grep -qx "${CLUSTER}"; then
+  if cluster_exists; then
     echo "cluster exists."
   else
     kind create cluster --name "${CLUSTER}" --config "${AUTO}/kind/kind-config.yaml" 2>/dev/null \
@@ -407,6 +498,17 @@ up() {
   echo "Let it run a few minutes so cost/tokens accumulate to meaningful values."
 }
 
+verify() {
+  AUTO_STOP_APPS="${VERIFY_AUTO_STOP_APPS:-true}"
+  DELETE_CLUSTER_ON_EXIT="${VERIFY_DELETE_CLUSTER_ON_EXIT:-true}"
+  if [ -z "${EVIDENCE_DIR}" ]; then
+    EVIDENCE_DIR="${REPO}/experimentation/results-live-kind-$(date +%Y%m%d-%H%M%S)"
+  fi
+  export AUTO_STOP_APPS DELETE_CLUSTER_ON_EXIT EVIDENCE_DIR
+  trap verify_cleanup EXIT
+  up
+}
+
 grafana() {
   echo "Grafana → http://localhost:3000   (anonymous admin)"
   ${K} -n "${NS_OP}" port-forward svc/demo-grafana 3000:3000
@@ -446,8 +548,9 @@ down() {
 
 case "${1:-up}" in
   up) up ;;
+  verify) verify ;;
   grafana) grafana ;;
   test) test_call ;;
   down) down ;;
-  *) echo "usage: $0 [up|grafana|test|down]" >&2; exit 1 ;;
+  *) echo "usage: $0 [up|verify|grafana|test|down]" >&2; exit 1 ;;
 esac

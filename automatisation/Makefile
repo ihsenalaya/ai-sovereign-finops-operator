@@ -4,7 +4,7 @@
 SHELL := /usr/bin/env bash
 SCRIPTS := scripts
 
-.PHONY: up up-gitea down cluster image argocd gitea apps wait local help real-demo real-demo-reset real-demo-test real-demo-down full-demo
+.PHONY: up up-gitea down cluster image argocd gitea apps wait local help real-demo real-demo-reset real-demo-verify real-demo-test real-demo-down full-demo
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -23,6 +23,9 @@ real-demo: ## Full zero-manual demo: 4 apps + AI Gateway + Tetragon shadow-AI
 
 real-demo-reset: ## Delete/recreate kind, then run the full zero-manual real demo
 	@RESET_CLUSTER=true envoy-aigw/deploy.sh up
+
+real-demo-verify: ## Bounded real demo: collect evidence, stop apps, delete kind on exit
+	@RESET_CLUSTER=true envoy-aigw/deploy.sh verify
 
 real-demo-test: ## Sanity call through the real AI Gateway demo
 	@envoy-aigw/deploy.sh test

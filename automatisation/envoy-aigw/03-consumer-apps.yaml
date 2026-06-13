@@ -1,5 +1,5 @@
 # Stable data-path Service for the Envoy AI Gateway + REAL consumer apps that
-# continuously call LLMs through the gateway. The operator's mutating webhook
+# make a bounded number of real calls through the gateway. The operator's mutating webhook
 # injects a sidecar HTTP proxy into opted-in namespaces; that proxy adds the
 # `x-greenops-namespace` / `x-greenops-app` headers automatically, so token cost
 # is attributed PER NAMESPACE / APP even when two apps in different namespaces
@@ -66,6 +66,10 @@ spec:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "chatbot-rh" }
+            - { name: SUCCESS_TARGET, value: "1" }
+            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
+            - { name: START_DELAY_SECONDS, value: "20" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
           command: ["/bin/sh", "-c"]
@@ -73,15 +77,24 @@ spec:
             - |
               set -eu
               PROMPTS='Explique la politique de conges en une phrase.|Redige un accueil pour un nouvel employe.|Comment soumettre une note de frais ?'
-              sleep 0
-              while true; do
-                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
-                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+              sleep "${START_DELAY_SECONDS:-20}"
+              attempt=0
+              success=0
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-4}" ] && [ "$success" -lt "${SUCCESS_TARGET:-1}" ]; do
+                attempt=$((attempt + 1))
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
+                code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
                   -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":220}" \
-                  "$GATEWAY" || true
-                sleep 210
+                  "$GATEWAY" || true)"
+                [ -n "$code" ] || code="000"
+                echo "$NS/$APP($MODEL): $code"
+                case "$code" in 2*) success=$((success + 1));; esac
+                [ "$success" -ge "${SUCCESS_TARGET:-1}" ] && break
+                sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
               done
+              echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
+              tail -f /dev/null
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -106,6 +119,10 @@ spec:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "risk-assistant" }
+            - { name: SUCCESS_TARGET, value: "1" }
+            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
+            - { name: START_DELAY_SECONDS, value: "85" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
           command: ["/bin/sh", "-c"]
@@ -113,15 +130,24 @@ spec:
             - |
               set -eu
               PROMPTS='Summarize key counterparty risks for a new supplier.|List three liquidity-risk indicators.|Explain value-at-risk in two sentences.'
-              sleep 15
-              while true; do
-                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
-                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+              sleep "${START_DELAY_SECONDS:-85}"
+              attempt=0
+              success=0
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-4}" ] && [ "$success" -lt "${SUCCESS_TARGET:-1}" ]; do
+                attempt=$((attempt + 1))
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
+                code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
                   -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":320}" \
-                  "$GATEWAY" || true
-                sleep 210
+                  "$GATEWAY" || true)"
+                [ -n "$code" ] || code="000"
+                echo "$NS/$APP($MODEL): $code"
+                case "$code" in 2*) success=$((success + 1));; esac
+                [ "$success" -ge "${SUCCESS_TARGET:-1}" ] && break
+                sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
               done
+              echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
+              tail -f /dev/null
 ---
 # Same model as rh and finance but a different namespace -> proves
 # per-namespace attribution works even on a shared model.
@@ -148,6 +174,10 @@ spec:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "contract-review" }
+            - { name: SUCCESS_TARGET, value: "1" }
+            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
+            - { name: START_DELAY_SECONDS, value: "150" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
           command: ["/bin/sh", "-c"]
@@ -155,12 +185,21 @@ spec:
             - |
               set -eu
               PROMPTS='Summarize the liability clauses of a SaaS contract.|List risks in an auto-renewal clause.|Explain an indemnification clause simply.'
-              sleep 30
-              while true; do
-                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
-                curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
+              sleep "${START_DELAY_SECONDS:-150}"
+              attempt=0
+              success=0
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-4}" ] && [ "$success" -lt "${SUCCESS_TARGET:-1}" ]; do
+                attempt=$((attempt + 1))
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
+                code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
                   -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":300}" \
-                  "$GATEWAY" || true
-                sleep 210
+                  "$GATEWAY" || true)"
+                [ -n "$code" ] || code="000"
+                echo "$NS/$APP($MODEL): $code"
+                case "$code" in 2*) success=$((success + 1));; esac
+                [ "$success" -ge "${SUCCESS_TARGET:-1}" ] && break
+                sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
               done
+              echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
+              tail -f /dev/null

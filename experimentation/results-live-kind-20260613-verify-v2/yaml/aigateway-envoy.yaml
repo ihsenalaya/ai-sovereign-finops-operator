@@ -1,0 +1,347 @@
+apiVersion: v1
+items:
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"gateway.networking.k8s.io/v1","kind":"Gateway","metadata":{"annotations":{},"name":"greenops-aigw","namespace":"default"},"spec":{"gatewayClassName":"greenops-aigw","infrastructure":{"parametersRef":{"group":"gateway.envoyproxy.io","kind":"EnvoyProxy","name":"greenops-aigw"}},"listeners":[{"name":"http","port":80,"protocol":"HTTP"}]}}
+    creationTimestamp: "2026-06-13T09:41:20Z"
+    generation: 1
+    name: greenops-aigw
+    namespace: default
+    resourceVersion: "1584"
+    uid: 6b9efcfd-58ea-4d6d-95a8-38370f65ed5b
+  spec:
+    gatewayClassName: greenops-aigw
+    infrastructure:
+      parametersRef:
+        group: gateway.envoyproxy.io
+        kind: EnvoyProxy
+        name: greenops-aigw
+    listeners:
+    - allowedRoutes:
+        namespaces:
+          from: Same
+      name: http
+      port: 80
+      protocol: HTTP
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:33Z"
+      message: The Gateway has been scheduled by Envoy Gateway
+      observedGeneration: 1
+      reason: Accepted
+      status: "True"
+      type: Accepted
+    - lastTransitionTime: "2026-06-13T09:42:33Z"
+      message: No addresses have been assigned to the Gateway
+      observedGeneration: 1
+      reason: AddressNotAssigned
+      status: "False"
+      type: Programmed
+    listeners:
+    - attachedRoutes: 2
+      conditions:
+      - lastTransitionTime: "2026-06-13T09:42:33Z"
+        message: Sending translated listener configuration to the data plane
+        observedGeneration: 1
+        reason: Programmed
+        status: "True"
+        type: Programmed
+      - lastTransitionTime: "2026-06-13T09:42:33Z"
+        message: Listener has been successfully translated
+        observedGeneration: 1
+        reason: Accepted
+        status: "True"
+        type: Accepted
+      - lastTransitionTime: "2026-06-13T09:42:33Z"
+        message: Listener references have been resolved
+        observedGeneration: 1
+        reason: ResolvedRefs
+        status: "True"
+        type: ResolvedRefs
+      name: http
+      supportedKinds:
+      - group: gateway.networking.k8s.io
+        kind: HTTPRoute
+      - group: gateway.networking.k8s.io
+        kind: GRPCRoute
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: GatewayClass
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"gateway.networking.k8s.io/v1","kind":"GatewayClass","metadata":{"annotations":{},"name":"greenops-aigw"},"spec":{"controllerName":"gateway.envoyproxy.io/gatewayclass-controller"}}
+    creationTimestamp: "2026-06-13T09:41:20Z"
+    finalizers:
+    - gateway-exists-finalizer.gateway.networking.k8s.io
+    generation: 1
+    name: greenops-aigw
+    resourceVersion: "1011"
+    uid: ad8e3d1e-314c-4dea-8875-51a7a26cbc5a
+  spec:
+    controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:20Z"
+      message: Valid GatewayClass
+      observedGeneration: 1
+      reason: Accepted
+      status: "True"
+      type: Accepted
+- apiVersion: aigateway.envoyproxy.io/v1beta1
+  kind: AIGatewayRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aigateway.envoyproxy.io/v1beta1","kind":"AIGatewayRoute","metadata":{"annotations":{},"name":"greenops-cohere","namespace":"default"},"spec":{"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"greenops-aigw"}],"rules":[{"backendRefs":[{"name":"greenops-cohere"}],"matches":[{"headers":[{"name":"x-ai-eg-model","type":"Exact","value":"cohere-command-a-latest"}]}]}]}}
+    creationTimestamp: "2026-06-13T09:41:20Z"
+    finalizers:
+    - aigateway.envoyproxy.io/finalizer
+    generation: 1
+    name: greenops-cohere
+    namespace: default
+    resourceVersion: "1010"
+    uid: 52d74ea2-583b-4427-8659-3cdb0d1cee93
+  spec:
+    parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: greenops-aigw
+    rules:
+    - backendRefs:
+      - name: greenops-cohere
+        priority: 0
+        weight: 1
+      matches:
+      - headers:
+        - name: x-ai-eg-model
+          type: Exact
+          value: cohere-command-a-latest
+      modelsOwnedBy: Envoy AI Gateway
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:20Z"
+      message: AI Gateway Route reconciled successfully
+      reason: ReconciliationSucceeded
+      status: "True"
+      type: Accepted
+- apiVersion: aigateway.envoyproxy.io/v1beta1
+  kind: AIGatewayRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aigateway.envoyproxy.io/v1beta1","kind":"AIGatewayRoute","metadata":{"annotations":{},"name":"greenops-mistral","namespace":"default"},"spec":{"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"greenops-aigw"}],"rules":[{"backendRefs":[{"name":"greenops-mistral"}],"matches":[{"headers":[{"name":"x-ai-eg-model","type":"Exact","value":"mistral-large-latest"}]}]}]}}
+    creationTimestamp: "2026-06-13T09:41:34Z"
+    finalizers:
+    - aigateway.envoyproxy.io/finalizer
+    generation: 1
+    name: greenops-mistral
+    namespace: default
+    resourceVersion: "1214"
+    uid: 4de35a54-d31b-4afe-afd2-3f69b5d304ce
+  spec:
+    parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: greenops-aigw
+    rules:
+    - backendRefs:
+      - name: greenops-mistral
+        priority: 0
+        weight: 1
+      matches:
+      - headers:
+        - name: x-ai-eg-model
+          type: Exact
+          value: mistral-large-latest
+      modelsOwnedBy: Envoy AI Gateway
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:35Z"
+      message: AI Gateway Route reconciled successfully
+      reason: ReconciliationSucceeded
+      status: "True"
+      type: Accepted
+- apiVersion: aigateway.envoyproxy.io/v1beta1
+  kind: AIServiceBackend
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aigateway.envoyproxy.io/v1beta1","kind":"AIServiceBackend","metadata":{"annotations":{},"name":"greenops-cohere","namespace":"default"},"spec":{"backendRef":{"group":"gateway.envoyproxy.io","kind":"Backend","name":"greenops-cohere"},"schema":{"name":"AzureOpenAI","version":"2024-05-01-preview"}}}
+    creationTimestamp: "2026-06-13T09:41:20Z"
+    finalizers:
+    - aigateway.envoyproxy.io/finalizer
+    generation: 1
+    name: greenops-cohere
+    namespace: default
+    resourceVersion: "1005"
+    uid: fcf1650e-1af6-4f83-b5c9-fddae59fb171
+  spec:
+    backendRef:
+      group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-cohere
+    schema:
+      name: AzureOpenAI
+      version: 2024-05-01-preview
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:20Z"
+      message: AIServiceBackend reconciled successfully
+      reason: ReconciliationSucceeded
+      status: "True"
+      type: Accepted
+- apiVersion: aigateway.envoyproxy.io/v1beta1
+  kind: AIServiceBackend
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aigateway.envoyproxy.io/v1beta1","kind":"AIServiceBackend","metadata":{"annotations":{},"name":"greenops-mistral","namespace":"default"},"spec":{"backendRef":{"group":"gateway.envoyproxy.io","kind":"Backend","name":"greenops-mistral"},"schema":{"name":"AzureOpenAI","version":"2024-05-01-preview"}}}
+    creationTimestamp: "2026-06-13T09:41:34Z"
+    finalizers:
+    - aigateway.envoyproxy.io/finalizer
+    generation: 1
+    name: greenops-mistral
+    namespace: default
+    resourceVersion: "1194"
+    uid: ad18ccfb-a2fd-474d-bfce-75a6a4e0c17a
+  spec:
+    backendRef:
+      group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-mistral
+    schema:
+      name: AzureOpenAI
+      version: 2024-05-01-preview
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:35Z"
+      message: AIServiceBackend reconciled successfully
+      reason: ReconciliationSucceeded
+      status: "True"
+      type: Accepted
+- apiVersion: gateway.envoyproxy.io/v1alpha1
+  kind: Backend
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"gateway.envoyproxy.io/v1alpha1","kind":"Backend","metadata":{"annotations":{},"name":"greenops-cohere","namespace":"default"},"spec":{"endpoints":[{"fqdn":{"hostname":"greenops-foundry.services.ai.azure.com","port":443}}]}}
+    creationTimestamp: "2026-06-13T09:41:20Z"
+    generation: 1
+    name: greenops-cohere
+    namespace: default
+    resourceVersion: "1014"
+    uid: 68e3ff44-f03b-44e6-8c14-e9c73dde1a8d
+  spec:
+    endpoints:
+    - fqdn:
+        hostname: greenops-foundry.services.ai.azure.com
+        port: 443
+    type: Endpoints
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:20Z"
+      message: The Backend was accepted
+      observedGeneration: 1
+      reason: Accepted
+      status: "True"
+      type: Accepted
+- apiVersion: gateway.envoyproxy.io/v1alpha1
+  kind: Backend
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"gateway.envoyproxy.io/v1alpha1","kind":"Backend","metadata":{"annotations":{},"name":"greenops-mistral","namespace":"default"},"spec":{"endpoints":[{"fqdn":{"hostname":"greenops-foundry.services.ai.azure.com","port":443}}]}}
+    creationTimestamp: "2026-06-13T09:41:35Z"
+    generation: 1
+    name: greenops-mistral
+    namespace: default
+    resourceVersion: "1207"
+    uid: 38b69ab4-29ed-4ad5-a646-1263a13c9442
+  spec:
+    endpoints:
+    - fqdn:
+        hostname: greenops-foundry.services.ai.azure.com
+        port: 443
+    type: Endpoints
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:35Z"
+      message: The Backend was accepted
+      observedGeneration: 1
+      reason: Accepted
+      status: "True"
+      type: Accepted
+- apiVersion: gateway.networking.k8s.io/v1alpha3
+  kind: BackendTLSPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"gateway.networking.k8s.io/v1alpha3","kind":"BackendTLSPolicy","metadata":{"annotations":{},"name":"greenops-cohere-tls","namespace":"default"},"spec":{"targetRefs":[{"group":"gateway.envoyproxy.io","kind":"Backend","name":"greenops-cohere"}],"validation":{"hostname":"greenops-foundry.services.ai.azure.com","wellKnownCACertificates":"System"}}}
+    creationTimestamp: "2026-06-13T09:41:20Z"
+    generation: 1
+    name: greenops-cohere-tls
+    namespace: default
+    resourceVersion: "1020"
+    uid: 24f3d68c-fc68-44bb-99c4-241f21ea51e7
+  spec:
+    targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-cohere
+    validation:
+      hostname: greenops-foundry.services.ai.azure.com
+      wellKnownCACertificates: System
+  status:
+    ancestors:
+    - ancestorRef:
+        group: gateway.networking.k8s.io
+        kind: Gateway
+        name: greenops-aigw
+      conditions:
+      - lastTransitionTime: "2026-06-13T09:41:20Z"
+        message: Policy has been accepted.
+        observedGeneration: 1
+        reason: Accepted
+        status: "True"
+        type: Accepted
+      controllerName: gateway.envoyproxy.io/gatewayclass-controller
+- apiVersion: gateway.networking.k8s.io/v1alpha3
+  kind: BackendTLSPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"gateway.networking.k8s.io/v1alpha3","kind":"BackendTLSPolicy","metadata":{"annotations":{},"name":"greenops-mistral-tls","namespace":"default"},"spec":{"targetRefs":[{"group":"gateway.envoyproxy.io","kind":"Backend","name":"greenops-mistral"}],"validation":{"hostname":"greenops-foundry.services.ai.azure.com","wellKnownCACertificates":"System"}}}
+    creationTimestamp: "2026-06-13T09:41:35Z"
+    generation: 1
+    name: greenops-mistral-tls
+    namespace: default
+    resourceVersion: "1210"
+    uid: 5bebd765-3a3a-4cc0-a029-2f673c60712f
+  spec:
+    targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-mistral
+    validation:
+      hostname: greenops-foundry.services.ai.azure.com
+      wellKnownCACertificates: System
+  status:
+    ancestors:
+    - ancestorRef:
+        group: gateway.networking.k8s.io
+        kind: Gateway
+        name: greenops-aigw
+      conditions:
+      - lastTransitionTime: "2026-06-13T09:41:35Z"
+        message: Policy has been accepted.
+        observedGeneration: 1
+        reason: Accepted
+        status: "True"
+        type: Accepted
+      controllerName: gateway.envoyproxy.io/gatewayclass-controller
+kind: List
+metadata:
+  resourceVersion: ""

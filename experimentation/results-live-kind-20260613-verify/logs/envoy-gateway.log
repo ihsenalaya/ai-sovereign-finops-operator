@@ -1,0 +1,300 @@
+2026-06-13T09:29:54.935Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:29:54.940Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:29:54.942Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:54.945Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:54.946Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:54.946Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:54.946Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:29:54.947Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:29:54.947Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:29:54.953Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:29:54.953Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "Backend"}
+2026-06-13T09:29:54.954Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "Backend"}
+2026-06-13T09:29:54.954Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:29:54.954Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:29:54.954Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:29:55.603Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:29:55.604Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:29:55.605Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:29:55.605Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:29:55.605Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:29:55.607Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:29:55.607Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:29:55.607Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:29:55.607Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:55.607Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:55.607Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:55.608Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:29:55.608Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:29:55.608Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:29:55.608Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:29:55.608Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:29:55.608Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:29:55.845Z	INFO	xds	v3/simple.go:569	open delta watch ID:14 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "7"
+2026-06-13T09:29:55.859Z	INFO	xds	v3/simple.go:569	open delta watch ID:15 for type.googleapis.com/envoy.config.cluster.v3.Cluster Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "7"
+2026-06-13T09:29:55.882Z	INFO	xds	v3/simple.go:569	open delta watch ID:16 for type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.Secret Resources:map[greenops-cohere-tls/default-ca:{} greenops-mistral-tls/default-ca:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "7"
+2026-06-13T09:29:55.898Z	INFO	xds	v3/simple.go:569	open delta watch ID:17 for type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.Secret Resources:map[greenops-cohere-tls/default-ca:{} greenops-mistral-tls/default-ca:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "7"
+2026-06-13T09:29:55.934Z	INFO	xds	v3/simple.go:569	open delta watch ID:18 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "7"
+2026-06-13T09:29:55.948Z	INFO	xds	v3/simple.go:569	open delta watch ID:19 for type.googleapis.com/envoy.config.route.v3.RouteConfiguration Resources:map[default/greenops-aigw/http:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "7"
+2026-06-13T09:30:00.648Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:00.648Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:00.649Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:00.650Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:00.650Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:00.651Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:00.652Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:00.670Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:00.671Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:00.671Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:00.671Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:02.979Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:02.980Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:02.980Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:02.980Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:02.980Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:02.980Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:02.980Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:02.981Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:02.981Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:02.982Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:02.983Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:02.983Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:02.983Z	INFO	xds	runner/runner.go:203	received an update	{"runner": "xds"}
+2026-06-13T09:30:02.983Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:02.983Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:02.983Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:02.984Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:02.993Z	INFO	xds	v3/simple.go:569	open delta watch ID:20 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "8"
+2026-06-13T09:30:02.993Z	INFO	xds	v3/simple.go:569	open delta watch ID:21 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "8"
+2026-06-13T09:30:02.995Z	INFO	xds	v3/simple.go:569	open delta watch ID:22 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-54f887cbf5-n4927",  version "8"
+2026-06-13T09:30:02.995Z	INFO	xds	v3/simple.go:569	open delta watch ID:23 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-54f887cbf5-n4927",  version "8"
+2026-06-13T09:30:03.004Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.004Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.004Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.005Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.005Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:03.005Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:03.025Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:03.046Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:03.046Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:03.046Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:03.046Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:03.046Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:03.046Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:03.047Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:03.047Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:03.048Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:03.049Z	INFO	xds	runner/runner.go:203	received an update	{"runner": "xds"}
+2026-06-13T09:30:03.059Z	INFO	xds	v3/simple.go:569	open delta watch ID:24 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-54f887cbf5-n4927",  version "9"
+2026-06-13T09:30:03.060Z	INFO	xds	v3/simple.go:569	open delta watch ID:25 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-54f887cbf5-n4927",  version "9"
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:03.060Z	INFO	xds	v3/simple.go:569	open delta watch ID:26 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "9"
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.060Z	INFO	xds	v3/simple.go:569	open delta watch ID:27 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "9"
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.060Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.061Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:03.061Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:03.061Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:03.061Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:03.101Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:03.122Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:05.691Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:05.691Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:05.691Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:05.691Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:05.691Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:05.691Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:05.692Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:05.692Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:05.692Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:05.693Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:05.694Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:05.694Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:05.694Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:05.694Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:05.694Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:05.712Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:05.713Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:05.713Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:05.713Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:05.713Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:05.713Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:07.853Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:07.853Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:07.854Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:07.856Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:07.856Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:07.856Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:07.860Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:07.862Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:07.868Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:07.879Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:07.873Z	INFO	xds	runner/runner.go:203	received an update	{"runner": "xds"}
+2026-06-13T09:30:07.879Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:07.879Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:07.910Z	INFO	xds	v3/simple.go:569	open delta watch ID:28 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "10"
+2026-06-13T09:30:07.912Z	INFO	xds	v3/simple.go:569	open delta watch ID:29 for type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment Resources:map[default/greenops-aigw:{}] from nodeID: "envoy-default-greenops-aigw-dac3126f-54f887cbf5-n4927",  version "10"
+2026-06-13T09:30:07.912Z	INFO	xds	v3/simple.go:569	open delta watch ID:30 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-866869bf86-7pvmc",  version "10"
+2026-06-13T09:30:07.926Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:07.926Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:07.926Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:07.926Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:07.926Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:07.926Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:07.928Z	INFO	xds	v3/simple.go:569	open delta watch ID:31 for type.googleapis.com/envoy.config.listener.v3.Listener Resources:map[] from nodeID: "envoy-default-greenops-aigw-dac3126f-54f887cbf5-n4927",  version "10"
+2026-06-13T09:30:18.524Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:18.525Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:18.525Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:18.526Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:18.526Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:18.526Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:18.527Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:18.528Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:18.528Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:18.528Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:18.529Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:18.529Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:18.529Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:18.529Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:18.531Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:18.531Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:18.531Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:18.533Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:18.534Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:18.534Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:18.534Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:18.535Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:18.535Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:18.535Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:18.535Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:18.535Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:18.536Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:18.536Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:18.536Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:18.567Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:51.437Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:51.437Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:51.437Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:51.438Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:51.439Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:51.439Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:51.439Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:51.439Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:51.439Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:51.439Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:51.440Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:51.442Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:51.444Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:51.445Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:51.445Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:51.445Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:51.445Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:51.446Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:51.446Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:51.446Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:51.446Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:51.446Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:51.446Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:52.059Z	INFO	provider	kubernetes/controller.go:270	reconciling gateways	{"runner": "provider"}
+2026-06-13T09:30:52.059Z	INFO	provider	kubernetes/controller.go:1039	processing OIDC HMAC Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-13T09:30:52.060Z	INFO	provider	kubernetes/controller.go:1061	processing Envoy TLS Secret	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-13T09:30:52.060Z	INFO	provider	kubernetes/controller.go:1400	processing Gateway	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:52.060Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:52.060Z	INFO	provider	kubernetes/routes.go:248	processing HTTPRoute	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:2367	processing EnvoyProxy	{"runner": "provider", "namespace": "default", "name": "greenops-aigw"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-cohere"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Backend", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:669	added Backend to resource tree	{"runner": "provider", "namespace": "default", "name": "greenops-mistral"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:606	processing Backend	{"runner": "provider", "kind": "Service", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:623	added Service to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f"}
+2026-06-13T09:30:52.061Z	INFO	provider	kubernetes/controller.go:756	added EndpointSlice to resource tree	{"runner": "provider", "namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-scq88"}
+2026-06-13T09:30:52.062Z	INFO	provider	kubernetes/controller.go:542	reconciled gateways successfully	{"runner": "provider"}
+2026-06-13T09:30:52.062Z	INFO	gateway-api	runner/runner.go:131	received an update	{"runner": "gateway-api"}
+2026-06-13T09:30:52.062Z	INFO	gateway-api	runner/runner.go:180	extension resources	{"runner": "gateway-api", "GVKs count": 0}
+2026-06-13T09:30:52.065Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere", "kind": "HTTPRoute"}
+2026-06-13T09:30:52.065Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:52.065Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral", "kind": "HTTPRoute"}
+2026-06-13T09:30:52.066Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral", "namespace": "default", "kind": "HTTPRoute"}
+2026-06-13T09:30:52.066Z	INFO	infrastructure	runner/runner.go:100	received an update	{"runner": "infrastructure"}
+2026-06-13T09:30:52.067Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-cohere-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:52.067Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-cohere-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:52.067Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw", "kind": "Gateway"}
+2026-06-13T09:30:52.100Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-mistral-tls", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:52.101Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-mistral-tls", "namespace": "default", "kind": "BackendTLSPolicy"}
+2026-06-13T09:30:52.101Z	INFO	provider	kubernetes/status_updater.go:143	received a status update	{"runner": "provider", "namespace": "default", "name": "greenops-aigw-buffer", "kind": "ClientTrafficPolicy"}
+2026-06-13T09:30:52.101Z	INFO	provider	kubernetes/status_updater.go:108	status unchanged, bypassing update	{"runner": "provider", "name": "greenops-aigw-buffer", "namespace": "default", "kind": "ClientTrafficPolicy"}

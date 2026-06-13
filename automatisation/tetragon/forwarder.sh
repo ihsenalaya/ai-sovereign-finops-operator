@@ -32,6 +32,8 @@ echo "==> Reading Tetragon export log (${EXPORT_LOG}, last ${TAIL} lines)"
 TMP="$(mktemp)"
 trap 'rm -f "${TMP}"' EXIT
 "${K[@]}" -n "${TETRAGON_NS}" exec "${POD}" -c tetragon -- sh -c "tail -n ${TAIL} ${EXPORT_LOG}" >"${TMP}" 2>/dev/null || true
+"${K[@]}" -n "${TETRAGON_NS}" logs "${POD}" -c export-stdout --tail="${TAIL}" >>"${TMP}" 2>/dev/null || true
+"${K[@]}" -n "${TETRAGON_NS}" logs "${POD}" -c tetragon --tail="${TAIL}" >>"${TMP}" 2>/dev/null || true
 
 echo "==> Building ${CM} from observed egress (resolving known LLM hosts)"
 EGRESS_JSON="$(HOSTS="${HOSTS}" python3 /dev/stdin "${TMP}" <<'PY'

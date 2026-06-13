@@ -1,0 +1,4 @@
+rh/chatbot-rh(cohere-command-a-latest): 000
+rh/chatbot-rh(cohere-command-a-latest): 200
+rh/chatbot-rh(cohere-command-a-latest): successes=1 attempts=2; idling
+2026/06/13 09:30:00 starting greenops header proxy on :15088

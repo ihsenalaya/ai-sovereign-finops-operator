@@ -69,6 +69,7 @@ affiche les vraies métriques `ai_finops_*`.
 cd automatisation
 make real-demo
 make real-demo-reset
+make real-demo-verify
 make real-demo-test
 make real-demo-down
 ```
@@ -81,6 +82,15 @@ Helm operator, Envoy Gateway, Envoy AI Gateway, catalogue Cohere + Mistral, les
 Pour une exécution strictement sans état précédent, utilisez `make real-demo-reset` :
 la cible supprime d'abord le cluster kind `greenops`, le recrée, puis relance toute
 la stack de bout en bout.
+
+Pour une vérification reproductible sans laisser d'app consommatrice tourner,
+utilisez `make real-demo-verify`. Cette cible:
+
+1. recrée le cluster kind;
+2. lance les 4 apps avec un seul succès réel cible par app et des tentatives bornées;
+3. collecte les preuves (`kubectl get`, CRD YAML, logs, métriques gateway, Tetragon);
+4. scale les apps consommatrices à zéro;
+5. supprime le cluster kind même en cas d'échec.
 
 Important : ce chemin requiert une **clé Azure AI Foundry réellement utilisable**
 dans `docs/foundrykey.txt` (ou `docs/mistralkey.txt` pour compatibilité). Le
@@ -102,6 +112,9 @@ Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 | `REQUIRE_SHADOW_EGRESS` | `true` | fait échouer la démo si `shadow-egress` reste vide |
 | `REAL_DEMO_ISOLATE_GITOPS` | `true` | désactive l'auto-sync ArgoCD existant et nettoie les anciens samples avant la démo réelle |
 | `RESET_CLUSTER` | `false` | supprime/recrée le cluster avant la démo (`make real-demo-reset`) |
+| `EVIDENCE_DIR` | `experimentation/results-live-kind-<date>` en mode verify | dossier des preuves collectées |
+| `VERIFY_AUTO_STOP_APPS` | `true` | scale les apps à zéro à la fin de `real-demo-verify` |
+| `VERIFY_DELETE_CLUSTER_ON_EXIT` | `true` | supprime le cluster kind à la fin de `real-demo-verify` |
 | `REPO_URL` | remote `origin` ou repo Gitea in-cluster | source Git pour ArgoCD |
 | `REVISION` | branche courante | révision Git ciblée |
 | `GITOPS_SOURCE` | `auto` | `auto` (origin), `gitea` (repo in-cluster) |

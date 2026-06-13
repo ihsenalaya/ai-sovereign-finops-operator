@@ -1,0 +1,183 @@
+NAMESPACE                 LAST SEEN   TYPE      REASON                    OBJECT                                                        MESSAGE
+default                   7m9s        Normal    Starting                  node/greenops-control-plane                                   
+kube-system               7m19s       Normal    LeaderElection            lease/kube-controller-manager                                 greenops-control-plane_7da6c1e8-59b2-488f-80bb-93a2bcffe1ca became leader
+kube-system               7m18s       Normal    LeaderElection            lease/kube-scheduler                                          greenops-control-plane_b7d6a2fe-151a-4e43-8c7c-f32df96d3b73 became leader
+default                   7m18s       Normal    Starting                  node/greenops-control-plane                                   Starting kubelet.
+default                   7m18s       Normal    NodeAllocatableEnforced   node/greenops-control-plane                                   Updated Node Allocatable limit across pods
+default                   7m17s       Normal    NodeHasSufficientMemory   node/greenops-control-plane                                   Node greenops-control-plane status is now: NodeHasSufficientMemory
+default                   7m17s       Normal    NodeHasNoDiskPressure     node/greenops-control-plane                                   Node greenops-control-plane status is now: NodeHasNoDiskPressure
+default                   7m17s       Normal    NodeHasSufficientPID      node/greenops-control-plane                                   Node greenops-control-plane status is now: NodeHasSufficientPID
+kube-system               7m13s       Normal    ScalingReplicaSet         deployment/coredns                                            Scaled up replica set coredns-7d764666f9 from 0 to 2
+default                   7m13s       Normal    RegisteredNode            node/greenops-control-plane                                   Node greenops-control-plane event: Registered Node greenops-control-plane in Controller
+kube-system               7m13s       Warning   NodeNotReady              pod/kube-controller-manager-greenops-control-plane            Node is not ready
+kube-system               7m12s       Normal    SuccessfulCreate          replicaset/coredns-7d764666f9                                 Created pod: coredns-7d764666f9-s8wh7
+kube-system               7m12s       Warning   FailedScheduling          pod/coredns-7d764666f9-s8wh7                                  0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+local-path-storage        7m12s       Normal    SuccessfulCreate          replicaset/local-path-provisioner-67b8995b4b                  Created pod: local-path-provisioner-67b8995b4b-bqsg4
+kube-system               7m12s       Normal    SuccessfulCreate          daemonset/kube-proxy                                          Created pod: kube-proxy-6mc8x
+kube-system               7m12s       Normal    Scheduled                 pod/kindnet-7mshp                                             Successfully assigned kube-system/kindnet-7mshp to greenops-control-plane
+kube-system               7m12s       Normal    SuccessfulCreate          daemonset/kindnet                                             Created pod: kindnet-7mshp
+local-path-storage        7m12s       Warning   FailedScheduling          pod/local-path-provisioner-67b8995b4b-bqsg4                   0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+local-path-storage        7m12s       Normal    ScalingReplicaSet         deployment/local-path-provisioner                             Scaled up replica set local-path-provisioner-67b8995b4b from 0 to 1
+kube-system               7m12s       Warning   FailedScheduling          pod/coredns-7d764666f9-bljdp                                  0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system               7m12s       Normal    Scheduled                 pod/kube-proxy-6mc8x                                          Successfully assigned kube-system/kube-proxy-6mc8x to greenops-control-plane
+kube-system               7m12s       Normal    SuccessfulCreate          replicaset/coredns-7d764666f9                                 Created pod: coredns-7d764666f9-bljdp
+kube-system               7m11s       Normal    Pulled                    pod/kindnet-7mshp                                             Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system               7m11s       Normal    Pulled                    pod/kube-proxy-6mc8x                                          Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+kube-system               7m10s       Normal    Started                   pod/kube-proxy-6mc8x                                          Container started
+kube-system               7m10s       Normal    Created                   pod/kube-proxy-6mc8x                                          Container created
+kube-system               7m8s        Normal    Created                   pod/kindnet-7mshp                                             Container created
+kube-system               7m6s        Normal    Started                   pod/kindnet-7mshp                                             Container started
+kube-system               6m55s       Normal    Scheduled                 pod/coredns-7d764666f9-s8wh7                                  Successfully assigned kube-system/coredns-7d764666f9-s8wh7 to greenops-control-plane
+kube-system               6m55s       Normal    Scheduled                 pod/coredns-7d764666f9-bljdp                                  Successfully assigned kube-system/coredns-7d764666f9-bljdp to greenops-control-plane
+local-path-storage        6m55s       Normal    Scheduled                 pod/local-path-provisioner-67b8995b4b-bqsg4                   Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-bqsg4 to greenops-control-plane
+default                   6m55s       Normal    NodeReady                 node/greenops-control-plane                                   Node greenops-control-plane status is now: NodeReady
+kube-system               6m53s       Normal    Pulled                    pod/coredns-7d764666f9-bljdp                                  Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+kube-system               6m53s       Normal    Pulled                    pod/coredns-7d764666f9-s8wh7                                  Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+local-path-storage        6m53s       Normal    Pulled                    pod/local-path-provisioner-67b8995b4b-bqsg4                   Container image "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system               6m51s       Normal    Created                   pod/coredns-7d764666f9-bljdp                                  Container created
+kube-system               6m50s       Normal    Started                   pod/coredns-7d764666f9-s8wh7                                  Container started
+kube-system               6m50s       Normal    Created                   pod/coredns-7d764666f9-s8wh7                                  Container created
+kube-system               6m50s       Normal    Started                   pod/coredns-7d764666f9-bljdp                                  Container started
+local-path-storage        6m42s       Normal    Created                   pod/local-path-provisioner-67b8995b4b-bqsg4                   Container created
+local-path-storage        6m42s       Normal    Started                   pod/local-path-provisioner-67b8995b4b-bqsg4                   Container started
+greenops-system           5m20s       Normal    SuccessfulCreate          replicaset/greenops-ai-sovereign-finops-operator-5c497f985c   Created pod: greenops-ai-sovereign-finops-operator-5c497f985c-cc2z2
+greenops-system           5m20s       Normal    ScalingReplicaSet         deployment/greenops-ai-sovereign-finops-operator              Scaled up replica set greenops-ai-sovereign-finops-operator-5c497f985c from 0 to 1
+greenops-system           5m20s       Normal    Scheduled                 pod/greenops-ai-sovereign-finops-operator-5c497f985c-cc2z2    Successfully assigned greenops-system/greenops-ai-sovereign-finops-operator-5c497f985c-cc2z2 to greenops-control-plane
+greenops-system           5m19s       Normal    Started                   pod/greenops-ai-sovereign-finops-operator-5c497f985c-cc2z2    Container started
+greenops-system           5m19s       Normal    Pulled                    pod/greenops-ai-sovereign-finops-operator-5c497f985c-cc2z2    Container image "ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7" already present on machine and can be accessed by the pod
+greenops-system           5m19s       Normal    Created                   pod/greenops-ai-sovereign-finops-operator-5c497f985c-cc2z2    Container created
+envoy-gateway-system      4m55s       Normal    Scheduled                 pod/eg-gateway-helm-certgen-x6sg2                             Successfully assigned envoy-gateway-system/eg-gateway-helm-certgen-x6sg2 to greenops-control-plane
+envoy-gateway-system      4m55s       Normal    SuccessfulCreate          job/eg-gateway-helm-certgen                                   Created pod: eg-gateway-helm-certgen-x6sg2
+envoy-gateway-system      4m55s       Normal    Pulling                   pod/eg-gateway-helm-certgen-x6sg2                             Pulling image "docker.io/envoyproxy/gateway:v1.5.0"
+envoy-gateway-system      4m44s       Normal    Started                   pod/eg-gateway-helm-certgen-x6sg2                             Container started
+envoy-gateway-system      4m44s       Normal    Created                   pod/eg-gateway-helm-certgen-x6sg2                             Container created
+envoy-gateway-system      4m44s       Normal    Pulled                    pod/eg-gateway-helm-certgen-x6sg2                             Successfully pulled image "docker.io/envoyproxy/gateway:v1.5.0" in 10.526s (10.526s including waiting). Image size: 74229543 bytes.
+envoy-gateway-system      4m36s       Normal    ScalingReplicaSet         deployment/envoy-gateway                                      Scaled up replica set envoy-gateway-6b9486fbbc from 0 to 1
+envoy-gateway-system      4m36s       Normal    Completed                 job/eg-gateway-helm-certgen                                   Job completed
+envoy-gateway-system      4m36s       Normal    SuccessfulCreate          replicaset/envoy-gateway-6b9486fbbc                           Created pod: envoy-gateway-6b9486fbbc-jv589
+envoy-gateway-system      4m36s       Normal    Pulled                    pod/envoy-gateway-6b9486fbbc-jv589                            Container image "docker.io/envoyproxy/gateway:v1.5.0" already present on machine and can be accessed by the pod
+envoy-gateway-system      4m36s       Normal    Scheduled                 pod/envoy-gateway-6b9486fbbc-jv589                            Successfully assigned envoy-gateway-system/envoy-gateway-6b9486fbbc-jv589 to greenops-control-plane
+envoy-gateway-system      4m35s       Normal    LeaderElection            lease/5b9825d2.gateway.envoyproxy.io                          envoy-gateway-6b9486fbbc-jv589_adcb08f9-9383-4381-be12-2546414f30d4 became leader
+envoy-gateway-system      4m35s       Normal    Started                   pod/envoy-gateway-6b9486fbbc-jv589                            Container started
+envoy-gateway-system      4m35s       Normal    Created                   pod/envoy-gateway-6b9486fbbc-jv589                            Container created
+envoy-ai-gateway-system   4m16s       Normal    ScalingReplicaSet         deployment/ai-gateway-controller                              Scaled up replica set ai-gateway-controller-897c74ddb from 0 to 1
+envoy-ai-gateway-system   4m16s       Normal    Scheduled                 pod/ai-gateway-controller-897c74ddb-wjp92                     Successfully assigned envoy-ai-gateway-system/ai-gateway-controller-897c74ddb-wjp92 to greenops-control-plane
+envoy-ai-gateway-system   4m16s       Normal    SuccessfulCreate          replicaset/ai-gateway-controller-897c74ddb                    Created pod: ai-gateway-controller-897c74ddb-wjp92
+envoy-ai-gateway-system   4m15s       Normal    Pulling                   pod/ai-gateway-controller-897c74ddb-wjp92                     Pulling image "docker.io/envoyproxy/ai-gateway-controller:v0.7.0"
+envoy-ai-gateway-system   4m6s        Normal    Started                   pod/ai-gateway-controller-897c74ddb-wjp92                     Container started
+envoy-ai-gateway-system   4m6s        Normal    Pulled                    pod/ai-gateway-controller-897c74ddb-wjp92                     Successfully pulled image "docker.io/envoyproxy/ai-gateway-controller:v0.7.0" in 8.892s (8.892s including waiting). Image size: 45438281 bytes.
+envoy-ai-gateway-system   4m6s        Normal    Created                   pod/ai-gateway-controller-897c74ddb-wjp92                     Container created
+envoy-ai-gateway-system   4m5s        Normal    LeaderElection            lease/envoy-ai-gateway-controller                             ai-gateway-controller-897c74ddb-wjp92_a5ff1081-438d-4a8a-95ff-68bf6b1dacdd became leader
+envoy-gateway-system      3m59s       Normal    ScalingReplicaSet         deployment/envoy-default-greenops-aigw-dac3126f               Scaled up replica set envoy-default-greenops-aigw-dac3126f-54f887cbf5 from 0 to 1
+envoy-gateway-system      3m59s       Normal    SuccessfulCreate          replicaset/envoy-default-greenops-aigw-dac3126f-54f887cbf5    Created pod: envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd
+envoy-gateway-system      3m59s       Normal    Scheduled                 pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Successfully assigned envoy-gateway-system/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd to greenops-control-plane
+envoy-gateway-system      3m58s       Normal    Pulling                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Pulling image "docker.io/envoyproxy/envoy:distroless-v1.35.0"
+envoy-gateway-system      3m54s       Normal    ScalingReplicaSet         deployment/envoy-default-greenops-aigw-dac3126f               Scaled up replica set envoy-default-greenops-aigw-dac3126f-6ff67d9fbb from 0 to 1
+envoy-gateway-system      3m54s       Normal    Scheduled                 pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Successfully assigned envoy-gateway-system/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6 to greenops-control-plane
+envoy-gateway-system      3m54s       Normal    SuccessfulCreate          replicaset/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb    Created pod: envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6
+envoy-gateway-system      3m52s       Normal    Pulling                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Pulling image "docker.io/envoyproxy/ai-gateway-extproc:v0.7.0"
+envoy-gateway-system      3m51s       Normal    Pulled                    pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Container image "docker.io/envoyproxy/gateway:v1.5.0" already present on machine and can be accessed by the pod
+envoy-gateway-system      3m51s       Normal    Started                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Container started
+envoy-gateway-system      3m51s       Normal    Pulled                    pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Successfully pulled image "docker.io/envoyproxy/envoy:distroless-v1.35.0" in 6.621s (6.621s including waiting). Image size: 36688109 bytes.
+envoy-gateway-system      3m51s       Normal    Created                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Container created
+envoy-gateway-system      3m51s       Normal    Started                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Container started
+envoy-gateway-system      3m51s       Normal    Created                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Container created
+finance                   3m47s       Normal    SuccessfulCreate          replicaset/risk-assistant-659f569787                          Created pod: risk-assistant-659f569787-dzmg2
+legal                     3m47s       Normal    ScalingReplicaSet         deployment/contract-review                                    Scaled up replica set contract-review-787956 from 0 to 1
+rh                        3m47s       Normal    Scheduled                 pod/chatbot-rh-5b6476cc45-tvvq2                               Successfully assigned rh/chatbot-rh-5b6476cc45-tvvq2 to greenops-control-plane
+finance                   3m47s       Normal    Scheduled                 pod/risk-assistant-659f569787-dzmg2                           Successfully assigned finance/risk-assistant-659f569787-dzmg2 to greenops-control-plane
+default                   3m47s       Normal    Reconciled                aigateway/main-gateway                                        Governs 0 namespace(s) via aigw telemetry
+rh                        3m47s       Normal    SuccessfulCreate          replicaset/chatbot-rh-5b6476cc45                              Created pod: chatbot-rh-5b6476cc45-tvvq2
+rh                        3m47s       Normal    ScalingReplicaSet         deployment/chatbot-rh                                         Scaled up replica set chatbot-rh-5b6476cc45 from 0 to 1
+legal                     3m47s       Normal    Scheduled                 pod/contract-review-787956-2gw29                              Successfully assigned legal/contract-review-787956-2gw29 to greenops-control-plane
+finance                   3m47s       Normal    ScalingReplicaSet         deployment/risk-assistant                                     Scaled up replica set risk-assistant-659f569787 from 0 to 1
+legal                     3m47s       Normal    SuccessfulCreate          replicaset/contract-review-787956                             Created pod: contract-review-787956-2gw29
+rh                        3m46s       Normal    Pulling                   pod/chatbot-rh-5b6476cc45-tvvq2                               Pulling image "curlimages/curl:8.10.1"
+finance                   3m45s       Normal    Pulling                   pod/risk-assistant-659f569787-dzmg2                           Pulling image "curlimages/curl:8.10.1"
+legal                     3m45s       Normal    Pulling                   pod/contract-review-787956-2gw29                              Pulling image "curlimages/curl:8.10.1"
+envoy-gateway-system      3m44s       Normal    Pulled                    pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Successfully pulled image "docker.io/envoyproxy/ai-gateway-extproc:v0.7.0" in 7.673s (8.679s including waiting). Image size: 35535143 bytes.
+marketing                 3m44s       Normal    ScalingReplicaSet         deployment/content-writer                                     Scaled up replica set content-writer-8594bcdf64 from 0 to 1
+envoy-gateway-system      3m44s       Normal    Created                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container created
+marketing                 3m44s       Normal    SuccessfulCreate          replicaset/content-writer-8594bcdf64                          Created pod: content-writer-8594bcdf64-h5xkw
+marketing                 3m44s       Normal    Scheduled                 pod/content-writer-8594bcdf64-h5xkw                           Successfully assigned marketing/content-writer-8594bcdf64-h5xkw to greenops-control-plane
+marketing                 3m43s       Normal    Pulling                   pod/content-writer-8594bcdf64-h5xkw                           Pulling image "curlimages/curl:8.10.1"
+envoy-gateway-system      3m43s       Normal    Pulled                    pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container image "docker.io/envoyproxy/envoy:distroless-v1.35.0" already present on machine and can be accessed by the pod
+envoy-gateway-system      3m43s       Normal    Started                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container started
+envoy-gateway-system      3m43s       Normal    Pulled                    pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container image "docker.io/envoyproxy/gateway:v1.5.0" already present on machine and can be accessed by the pod
+envoy-gateway-system      3m43s       Normal    Started                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container started
+envoy-gateway-system      3m43s       Normal    Created                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container created
+envoy-gateway-system      3m42s       Normal    Started                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container started
+envoy-gateway-system      3m42s       Normal    Created                   pod/envoy-default-greenops-aigw-dac3126f-6ff67d9fbb-sh7j6     Container created
+rh                        3m36s       Normal    Pulled                    pod/chatbot-rh-5b6476cc45-tvvq2                               Successfully pulled image "curlimages/curl:8.10.1" in 7.543s (9.412s including waiting). Image size: 9414401 bytes.
+rh                        3m36s       Normal    Created                   pod/chatbot-rh-5b6476cc45-tvvq2                               Container created
+finance                   3m35s       Normal    Pulled                    pod/risk-assistant-659f569787-dzmg2                           Successfully pulled image "curlimages/curl:8.10.1" in 1.302s (10.163s including waiting). Image size: 9414401 bytes.
+finance                   3m35s       Normal    Created                   pod/risk-assistant-659f569787-dzmg2                           Container created
+rh                        3m35s       Normal    Started                   pod/chatbot-rh-5b6476cc45-tvvq2                               Container started
+rh                        3m35s       Normal    Pulled                    pod/chatbot-rh-5b6476cc45-tvvq2                               Container image "ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7" already present on machine and can be accessed by the pod
+rh                        3m35s       Normal    Created                   pod/chatbot-rh-5b6476cc45-tvvq2                               Container created
+rh                        3m35s       Normal    Started                   pod/chatbot-rh-5b6476cc45-tvvq2                               Container started
+finance                   3m34s       Normal    Pulled                    pod/risk-assistant-659f569787-dzmg2                           Container image "ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7" already present on machine and can be accessed by the pod
+finance                   3m34s       Normal    Started                   pod/risk-assistant-659f569787-dzmg2                           Container started
+finance                   3m34s       Normal    Created                   pod/risk-assistant-659f569787-dzmg2                           Container created
+legal                     3m33s       Normal    Pulled                    pod/contract-review-787956-2gw29                              Successfully pulled image "curlimages/curl:8.10.1" in 1.592s (11.716s including waiting). Image size: 9414401 bytes.
+finance                   3m33s       Normal    Started                   pod/risk-assistant-659f569787-dzmg2                           Container started
+envoy-gateway-system      3m33s       Normal    ScalingReplicaSet         deployment/envoy-default-greenops-aigw-dac3126f               Scaled down replica set envoy-default-greenops-aigw-dac3126f-54f887cbf5 from 1 to 0
+envoy-gateway-system      3m33s       Normal    SuccessfulDelete          replicaset/envoy-default-greenops-aigw-dac3126f-54f887cbf5    Deleted pod: envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd
+legal                     3m33s       Normal    Created                   pod/contract-review-787956-2gw29                              Container created
+envoy-gateway-system      3m33s       Normal    Killing                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Stopping container envoy
+envoy-gateway-system      3m33s       Normal    Killing                   pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Stopping container shutdown-manager
+legal                     3m32s       Normal    Started                   pod/contract-review-787956-2gw29                              Container started
+legal                     3m32s       Normal    Created                   pod/contract-review-787956-2gw29                              Container created
+marketing                 3m32s       Normal    Pulled                    pod/content-writer-8594bcdf64-h5xkw                           Successfully pulled image "curlimages/curl:8.10.1" in 1.369s (11.597s including waiting). Image size: 9414401 bytes.
+legal                     3m32s       Normal    Pulled                    pod/contract-review-787956-2gw29                              Container image "ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7" already present on machine and can be accessed by the pod
+legal                     3m32s       Normal    Started                   pod/contract-review-787956-2gw29                              Container started
+marketing                 3m32s       Normal    Created                   pod/content-writer-8594bcdf64-h5xkw                           Container created
+marketing                 3m31s       Normal    Started                   pod/content-writer-8594bcdf64-h5xkw                           Container started
+marketing                 3m31s       Normal    Started                   pod/content-writer-8594bcdf64-h5xkw                           Container started
+marketing                 3m31s       Normal    Created                   pod/content-writer-8594bcdf64-h5xkw                           Container created
+marketing                 3m31s       Normal    Pulled                    pod/content-writer-8594bcdf64-h5xkw                           Container image "ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7" already present on machine and can be accessed by the pod
+greenops-system           3m28s       Normal    Pulling                   pod/demo-prometheus-7fc44f9f78-wnhpq                          Pulling image "prom/prometheus:v2.55.1"
+greenops-system           3m28s       Normal    Scheduled                 pod/demo-grafana-5f67d7699d-zrvwv                             Successfully assigned greenops-system/demo-grafana-5f67d7699d-zrvwv to greenops-control-plane
+greenops-system           3m28s       Normal    ScalingReplicaSet         deployment/demo-prometheus                                    Scaled up replica set demo-prometheus-7fc44f9f78 from 0 to 1
+greenops-system           3m28s       Normal    ScalingReplicaSet         deployment/demo-grafana                                       Scaled up replica set demo-grafana-5f67d7699d from 0 to 1
+greenops-system           3m28s       Normal    Scheduled                 pod/demo-prometheus-7fc44f9f78-wnhpq                          Successfully assigned greenops-system/demo-prometheus-7fc44f9f78-wnhpq to greenops-control-plane
+greenops-system           3m28s       Normal    SuccessfulCreate          replicaset/demo-prometheus-7fc44f9f78                         Created pod: demo-prometheus-7fc44f9f78-wnhpq
+greenops-system           3m28s       Normal    SuccessfulCreate          replicaset/demo-grafana-5f67d7699d                            Created pod: demo-grafana-5f67d7699d-zrvwv
+greenops-system           3m28s       Normal    Pulling                   pod/demo-grafana-5f67d7699d-zrvwv                             Pulling image "grafana/grafana:11.2.2"
+envoy-gateway-system      3m23s       Warning   Unhealthy                 pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Readiness probe failed: HTTP probe failed with statuscode: 503
+envoy-gateway-system      3m21s       Warning   FailedPreStopHook         pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     PreStopHook failed
+envoy-gateway-system      3m18s       Warning   Unhealthy                 pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Readiness probe failed: Get "http://10.244.0.9:19003/ready": dial tcp 10.244.0.9:19003: connect: connection refused
+envoy-gateway-system      3m18s       Warning   Unhealthy                 pod/envoy-default-greenops-aigw-dac3126f-54f887cbf5-mxffd     Readiness probe failed: Get "http://10.244.0.9:19002/healthz": dial tcp 10.244.0.9:19002: connect: connection refused
+greenops-system           3m12s       Normal    Started                   pod/demo-prometheus-7fc44f9f78-wnhpq                          Container started
+greenops-system           3m12s       Normal    Created                   pod/demo-prometheus-7fc44f9f78-wnhpq                          Container created
+greenops-system           3m12s       Normal    Pulled                    pod/demo-prometheus-7fc44f9f78-wnhpq                          Successfully pulled image "prom/prometheus:v2.55.1" in 15.68s (15.68s including waiting). Image size: 114286128 bytes.
+greenops-system           2m52s       Normal    Pulled                    pod/demo-grafana-5f67d7699d-zrvwv                             Successfully pulled image "grafana/grafana:11.2.2" in 20.371s (36.037s including waiting). Image size: 126099595 bytes.
+greenops-system           2m51s       Normal    Started                   pod/demo-grafana-5f67d7699d-zrvwv                             Container started
+greenops-system           2m51s       Normal    Created                   pod/demo-grafana-5f67d7699d-zrvwv                             Container created
+kube-system               2m47s       Normal    Scheduled                 pod/tetragon-cxqrw                                            Successfully assigned kube-system/tetragon-cxqrw to greenops-control-plane
+kube-system               2m47s       Normal    Scheduled                 pod/tetragon-operator-7c9f964ff5-rpmz6                        Successfully assigned kube-system/tetragon-operator-7c9f964ff5-rpmz6 to greenops-control-plane
+kube-system               2m47s       Normal    SuccessfulCreate          daemonset/tetragon                                            Created pod: tetragon-cxqrw
+kube-system               2m47s       Normal    ScalingReplicaSet         deployment/tetragon-operator                                  Scaled up replica set tetragon-operator-7c9f964ff5 from 0 to 1
+kube-system               2m47s       Normal    SuccessfulCreate          replicaset/tetragon-operator-7c9f964ff5                       Created pod: tetragon-operator-7c9f964ff5-rpmz6
+kube-system               2m46s       Normal    Pulling                   pod/tetragon-cxqrw                                            Pulling image "quay.io/cilium/hubble-export-stdout:v1.1.1"
+kube-system               2m45s       Normal    Pulling                   pod/tetragon-operator-7c9f964ff5-rpmz6                        Pulling image "quay.io/cilium/tetragon-operator:v1.7.0"
+default                   2m42s       Normal    ReportGenerated           aifinopsreport/ai-report-all                                  Total cost 0.00 EUR over 2 requests
+kube-system               2m41s       Normal    Pulling                   pod/tetragon-cxqrw                                            Pulling image "quay.io/cilium/tetragon:v1.7.0"
+kube-system               2m41s       Normal    Created                   pod/tetragon-cxqrw                                            Container created
+kube-system               2m41s       Normal    Started                   pod/tetragon-cxqrw                                            Container started
+kube-system               2m41s       Normal    Pulled                    pod/tetragon-cxqrw                                            Successfully pulled image "quay.io/cilium/hubble-export-stdout:v1.1.1" in 4.709s (4.709s including waiting). Image size: 1527921 bytes.
+kube-system               2m38s       Normal    Pulled                    pod/tetragon-operator-7c9f964ff5-rpmz6                        Successfully pulled image "quay.io/cilium/tetragon-operator:v1.7.0" in 3.586s (7.856s including waiting). Image size: 16250700 bytes.
+kube-system               2m38s       Normal    Created                   pod/tetragon-operator-7c9f964ff5-rpmz6                        Container created
+kube-system               2m37s       Normal    Started                   pod/tetragon-operator-7c9f964ff5-rpmz6                        Container started
+kube-system               2m28s       Normal    Created                   pod/tetragon-cxqrw                                            Container created
+kube-system               2m28s       Normal    Pulled                    pod/tetragon-cxqrw                                            Successfully pulled image "quay.io/cilium/tetragon:v1.7.0" in 9.796s (13.076s including waiting). Image size: 87873656 bytes.
+kube-system               2m27s       Normal    Started                   pod/tetragon-cxqrw                                            Container started
+finance                   2m26s       Normal    Scheduled                 pod/shadow-ai-rogue-8489765678-nf5sb                          Successfully assigned finance/shadow-ai-rogue-8489765678-nf5sb to greenops-control-plane
+finance                   2m26s       Normal    SuccessfulCreate          replicaset/shadow-ai-rogue-8489765678                         Created pod: shadow-ai-rogue-8489765678-nf5sb
+finance                   2m26s       Normal    ScalingReplicaSet         deployment/shadow-ai-rogue                                    Scaled up replica set shadow-ai-rogue-8489765678 from 0 to 1
+finance                   2m24s       Normal    Pulled                    pod/shadow-ai-rogue-8489765678-nf5sb                          Container image "curlimages/curl:8.10.1" already present on machine and can be accessed by the pod
+finance                   2m23s       Normal    Created                   pod/shadow-ai-rogue-8489765678-nf5sb                          Container created
+finance                   2m21s       Normal    Started                   pod/shadow-ai-rogue-8489765678-nf5sb                          Container started
+default                   103s        Normal    ReportGenerated           aifinopsreport/ai-report-all                                  Total cost 0.01 EUR over 3 requests
+default                   13s         Warning   ShadowAI                  aisovereigntypolicy/regulated-france-policy                   Shadow-AI: finance/rogue-script connected directly to "api.openai.com" (openai) in FORBIDDEN zone US, bypassing the gateway.
+default                   13s         Normal    ReportGenerated           aifinopsreport/ai-report-all                                  Total cost 0.01 EUR over 4 requests

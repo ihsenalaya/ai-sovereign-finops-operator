@@ -1,20 +1,18 @@
-# Démo réelle — vraies apps consommant des tokens via Envoy AI Gateway
+# Démo réelle — apps bornées consommant des tokens via Envoy AI Gateway
 
 Exemple end-to-end **100 % réel** : des applications déployées dans le cluster
-appellent en boucle de vrais LLM **à travers Envoy AI Gateway** (projet CNCF).
+font des appels bornés à de vrais LLM **à travers Envoy AI Gateway** (projet CNCF).
 La gateway **mesure les vrais tokens** ; l'opérateur les **lit** et calcule
 **coût, souveraineté et budget par application**, exposés dans **Grafana**. Le scénario
-valide aussi le **fallback budgétaire managé** : l'app finance démarre sur `gpt-4o`
-et peut être reroutée en live vers `gpt-4o-mini` quand son budget passe en `Critical`.
+valide aussi le plan shadow-AI : un workload contourne la gateway et Tetragon
+alimente `shadow-egress` avec des événements réels.
 
 ```
- app rh/legal (gpt-4o-mini) ─┐                                  ┌─► OpenAI gpt-4o-mini (US)
-                              ├─► Envoy AI Gateway (compte tokens)┤
- app finance (gpt-4o) ───────┘            │ gen_ai_* metrics      └─► OpenAI gpt-4o (US)
-                                           ▼
-                       Opérateur (collector "aigw") ─► coût/souveraineté/budget/enforcement par app
-                                          ▼
-                          Prometheus ─► Grafana (dashboard véridique)
+ rh/finance/legal ──► Envoy AI Gateway ──► Azure Foundry Cohere (global)
+ marketing ────────► Envoy AI Gateway ──► Azure Foundry Mistral (EU)
+ finance/rogue ────► api.openai.com direct ──► Tetragon ──► shadow-egress
+
+ Envoy gen_ai_* metrics ──► operator collector "aigw" ──► cost/sovereignty/budget
 ```
 
 ## Versions (IMPORTANT, testées)
@@ -28,8 +26,9 @@ et peut être reroutée en live vers `gpt-4o-mini` quand son budget passe en `Cr
 
 ```bash
 cd automatisation/envoy-aigw
-./deploy.sh up        # Envoy Gateway + AI Gateway + route OpenAI + catalogue + apps
-./deploy.sh test      # un vrai appel gpt-4o à travers la gateway (sanity)
+./deploy.sh up        # laisse la démo vivante
+./deploy.sh verify    # collecte les preuves, stoppe les apps, supprime kind
+./deploy.sh test      # un vrai appel Cohere à travers la gateway (sanity)
 ./deploy.sh down      # retire la démo (laisse les control planes)
 ```
 
@@ -37,33 +36,36 @@ Depuis la racine `automatisation/`, le même scénario est disponible via :
 
 ```bash
 make real-demo
+make real-demo-verify
 make real-demo-test
 make real-demo-down
 ```
 
-Prérequis : cluster kind `greenops`, `kubectl`, `helm`, `docs/openaikey.txt` avec
-**quota/billing actif**. La présence d'une clé seule ne suffit pas : `deploy.sh up`
-fait désormais un **préflight fournisseur** et s'arrête immédiatement si OpenAI
-répond `insufficient_quota`. `docs/mistralkey.txt` reste optionnel ; s'il est
-présent, il est aussi préflighté avant de déployer l'app EU.
+Prérequis : `kind`, `kubectl`, `helm`, Docker, et une clé Azure AI Foundry
+réellement utilisable dans `docs/foundrykey.txt` (ou `docs/mistralkey.txt` pour
+compatibilité). La présence d'une clé seule ne suffit pas : `deploy.sh` fait un
+**préflight Cohere et Mistral** avant de démarrer.
+
+`verify` est le mode recommandé pour une preuve reproductible sans laisser
+d'app consommatrice tourner. Il borne les clients à un succès réel cible par app,
+collecte les preuves, scale les apps à zéro, puis supprime le cluster kind.
 
 ## Fichiers
-- `01-gateway-openai.yaml` — GatewayClass/Gateway/EnvoyProxy + AIGatewayRoute
-  (modèles gpt-4o, gpt-4o-mini) + AIServiceBackend + BackendSecurityPolicy
-  (clé OpenAI via Secret, créé par `deploy.sh`) + Backend api.openai.com + TLS.
+- `01-gateway-cohere.yaml` — GatewayClass/Gateway/EnvoyProxy + AIGatewayRoute
+  pour Azure Foundry Cohere + AIServiceBackend + BackendSecurityPolicy
+  (clé Foundry via Secret, créé par `deploy.sh`) + Backend Foundry + TLS.
 - `02-metrics-and-catalog.yaml` — Service métriques de l'extproc (`:1064`),
   `AIGateway` en **mode `aigw`**, `AIProvider`/`AIModel` (prix réels par modèle,
   attribution `servesNamespace/Application/Team`), `AISovereigntyPolicy` (EU-only),
-  `AIFinOpsReport`, `AIBudgetPolicy`. `finance-budget` est configuré en
-  `enforcementMode=enforce` avec fallback `gpt-4o-mini`.
+  `AIFinOpsReport`, `AIBudgetPolicy`.
 - `03-consumer-apps.yaml` — Service data stable + 3 Deployments (rh/chatbot-rh,
-  finance/risk-assistant, legal/contract-review) qui appellent la gateway en boucle.
+  finance/risk-assistant, legal/contract-review) qui font des appels bornés.
 - `05-mistral-eu.yaml` — **2ᵉ provider EU** : route Mistral (Azure AI Foundry, zone EU)
   via le schéma `AzureOpenAI` + catalogue `mistral-eu`/`mistral-large` + 4ᵉ app
   `marketing/content-writer`. Sert à **vérifier la souveraineté zone-aware** (l'app EU
-  ne produit aucune violation, contrairement aux apps OpenAI US). Voir [`CRITERES.md` §6](CRITERES.md).
-  Prérequis : clé Mistral dans `docs/mistralkey.txt` (récupérée depuis Azure Foundry/Key Vault).
-- `deploy.sh` — installe et câble le tout (versions épinglées).
+  ne produit aucune violation de zone, contrairement au provider global).
+  Prérequis : clé Foundry dans `docs/foundrykey.txt`.
+- `deploy.sh` — installe et câble le tout (versions épinglées), avec mode `verify`.
 
 ## Comment l'opérateur lit les vrais tokens
 Envoy AI Gateway expose l'histogramme OpenTelemetry
@@ -87,8 +89,9 @@ même modèle seraient donc fusionnées. La solution mise en place :
 3. Le collector **`aigw`** lit ces labels et attribue le coût **par namespace/app
    réel** (fallback sur `AIModel.serves*` si l'en-tête est absent).
 
-➡️ Résultat : **`rh/chatbot-rh` et `legal/contract-review` utilisent tous deux
-gpt-4o-mini, mais sont comptabilisés séparément, par namespace/app** — automatiquement.
+➡️ Résultat : **`rh/chatbot-rh`, `finance/risk-assistant` et
+`legal/contract-review` utilisent tous le même modèle Cohere, mais sont
+comptabilisés séparément, par namespace/app** — automatiquement.
 Déployer une nouvelle app dans un namespace opt-in suffit : aucune modification du
 code applicatif ni ajout manuel d'en-têtes n'est nécessaire. Dans la démo, les pods
 restreignent l'injection au host de la gateway via
@@ -96,9 +99,9 @@ restreignent l'injection au host de la gateway via
 
 ## Ce que la démo vérifie en plus
 
-- **Souveraineté** : les apps OpenAI US produisent des violations critiques ; l'app Mistral EU n'en produit aucune.
-- **Budget** : `finance-budget` franchit vite `Critical` puis `Exceeded`, et le contrôleur peut
-  **actuer** une reroute `gpt-4o -> gpt-4o-mini` au niveau de l'`AIGatewayRoute`.
+- **Souveraineté** : les apps Cohere global produisent des findings ; l'app Mistral EU reste dans la zone EU.
+- **Budget** : les budgets sont calculés sur les tokens réels observés, sans forcer de faux dépassement.
+- **Shadow-AI** : `finance/shadow-ai-rogue` appelle `api.openai.com` directement sans clé; Tetragon capture l'egress réel.
 - **Honnêteté des garde-fous** : la démo n'active pas de garde-fous latence/erreur, car le collector
   `aigw` ne publie pas encore ces signaux.
 
@@ -122,13 +125,13 @@ proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 | 1 | **Total cost (EUR) — observed** | Dépense réelle cumulée depuis le démarrage de la gateway (tous apps) | `sum(ai_finops_cost_eur)` | Coût réel = tokens mesurés × prix de liste réels. Croît dans le temps. |
 | 2 | **Tokens (total in + out)** | Volume total de tokens mesurés par la gateway | `sum(ai_finops_input_tokens) + sum(ai_finops_output_tokens)` | Le « carburant » consommé ; croît avec le trafic. |
 | 3 | **Requests (total)** | Nombre total de requêtes LLM routées et comptabilisées | `sum(ai_finops_requests)` | Volume d'appels réels. |
-| 4 | **Budget usage (%) by policy** | Prévision mensuelle de dépense ÷ plafond mensuel, **une barre par AIBudgetPolicy** | `ai_finops_budget_usage_percent` | Vert <70%, jaune ≥70, orange ≥90, **rouge ≥100 (dépassé)**. Ex. finance 162% (dépassé) / rh 21% (ok). |
+| 4 | **Budget usage (%) by policy** | Prévision mensuelle de dépense ÷ plafond mensuel, **une barre par AIBudgetPolicy** | `ai_finops_budget_usage_percent` | Vert <70%, jaune ≥70, orange ≥90, **rouge ≥100 (dépassé)**. En mode `verify`, les budgets restent normalement faibles car les appels sont bornés. |
 | 5 | **Cost (EUR) by namespace** | Coût réel par namespace dans le temps | `ai_finops_cost_eur` (par `namespace`) | Compare la dépense des équipes ; courbes croissantes. |
 | 6 | **Tokens by namespace (input / output)** | Tokens entrée/sortie réels par namespace | `ai_finops_input_tokens`, `ai_finops_output_tokens` | Profil de consommation par équipe (out ≫ in pour les générations). |
 | 7 | **Requests violating sovereignty (by app)** | Nb de requêtes envoyées par chaque app vers un fournisseur **non conforme** (zone interdite) | `sum by (namespace, application) (ai_finops_sovereignty_requests{severity="critical"})` | Volume réel **à risque** par app. 0 = conforme ; >0 = violation (rouge). |
 | 8 | **Cost-saving recommendations (action + gain €)** | **Table** : une ligne = une action cost-saving concrète, avec le **modèle actuel → modèle recommandé** et le **gain €** par app | `ai_finops_cost_saving_eur` (labels `namespace`, `application`, `current_model`, `recommended_model` ; valeur = € économisables) | « To-do » d'économies : *qui*, *quel swap de modèle*, *combien*. Voir « Comment lire la table » ci-dessous. |
 | 9 | **Potential savings (EUR)** | Économie **potentielle** totale si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. |
-| 10 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs **US interdit** | `ai_finops_cost_by_zone_eur` (label `zone`) | La part qui **quitte l'UE** = exposition souveraineté. US (rouge) ≫ EU (vert) tant que les apps tapent OpenAI. |
+| 10 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs zone interdite/global | `ai_finops_cost_by_zone_eur` (label `zone`) | La part hors zone autorisée = exposition souveraineté. |
 
 #### Comment lire la table « Cost-saving recommendations (action + gain €) »
 
@@ -139,18 +142,17 @@ gagne**. La table répond aux trois — **chaque ligne = une action d'économie 
 | Colonne | Question | Sens |
 |---------|----------|------|
 | **Namespace / Application** | **QUI ?** | L'équipe / l'app concernée. |
-| **Modèle actuel → Recommandé** | **QUOI ?** | Le swap de modèle proposé (ex. `gpt-4o → gpt-4o-mini`). |
+| **Modèle actuel → Recommandé** | **QUOI ?** | Le swap de modèle proposé quand un modèle moins cher et conforme existe dans le catalogue. |
 | **Gain (€)** | **COMBIEN ?** | Économie estimée sur la fenêtre observée si on applique le swap. |
 
-Exemple typique (apps `finance`/`legal` sur `gpt-4o`, app `marketing` sur `mistral-large`) :
+Exemple typique quand le catalogue contient plusieurs modèles conformes :
 
 | Namespace | Application | Modèle actuel | Recommandé | Gain (€) |
 |-----------|-------------|---------------|-----------|---------:|
-| finance | risk-assistant | gpt-4o | gpt-4o-mini | 0,26 |
-| legal | contract-review | gpt-4o | gpt-4o-mini | 0,23 |
+| finance | risk-assistant | modèle coûteux | modèle conforme moins cher | valeur mesurée |
+| legal | contract-review | modèle coûteux | modèle conforme moins cher | valeur mesurée |
 | marketing | content-writer | mistral-large-latest | *(modèle conforme le moins cher)* | … |
 
-- `rh` n'apparaît pas : elle utilise déjà `gpt-4o-mini` (le moins cher) → aucune économie.
 - Le moteur de recos est désormais **zone-aware** : le modèle proposé reste dans une **zone
   autorisée** (il ne recommandera pas un provider qui violerait la souveraineté).
 - Le **total** € est dans le panneau **#9 Potential savings** ; la répartition zone EU/US

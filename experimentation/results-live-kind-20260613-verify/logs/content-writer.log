@@ -1,0 +1,4 @@
+marketing/content-writer(mistral-large-latest): 000
+marketing/content-writer(mistral-large-latest): 200
+marketing/content-writer(mistral-large-latest): successes=1 attempts=2; idling
+2026/06/13 09:30:04 starting greenops header proxy on :15088

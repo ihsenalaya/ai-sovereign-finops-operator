@@ -1,0 +1,14 @@
+NAMESPACE                 NAME                                            TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                                            AGE
+default                   kubernetes                                      ClusterIP      10.96.0.1       <none>        443/TCP                                            5m17s
+envoy-ai-gateway-system   ai-gateway-controller                           ClusterIP      10.96.136.165   <none>        9443/TCP,1063/TCP,8080/TCP,18002/TCP               3m38s
+envoy-gateway-system      envoy-default-greenops-aigw-dac3126f            LoadBalancer   10.96.64.226    <pending>     80:32431/TCP                                       3m19s
+envoy-gateway-system      envoy-gateway                                   ClusterIP      10.96.147.44    <none>        18000/TCP,18001/TCP,18002/TCP,19001/TCP,9443/TCP   3m59s
+envoy-gateway-system      greenops-aigw                                   ClusterIP      10.96.206.34    <none>        80/TCP                                             3m7s
+envoy-gateway-system      greenops-aigw-metrics                           ClusterIP      10.96.123.213   <none>        1064/TCP                                           3m7s
+greenops-system           demo-grafana                                    ClusterIP      10.96.244.14    <none>        3000/TCP                                           2m49s
+greenops-system           demo-prometheus                                 ClusterIP      10.96.173.218   <none>        9090/TCP                                           2m49s
+greenops-system           greenops-ai-sovereign-finops-operator-metrics   ClusterIP      10.96.251.242   <none>        8080/TCP                                           4m56s
+greenops-system           greenops-ai-sovereign-finops-operator-webhook   ClusterIP      10.96.231.207   <none>        443/TCP                                            4m56s
+kube-system               kube-dns                                        ClusterIP      10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP                             5m15s
+kube-system               tetragon                                        ClusterIP      10.96.113.77    <none>        2112/TCP                                           2m4s
+kube-system               tetragon-operator-metrics                       ClusterIP      10.96.22.69     <none>        2113/TCP                                           2m4s

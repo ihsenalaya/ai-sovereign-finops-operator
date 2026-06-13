@@ -1,0 +1,562 @@
+apiVersion: v1
+items:
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIGateway
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIGateway","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"main-gateway","namespace":"default"},"spec":{"endpoint":"http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064","telemetry":{"metricsEndpoint":"/metrics","mode":"aigw"},"type":"envoy"}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: main-gateway
+    namespace: default
+    resourceVersion: "1107"
+    uid: 18129f27-1cfb-422c-888a-8dfce47fe387
+  spec:
+    endpoint: http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064
+    telemetry:
+      metricsEndpoint: /metrics
+      mode: aigw
+    type: envoy
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:32Z"
+      message: AIGateway registered and namespaces resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"cohere-global","namespace":"default"},"spec":{"compliance":{"allowedForSensitiveData":false},"dataResidency":"global","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"2.16","outputTokenPricePerMillion":"8.65"},"region":"francecentral","type":"azure-openai"}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: cohere-global
+    namespace: default
+    resourceVersion: "1110"
+    uid: e60592eb-30a7-45a7-8ac7-47d284c3715a
+  spec:
+    compliance:
+      allowedForSensitiveData: false
+    dataResidency: global
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "2.16"
+      outputTokenPricePerMillion: "8.65"
+    region: francecentral
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:32Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"mistral-eu","namespace":"default"},"spec":{"compliance":{"allowedCountries":["FR"],"allowedForSensitiveData":true},"dataResidency":"eu","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"1.84","outputTokenPricePerMillion":"5.52"},"region":"francecentral","type":"mistral"}}
+    creationTimestamp: "2026-06-13T09:41:35Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: mistral-eu
+    namespace: default
+    resourceVersion: "1204"
+    uid: b2a89de5-78d1-42b8-a3ca-5b567e2955af
+  spec:
+    compliance:
+      allowedCountries:
+      - FR
+      allowedForSensitiveData: true
+    dataResidency: eu
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "1.84"
+      outputTokenPricePerMillion: "5.52"
+    region: francecentral
+    type: mistral
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:35Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"cohere-command-a","namespace":"default"},"spec":{"costTier":"high","modelName":"cohere-command-a-latest","providerRef":"cohere-global","qualityTier":"high","sensitiveDataAllowed":false,"servesApplication":"risk-assistant","servesNamespace":"finance","servesTeam":"finance","type":"llm"}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: cohere-command-a
+    namespace: default
+    resourceVersion: "1113"
+    uid: 26457545-8886-485b-bcf8-5468bc70d99a
+  spec:
+    costTier: high
+    modelName: cohere-command-a-latest
+    providerRef: cohere-global
+    qualityTier: high
+    sensitiveDataAllowed: false
+    servesApplication: risk-assistant
+    servesNamespace: finance
+    servesTeam: finance
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:32Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"mistral-large","namespace":"default"},"spec":{"costTier":"high","modelName":"mistral-large-latest","providerRef":"mistral-eu","qualityTier":"high","sensitiveDataAllowed":true,"servesApplication":"content-writer","servesNamespace":"marketing","servesTeam":"marketing","type":"llm"}}
+    creationTimestamp: "2026-06-13T09:41:35Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: mistral-large
+    namespace: default
+    resourceVersion: "1208"
+    uid: 0bbcc17d-e1d2-4af0-a1e6-adfc8ce5da61
+  spec:
+    costTier: high
+    modelName: mistral-large-latest
+    providerRef: mistral-eu
+    qualityTier: high
+    sensitiveDataAllowed: true
+    servesApplication: content-writer
+    servesNamespace: marketing
+    servesTeam: marketing
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:41:35Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: mistral
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AISovereigntyPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1781343906"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AISovereigntyPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"regulated-france-policy","namespace":"default"},"spec":{"dataResidency":{"allowedZones":["FR","EU"],"forbiddenZones":["US","CN","GLOBAL"]},"enforcementMode":"reportOnly","sensitiveData":{"externalProvidersAllowed":false,"requireAnonymization":true}}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    finalizers:
+    - aiops.imperium.io/enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: regulated-france-policy
+    namespace: default
+    resourceVersion: "2040"
+    uid: c2f12014-9f01-4430-963e-0a77710df317
+  spec:
+    audit: {}
+    dataResidency:
+      allowedZones:
+      - FR
+      - EU
+      forbiddenZones:
+      - US
+      - CN
+      - GLOBAL
+    enforcementMode: reportOnly
+    sensitiveData:
+      requireAnonymization: true
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:42Z"
+      message: 'Evaluated (reportOnly): 7 finding(s) — 3 critical, 3 warning; enforcement:
+        0 warn, 0 reroute, 0 block'
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    findingsCount: 7
+    observedGeneration: 2
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1781343906"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"finance-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.02","criticalThresholdPercent":90,"enforcementMode":"reportOnly","hardLimitPercent":100,"period":"monthly","target":{"application":"risk-assistant","namespace":"finance","team":"finance"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: finance-budget
+    namespace: default
+    resourceVersion: "2042"
+    uid: b782cf46-8c8d-4343-950f-e5f284d57942
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 20m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: risk-assistant
+      namespace: finance
+      team: finance
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:38Z"
+      message: 0.00 / 0.02 EUR consumed (14%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 2774u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 2774u
+    usagePercent: 14
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1781343907"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"legal-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"contract-review","namespace":"legal","team":"legal"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: legal-budget
+    namespace: default
+    resourceVersion: "2044"
+    uid: b32b4019-ebaa-4de5-b587-87f57e7a7b2f
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: contract-review
+      namespace: legal
+      team: legal
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:38Z"
+      message: 0.00 / 0.20 EUR consumed (1%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 2608u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 2608u
+    usagePercent: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1781343907"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"marketing-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"content-writer","namespace":"marketing","team":"marketing"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-13T09:41:35Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: marketing-budget
+    namespace: default
+    resourceVersion: "2045"
+    uid: e38892ce-f10c-4885-996b-eeefe144668e
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: content-writer
+      namespace: marketing
+      team: marketing
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:38Z"
+      message: 0.00 / 0.20 EUR consumed (0%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 357u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 357u
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1781343906"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"rh-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"chatbot-rh","namespace":"rh","team":"rh"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: rh-budget
+    namespace: default
+    resourceVersion: "2043"
+    uid: 83c92d08-a718-4b14-b7f6-a440249a3f51
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: chatbot-rh
+      namespace: rh
+      team: rh
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:38Z"
+      message: 0.00 / 0.20 EUR consumed (1%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 1916u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 1916u
+    usagePercent: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIFinOpsReport
+  metadata:
+    annotations:
+      demo/reconcile: "1781343905"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIFinOpsReport","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"ai-report-all","namespace":"default"},"spec":{"gatewayRef":"main-gateway","target":{"period":"monthly"}}}
+    creationTimestamp: "2026-06-13T09:41:32Z"
+    finalizers:
+    - aiops.imperium.io/report-metrics
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: ai-report-all
+    namespace: default
+    resourceVersion: "2036"
+    uid: d4c4a085-43e5-491f-9140-7568d8e8fc77
+  spec:
+    gatewayRef: main-gateway
+    target:
+      period: monthly
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-13T09:42:35Z"
+      message: Report generated from 4 usage sample(s) via aigw collector
+      observedGeneration: 1
+      reason: ReportGenerated
+      status: "True"
+      type: Ready
+    generatedAt: "2026-06-13T09:45:06Z"
+    observedGeneration: 1
+    projectedMonthlyCostEUR: 7655u
+    recommendations:
+    - application: risk-assistant
+      message: 'finance/risk-assistant: 1 request(s) (~0.0028 EUR) sent to non-compliant
+        provider "cohere-global" in zone GLOBAL — route this app to an allowed-zone
+        model.'
+      namespace: finance
+      severity: critical
+      type: sovereignty
+    - application: contract-review
+      message: 'legal/contract-review: 1 request(s) (~0.0026 EUR) sent to non-compliant
+        provider "cohere-global" in zone GLOBAL — route this app to an allowed-zone
+        model.'
+      namespace: legal
+      severity: critical
+      type: sovereignty
+    - application: chatbot-rh
+      message: 'rh/chatbot-rh: 1 request(s) (~0.0019 EUR) sent to non-compliant provider
+        "cohere-global" in zone GLOBAL — route this app to an allowed-zone model.'
+      namespace: rh
+      severity: critical
+      type: sovereignty
+    - application: risk-assistant
+      estimatedSavingsEUR: 2597u
+      message: 'finance/risk-assistant: routing low-stakes "cohere-command-a-latest"
+        traffic to "mistral-small" would save ~0.0026 EUR over the window (-94%).'
+      namespace: finance
+      severity: info
+      type: cost-saving
+    - application: contract-review
+      estimatedSavingsEUR: 2441u
+      message: 'legal/contract-review: routing low-stakes "cohere-command-a-latest"
+        traffic to "mistral-small" would save ~0.0024 EUR over the window (-94%).'
+      namespace: legal
+      severity: info
+      type: cost-saving
+    - application: chatbot-rh
+      estimatedSavingsEUR: 1793u
+      message: 'rh/chatbot-rh: routing low-stakes "cohere-command-a-latest" traffic
+        to "mistral-small" would save ~0.0018 EUR over the window (-94%).'
+      namespace: rh
+      severity: info
+      type: cost-saving
+    - application: content-writer
+      estimatedSavingsEUR: 321u
+      message: 'marketing/content-writer: routing low-stakes "mistral-large-latest"
+        traffic to "mistral-small" would save ~0.0003 EUR over the window (-90%).'
+      namespace: marketing
+      severity: info
+      type: cost-saving
+    sovereigntyFindings:
+    - application: risk-assistant
+      message: Namespace "finance" app "risk-assistant" routed model "cohere-command-a-latest"
+        to provider "cohere-global" in forbidden zone GLOBAL.
+      model: cohere-command-a-latest
+      namespace: finance
+      provider: cohere-global
+      requests: 1
+      severity: critical
+      zone: GLOBAL
+    - application: contract-review
+      message: Namespace "legal" app "contract-review" routed model "cohere-command-a-latest"
+        to provider "cohere-global" in forbidden zone GLOBAL.
+      model: cohere-command-a-latest
+      namespace: legal
+      provider: cohere-global
+      requests: 1
+      severity: critical
+      zone: GLOBAL
+    - application: chatbot-rh
+      message: Namespace "rh" app "chatbot-rh" routed model "cohere-command-a-latest"
+        to provider "cohere-global" in forbidden zone GLOBAL.
+      model: cohere-command-a-latest
+      namespace: rh
+      provider: cohere-global
+      requests: 1
+      severity: critical
+      zone: GLOBAL
+    - application: risk-assistant
+      message: Namespace "finance" app "risk-assistant" sent traffic (model "cohere-command-a-latest")
+        to external managed provider "cohere-global" while external providers are
+        disallowed for sensitive data.
+      model: cohere-command-a-latest
+      namespace: finance
+      provider: cohere-global
+      requests: 1
+      severity: warning
+      zone: GLOBAL
+    - application: contract-review
+      message: Namespace "legal" app "contract-review" sent traffic (model "cohere-command-a-latest")
+        to external managed provider "cohere-global" while external providers are
+        disallowed for sensitive data.
+      model: cohere-command-a-latest
+      namespace: legal
+      provider: cohere-global
+      requests: 1
+      severity: warning
+      zone: GLOBAL
+    - application: chatbot-rh
+      message: Namespace "rh" app "chatbot-rh" sent traffic (model "cohere-command-a-latest")
+        to external managed provider "cohere-global" while external providers are
+        disallowed for sensitive data.
+      model: cohere-command-a-latest
+      namespace: rh
+      provider: cohere-global
+      requests: 1
+      severity: warning
+      zone: GLOBAL
+    - message: Policy requires prompt anonymization; ensure the gateway redacts sensitive
+        fields before egress.
+      severity: info
+    topModels:
+    - costEUR: 7298u
+      name: cohere-command-a-latest
+    - costEUR: 357u
+      name: mistral-large-latest
+    totalCostEUR: 7655u
+    totalInputTokens: 41
+    totalOutputTokens: 897
+kind: List
+metadata:
+  resourceVersion: ""
