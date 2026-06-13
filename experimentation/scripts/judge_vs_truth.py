@@ -15,6 +15,22 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+plt.rcParams.update({
+    "figure.dpi": 200,
+    "savefig.dpi": 300,
+    "font.family": "DejaVu Sans",
+    "font.size": 8,
+    "axes.labelsize": 8,
+    "xtick.labelsize": 7,
+    "ytick.labelsize": 7,
+    "legend.fontsize": 7,
+    "axes.grid": True,
+    "grid.alpha": 0.22,
+    "grid.linewidth": 0.6,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -53,13 +69,14 @@ def main():
     ]
     open(f"{args.results}/judge_vs_truth_summary.md", "w").write("\n".join(lines) + "\n")
 
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(3.45, 2.25))
     bins = np.arange(0.5, 6.5, 1)
-    ax.hist([inc, corr], bins=bins, label=["incorrect", "correct"], color=["#a53b3b", "#3b8f5a"])
-    ax.set_xlabel("LLM judge score (1-5)"); ax.set_ylabel("count")
-    ax.set_title("Judge score by objective correctness")
-    ax.legend()
-    fig.tight_layout(); fig.savefig(f"{args.figures}/fig_judge_vs_truth.png", bbox_inches="tight"); plt.close(fig)
+    ax.hist([inc, corr], bins=bins, label=["incorrect", "correct"],
+            color=["#a83f3f", "#3d8b5a"], edgecolor="white", linewidth=0.5)
+    ax.set_xlabel("LLM judge score (1-5)")
+    ax.set_ylabel("Count")
+    ax.legend(frameon=False)
+    fig.tight_layout(pad=0.4); fig.savefig(f"{args.figures}/fig_judge_vs_truth.png", bbox_inches="tight"); plt.close(fig)
 
     print("\n".join(lines[:6]))
     print(f"wrote {args.results}/judge_vs_truth_summary.md and {args.figures}/fig_judge_vs_truth.png")

@@ -42,52 +42,42 @@
 
 % =====================================================================
 \title{Economic-Aware and Sovereignty-Constrained Routing\\
-       for Enterprise LLM Gateways}
+       for LLM Gateways: A Bounded Two-Provider Testbed}
 \author{Anonymous~Authors%
 \IEEEcompsocitemizethanks{\IEEEcompsocthanksitem Manuscript prepared in IEEE
 Transactions on Software Engineering style. Author information is omitted for
 review.}}
 \markboth{IEEE Transactions on Software Engineering,~Draft Manuscript}%
-{Anonymous Authors: Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways}
+{Anonymous Authors: Economic-Aware and Sovereignty-Constrained Routing for LLM Gateways}
 
 \begin{document}
 
 % ---------------------------------------------------------------------
 \IEEEtitleabstractindextext{%
 \begin{abstract}
-Enterprises are adopting large language models (LLMs) faster than they can govern
-them: they cannot say which model truly costs the most, which team consumes what,
-when to route to a cheaper model, what a data-sovereignty constraint costs, or
-when self-hosting beats a managed API. We present an \emph{economic-aware,
-sovereignty-constrained, budget-aware routing control plane} for enterprise LLM
-gateways. We formalize model selection as a constrained scoring problem that
-rejects any model violating declarative sovereignty rules and, among the rest,
-minimizes a weighted combination of cost, expected quality loss, latency, and
-budget pressure. We realize the approach as a Kubernetes operator whose FinOps
-and sovereignty engines compute auditable decisions and telemetry, and evaluate
-it with explicitly separated evidence classes. In the cached experimental
-harness, real LLM calls across OpenAI (US, managed) and Mistral (EU, Azure AI
-Foundry DataZoneStandard) are replayed deterministically from committed caches.
-Relative to an always-premium policy, the governance policy reduces cached
-measured cost by \textbf{70.8\%} while keeping LLM-as-judge quality comparable to
-premium; a \textbf{30-repetition} uncached statistical run (temperature 0.7)
-confirms the cost reduction is highly significant
-($p\approx3\times10^{-11}$, Cohen $d\approx-43$) at a significant but bounded
-latency increase. In simulated policy scenarios it produces \textbf{zero
-sovereignty violations} (vs.\ 40 for a sovereignty-blind baseline) and sustains
-100\% request availability with 0\% budget overrun under a tight budget where
-hard-blocking drops to 60\%. A bounded live kind verification then shows the
-operator scraping real Envoy AI Gateway token telemetry from four apps
-(41 input and 897 output tokens, 7655\textmu EUR reported in status) and
-detecting real shadow-AI egress through Tetragon. On quality we are deliberately
-careful: on
-\textbf{500 objective public-benchmark items} (GSM8K + MMLU) our policy
-\emph{trades accuracy for cost} (47.2\% vs.\ 65.4\% premium, $-94\%$ cost), and
-we show the LLM judge \emph{over-rates incorrect answers} (81.1\% of wrong
-answers rated ``acceptable''). We frame the contribution as a \textbf{governance
-layer} with a favourable cost/quality trade-off, not a quality-free lunch, and
-release all code, datasets, cached responses, and analysis as a reproducible
-framework.
+Large language model (LLM) adoption creates a governance problem at the gateway:
+teams need auditable routing decisions that account for cost, data sovereignty,
+budget pressure, and workload ownership. We present an economic-aware,
+sovereignty-constrained routing control plane implemented as a Kubernetes
+operator. The system filters non-compliant model candidates using declared
+policy metadata, then scores the remaining candidates by cost, expected quality
+loss, latency, and budget pressure.
+
+We evaluate the approach in a bounded two-provider testbed, separating cached,
+measured, simulated, and modeled evidence. In cached replays derived from
+previously collected real API calls to OpenAI (US, managed) and Mistral on Azure
+AI Foundry (EU), the governance policy reduces replay cost by \textbf{70.8\%}
+relative to an always-premium policy while keeping open-ended LLM-as-judge
+quality comparable. A 30-repetition uncached run confirms that the cost
+reduction is statistically significant ($p\approx3\times10^{-11}$), with a
+measured latency increase. Simulated policy scenarios show that declarative
+sovereignty and budget rules can prevent configured violations and avoid
+hard-blocking behavior, while a bounded live kind run verifies telemetry,
+attribution, shadow-AI ingestion, and cleanup in a local cluster. Objective
+benchmark results are more cautious: the policy trades accuracy for cost on
+GSM8K and MMLU. The contribution is therefore a reproducible governance
+framework and evidence base, not a claim of enterprise-scale production
+validation or universal quality preservation.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -134,8 +124,8 @@ outside the claims of this paper.
   \item A Kubernetes/Envoy control-plane realization: the \emph{AI Sovereign
         FinOps Operator}, exposing Cost, Budget, Sovereignty, Break-even, and
         Report engines as CRDs (\S\ref{sec:design}).
-  \item A reproducible evaluation methodology and testbed driving the operator's
-        actual engines with real LLM telemetry (\S\ref{sec:method}).
+  \item A reproducible bounded two-provider testbed driving the operator's actual
+        engines with real LLM telemetry (\S\ref{sec:method}).
   \item A bounded live kind verification that exercises Envoy AI Gateway
         telemetry, Kubernetes attribution, Azure Foundry Cohere/Mistral calls,
         and Tetragon shadow-AI detection without manual seeding.
@@ -358,7 +348,7 @@ decision logic in the Kubernetes operator. In this paper the routing decision is
 evaluated primarily at the control-plane level. The repository also contains a
 bounded live kind verification in which Envoy AI Gateway emits real token
 telemetry and the operator attributes it per namespace/application. This
-validates the telemetry and attribution path, not production-grade load,
+verifies the telemetry and attribution path, not production-grade load,
 failover, or legal compliance. OpenTelemetry-style correlation of metrics, logs,
 and traces motivates the evidence model, while Tetragon supplies eBPF-based
 runtime observability for direct, non-gateway LLM egress
@@ -412,8 +402,9 @@ workload simulation over declared catalogs. \textbf{MODELED} means computed from
 an analytical model, such as GPU break-even economics. We do not present modeled
 self-hosting economics as GPU/vLLM measurements.
 
-\paragraph{Testbed.} A Go harness drives the operator's \emph{actual} engines and
-issues \textbf{real} LLM calls across \textbf{two providers}: (1) \textbf{OpenAI
+\paragraph{Bounded two-provider testbed.} A Go harness drives the operator's
+\emph{actual} engines and issues \textbf{real} LLM calls across
+\textbf{two providers}: (1) \textbf{OpenAI
 (US, managed)} --- gpt-4o (premium), gpt-4o-mini (medium), gpt-4.1-nano (cheap);
 (2) \textbf{Mistral (EU)} --- \texttt{mistral-large} served via \textbf{Azure AI
 Foundry} as \textbf{Mistral-Large-3} in \emph{DataZoneStandard} (EU data zone), a
@@ -483,7 +474,7 @@ Negative live run & yes & \path{results-live-kind-20260613-verify/} & Preserved 
 
 \paragraph{Bounded live kind verification.} In addition to the harness, we ran a
 fresh local kind verification on 2026-06-13 using
-\path{make -C automatisation real-demo-verify}. The run rebuilt the operator
+\texttt{make -C automatisation real-demo-verify}. The run rebuilt the operator
 image from the local source, deployed Envoy Gateway v1.5.0 and Envoy AI Gateway
 v0.7.0, deployed four bounded apps, collected logs/CRDs/metrics/Tetragon
 evidence, scaled the apps down, and deleted the kind cluster. Azure was used only
@@ -595,9 +586,9 @@ exact-match for tasks with ground truth, and never claim quality preservation
 from the judge alone.
 
 \begin{figure}[!t]\centering
-\includegraphics[width=0.72\linewidth]{fig_judge_vs_truth.png}
-\caption{CACHED: LLM-judge score by objective correctness
-(source: results/judgevstruth.csv); the judge over-rates wrong answers.}\label{fig:judge}
+\includegraphics[width=0.95\linewidth]{fig_judge_vs_truth.png}
+\caption{CACHED: LLM-judge score by objective correctness.
+Source: results/judgevstruth.csv.}\label{fig:judge}
 \end{figure}
 
 \subsection{RQ3 --- Latency and overhead}
@@ -622,7 +613,7 @@ Beyond control-plane decision time, we measured routing through a real
 concurrency 8. Envoy adds \textbf{negligible overhead} --- mean latency 1153 ms
 vs.\ 1116 ms direct (${\approx}{+}3\%$, within run-to-run variance), throughput
 6.05 vs.\ 5.81 req/s, \textbf{0 errors} --- supporting the feasibility of a
-gateway-level control plane. The bounded kind verification above validates
+gateway-level control plane. The bounded kind verification above verifies
 in-cluster Envoy AI Gateway telemetry and attribution; production-grade
 load/failover testing remains future work.
 
@@ -672,9 +663,9 @@ cost dominates monthly savings
 (Figure~\ref{fig:be}).
 
 \begin{figure}[!t]\centering
-\includegraphics[width=0.82\linewidth]{fig7_breakeven.png}
-\caption{MODELED: managed vs.\ self-hosted cost vs.\ daily volume
-(source: results/rq6\_breakeven.csv). This is not a GPU/vLLM measurement.}\label{fig:be}
+\includegraphics[width=0.95\linewidth]{fig7_breakeven.png}
+\caption{MODELED: managed vs.\ self-hosted monthly cost.
+Source: results/rq6\_breakeven.csv; not a GPU/vLLM measurement.}\label{fig:be}
 \end{figure}
 
 \subsection{Sensitivity analysis}
@@ -708,10 +699,9 @@ here. The full system attains the cost saving \emph{and} the quality floor
 (Figure~\ref{fig:abl}).
 
 \begin{figure}[!t]\centering
-\includegraphics[width=0.82\linewidth]{fig8_ablation.png}
-\caption{CACHED/SIMULATED: ablation of scoring terms in the harness
-(source: results/rq8\_ablation.csv); it tests heuristic components, not
-optimality.}\label{fig:abl}
+\includegraphics[width=0.95\linewidth]{fig8_ablation.png}
+\caption{CACHED/SIMULATED: scoring-term ablation.
+Source: results/rq8\_ablation.csv; heuristic components, not optimality.}\label{fig:abl}
 \end{figure}
 
 \subsection{Statistical significance (N=30 repetitions, \textbf{MEASURED fresh API calls})}
@@ -724,8 +714,11 @@ $\delta$, Cohen's $d$, 95\% CIs).
 \begin{itemize}
   \item \textbf{Cost.} Ours 0.0110 EUR/rep [0.0109, 0.0110] vs.\ premium 0.0385
         [0.0382, 0.0389] --- a \textbf{71.4\% reduction},
-        $p\approx3\times10^{-11}$, Cliff $\delta=-1.00$, Cohen $d=-43$
-        (non-overlapping CIs): highly significant with a maximal effect size.
+        $p\approx3\times10^{-11}$, Cliff $\delta=-1.00$, Cohen $d=-43$.
+        The very large effect size reflects the deterministic structure of
+        catalog-based pricing across repeated workload matrices; it should be
+        interpreted as a stable cost-separation signal rather than evidence of
+        broader external validity.
   \item \textbf{Quality.} Ours mean normalized quality 0.9587 [0.9564, 0.9611]
         vs.\ premium 0.9362 --- under this judge Ours is significantly higher
         ($p\approx6\times10^{-11}$, $\delta=+0.97$, $d=+3.4$), while na\"ive
@@ -738,14 +731,13 @@ $\delta$, Cohen's $d$, 95\% CIs).
         is lowest (707 ms); the latency/cost trade-off is now quantified.
 \end{itemize}
 
-\begin{figure}[!t]\centering
-\includegraphics[width=0.49\linewidth]{fig_stats_cost.png}\hfill
-\includegraphics[width=0.49\linewidth]{fig_stats_quality.png}
-\\[4pt]
-\includegraphics[width=0.49\linewidth]{fig_stats_latency.png}
-\caption{MEASURED: per-repetition cost, quality and latency, mean $\pm$ 95\% CI
-(N=30, source: results-stats/); the quality sign remains judge-dependent.}\label{fig:stats}
-\end{figure}
+\begin{figure*}[!t]\centering
+\includegraphics[width=0.32\textwidth]{fig_stats_cost.png}\hfill
+\includegraphics[width=0.32\textwidth]{fig_stats_quality.png}\hfill
+\includegraphics[width=0.32\textwidth]{fig_stats_latency.png}
+\caption{MEASURED: per-repetition cost, quality, and latency with 95\% CIs.
+Source: results-stats/; $N=30$.}\label{fig:stats}
+\end{figure*}
 
 % =====================================================================
 \section{Discussion}
@@ -778,7 +770,7 @@ attributable to the workload rather than only to an API key.
 
 \paragraph{What is actually measured?} The paper measures cached and fresh LLM
 calls in the harness, a 30-repetition uncached statistical run, standalone Envoy
-data-path overhead, and a bounded live kind run proving in-cluster gateway
+data-path overhead, and a bounded live kind run showing in-cluster gateway
 telemetry plus Tetragon shadow-AI ingestion. It does not measure production
 failover, multi-cluster scale, or real GPU serving.
 
@@ -807,7 +799,7 @@ capability the baseline lacks.}
 Dimension & Premium baseline & Ours & Net effect & \\
 \midrule
 Total cost (40-prompt matrix, cached harness) & 0.0389 EUR & 0.0114 EUR & $-70.8\%$ & \cmark \\
-Cost (N=30, significance)     & 0.0385 EUR & 0.0110 EUR & $-71.4\%$, $p{\approx}3{\times}10^{-11}$, $d{=}{-}43$ & \cmark \\
+Cost (N=30, significance)     & 0.0385 EUR & 0.0110 EUR & $-71.4\%$, $p{\approx}3{\times}10^{-11}$; large $d$ from low cost variance & \cmark \\
 Quality --- open-ended (judge) & 0.900 & 0.9125 & comparable / parity (win-rate 50\%) & $\approx$ \\
 Quality --- objective (exact-match, 500 items) & 65.4\% & 47.2\% & $-18.2$ pts (but $-94\%$ cost) & \xmark \\
 Latency (mean, N=30) & 998 ms & 1506 ms & $+51\%$, $d{=}{+}3.7$ & \xmark \\
@@ -901,8 +893,8 @@ open-ended quality. RQ2b shows the judge over-rates objectively wrong answers, s
 we separate judge-assessed quality from exact-match accuracy and avoid universal
 quality-preservation claims.
 
-\textbf{External validity.} The harness uses two real managed providers, four
-synthetic enterprise workloads, and no production traces. The Mistral deployment
+\textbf{External validity.} The harness is a bounded two-provider testbed with
+four synthetic enterprise workloads and no production traces. The Mistral deployment
 uses Azure AI Foundry DataZoneStandard (EU data zone); strict France-only
 residency still relies on modeled/self-hosted options.
 
@@ -935,7 +927,7 @@ resolution.
 % =====================================================================
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
-Within our preliminary, two-provider testbed, a gateway-level, economic-aware,
+Within our preliminary, bounded two-provider testbed, a gateway-level, economic-aware,
 sovereignty-constrained, budget-aware control plane substantially reduced cached
 harness cost ($-70.8\%$) while keeping open-ended judge quality comparable, and
 the simulated policy scenarios showed zero violations under declared provider
@@ -956,10 +948,10 @@ what the committed results support.
 \paragraph{Artifact / Reproducibility.} The operator and \path{experimentation/}
 (datasets, harness, scripts, results, figures, cached responses, and live kind
 evidence bundles) constitute the reproducible artifact. Reproduce harness results
-with \path{scripts/run_experiment.sh} then
-\path{python3 scripts/analyze_results.py}; reproduce the bounded live
-verification with \path{make -C automatisation real-demo-verify}; regenerate the
-local sensitivity tables with \path{python3 scripts/sensitivity_analysis.py}.
+with \texttt{scripts/run\_experiment.sh} then
+\texttt{python3 scripts/analyze\_results.py}; reproduce the bounded live
+verification with \texttt{make -C automatisation real-demo-verify}; regenerate the
+local sensitivity tables with \texttt{python3 scripts/sensitivity\_analysis.py}.
 Every reported test is journaled; failed or negative runs are preserved rather
 than relabeled.
 

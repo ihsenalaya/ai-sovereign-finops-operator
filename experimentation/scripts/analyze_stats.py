@@ -17,8 +17,38 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-plt.rcParams.update({"figure.dpi": 150, "font.size": 10, "axes.grid": True, "grid.alpha": 0.3})
+plt.rcParams.update({
+    "figure.dpi": 200,
+    "savefig.dpi": 300,
+    "font.family": "DejaVu Sans",
+    "font.size": 8,
+    "axes.labelsize": 8,
+    "axes.titlesize": 8,
+    "xtick.labelsize": 7,
+    "ytick.labelsize": 7,
+    "legend.fontsize": 7,
+    "axes.grid": True,
+    "grid.alpha": 0.22,
+    "grid.linewidth": 0.6,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
 BASE = "B1-premium-static"
+BLUE = "#2f6f9f"
+RED = "#a83f3f"
+GREEN = "#3d8b5a"
+
+
+def compact_label(label):
+    mapping = {
+        "B1-premium-static": "Premium",
+        "B2-round-robin": "Round robin",
+        "B3-least-cost": "Least cost",
+        "B4-static-policy": "Static",
+        "B5-budget-hard-block": "Hard block",
+        "B6-ours": "Ours",
+    }
+    return mapping.get(str(label), str(label))
 
 
 def ci95(x):
@@ -54,13 +84,19 @@ def per_rep(df, metric, agg="sum"):
     return out
 
 
-def barci(ax, order, data, title, ylabel, color):
+def barcih(ax, order, data, xlabel, color):
     means, los, his = [], [], []
     for s in order:
         m, lo, hi = ci95(data.get(s, [0]))
         means.append(m); los.append(m - lo); his.append(hi - m)
-    ax.bar(order, means, yerr=[los, his], capsize=4, color=color)
-    ax.set_title(title); ax.set_ylabel(ylabel); ax.tick_params(axis="x", rotation=30)
+    y = np.arange(len(order))
+    ax.barh(y, means, xerr=[los, his], capsize=3, color=color)
+    ax.set_yticks(y)
+    ax.set_yticklabels([compact_label(s) for s in order])
+    ax.invert_yaxis()
+    ax.set_xlabel(xlabel)
+    ax.grid(axis="x", alpha=0.22)
+    ax.grid(axis="y", visible=False)
 
 
 def main():
@@ -82,12 +118,16 @@ def main():
     lat = per_rep(df[df.latency_ms > 0], "latency_ms", "mean")  # mean latency per rep
 
     # Figures with 95% CI error bars.
-    fig, ax = plt.subplots(figsize=(7, 4)); barci(ax, order, cost, f"Total cost per rep (N={len(reps)}) ±95% CI", "EUR", "#3b6ea5")
-    fig.tight_layout(); fig.savefig(f"{args.out}/fig_stats_cost.png", bbox_inches="tight"); plt.close(fig)
-    fig, ax = plt.subplots(figsize=(7, 4)); barci(ax, order, qual, f"Mean quality per rep (N={len(reps)}) ±95% CI", "quality (norm)", "#a53b3b")
-    fig.tight_layout(); fig.savefig(f"{args.out}/fig_stats_quality.png", bbox_inches="tight"); plt.close(fig)
-    fig, ax = plt.subplots(figsize=(7, 4)); barci(ax, order, lat, f"Mean latency per rep (N={len(reps)}) ±95% CI", "ms", "#3b8f5a")
-    fig.tight_layout(); fig.savefig(f"{args.out}/fig_stats_latency.png", bbox_inches="tight"); plt.close(fig)
+    fig, ax = plt.subplots(figsize=(3.45, 2.25))
+    barcih(ax, order, cost, "Cost per rep (EUR)", BLUE)
+    fig.tight_layout(pad=0.4); fig.savefig(f"{args.out}/fig_stats_cost.png", bbox_inches="tight"); plt.close(fig)
+    fig, ax = plt.subplots(figsize=(3.45, 2.25))
+    barcih(ax, order, qual, "Mean quality", RED)
+    ax.set_xlim(0.82, 0.98)
+    fig.tight_layout(pad=0.4); fig.savefig(f"{args.out}/fig_stats_quality.png", bbox_inches="tight"); plt.close(fig)
+    fig, ax = plt.subplots(figsize=(3.45, 2.25))
+    barcih(ax, order, lat, "Latency per rep (ms)", GREEN)
+    fig.tight_layout(pad=0.4); fig.savefig(f"{args.out}/fig_stats_latency.png", bbox_inches="tight"); plt.close(fig)
 
     # Significance table vs premium.
     lines = [f"# Statistical summary — N={len(reps)} repetitions (temperature>0)\n",
