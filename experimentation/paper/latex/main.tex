@@ -274,21 +274,27 @@ $w_C{=}1.0,\ w_Q{=}1.5,\ w_L{=}0.3,\ w_S{=}0.5,\ w_B{=}1.0$ in
 parameters.
 
 \paragraph{Budget phases and weights.} The operator exposes budget phases from
-CRDs; the experimental B6 router keeps the base weights fixed and increases the
-effective cost term continuously through $(1+w_B\rho)$. Operational deployments
-may instead bind phases to weight presets:
+CRDs. The experimental B6 router keeps the base weights fixed and increases the
+effective cost weight continuously:
+$w_C^{eff}=w_C(1+w_B\rho)$, capped at $\rho=1$. With the committed defaults
+($w_C{=}1,w_B{=}1$), this yields $w_C^{eff}\in[1.0,1.7)$ in NORMAL,
+$[1.7,1.9)$ in PRESSURE, $[1.9,2.0)$ in CRITICAL, and $2.0$ in EXHAUSTED; in
+EXHAUSTED the quality gate is relaxed to preserve availability when a compliant
+candidate exists. Operational deployments may bind phases to discrete weight
+presets, but the evaluated artifact uses the continuous form above:
 \begin{table}[H]\centering\small
-\caption{Budget phase to routing behaviour. Thresholds are CRD policy values in
-the current manifests, not experimental constants.}
+\caption{Budget phase to routing behaviour. Thresholds and effective cost weights
+are CRD/code policy values in the current artifact, not hidden experimental
+constants.}
 \label{tab:budgetstate}
 \begin{tabular}{p{2.5cm}p{3.0cm}p{4.3cm}p{3.3cm}}
 \toprule
 Phase & Trigger & Routing behaviour & Risk \\
 \midrule
-NORMAL / WithinBudget & $usage<70\%$ & Apply default weights; require $q_{\min}$. & May leave savings unused. \\
-PRESSURE / Warning & $70\%\le usage<90\%$ & Increase cost pressure; alert. & Quality may drift if weights are too aggressive. \\
-CRITICAL & $90\%\le usage<100\%$ & Prefer cheaper compliant fallbacks when guardrails allow. & Fallback can increase latency or lower quality. \\
-EXHAUSTED / Exceeded & $usage\ge100\%$ & Hard-block policy may stop traffic; B6 degrades instead of blocking when a compliant candidate exists. & Availability vs.\ quality trade-off becomes explicit. \\
+NORMAL / WithinBudget & $usage<70\%$ & $w_C^{eff}\in[1.0,1.7)$; require $q_{\min}$. & May leave savings unused. \\
+PRESSURE / Warning & $70\%\le usage<90\%$ & $w_C^{eff}\in[1.7,1.9)$; alert. & Quality may drift if cost pressure is too aggressive. \\
+CRITICAL & $90\%\le usage<100\%$ & $w_C^{eff}\in[1.9,2.0)$; prefer cheaper compliant fallbacks when guardrails allow. & Fallback can increase latency or lower quality. \\
+EXHAUSTED / Exceeded & $usage\ge100\%$ & $w_C^{eff}=2.0$; hard-block policy may stop traffic, while B6 relaxes $q_{\min}$ and degrades if possible. & Availability vs.\ quality trade-off becomes explicit. \\
 RECOVERY & usage drops below threshold & Current implementation recovers immediately; hysteresis/cooldown is future work. & Without cooldown, phase can oscillate near thresholds. \\
 \bottomrule
 \end{tabular}
@@ -393,6 +399,11 @@ statistics. Public-benchmark exact-match evaluation uses 500 committed items
 (GSM8K + MMLU). The live kind verification was run on 2026-06-13. Pricing values
 are the catalog values committed with the experiment and are not dynamically
 looked up during analysis; price drift is handled as sensitivity, not hidden.
+Per-call input/output tokens, model, provider, latency, cost, and blocked status
+are recorded in \path{experimentation/results/calls.csv}. The harness preserves
+failed runs in journals rather than silently retrying them into success; the live
+kind apps use bounded attempt limits and expose HTTP status codes in the evidence
+logs.
 
 \paragraph{Baselines.} B1 premium-static, B2 round-robin, B3 least-cost, B4
 static namespace policy, B5 budget hard-block, B6 ours; plus B7 a
@@ -591,7 +602,8 @@ violated --- quantifying the availability price of strict residency
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig5_sovereignty.png}
 \caption{SIMULATED POLICY SCENARIOS: sovereignty violations for a blind baseline
-vs.\ Ours. Provider residency is declared metadata, not legal certification.}\label{fig:sov}
+vs.\ Ours (source: results/rq4\_sovereignty.csv). Provider residency is declared
+metadata, not legal certification.}\label{fig:sov}
 \end{figure}
 
 \subsection{RQ5 --- Budget-aware degradation (\textbf{SIMULATED budget pressure})}
