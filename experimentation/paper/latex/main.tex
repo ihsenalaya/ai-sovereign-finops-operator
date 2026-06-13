@@ -1,54 +1,60 @@
 % =====================================================================
 %  Economic-Aware and Sovereignty-Constrained Routing for Enterprise
-%  LLM Gateways  --  full article (Draft v0.6)
+%  LLM Gateways  --  IEEE TSE-style article (Draft v0.8)
 %
-%  Compiles on Overleaf with the default pdfLaTeX + BibTeX pipeline,
-%  and locally with `tectonic main.tex`. All figures are in ./figures/
-%  and the bibliography is ./references.bib  (no external paths).
+%  Uses IEEEtran in IEEE Computer Society journal mode, suitable as a
+%  Transactions on Software Engineering style draft. All figures are in
+%  ./figures/ and the bibliography is ./references.bib.
 % =====================================================================
-\documentclass[11pt,a4paper]{article}
+\documentclass[10pt,journal,compsoc]{IEEEtran}
 
-% ---- encoding & fonts (portable on pdfLaTeX) ------------------------
+% ---- encoding --------------------------------------------------------
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{textcomp}
 
-% ---- math, tables, figures, layout ---------------------------------
+% ---- citations -------------------------------------------------------
+\ifCLASSOPTIONcompsoc
+  \usepackage[nocompress]{cite}
+\else
+  \usepackage{cite}
+\fi
+
+% ---- math, tables, figures -----------------------------------------
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{graphicx}
-\usepackage{float}
-\usepackage{caption}
 \usepackage{xcolor}
 \usepackage{pifont}            % \ding{51} check, \ding{55} cross
-\usepackage[margin=1in]{geometry}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
-\usepackage[numbers,sort&compress]{natbib}
+\def\UrlBreaks{\do\/\do-\do\_\do\.\do\:}
+\Urlmuskip=0mu plus 1mu\relax
 
 % ---- convenience macros --------------------------------------------
 \newcommand{\cmark}{\textcolor{green!55!black}{\ding{51}}}
 \newcommand{\xmark}{\textcolor{red!70!black}{\ding{55}}}
 \newcommand{\Ours}{\textbf{Ours}}
 \graphicspath{{figures/}}
-\captionsetup{font=small,labelfont=bf}
-\setlength{\parskip}{0.35em}
 \renewcommand{\arraystretch}{1.15}
+\hyphenation{Open-Telemetry Kubernetes data-sovereignty self-hosted}
 
 % =====================================================================
-\title{\bfseries Economic-Aware and Sovereignty-Constrained Routing\\[2pt]
+\title{Economic-Aware and Sovereignty-Constrained Routing\\
        for Enterprise LLM Gateways}
-\author{(authors omitted for review)}
-\date{Draft v0.7 --- conservative evidence labels, sensitivity, bounded live kind verification, and expanded bibliography}
+\author{Anonymous~Authors%
+\IEEEcompsocitemizethanks{\IEEEcompsocthanksitem Manuscript prepared in IEEE
+Transactions on Software Engineering style. Author information is omitted for
+review.}}
+\markboth{IEEE Transactions on Software Engineering,~Draft Manuscript}%
+{Anonymous Authors: Economic-Aware and Sovereignty-Constrained Routing for Enterprise LLM Gateways}
 
 \begin{document}
-\maketitle
 
 % ---------------------------------------------------------------------
+\IEEEtitleabstractindextext{%
 \begin{abstract}
-\noindent
 Enterprises are adopting large language models (LLMs) faster than they can govern
 them: they cannot say which model truly costs the most, which team consumes what,
 when to route to a cheaper model, what a data-sovereignty constraint costs, or
@@ -84,9 +90,18 @@ release all code, datasets, cached responses, and analysis as a reproducible
 framework.
 \end{abstract}
 
+\begin{IEEEkeywords}
+LLM gateways, software engineering, Kubernetes operators, FinOps, model routing,
+data sovereignty, AI governance, cost attribution, reproducibility.
+\end{IEEEkeywords}}
+
+\maketitle
+\IEEEdisplaynontitleabstractindextext
+\IEEEpeerreviewmaketitle
+
 % =====================================================================
-\section{Introduction}
-LLMs are now embedded in HR assistants, document RAG, developer tooling, and
+\IEEEraisesectionheading{\section{Introduction}\label{sec:introduction}}
+\IEEEPARstart{L}{arge language models} (LLMs) are now embedded in HR assistants, document RAG, developer tooling, and
 analytical agents, following the rapid scaling of foundation models and both
 closed and open deployments~\cite{brown2020language,bommasani2021foundation,
 openai2023gpt4,touvron2023llama2}. Each call has a price that depends on the
@@ -187,7 +202,7 @@ taxonomies~\cite{owaspllm2025}; our system targets \emph{audit preparation}, not
 legal attestation.
 
 % ---- Table 1: feature matrix ---------------------------------------
-\begin{table}[H]
+\begin{table*}[!t]
 \centering\small
 \caption{Positioning feature matrix. Prior routing work optimizes the
 cost--quality trade-off; we add the governance dimensions at the control-plane
@@ -208,13 +223,13 @@ Learned difficulty predictor  & \cmark & \cmark & \cmark & \cmark & \xmark\,(pri
 Gateway/K8s artifact          & \xmark & \xmark & \xmark & \xmark & \cmark \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 We do not claim to beat learned routers on the cost--quality frontier; our
 governance layer is \emph{orthogonal} and could wrap any of them.
 
 % ---- Table 2: side-by-side -----------------------------------------
-\begin{table}[H]
+\begin{table*}[!t]
 \centering\small
 \caption{Side-by-side vs.\ representative systems --- three learned routers and a
 production gateway.}
@@ -232,7 +247,7 @@ Multi-provider             & part.   & \cmark  & \cmark  & \cmark    & \cmark \\
 K8s/Envoy artifact         & \xmark  & \xmark  & \xmark  & proxy     & \cmark \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 LiteLLM is the closest \emph{engineering} peer: it is a production-oriented
 gateway with spend tracking, budgets, keys/teams, retries, and fallbacks. We do
@@ -260,12 +275,13 @@ forbidden, if an allow-list exists and its declared zone is outside that list
 external providers are disallowed. If $C_P(r)=\varnothing$, the request is
 blocked or requires approval; this is a policy outcome, not a router failure.
 
-\paragraph{Normalization.} For any scalar metric $x_m$ over candidates $C$, define
+\paragraph{Normalization.} For any scalar metric $x_m$ over candidates $C$, let
+$a=\min_C x$ and $b=\max_C x$, then define
 \[
 N(x_m)=
 \begin{cases}
-0, & \min_C x = \max_C x,\\
-(x_m-\min_C x)/(\max_C x-\min_C x), & \text{otherwise.}
+0, & a=b,\\
+(x_m-a)/(b-a), & \text{otherwise.}
 \end{cases}
 \]
 Cost $C_m$ is the expected request price from $(\hat{t}_{in},\hat{t}_{out})$.
@@ -276,11 +292,11 @@ positive budget is configured.
 
 \paragraph{Soft objective.} Among feasible candidates, the router selects
 \begin{equation}
-\arg\min_{m\in C_P(r)}\;
-  w_C\,N(C_m)(1+w_B\rho)
-  + w_Q\,N(\ell_q(m))
-  + w_L\,N(\lambda_m)
-  + w_S\,\sigma(m),
+\begin{split}
+\arg\min_{m\in C_P(r)}\;&
+  w_C\,N(C_m)(1+w_B\rho) + w_Q\,N(\ell_q(m))\\
+& + w_L\,N(\lambda_m) + w_S\,\sigma(m).
+\end{split}
 \end{equation}
 where $\sigma(m)\in[0,1]$ is residual policy risk after hard filtering. The
 committed B6 implementation instantiates this heuristic with premium-normalized
@@ -298,7 +314,7 @@ $[1.7,1.9)$ in PRESSURE, $[1.9,2.0)$ in CRITICAL, and $2.0$ in EXHAUSTED; in
 EXHAUSTED the quality gate is relaxed to preserve availability when a compliant
 candidate exists. Operational deployments may bind phases to discrete weight
 presets, but the evaluated artifact uses the continuous form above:
-\begin{table}[H]\centering\small
+\begin{table*}[!t]\centering\small
 \caption{Budget phase to routing behaviour. Thresholds and effective cost weights
 are CRD/code policy values in the current artifact, not hidden experimental
 constants.}
@@ -314,7 +330,7 @@ EXHAUSTED / Exceeded & $usage\ge100\%$ & $w_C^{eff}=2.0$; hard-block policy may 
 RECOVERY & usage drops below threshold & Current implementation recovers immediately; hysteresis/cooldown is future work. & Without cooldown, phase can oscillate near thresholds. \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \paragraph{Algorithm.}
 \begin{enumerate}
@@ -368,7 +384,7 @@ policies include EU-only, France-only, self-hosted-only, and
 no-external-provider-for-sensitive-data. The output is an auditable finding or
 decision trace, not a legal attestation.
 
-\begin{table}[H]\centering\small
+\begin{table*}[!t]\centering\small
 \caption{Example decision trace under an EU-only, sensitive-data policy. This is
 ILLUSTRATIVE of the rule evaluation; source fields are declared metadata.}
 \label{tab:decisiontrace}
@@ -379,10 +395,10 @@ Candidate & Declared zone & Decision & Reason \\
 \texttt{gpt-4o} & US & reject & Zone outside EU allow-list. \\
 \texttt{gpt-4o-mini} & US & reject & Zone outside EU allow-list. \\
 \texttt{mistral-large} & EU & accept & Declared EU residency and sensitive-data allowed. \\
-\texttt{selfhosted-eu-llama} & FR & accept & FR is inside EU allow-list; self-hosted. \\
+\path{selfhosted-eu-llama} & FR & accept & FR is inside EU allow-list; self-hosted. \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 % =====================================================================
 \section{Methodology}
@@ -445,25 +461,25 @@ journaled with status+duration (42 PASS / 0 FAIL). Latency 95\% CIs via
 bootstrap. The protocol also supports the $\geq30$-repetition run reported in
 \S\ref{sec:stats}.
 
-\begin{table}[H]\centering\footnotesize
+\begin{table*}[!t]\centering\footnotesize
 \caption{Reproducibility checklist and artifact mapping.}
 \label{tab:artifactmap}
 \begin{tabular}{p{3.0cm}p{1.4cm}p{5.0cm}p{4.0cm}}
 \toprule
 Artifact & Avail. & Path & Used for \\
 \midrule
-Workload prompts & yes & \path{experimentation/datasets/*.json} & RQ1--RQ6 harness inputs \\
-Public benchmarks & yes & \path{experimentation/datasets-public/*.json} & RQ2b exact-match accuracy \\
-Cached responses & yes & \path{experimentation/results/cache.json} & CACHED deterministic reruns \\
-Harness CSVs & yes & \path{experimentation/results/*.csv} & Figures 2--8 and recap tables \\
-Statistical run & yes & \path{experimentation/results-stats/} & N=30 significance results \\
-Sensitivity CSVs & yes & \path{experimentation/results/*sensitivity.csv} & Table~\ref{tab:sensitivity} \\
-Analysis scripts & yes & \path{experimentation/scripts/} & Figure/table regeneration \\
-Live kind evidence & yes & \path{experimentation/results-live-kind-20260613-verify-v2/} & Table~\ref{tab:liveattr} and measured telemetry \\
-Negative live run & yes & \path{experimentation/results-live-kind-20260613-verify/} & Preserved partial/negative evidence \\
+Workload prompts & yes & \path{datasets/*.json} & RQ1--RQ6 harness inputs \\
+Public benchmarks & yes & \path{datasets-public/*.json} & RQ2b exact-match accuracy \\
+Cached responses & yes & \path{results/cache.json} & CACHED deterministic reruns \\
+Harness CSVs & yes & \path{results/*.csv} & Figures 2--8 and recap tables \\
+Statistical run & yes & \path{results-stats/} & N=30 significance results \\
+Sensitivity CSVs & yes & \path{results/*sensitivity.csv} & Table~\ref{tab:sensitivity} \\
+Analysis scripts & yes & \path{scripts/} & Figure/table regeneration \\
+Live kind evidence & yes & \path{results-live-kind-20260613-verify-v2/} & Table~\ref{tab:liveattr} and measured telemetry \\
+Negative live run & yes & \path{results-live-kind-20260613-verify/} & Preserved partial/negative evidence \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \paragraph{Bounded live kind verification.} In addition to the harness, we ran a
 fresh local kind verification on 2026-06-13 using
@@ -502,7 +518,7 @@ Gateway token telemetry and real Tetragon shadow-AI evidence without manual
 seeding, and that the automation stops apps and deletes the cluster after
 collecting evidence.
 
-\begin{table}[H]\centering\small
+\begin{table*}[!t]\centering\small
 \caption{MEASURED live kind attribution from Envoy AI Gateway metrics
 (2026-06-13). Costs use the declared catalog prices in the evidence bundle.}
 \label{tab:liveattr}
@@ -518,7 +534,7 @@ Namespace / app & Model & Input tok. & Output tok. & Cost EUR \\
 \textbf{Total} & & 41 & 897 & 0.007655 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{RQ1 --- Cost}
 In the cached harness (\textbf{CACHED}), relative to premium-static,
@@ -531,7 +547,7 @@ difficulty router} (B7) saves slightly \emph{more} (73.1\%) but at lower quality
 (B3) saves 98.2\% at the largest quality cost; round-robin 62.3\%; static policy
 46.0\% (Figure~\ref{fig:cost}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig2_cost_by_strategy.png}
 \caption{CACHED: total cost by routing strategy in the harness
 (source: results/rq1\_cost.csv); lower is better, with catalog prices.}\label{fig:cost}
@@ -549,7 +565,7 @@ results; (ii) this is a single deterministic pass. We therefore claim only that
 \emph{quality remained comparable within the evaluated scope}
 (Figure~\ref{fig:qvc}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig3_quality_vs_cost.png}
 \caption{CACHED/JUDGE-ASSESSED: quality vs.\ cost in the open-ended harness
 (sources: results/rq1\_cost.csv, results/rq2\_quality.csv). This is a proxy
@@ -578,7 +594,7 @@ consequence throughout: report judge-based quality only for open-ended workloads
 exact-match for tasks with ground truth, and never claim quality preservation
 from the judge alone.
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.72\linewidth]{fig_judge_vs_truth.png}
 \caption{CACHED: LLM-judge score by objective correctness
 (source: results/judgevstruth.csv); the judge over-rates wrong answers.}\label{fig:judge}
@@ -594,7 +610,7 @@ single-pass noise in \S\ref{sec:stats}. Least-cost has the lowest latency
 (p95 1476 ms), consistent with always picking small models
 (Figure~\ref{fig:lat}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig4_latency.png}
 \caption{CACHED/MEASURED LATENCY: latency percentiles by strategy in the harness
 (source: results/rq3\_latency.csv); provider variance is not isolated.}\label{fig:lat}
@@ -623,7 +639,7 @@ self-hosted model qualifies, so 20/40 are served and the rest refused rather tha
 violated --- quantifying the availability price of strict residency
 (Figure~\ref{fig:sov}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig5_sovereignty.png}
 \caption{SIMULATED POLICY SCENARIOS: sovereignty violations for a blind baseline
 vs.\ Ours (source: results/rq4\_sovereignty.csv). Provider residency is declared
@@ -638,7 +654,7 @@ Under a budget tight enough to be exceeded by always-premium,
 degradation dominates on availability \emph{and} spend
 (Figure~\ref{fig:budget}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig6_budget.png}
 \caption{SIMULATED: budget policies, availability vs.\ overrun
 (source: results/rq5\_budget.csv); no live provider is called in this scenario.}\label{fig:budget}
@@ -655,7 +671,7 @@ under low utilization, with high reliability/operations cost, or when migration
 cost dominates monthly savings
 (Figure~\ref{fig:be}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig7_breakeven.png}
 \caption{MODELED: managed vs.\ self-hosted cost vs.\ daily volume
 (source: results/rq6\_breakeven.csv). This is not a GPU/vLLM measurement.}\label{fig:be}
@@ -668,7 +684,7 @@ We add local-only sensitivity tables generated by
 call any provider. Scoring-weight and budget-threshold rows are
 \textbf{SIMULATED}; break-even rows are \textbf{MODELED}.
 
-\begin{table}[H]\centering\footnotesize
+\begin{table*}[!t]\centering\footnotesize
 \caption{Sensitivity analysis. Source: experimentation/results/*sensitivity.csv.}
 \label{tab:sensitivity}
 \begin{tabular}{p{3.1cm}p{3.2cm}p{3.2cm}p{4.2cm}}
@@ -681,7 +697,7 @@ Break-even economics & Low-ops/high-utilization: break-even 14.9M tokens/day & B
 Break-even downside & High-ops/low-utilization: break-even 87.7M tokens/day, keep-managed at 25M/day & API price -30\%: keep-managed at 25M/day & Self-hosting is not inherently cheaper; utilization and managed API price dominate. \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Ablation}
 Removing the \textbf{cost term} reverts spend to premium (0.0389 EUR) at
@@ -691,7 +707,7 @@ to 0.863 --- the quality term protects it. The latency term has negligible effec
 here. The full system attains the cost saving \emph{and} the quality floor
 (Figure~\ref{fig:abl}).
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.82\linewidth]{fig8_ablation.png}
 \caption{CACHED/SIMULATED: ablation of scoring terms in the harness
 (source: results/rq8\_ablation.csv); it tests heuristic components, not
@@ -722,7 +738,7 @@ $\delta$, Cohen's $d$, 95\% CIs).
         is lowest (707 ms); the latency/cost trade-off is now quantified.
 \end{itemize}
 
-\begin{figure}[H]\centering
+\begin{figure}[!t]\centering
 \includegraphics[width=0.49\linewidth]{fig_stats_cost.png}\hfill
 \includegraphics[width=0.49\linewidth]{fig_stats_quality.png}
 \\[4pt]
@@ -776,7 +792,7 @@ visible at a glance: large, statistically significant cost and governance gains,
 bought with a real latency increase and --- on objective tasks --- a real
 accuracy loss.
 
-\begin{table}[H]
+\begin{table*}[!t]
 \centering\footnotesize
 \caption{Recap of gains and losses vs.\ the always-premium baseline.
 \cmark~=~net gain, \xmark~=~net loss, $\approx$~=~parity/neutral, $+$~=~new
@@ -803,7 +819,7 @@ Live kind verification & none & 4 apps + shadow-AI & real gateway telemetry and 
 Cost attribution, budgets, break-even & none & present & governance layer & $+$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{When \emph{not} to use economic routing}
 Economic routing is not a universal win; our own results delimit where to avoid it:
@@ -948,7 +964,7 @@ Every reported test is journaled; failed or negative runs are preserved rather
 than relabeled.
 
 % =====================================================================
-\bibliographystyle{plainnat}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
 \end{document}
