@@ -41,7 +41,7 @@
 \title{\bfseries Economic-Aware and Sovereignty-Constrained Routing\\[2pt]
        for Enterprise LLM Gateways}
 \author{(authors omitted for review)}
-\date{Draft v0.6 --- conservative evidence labels, sensitivity, and bounded live kind verification}
+\date{Draft v0.7 --- conservative evidence labels, sensitivity, bounded live kind verification, and expanded bibliography}
 
 \begin{document}
 \maketitle
@@ -87,9 +87,11 @@ framework.
 % =====================================================================
 \section{Introduction}
 LLMs are now embedded in HR assistants, document RAG, developer tooling, and
-analytical agents. Each call has a price that depends on the model, the provider,
-and the token volume; each call may also send data across jurisdictions. Three
-problems recur in regulated enterprises:
+analytical agents, following the rapid scaling of foundation models and both
+closed and open deployments~\cite{brown2020language,bommasani2021foundation,
+openai2023gpt4,touvron2023llama2}. Each call has a price that depends on the
+model, the provider, and the token volume; each call may also send data across
+jurisdictions. Three problems recur in regulated enterprises:
 \begin{enumerate}
   \item \textbf{Cost opacity.} Teams cannot attribute spend per application/team
         or decide when a cheaper model would suffice.
@@ -100,8 +102,10 @@ problems recur in regulated enterprises:
         self-hosting on GPU becomes cheaper than a managed API.
 \end{enumerate}
 
-Existing gateways and FinOps tools mostly \emph{measure and report}. Our thesis is
-that a gateway-adjacent control plane can compute and expose auditable routing
+Existing gateways and FinOps tools mostly \emph{measure and report}, as seen in
+cloud FinOps practice and Kubernetes cost-allocation systems
+\cite{finopsframework,opencost}. Our thesis is that a gateway-adjacent control
+plane can compute and expose auditable routing
 decisions: select a model that meets quality and hard sovereignty constraints,
 degrade gracefully under budget pressure instead of blocking, attribute spend by
 Kubernetes workload, and surface the self-hosting break-even from observed usage.
@@ -136,8 +140,11 @@ models using a learned scorer; Hybrid LLM~\cite{ding2024hybridllm} routes by
 predicted query difficulty with a tunable quality target;
 RouteLLM~\cite{ong2024routellm} learns routers from preference data;
 AutoMix~\cite{aggarwal2024automix} uses few-shot self-verification and a POMDP
-router. These works optimize a \emph{cost--quality} trade-off, largely via
-per-request difficulty/confidence prediction for a single tenant. Our work is
+router. Recent work extends this space with test-time compute selection,
+preference-conditioned bandits, and dynamic mixed-model routing
+\cite{ding2025bestroute,li2025llmbandit,wang2025mixllm}. These works optimize
+a \emph{cost--quality} trade-off, largely via per-request
+difficulty/confidence prediction for a single tenant. Our work is
 \textbf{orthogonal and complementary}: they decide \emph{which model is good
 enough}; we add the \textbf{governance layer} around that decision --- hard
 data-sovereignty constraints, per-team/namespace budgets, budget-aware graceful
@@ -148,27 +155,36 @@ sovereignty/budget constraints is explicit future work (\S\ref{sec:conclusion}).
 
 \paragraph{LLM serving systems.}
 Orca~\cite{yu2022orca}, vLLM/PagedAttention~\cite{kwon2023pagedattention},
-SGLang~\cite{zheng2024sglang}, and DistServe~\cite{zhong2024distserve} optimize
-\emph{throughput/latency} of a single self-hosted engine; surveys
-\cite{zhou2024surveyinference,li2025tamingtitans} organize this space. They are
+FlexGen~\cite{sheng2023flexgen}, SGLang~\cite{zheng2024sglang},
+FastServe~\cite{wu2023fastserve}, SpecInfer~\cite{miao2024specinfer},
+Sarathi-Serve~\cite{agrawal2024sarathi}, DistServe~\cite{zhong2024distserve},
+fair LLM schedulers~\cite{sheng2024fairness}, and
+Llumnix~\cite{sun2024llumnix} optimize \emph{throughput/latency} or scheduling
+of a single self-hosted serving layer; surveys
+\cite{zhou2024surveyinference,zhen2025tamingtitans} organize this space. They are
 complementary: they define the \emph{cost} of the self-hosted option whose
 break-even our system predicts (RQ6), but do not address cross-provider routing,
 attribution, or sovereignty.
 
 \paragraph{LLM gateways.}
 Envoy AI Gateway~\cite{envoyaigateway} and LiteLLM~\cite{litellm} provide a
-unified data path to multiple providers and expose usage telemetry, but leave
-\emph{policy} (which model, under which constraints, within which budget) to the
-operator. We contribute that policy layer as a Kubernetes control plane and
+unified data path to multiple providers; Envoy Gateway provides the underlying
+gateway substrate~\cite{envoygateway}. These systems expose usage telemetry, but
+leave \emph{policy} (which model, under which constraints, within which budget)
+to the operator. We contribute that policy layer as a Kubernetes control plane,
+using the operator/CRD pattern~\cite{kubernetesoperators,kubernetescrd}, and
 validate it.
 
 \paragraph{Evaluation and regulation.}
 We follow the LLM-as-a-judge methodology of Zheng et al.~\cite{zheng2023judge},
-which shows strong judges approximate human preference at ${\sim}80\%$ agreement,
-adopting both absolute and pairwise protocols while acknowledging its documented
-biases (\S\ref{sec:threats}). Data-residency and sensitive-data handling are
-driven by the GDPR~\cite{gdpr2016} and the EU AI Act~\cite{euaiact2024}; our
-system targets \emph{audit preparation}, not legal attestation.
+alongside broader LLM evaluation and benchmark work
+\cite{liu2023geval,liang2022helm,srivastava2022bigbench}. We adopt both
+absolute and pairwise protocols while acknowledging documented judge biases
+(\S\ref{sec:threats}). Data-residency and sensitive-data handling are driven by
+the GDPR~\cite{gdpr2016}, the EU AI Act~\cite{euaiact2024}, AI governance
+frameworks~\cite{nistairmf2023,nistgenai2024,iso42001}, and LLM security risk
+taxonomies~\cite{owaspllm2025}; our system targets \emph{audit preparation}, not
+legal attestation.
 
 % ---- Table 1: feature matrix ---------------------------------------
 \begin{table}[H]
@@ -322,12 +338,15 @@ CRDs declare gateways, providers, models, budgets, and sovereignty policies; pur
 engines compute cost (per model/team/namespace), budget phase, sovereignty
 findings, and break-even; a report engine emits Markdown/JSON and Prometheus
 \texttt{ai\_finops\_*} metrics. The design keeps the data path in Envoy and the
-decision logic in the operator. In this paper the routing decision is evaluated
-primarily at the control-plane level. The repository also contains a bounded
-live kind verification in which Envoy AI Gateway emits real token telemetry and
-the operator attributes it per namespace/application. This validates the
-telemetry and attribution path, not production-grade load, failover, or legal
-compliance.
+decision logic in the Kubernetes operator. In this paper the routing decision is
+evaluated primarily at the control-plane level. The repository also contains a
+bounded live kind verification in which Envoy AI Gateway emits real token
+telemetry and the operator attributes it per namespace/application. This
+validates the telemetry and attribution path, not production-grade load,
+failover, or legal compliance. OpenTelemetry-style correlation of metrics, logs,
+and traces motivates the evidence model, while Tetragon supplies eBPF-based
+runtime observability for direct, non-gateway LLM egress
+\cite{opentelemetry,tetragon}.
 
 \paragraph{Budget engine.} The budget engine is pure control-plane logic: it
 collects usage samples, computes cost through the catalog price book, projects
@@ -396,9 +415,11 @@ model, allowed models, and $q_{\min}$.
 and the committed response cache for repeatability. The statistical run bypasses
 caches for 30 repetitions at temperature 0.7 and reports distribution-level
 statistics. Public-benchmark exact-match evaluation uses 500 committed items
-(GSM8K + MMLU). The live kind verification was run on 2026-06-13. Pricing values
-are the catalog values committed with the experiment and are not dynamically
-looked up during analysis; price drift is handled as sensitivity, not hidden.
+(GSM8K~\cite{cobbe2021gsm8k} +
+MMLU~\cite{hendrycks2021mmlu}). The live kind verification was run on
+2026-06-13. Pricing values are the catalog values committed with the experiment
+and are not dynamically looked up during analysis; price drift is handled as
+sensitivity, not hidden.
 Per-call input/output tokens, model, provider, latency, cost, and blocked status
 are recorded in \path{experimentation/results/calls.csv}. The harness preserves
 failed runs in journals rather than silently retrying them into success; the live
@@ -414,7 +435,9 @@ operator cost engine, \% savings); quality (LLM-as-judge acceptability 1--5
 $\to$ normalized 0--1, acceptable-rate $\geq3$, pairwise win-rate vs.\ premium);
 latency (p50/p95/p99, mean, routing-decision $\mu$s); sovereignty (violations,
 reroutes, blocked); budget (availability, overrun); break-even (managed vs.\
-self-hosted monthly, payback).
+self-hosted monthly, payback). This multi-metric view follows the evaluation
+lesson that accuracy alone is insufficient for deployed LLM systems
+\cite{liang2022helm,srivastava2022bigbench}.
 
 \paragraph{Reproducibility.} Temperature 0 for the deterministic pass; all
 responses and judge scores cached so re-runs are identical and free; every test
@@ -535,8 +558,9 @@ quality signal, not objective correctness.}\label{fig:qvc}
 
 \subsection{RQ2b --- Objective accuracy + judge validity}
 To remove judge bias and test generality, we evaluate on \textbf{500 real
-public-benchmark items} --- 250 \textbf{GSM8K} (math, numeric) and 250
-\textbf{MMLU} (multiple-choice A--D) --- scored by \textbf{objective exact-match}.
+public-benchmark items} --- 250 \textbf{GSM8K}~\cite{cobbe2021gsm8k} (math,
+numeric) and 250 \textbf{MMLU}~\cite{hendrycks2021mmlu} (multiple-choice A--D)
+--- scored by \textbf{objective exact-match}.
 Premium-static (gpt-4o) reaches \textbf{65.4\%} accuracy at 0.116 EUR;
 \textbf{Ours 47.2\%} at 0.0073 EUR (\textbf{$-94\%$ cost}); static-policy 59.4\%;
 least-cost/difficulty-router 44--46\%. On these objective tasks aggressive cost
@@ -578,7 +602,7 @@ single-pass noise in \S\ref{sec:stats}. Least-cost has the lowest latency
 
 \paragraph{Gateway data-path overhead (MEASURED, standalone Envoy).}
 Beyond control-plane decision time, we measured routing through a real
-\textbf{Envoy} data path: an Envoy proxy in front of the provider, driven at
+\textbf{Envoy} data path~\cite{envoygateway}: an Envoy proxy in front of the provider, driven at
 concurrency 8. Envoy adds \textbf{negligible overhead} --- mean latency 1153 ms
 vs.\ 1116 ms direct (${\approx}{+}3\%$, within run-to-run variance), throughput
 6.05 vs.\ 5.81 req/s, \textbf{0 errors} --- supporting the feasibility of a
@@ -884,7 +908,8 @@ residency.
 \textbf{Adversarial validity.} Teams could mislabel sensitivity, provider
 metadata could be stale, or direct API calls could bypass the gateway. Shadow-AI
 detection reduces this blind spot but does not replace network policy, identity
-controls, and procurement governance.
+controls, procurement governance, and LLM-specific security controls such as
+those catalogued by OWASP~\cite{owaspllm2025}.
 
 \textbf{Scalability validity.} Many namespaces, many providers, and policy
 explosion are not stress-tested here. Larger deployments need load testing of the
