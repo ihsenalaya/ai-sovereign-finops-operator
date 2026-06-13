@@ -1,0 +1,6 @@
+scenario,gpu_monthly_eur,ops_monthly_eur,migration_eur,utilization,managed_api_price_multiplier,effective_selfhost_monthly_eur,break_even_tokens_per_day,managed_monthly_at_25m_tokens_day_eur,monthly_savings_at_25m_tokens_day_eur,payback_months_at_25m_tokens_day,recommendation_at_25m_tokens_day,evidence_label
+low_ops_high_util,1200.00,500.00,2000.00,0.80,1.00,2125.00,14912280.70,3562.50,1437.50,1.39,self-host,MODELED
+base,1800.00,700.00,5000.00,1.00,1.00,2500.00,17543859.65,3562.50,1062.50,4.71,self-host,MODELED
+high_ops_low_util,3500.00,1500.00,10000.00,0.40,1.00,12500.00,87719298.25,3562.50,-8937.50,n/a,keep-managed,MODELED
+api_price_minus_30pct,1800.00,700.00,5000.00,1.00,0.70,2500.00,25062656.64,2493.75,-6.25,n/a,keep-managed,MODELED
+api_price_plus_30pct,1800.00,700.00,5000.00,1.00,1.30,2500.00,13495276.65,4631.25,2131.25,2.35,self-host,MODELED

@@ -1,6 +1,6 @@
 % =====================================================================
 %  Economic-Aware and Sovereignty-Constrained Routing for Enterprise
-%  LLM Gateways  --  full article (Draft v0.4)
+%  LLM Gateways  --  full article (Draft v0.6)
 %
 %  Compiles on Overleaf with the default pdfLaTeX + BibTeX pipeline,
 %  and locally with `tectonic main.tex`. All figures are in ./figures/
@@ -24,6 +24,7 @@
 \usepackage{xcolor}
 \usepackage{pifont}            % \ding{51} check, \ding{55} cross
 \usepackage[margin=1in]{geometry}
+\usepackage{url}
 \usepackage[hidelinks]{hyperref}
 \usepackage[numbers,sort&compress]{natbib}
 
@@ -40,7 +41,7 @@
 \title{\bfseries Economic-Aware and Sovereignty-Constrained Routing\\[2pt]
        for Enterprise LLM Gateways}
 \author{(authors omitted for review)}
-\date{Draft v0.5 --- cached harness results plus bounded live kind verification}
+\date{Draft v0.6 --- conservative evidence labels, sensitivity, and bounded live kind verification}
 
 \begin{document}
 \maketitle
@@ -217,46 +218,94 @@ K8s/Envoy artifact         & \xmark  & \xmark  & \xmark  & proxy     & \cmark \\
 \end{tabular}
 \end{table}
 
-LiteLLM is the closest \emph{engineering} peer (a real gateway with per-key spend
-and fallbacks) but offers no constraint-aware routing, graceful degradation, or
-break-even; the learned routers are stronger on the cost--quality decision but
-carry none of the governance dimensions. Our contribution is the governance
-layer, designed to compose with a learned router rather than replace it.
+LiteLLM is the closest \emph{engineering} peer: it is a production-oriented
+gateway with spend tracking, budgets, keys/teams, retries, and fallbacks. We do
+not position our operator as a replacement for such a gateway. The difference is
+the Kubernetes-native governance surface around the gateway: CRDs, reconciliation
+loops, namespace/application attribution, hard sovereignty-first filtering,
+auditable decision traces, and modeled managed-vs-self-host economics. Learned
+routers remain stronger on request-difficulty prediction; our contribution is the
+governance layer designed to wrap such routers rather than replace them.
 
 % =====================================================================
 \section{Problem Formulation and Algorithm}
 \label{sec:formulation}
-A request $r$ carries metadata (team, namespace, sensitivity) and an estimated
-token footprint. Given a catalog of models $M$ (each with provider, zone, managed
-flag, per-token price, quality prior, latency prior), a sovereignty policy $P$,
-and budget state $(\mathit{used}, \mathit{total})$:
+A request $r$ is a tuple
+$(team, namespace, application, sensitivity, \hat{t}_{in}, \hat{t}_{out})$.
+The catalog $M$ contains candidate models; each model $m$ has provider metadata,
+declared residency zone, managed/self-hosted flag, per-token price, quality prior
+$q_m$, and latency prior $\lambda_m$. A sovereignty policy $P$ and budget state
+$b=(used,total)$ are evaluated before scoring.
 
-\paragraph{Hard constraint.} Reject any $m$ that violates $P$: its zone is
-forbidden; or an allow-list is set and $m$'s zone is outside it (EU covers EU
-member states); or $r$ is sensitive, $m$ is a managed external provider, and
-external providers are disallowed for sensitive data. Let $C$ be the surviving
-candidates. If $C=\varnothing$, the request is not served (a measured outcome,
-not a crash).
+\paragraph{Hard sovereignty filter.} The feasible candidate set is
+$C_P(r)=\{m\in M : compliant(m,r,P)\}$. A model is rejected if its zone is
+forbidden, if an allow-list exists and its declared zone is outside that list
+(``EU'' covers EU member-state zones), or if the request is sensitive and managed
+external providers are disallowed. If $C_P(r)=\varnothing$, the request is
+blocked or requires approval; this is a policy outcome, not a router failure.
 
-\paragraph{Soft objective.} Among $C$ meeting a minimum quality $q_{\min}$
-(relaxed only when the budget is exhausted, enabling graceful degradation),
-select
+\paragraph{Normalization.} For any scalar metric $x_m$ over candidates $C$, define
+\[
+N(x_m)=
+\begin{cases}
+0, & \min_C x = \max_C x,\\
+(x_m-\min_C x)/(\max_C x-\min_C x), & \text{otherwise.}
+\end{cases}
+\]
+Cost $C_m$ is the expected request price from $(\hat{t}_{in},\hat{t}_{out})$.
+Quality loss is $\ell_q(m)=\max(0,q_{best}-q_m)$ before normalization. Latency
+penalty is derived from observed p95/p99 when available, otherwise from catalog
+priors. Budget pressure is $\rho=\min(1,used/total)$, with $\rho=0$ when no
+positive budget is configured.
+
+\paragraph{Soft objective.} Among feasible candidates, the router selects
 \begin{equation}
-\arg\min_{m\in C}\;
-  \alpha\,\widehat{c}(m)\,(1+\varepsilon\rho)
-  + \beta\,\ell_q(m)
-  + \gamma\,\ell_\lambda(m)
-  + \delta\,\sigma(m),
+\arg\min_{m\in C_P(r)}\;
+  w_C\,N(C_m)(1+w_B\rho)
+  + w_Q\,N(\ell_q(m))
+  + w_L\,N(\lambda_m)
+  + w_S\,\sigma(m),
 \end{equation}
-where $\widehat{c}(m)=\mathrm{cost}(m)/\mathrm{cost}(\mathrm{premium})$ is
-normalized cost, $\rho=\mathit{used}/\mathit{total}$ is budget pressure,
-$\ell_q(m)=\max\!\big(0,(q_{\mathrm{prem}}-q_m)/q_{\mathrm{prem}}\big)$ is expected
-quality loss, $\ell_\lambda$ is normalized latency, and $\sigma$ a residual
-sovereignty risk. Budget pressure multiplies the cost term, so as the budget
-fills the router shifts to cheaper models. Defaults:
-$\alpha{=}1.0,\ \beta{=}1.5,\ \gamma{=}0.3,\ \delta{=}0.5,\ \varepsilon{=}1.0$.
-The implementation is \texttt{experimentation/internal/router} (strategy
-\texttt{B6-ours}), reusing the operator's sovereignty normalization.
+where $\sigma(m)\in[0,1]$ is residual policy risk after hard filtering. The
+committed B6 implementation instantiates this heuristic with premium-normalized
+cost, max-normalized latency, quality loss vs.\ premium, and defaults
+$w_C{=}1.0,\ w_Q{=}1.5,\ w_L{=}0.3,\ w_S{=}0.5,\ w_B{=}1.0$ in
+\path{experimentation/internal/router}. These are policy weights, not learned
+parameters.
+
+\paragraph{Budget phases and weights.} The operator exposes budget phases from
+CRDs; the experimental B6 router keeps the base weights fixed and increases the
+effective cost term continuously through $(1+w_B\rho)$. Operational deployments
+may instead bind phases to weight presets:
+\begin{table}[H]\centering\small
+\caption{Budget phase to routing behaviour. Thresholds are CRD policy values in
+the current manifests, not experimental constants.}
+\label{tab:budgetstate}
+\begin{tabular}{p{2.5cm}p{3.0cm}p{4.3cm}p{3.3cm}}
+\toprule
+Phase & Trigger & Routing behaviour & Risk \\
+\midrule
+NORMAL / WithinBudget & $usage<70\%$ & Apply default weights; require $q_{\min}$. & May leave savings unused. \\
+PRESSURE / Warning & $70\%\le usage<90\%$ & Increase cost pressure; alert. & Quality may drift if weights are too aggressive. \\
+CRITICAL & $90\%\le usage<100\%$ & Prefer cheaper compliant fallbacks when guardrails allow. & Fallback can increase latency or lower quality. \\
+EXHAUSTED / Exceeded & $usage\ge100\%$ & Hard-block policy may stop traffic; B6 degrades instead of blocking when a compliant candidate exists. & Availability vs.\ quality trade-off becomes explicit. \\
+RECOVERY & usage drops below threshold & Current implementation recovers immediately; hysteresis/cooldown is future work. & Without cooldown, phase can oscillate near thresholds. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Algorithm.}
+\begin{enumerate}
+  \item Build candidate set from the model catalog and workload metadata.
+  \item Apply hard sovereignty filtering and record every rejection reason.
+  \item If no compliant candidate remains, apply the configured block/approval policy.
+  \item Compute expected cost, quality loss, latency penalty, and budget pressure.
+  \item Normalize scoring terms and select the weight policy for the current budget phase.
+  \item Score each candidate and select the lowest-score model.
+  \item Emit a decision trace, rejected-candidate list, and attribution labels.
+\end{enumerate}
+This is an auditable heuristic. We make no global optimality claim, and learned
+request-difficulty predictors can be inserted behind the hard policy filter.
 
 % =====================================================================
 \section{System Design}
@@ -273,6 +322,42 @@ live kind verification in which Envoy AI Gateway emits real token telemetry and
 the operator attributes it per namespace/application. This validates the
 telemetry and attribution path, not production-grade load, failover, or legal
 compliance.
+
+\paragraph{Budget engine.} The budget engine is pure control-plane logic: it
+collects usage samples, computes cost through the catalog price book, projects
+monthly spend when the policy window is shorter than a month, and writes phase,
+usage percentage, observed spend, projected spend, and advisory actions to
+\texttt{AIBudgetPolicy.status}. The default manifests use warning/critical/hard
+thresholds of 70/90/100 percent and actions
+\texttt{alert}/\texttt{blockOrRequireApproval}. Gateway fallback actuation is only
+attempted when explicitly configured with \texttt{enforcementMode=enforce},
+\texttt{fallbackModelRef}, and guardrails; the live kind run used
+\texttt{reportOnly}, so no hidden reroute was performed.
+
+\paragraph{Sovereignty engine.} The sovereignty engine enforces declared
+technical routing policies. Provider residency, managed/self-hosted status, and
+sensitive-data eligibility come from catalog/configuration metadata, contracts,
+or another trusted source supplied by the operator. The system does \textbf{not}
+independently certify legal compliance or provider data-residency claims. Example
+policies include EU-only, France-only, self-hosted-only, and
+no-external-provider-for-sensitive-data. The output is an auditable finding or
+decision trace, not a legal attestation.
+
+\begin{table}[H]\centering\small
+\caption{Example decision trace under an EU-only, sensitive-data policy. This is
+ILLUSTRATIVE of the rule evaluation; source fields are declared metadata.}
+\label{tab:decisiontrace}
+\begin{tabular}{p{3.0cm}p{2.3cm}p{2.1cm}p{5.2cm}}
+\toprule
+Candidate & Declared zone & Decision & Reason \\
+\midrule
+\texttt{gpt-4o} & US & reject & Zone outside EU allow-list. \\
+\texttt{gpt-4o-mini} & US & reject & Zone outside EU allow-list. \\
+\texttt{mistral-large} & EU & accept & Declared EU residency and sensitive-data allowed. \\
+\texttt{selfhosted-eu-llama} & FR & accept & FR is inside EU allow-list; self-hosted. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % =====================================================================
 \section{Methodology}
@@ -301,6 +386,14 @@ context, quality-sensitive), Dev assistant (high quality), Analytical agent (hig
 volume). Each declares team, namespace, sensitivity, monthly budget, premium
 model, allowed models, and $q_{\min}$.
 
+\paragraph{Execution parameters.} The deterministic harness uses temperature 0
+and the committed response cache for repeatability. The statistical run bypasses
+caches for 30 repetitions at temperature 0.7 and reports distribution-level
+statistics. Public-benchmark exact-match evaluation uses 500 committed items
+(GSM8K + MMLU). The live kind verification was run on 2026-06-13. Pricing values
+are the catalog values committed with the experiment and are not dynamically
+looked up during analysis; price drift is handled as sensitivity, not hidden.
+
 \paragraph{Baselines.} B1 premium-static, B2 round-robin, B3 least-cost, B4
 static namespace policy, B5 budget hard-block, B6 ours; plus B7 a
 literature-style difficulty router (Hybrid-LLM/RouteLLM proxy).
@@ -317,6 +410,26 @@ responses and judge scores cached so re-runs are identical and free; every test
 journaled with status+duration (42 PASS / 0 FAIL). Latency 95\% CIs via
 bootstrap. The protocol also supports the $\geq30$-repetition run reported in
 \S\ref{sec:stats}.
+
+\begin{table}[H]\centering\footnotesize
+\caption{Reproducibility checklist and artifact mapping.}
+\label{tab:artifactmap}
+\begin{tabular}{p{3.0cm}p{1.4cm}p{5.0cm}p{4.0cm}}
+\toprule
+Artifact & Avail. & Path & Used for \\
+\midrule
+Workload prompts & yes & \path{experimentation/datasets/*.json} & RQ1--RQ6 harness inputs \\
+Public benchmarks & yes & \path{experimentation/datasets-public/*.json} & RQ2b exact-match accuracy \\
+Cached responses & yes & \path{experimentation/results/cache.json} & CACHED deterministic reruns \\
+Harness CSVs & yes & \path{experimentation/results/*.csv} & Figures 2--8 and recap tables \\
+Statistical run & yes & \path{experimentation/results-stats/} & N=30 significance results \\
+Sensitivity CSVs & yes & \path{experimentation/results/*sensitivity.csv} & Table~\ref{tab:sensitivity} \\
+Analysis scripts & yes & \path{experimentation/scripts/} & Figure/table regeneration \\
+Live kind evidence & yes & \path{experimentation/results-live-kind-20260613-verify-v2/} & Table~\ref{tab:liveattr} and measured telemetry \\
+Negative live run & yes & \path{experimentation/results-live-kind-20260613-verify/} & Preserved partial/negative evidence \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{Bounded live kind verification.} In addition to the harness, we ran a
 fresh local kind verification on 2026-06-13 using
@@ -355,6 +468,24 @@ Gateway token telemetry and real Tetragon shadow-AI evidence without manual
 seeding, and that the automation stops apps and deletes the cluster after
 collecting evidence.
 
+\begin{table}[H]\centering\small
+\caption{MEASURED live kind attribution from Envoy AI Gateway metrics
+(2026-06-13). Costs use the declared catalog prices in the evidence bundle.}
+\label{tab:liveattr}
+\begin{tabular}{llrrr}
+\toprule
+Namespace / app & Model & Input tok. & Output tok. & Cost EUR \\
+\midrule
+\texttt{finance/risk-assistant} & \texttt{cohere-command-a-latest} & 7 & 319 & 0.002774 \\
+\texttt{legal/contract-review} & \texttt{cohere-command-a-latest} & 10 & 299 & 0.002608 \\
+\texttt{marketing/content-writer} & \texttt{mistral-large-latest} & 14 & 60 & 0.000357 \\
+\texttt{rh/chatbot-rh} & \texttt{cohere-command-a-latest} & 10 & 219 & 0.001916 \\
+\midrule
+\textbf{Total} & & 41 & 897 & 0.007655 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{RQ1 --- Cost}
 In the cached harness (\textbf{CACHED}), relative to premium-static,
 \textbf{B6-ours cuts total cost by 70.8\%}
@@ -368,8 +499,8 @@ difficulty router} (B7) saves slightly \emph{more} (73.1\%) but at lower quality
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig2_cost_by_strategy.png}
-\caption{CACHED: total cost by routing strategy in the harness (lower is
-better).}\label{fig:cost}
+\caption{CACHED: total cost by routing strategy in the harness
+(source: results/rq1\_cost.csv); lower is better, with catalog prices.}\label{fig:cost}
 \end{figure}
 
 \subsection{RQ2 --- Quality (LLM-as-judge)}
@@ -386,8 +517,9 @@ results; (ii) this is a single deterministic pass. We therefore claim only that
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig3_quality_vs_cost.png}
-\caption{CACHED/JUDGE-ASSESSED: quality vs.\ cost in the open-ended harness.
-This is a proxy quality signal, not objective correctness.}\label{fig:qvc}
+\caption{CACHED/JUDGE-ASSESSED: quality vs.\ cost in the open-ended harness
+(sources: results/rq1\_cost.csv, results/rq2\_quality.csv). This is a proxy
+quality signal, not objective correctness.}\label{fig:qvc}
 \end{figure}
 
 \subsection{RQ2b --- Objective accuracy + judge validity}
@@ -413,8 +545,8 @@ from the judge alone.
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.72\linewidth]{fig_judge_vs_truth.png}
-\caption{LLM-judge score by objective correctness: the judge over-rates wrong
-answers.}\label{fig:judge}
+\caption{CACHED: LLM-judge score by objective correctness
+(source: results/judgevstruth.csv); the judge over-rates wrong answers.}\label{fig:judge}
 \end{figure}
 
 \subsection{RQ3 --- Latency and overhead}
@@ -429,7 +561,8 @@ single-pass noise in \S\ref{sec:stats}. Least-cost has the lowest latency
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig4_latency.png}
-\caption{CACHED/MEASURED LATENCY: latency percentiles by strategy in the harness.}\label{fig:lat}
+\caption{CACHED/MEASURED LATENCY: latency percentiles by strategy in the harness
+(source: results/rq3\_latency.csv); provider variance is not isolated.}\label{fig:lat}
 \end{figure}
 
 \paragraph{Gateway data-path overhead (MEASURED, standalone Envoy).}
@@ -471,7 +604,8 @@ degradation dominates on availability \emph{and} spend
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig6_budget.png}
-\caption{SIMULATED: budget policies, availability vs.\ overrun.}\label{fig:budget}
+\caption{SIMULATED: budget policies, availability vs.\ overrun
+(source: results/rq5\_budget.csv); no live provider is called in this scenario.}\label{fig:budget}
 \end{figure}
 
 \subsection{RQ6 --- Managed vs.\ self-hosted break-even (\emph{modeled})}
@@ -479,14 +613,39 @@ Using real per-token prices and modeled GPU+ops cost (2500 EUR/month, 5000 EUR
 migration), managed cost grows with volume while self-hosted is flat. The
 crossover is at \textbf{${\approx}25.6$M tokens/day} (payback ${\approx}4.3$
 months); above it the engine recommends \emph{self-host}. This is a modeled
-prediction to be validated against real GPU economics
+prediction to be validated against real GPU economics. It is decision support,
+not a vLLM/GPU benchmark. Self-hosting can be worse below the break-even point,
+under low utilization, with high reliability/operations cost, or when migration
+cost dominates monthly savings
 (Figure~\ref{fig:be}).
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig7_breakeven.png}
-\caption{MODELED: managed vs.\ self-hosted cost vs.\ daily volume. This is not a
-GPU/vLLM measurement.}\label{fig:be}
+\caption{MODELED: managed vs.\ self-hosted cost vs.\ daily volume
+(source: results/rq6\_breakeven.csv). This is not a GPU/vLLM measurement.}\label{fig:be}
 \end{figure}
+
+\subsection{Sensitivity analysis}
+\label{sec:sensitivity}
+We add local-only sensitivity tables generated by
+\path{experimentation/scripts/sensitivity_analysis.py}. These analyses do not
+call any provider. Scoring-weight and budget-threshold rows are
+\textbf{SIMULATED}; break-even rows are \textbf{MODELED}.
+
+\begin{table}[H]\centering\footnotesize
+\caption{Sensitivity analysis. Source: experimentation/results/*sensitivity.csv.}
+\label{tab:sensitivity}
+\begin{tabular}{p{3.1cm}p{3.2cm}p{3.2cm}p{4.2cm}}
+\toprule
+Analysis & Low/aggressive case & Base case & Reviewer-facing interpretation \\
+\midrule
+Scoring weights & Cost/latency-heavy: 0.015533 EUR simulated cost, mean quality prior 0.8600 & Base: 0.016363 EUR, mean quality prior 0.9000 & Higher cost/latency pressure saves little in this catalog but chooses 20 cheapest-model routes; quality risk rises. \\
+Budget threshold & At 40\% of premium spend, hard-block serves 6/10 and overruns 54.00\%; graceful serves 10/10 with 0\% overrun & At 100\%, all policies fit the budget & Graceful degradation is most valuable under tight budgets; hard-block can still overrun when a request crosses the threshold. \\
+Break-even economics & Low-ops/high-utilization: break-even 14.9M tokens/day & Base analytical: 17.5M tokens/day & The plotted RQ6 curve samples the first positive point at 25.6M/day; exact break-even is lower because the curve is coarse. \\
+Break-even downside & High-ops/low-utilization: break-even 87.7M tokens/day, keep-managed at 25M/day & API price -30\%: keep-managed at 25M/day & Self-hosting is not inherently cheaper; utilization and managed API price dominate. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Ablation}
 Removing the \textbf{cost term} reverts spend to premium (0.0389 EUR) at
@@ -498,7 +657,9 @@ here. The full system attains the cost saving \emph{and} the quality floor
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.82\linewidth]{fig8_ablation.png}
-\caption{CACHED/SIMULATED: ablation of scoring terms in the harness.}\label{fig:abl}
+\caption{CACHED/SIMULATED: ablation of scoring terms in the harness
+(source: results/rq8\_ablation.csv); it tests heuristic components, not
+optimality.}\label{fig:abl}
 \end{figure}
 
 \subsection{Statistical significance (N=30 repetitions, \textbf{MEASURED fresh API calls})}
@@ -531,7 +692,7 @@ $\delta$, Cohen's $d$, 95\% CIs).
 \\[4pt]
 \includegraphics[width=0.49\linewidth]{fig_stats_latency.png}
 \caption{MEASURED: per-repetition cost, quality and latency, mean $\pm$ 95\% CI
-(N=30).}\label{fig:stats}
+(N=30, source: results-stats/); the quality sign remains judge-dependent.}\label{fig:stats}
 \end{figure}
 
 % =====================================================================
@@ -544,6 +705,34 @@ cost. Strict sovereignty has a real availability/quality price that the system
 makes explicit and auditable rather than hidden. For budget control, graceful
 degradation strictly dominates hard-blocking on availability and overrun.
 Self-hosting pays off only at high, sustained volume.
+
+\subsection{Reviewer-facing questions}
+\paragraph{Why not just use LiteLLM?} LiteLLM is a practical gateway with spend
+tracking, keys/teams, budgets, retries, and fallbacks. Our operator adds a
+Kubernetes reconciliation layer around gateway telemetry: CRD-declared policies,
+namespace/application attribution, hard sovereignty filtering before scoring,
+decision traces, and break-even decision support. The systems are complementary.
+
+\paragraph{Why not just use RouteLLM or another learned router?} Learned routers
+estimate request difficulty and can improve the cost--quality frontier. They do
+not decide whether a candidate violates residency, a tenant budget, or an audit
+policy. In our architecture a learned router can rank candidates only after the
+hard governance filter has removed non-compliant options.
+
+\paragraph{What does Kubernetes add?} Kubernetes provides the ownership boundary
+that enterprises already operate: namespaces, deployments, service accounts,
+labels, CRDs, events, and reconciliation. This makes spend and policy decisions
+attributable to the workload rather than only to an API key.
+
+\paragraph{What is actually measured?} The paper measures cached and fresh LLM
+calls in the harness, a 30-repetition uncached statistical run, standalone Envoy
+data-path overhead, and a bounded live kind run proving in-cluster gateway
+telemetry plus Tetragon shadow-AI ingestion. It does not measure production
+failover, multi-cluster scale, or real GPU serving.
+
+\paragraph{What is modeled?} Self-hosting economics and the self-hosted fallback
+quality/cost are modeled. Sensitivity analysis varies GPU+ops cost, utilization,
+migration cost, and managed API price; it is decision support only.
 
 Table~\ref{tab:recap} consolidates every research question into a single
 gains/losses ledger versus the always-premium baseline, so the trade-off is
@@ -650,31 +839,45 @@ explicitly future work (protocol: \texttt{RQ7\_HUMAN\_EXPERT\_PROTOCOL.md}).
 % =====================================================================
 \section{Threats to Validity}
 \label{sec:threats}
-\textbf{Internal:} API/latency variability (mitigated by temperature 0, caching,
-bootstrap CIs); LLM-as-judge bias (absolute + pairwise, fixed judge).
-\textbf{External:} two providers and \emph{modeled} self-hosting in this phase;
-four synthetic workloads; modeled GPU economics (RQ6); the live kind verification
-is bounded and local, not an AKS or production load test; the Mistral EU model
-uses Azure AI Foundry DataZoneStandard (EU data zone) --- strict France-only
-residency still relies on a modeled fallback; volatile cloud prices are isolated
-as configuration. \textbf{Construct:} acceptability/win-rate are quality proxies;
-declarative sovereignty simplifies legal reality --- the system enforces declared
-technical routing policies and supports audit preparation, but does not
-independently certify legal compliance or provider data residency claims.
-\textbf{System validity:} the live verification proves telemetry scrape,
-namespace/application attribution, and Tetragon shadow-AI ingestion under a small
-kind workload; it does not prove production-grade Envoy AI Gateway enforcement,
-failover, or scale. \textbf{Conclusion:} beyond the
-deterministic pass we report a 30-repetition run (temperature 0.7) with 95\% CIs,
-Mann-Whitney U significance and Cliff's $\delta$/Cohen's $d$ effect sizes; the
-cost reduction and the latency increase are highly significant with large effect
-sizes. The remaining caveat is \emph{judge dependence} of the small quality gap. A
-two-judge agreement study (gpt-4o vs.\ Mistral-Large, $n{=}120$) finds
-\emph{moderate} agreement --- Cohen's quadratic-weighted $\kappa=0.40$,
-Krippendorff $\alpha=0.39$, Spearman $\rho=0.61$ ($p\approx10^{-13}$), within-1
-agreement 94.2\% --- which is precisely why we treat the small quality gap as
-judge-dependent and plan a human evaluation (a blind 100-item human-eval package
-is prepared and awaits evaluators).
+\textbf{Internal validity.} Provider APIs, latency, quotas, and prices vary over
+time. We mitigate deterministic runs with committed caches and report a
+30-repetition fresh run for distributional evidence, but future API changes can
+alter absolute costs or latency.
+
+\textbf{Construct validity.} LLM-as-judge acceptability is only a proxy for
+open-ended quality. RQ2b shows the judge over-rates objectively wrong answers, so
+we separate judge-assessed quality from exact-match accuracy and avoid universal
+quality-preservation claims.
+
+\textbf{External validity.} The harness uses two real managed providers, four
+synthetic enterprise workloads, and no production traces. The Mistral deployment
+uses Azure AI Foundry DataZoneStandard (EU data zone); strict France-only
+residency still relies on modeled/self-hosted options.
+
+\textbf{System validity.} The bounded kind run proves telemetry scrape,
+namespace/application attribution, cost status, and Tetragon shadow-AI ingestion
+under a small local workload. It does not prove production-grade Envoy AI Gateway
+enforcement, failover, high concurrency, or multi-cluster behaviour.
+
+\textbf{Economic validity.} RQ6 is modeled. It is not a GPU/vLLM measurement and
+does not include batching efficiency, model-size effects, cache-hit rates,
+reliability targets, reserved-capacity discounts, or engineering on-call cost
+beyond the configured scenarios.
+
+\textbf{Regulatory validity.} Sovereignty decisions rely on declared metadata.
+The operator can enforce technical routing policies and preserve audit evidence,
+but it cannot independently certify provider legal compliance or contractual data
+residency.
+
+\textbf{Adversarial validity.} Teams could mislabel sensitivity, provider
+metadata could be stale, or direct API calls could bypass the gateway. Shadow-AI
+detection reduces this blind spot but does not replace network policy, identity
+controls, and procurement governance.
+
+\textbf{Scalability validity.} Many namespaces, many providers, and policy
+explosion are not stress-tested here. Larger deployments need load testing of the
+reconciliation loop, CRD cardinality, metrics cardinality, and policy conflict
+resolution.
 
 % =====================================================================
 \section{Conclusion and Future Work}
@@ -702,8 +905,10 @@ what the committed results support.
 evidence bundles) constitute the reproducible artifact. Reproduce harness results
 with \path{scripts/run_experiment.sh} then
 \path{python3 scripts/analyze_results.py}; reproduce the bounded live
-verification with \path{make -C automatisation real-demo-verify}. Every reported
-test is journaled; failed or negative runs are preserved rather than relabeled.
+verification with \path{make -C automatisation real-demo-verify}; regenerate the
+local sensitivity tables with \path{python3 scripts/sensitivity_analysis.py}.
+Every reported test is journaled; failed or negative runs are preserved rather
+than relabeled.
 
 % =====================================================================
 \bibliographystyle{plainnat}

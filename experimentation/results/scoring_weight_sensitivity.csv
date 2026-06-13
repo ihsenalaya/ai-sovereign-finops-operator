@@ -1,0 +1,6 @@
+scenario,alpha_cost,beta_quality,gamma_latency,delta_sovereignty,epsilon_budget,estimated_cost_eur,mean_quality_prior,served,premium_picks,cheapest_picks,evidence_label
+base,1.00,1.50,0.30,0.50,1.00,0.016363,0.9000,40,0,0,SIMULATED
+cost_heavy,2.00,1.00,0.30,0.50,1.50,0.015533,0.8600,40,0,20,SIMULATED
+quality_heavy,0.70,2.50,0.30,0.50,0.50,0.016363,0.9000,40,0,0,SIMULATED
+latency_heavy,1.00,1.50,1.20,0.50,1.00,0.015533,0.8600,40,0,20,SIMULATED
+budget_heavy,1.00,1.20,0.30,0.50,2.50,0.016363,0.9000,40,0,0,SIMULATED
