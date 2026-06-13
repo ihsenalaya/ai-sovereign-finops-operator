@@ -4,7 +4,7 @@
 SHELL := /usr/bin/env bash
 SCRIPTS := scripts
 
-.PHONY: up up-gitea down cluster image argocd gitea apps wait local help real-demo real-demo-test real-demo-down full-demo
+.PHONY: up up-gitea down cluster image argocd gitea apps wait local help real-demo real-demo-reset real-demo-test real-demo-down full-demo
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -18,8 +18,11 @@ up-gitea: ## Self-contained GitOps bring-up with in-cluster Gitea
 local: ## Offline bring-up (kind + image + Helm, no ArgoCD)
 	@$(SCRIPTS)/install-local.sh
 
-real-demo: ## Real AI Gateway demo (kind + operator + Envoy + apps + Grafana)
+real-demo: ## Full zero-manual demo: 4 apps + AI Gateway + Tetragon shadow-AI
 	@envoy-aigw/deploy.sh up
+
+real-demo-reset: ## Delete/recreate kind, then run the full zero-manual real demo
+	@RESET_CLUSTER=true envoy-aigw/deploy.sh up
 
 real-demo-test: ## Sanity call through the real AI Gateway demo
 	@envoy-aigw/deploy.sh test
@@ -27,8 +30,8 @@ real-demo-test: ## Sanity call through the real AI Gateway demo
 real-demo-down: ## Remove real AI Gateway demo workloads (keeps control planes)
 	@envoy-aigw/deploy.sh down
 
-full-demo: ## Real AI Gateway demo + Tetragon shadow-AI plane
-	@tetragon/demo.sh
+full-demo: ## Alias: full zero-manual real demo
+	@envoy-aigw/deploy.sh up
 
 cluster: ## Create the kind cluster
 	@$(SCRIPTS)/01-create-cluster.sh

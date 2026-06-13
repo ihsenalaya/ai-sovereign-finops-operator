@@ -1,9 +1,13 @@
-# Envoy AI Gateway — Gateway + OpenAI route/backend for the greenops demo.
-# Real apps call this gateway; Envoy AI Gateway parses the OpenAI-compatible
-# traffic and emits real token-usage metrics per request. The OpenAI API key is
-# NOT in this file — it is created as a Secret from docs/openaikey.txt at deploy
-# time (see automatisation/envoy-aigw/deploy.sh). Routing is by the
-# `x-ai-eg-model` header the AI Gateway injects from the request body's model.
+# Envoy AI Gateway — Gateway + Azure Foundry Cohere route/backend for the
+# greenops demo. Real apps call this gateway; Envoy AI Gateway translates the
+# OpenAI-format request to the Azure-compatible deployment path and emits real
+# token-usage metrics per request. The Foundry API key is NOT in this file — it
+# is created as a Secret from docs/foundrykey.txt (or docs/mistralkey.txt for
+# backward compatibility) at deploy time.
+#
+# Real path verified on 2026-06-12 against the live account:
+#   /openai/deployments/cohere-command-a-latest/chat/completions?api-version=2024-05-01-preview
+#   -> HTTP 200
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
@@ -57,11 +61,11 @@ spec:
   connection:
     bufferLimit: 50Mi
 ---
-# Route gpt-4o and gpt-4o-mini (both served by OpenAI) by the model header.
+# Route the non-French live deployment by the model header.
 apiVersion: aigateway.envoyproxy.io/v1beta1
 kind: AIGatewayRoute
 metadata:
-  name: greenops-openai
+  name: greenops-cohere
   namespace: default
 spec:
   parentRefs:
@@ -73,67 +77,61 @@ spec:
         - headers:
             - type: Exact
               name: x-ai-eg-model
-              value: gpt-4o
+              value: cohere-command-a-latest
       backendRefs:
-        - name: greenops-openai
-    - matches:
-        - headers:
-            - type: Exact
-              name: x-ai-eg-model
-              value: gpt-4o-mini
-      backendRefs:
-        - name: greenops-openai
+        - name: greenops-cohere
 ---
 apiVersion: aigateway.envoyproxy.io/v1beta1
 kind: AIServiceBackend
 metadata:
-  name: greenops-openai
+  name: greenops-cohere
   namespace: default
 spec:
   schema:
-    name: OpenAI
+    name: AzureOpenAI
+    version: "2024-05-01-preview"
   backendRef:
-    name: greenops-openai
+    name: greenops-cohere
     kind: Backend
     group: gateway.envoyproxy.io
 ---
 apiVersion: aigateway.envoyproxy.io/v1beta1
 kind: BackendSecurityPolicy
 metadata:
-  name: greenops-openai-apikey
+  name: greenops-foundry-apikey
   namespace: default
 spec:
   targetRefs:
     - group: aigateway.envoyproxy.io
       kind: AIServiceBackend
-      name: greenops-openai
+      name: greenops-cohere
   type: APIKey
   apiKey:
     secretRef:
-      name: greenops-openai-apikey
+      name: greenops-foundry-apikey
       namespace: default
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: Backend
 metadata:
-  name: greenops-openai
+  name: greenops-cohere
   namespace: default
 spec:
   endpoints:
     - fqdn:
-        hostname: api.openai.com
+        hostname: greenops-foundry.services.ai.azure.com
         port: 443
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha3
 kind: BackendTLSPolicy
 metadata:
-  name: greenops-openai-tls
+  name: greenops-cohere-tls
   namespace: default
 spec:
   targetRefs:
     - group: gateway.envoyproxy.io
       kind: Backend
-      name: greenops-openai
+      name: greenops-cohere
   validation:
     wellKnownCACertificates: "System"
-    hostname: api.openai.com
+    hostname: greenops-foundry.services.ai.azure.com

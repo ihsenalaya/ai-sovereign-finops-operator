@@ -12,9 +12,10 @@
 #       the deployed operator always matches the repo/dashboard (GHCR is private)
 #   2.  the operator (Helm chart + CRDs)
 #   3.  Envoy Gateway v1.5.0 (with AI Gateway values) + Envoy AI Gateway v0.7.0
-#   4.  Gateway + OpenAI route (+ key Secret) + catalog + 3 OpenAI/US consumer apps
-#   4b. optional Mistral EU app (Azure Foundry) — sovereignty zone test (needs key)
+#   4.  Gateway + Azure Foundry Cohere route (+ key Secret) + catalog + 3 consumer apps
+#   4b. Mistral EU app (Azure Foundry) — 4th app, enabled by default
 #   5.  Prometheus + Grafana with the AI-FinOps dashboard
+#   6.  Tetragon + shadow-AI rogue workload + shadow-egress refresh
 #
 # Pinned versions are deliberate (see EG_VERSION / AIGW_VERSION below). The operator
 # tag is derived from the chart appVersion (no drifting hardcoded tag).
@@ -30,6 +31,7 @@ CLUSTER="${CLUSTER:-greenops}"
 CTX="${KCTX:-kind-${CLUSTER}}"
 K="kubectl --context ${CTX}"
 NS_OP="${NS_OP:-greenops-system}"
+RESET_CLUSTER="${RESET_CLUSTER:-false}"
 # Image tag is DERIVED from the chart's appVersion so the deployed operator always
 # matches this repo (and thus the dashboard's metric names) — never a hardcoded,
 # drifting tag again. Override OPERATOR_IMG to pin a specific image.
@@ -43,6 +45,20 @@ BUILD_OPERATOR="${BUILD_OPERATOR:-true}"
 EG_VERSION="${EG_VERSION:-v1.5.0}"      # IMPORTANT: v1.3.0 is too old (extproc not injected)
 AIGW_VERSION="${AIGW_VERSION:-v0.7.0}"
 SKIP_PROVIDER_PREFLIGHT="${SKIP_PROVIDER_PREFLIGHT:-false}"
+REAL_DEMO_ISOLATE_GITOPS="${REAL_DEMO_ISOLATE_GITOPS:-true}"
+ENABLE_MISTRAL_DEMO="${ENABLE_MISTRAL_DEMO:-true}"
+ENABLE_TETRAGON="${ENABLE_TETRAGON:-true}"
+ENABLE_SHADOW_ROGUE="${ENABLE_SHADOW_ROGUE:-true}"
+REQUIRE_SHADOW_EGRESS="${REQUIRE_SHADOW_EGRESS:-true}"
+SHADOW_NS="${SHADOW_NS:-default}"
+TETRAGON_NS="${TETRAGON_NS:-kube-system}"
+SHADOW_WAIT="${SHADOW_WAIT:-20}"
+SHADOW_REFRESH_RETRIES="${SHADOW_REFRESH_RETRIES:-6}"
+SHADOW_REFRESH_INTERVAL="${SHADOW_REFRESH_INTERVAL:-15}"
+FOUNDRY_ENDPOINT="${FOUNDRY_ENDPOINT:-https://greenops-foundry.services.ai.azure.com}"
+FOUNDRY_HOST="${FOUNDRY_HOST:-greenops-foundry.services.ai.azure.com}"
+FOUNDRY_API_VERSION="${FOUNDRY_API_VERSION:-2024-05-01-preview}"
+FOUNDRY_PRIMARY_DEPLOYMENT="${FOUNDRY_PRIMARY_DEPLOYMENT:-cohere-command-a-latest}"
 MISTRAL_READY="false"
 
 # helm OCI pulls fail when the WSL docker credential helper is used -> anonymous.
@@ -52,26 +68,50 @@ mkdir -p "${DOCKER_CONFIG}"; [ -f "${DOCKER_CONFIG}/config.json" ] || echo '{}' 
 step() { printf '\n\033[1;36m== %s\033[0m\n' "$*"; }
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing required tool: $1" >&2; exit 1; }; }
 
-probe_openai() {
+apply_file() {
+  local file="$1" attempt
+  for attempt in 1 2 3 4; do
+    if ${K} apply --request-timeout=2m -f "${file}"; then
+      return 0
+    fi
+    echo "kubectl apply failed for ${file}; retry ${attempt}/4" >&2
+    sleep $((attempt * 5))
+  done
+  return 1
+}
+
+apply_stdin() {
+  ${K} apply --request-timeout=2m -f -
+}
+
+load_foundry_key() {
+  local path
+  for path in "${REPO}/docs/foundrykey.txt" "${REPO}/docs/mistralkey.txt"; do
+    [ -f "${path}" ] || continue
+    tr -d '\r\n' < "${path}"
+    return 0
+  done
+  echo "missing docs/foundrykey.txt (preferred) or docs/mistralkey.txt" >&2
+  return 1
+}
+
+probe_foundry() {
   local key body code
-  [ -f "${REPO}/docs/openaikey.txt" ] || { echo "missing docs/openaikey.txt" >&2; return 1; }
-  key="$(grep -oE 'sk-[A-Za-z0-9_-]+' "${REPO}/docs/openaikey.txt" | head -1)"
-  [ -n "${key}" ] || { echo "no OpenAI key found in docs/openaikey.txt" >&2; return 1; }
+  key="$(load_foundry_key)" || return 1
+  [ -n "${key}" ] || { echo "empty Foundry key" >&2; return 1; }
   body="$(mktemp)"
   code="$(
-    curl -sS -o "${body}" -w '%{http_code}' https://api.openai.com/v1/chat/completions \
+    curl -sS -o "${body}" -w '%{http_code}' \
+      "${FOUNDRY_ENDPOINT}/openai/deployments/${FOUNDRY_PRIMARY_DEPLOYMENT}/chat/completions?api-version=${FOUNDRY_API_VERSION}" \
       -H "Authorization: Bearer ${key}" \
       -H 'Content-Type: application/json' \
-      -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"ping"}],"max_tokens":1}'
+      -d '{"messages":[{"role":"user","content":"Reply with exactly: ok"}],"max_tokens":8}'
   )"
   if [ "${code}" = "200" ]; then
     rm -f "${body}"
     return 0
   fi
-  echo "OpenAI preflight failed (HTTP ${code})." >&2
-  if grep -q 'insufficient_quota' "${body}"; then
-    echo "The key is valid but has no usable quota/billing. Refresh docs/openaikey.txt before running the real demo." >&2
-  fi
+  echo "Azure Foundry Cohere preflight failed (HTTP ${code})." >&2
   sed -n '1,20p' "${body}" >&2
   rm -f "${body}"
   return 1
@@ -79,13 +119,12 @@ probe_openai() {
 
 probe_mistral() {
   local key body code
-  [ -f "${REPO}/docs/mistralkey.txt" ] || return 1
-  key="$(tr -d '\r\n' < "${REPO}/docs/mistralkey.txt")"
+  key="$(load_foundry_key)" || return 1
   [ -n "${key}" ] || return 1
   body="$(mktemp)"
   code="$(
     curl -sS -o "${body}" -w '%{http_code}' \
-      'https://greenops-foundry.services.ai.azure.com/openai/deployments/mistral-large-latest/chat/completions?api-version=2024-05-01-preview' \
+      "${FOUNDRY_ENDPOINT}/openai/deployments/mistral-large-latest/chat/completions?api-version=${FOUNDRY_API_VERSION}" \
       -H "Authorization: Bearer ${key}" \
       -H 'Content-Type: application/json' \
       -d '{"messages":[{"role":"user","content":"ping"}],"max_tokens":1}'
@@ -102,22 +141,31 @@ probe_mistral() {
 
 preflight() {
   for t in kubectl helm kind docker curl; do need "$t"; done
+  if [ "${ENABLE_TETRAGON}" = "true" ]; then
+    need python3
+  fi
   if [ "${SKIP_PROVIDER_PREFLIGHT}" = "true" ]; then
     echo "provider preflight skipped (SKIP_PROVIDER_PREFLIGHT=true)"
     return 0
   fi
   step "0/5 provider preflight"
-  probe_openai || exit 1
-  if probe_mistral; then
-    MISTRAL_READY="true"
-    echo "Mistral Foundry probe OK."
-  else
-    MISTRAL_READY="false"
+  probe_foundry || exit 1
+  if [ "${ENABLE_MISTRAL_DEMO}" = "true" ]; then
+    if probe_mistral; then
+      MISTRAL_READY="true"
+      echo "Mistral Foundry probe OK."
+    else
+      MISTRAL_READY="false"
+    fi
   fi
 }
 
 ensure_cluster() {
   step "1/5 kind cluster '${CLUSTER}'"
+  if [ "${RESET_CLUSTER}" = "true" ]; then
+    echo "RESET_CLUSTER=true: deleting any existing kind cluster '${CLUSTER}' first."
+    kind delete cluster --name "${CLUSTER}" >/dev/null 2>&1 || true
+  fi
   if kind get clusters 2>/dev/null | grep -qx "${CLUSTER}"; then
     echo "cluster exists."
   else
@@ -125,6 +173,29 @@ ensure_cluster() {
       || kind create cluster --name "${CLUSTER}"
   fi
   ${K} cluster-info >/dev/null
+}
+
+isolate_existing_gitops() {
+  step "1b/6 isolate real-demo from stale GitOps state"
+  if [ "${REAL_DEMO_ISOLATE_GITOPS}" != "true" ]; then
+    echo "GitOps isolation disabled (REAL_DEMO_ISOLATE_GITOPS=false)."
+    return 0
+  fi
+
+  if ${K} api-resources --api-group=argoproj.io 2>/dev/null | awk '{print $1}' | grep -qx applications; then
+    for app in greenops-operator greenops-samples; do
+      if ${K} -n argocd get application "${app}" >/dev/null 2>&1; then
+        ${K} -n argocd patch application "${app}" --type merge \
+          -p '{"spec":{"syncPolicy":null}}' >/dev/null || true
+        echo "disabled ArgoCD auto-sync for ${app}."
+      fi
+    done
+  fi
+
+  # Older GitOps demos used release name greenops-operator. Keep only the
+  # Helm-managed real-demo release active, otherwise two managers race on status.
+  ${K} -n "${NS_OP}" scale deployment/greenops-operator-ai-sovereign-finops-operator \
+    --replicas=0 >/dev/null 2>&1 || true
 }
 
 ensure_operator_image() {
@@ -154,6 +225,28 @@ ensure_operator() {
   ${K} -n "${NS_OP}" rollout status deploy/greenops-ai-sovereign-finops-operator --timeout=180s
 }
 
+cleanup_legacy_aiops_state() {
+  step "2b/6 clean stale samples before applying real-demo catalog"
+  if [ "${REAL_DEMO_ISOLATE_GITOPS}" != "true" ]; then
+    echo "Legacy sample cleanup disabled with REAL_DEMO_ISOLATE_GITOPS=false."
+    return 0
+  fi
+
+  ${K} delete -k "${REPO}/config/samples" --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -f "${AUTO}/demo/demo-extra.yaml" --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete \
+    aigatewayroute.aigateway.envoyproxy.io/greenops-openai \
+    aiservicebackend.aigateway.envoyproxy.io/greenops-openai \
+    backendsecuritypolicy.aigateway.envoyproxy.io/greenops-openai-apikey \
+    backend.gateway.envoyproxy.io/greenops-openai \
+    backendtlspolicy.gateway.networking.k8s.io/greenops-openai-tls \
+    aiproviders.aiops.imperium.io/openai-us \
+    aiproviders.aiops.imperium.io/openai-us-mini \
+    aimodels.aiops.imperium.io/gpt-4o \
+    aimodels.aiops.imperium.io/gpt-4o-mini \
+    --ignore-not-found >/dev/null 2>&1 || true
+}
+
 ensure_envoy() {
   step "3/5 Envoy Gateway ${EG_VERSION} + Envoy AI Gateway ${AIGW_VERSION}"
   curl -fsSL -o /tmp/eg-values.yaml \
@@ -173,33 +266,48 @@ ensure_envoy() {
 }
 
 deploy_gateway_and_apps() {
-  step "4/5 Gateway + OpenAI route + catalog + consumer apps"
-  local oaikey
-  oaikey="$(grep -oE 'sk-[A-Za-z0-9_-]+' "${REPO}/docs/openaikey.txt" | head -1)"
-  [ -n "${oaikey}" ] || { echo "no OpenAI key in docs/openaikey.txt" >&2; exit 1; }
-  ${K} -n default create secret generic greenops-openai-apikey \
-    --from-literal=apiKey="${oaikey}" --dry-run=client -o yaml | ${K} apply -f - >/dev/null
-  ${K} apply -f "${HERE}/01-gateway-openai.yaml"
+  step "4/5 Gateway + Cohere Foundry route + catalog + consumer apps"
+  local fkey
+  fkey="$(load_foundry_key)" || exit 1
+  [ -n "${fkey}" ] || { echo "no Foundry key found" >&2; exit 1; }
+  ${K} -n default create secret generic greenops-foundry-apikey \
+    --from-literal=apiKey="${fkey}" --dry-run=client -o yaml | apply_stdin >/dev/null
+  apply_file "${HERE}/01-gateway-cohere.yaml"
   ${K} wait pods --timeout=180s -l gateway.envoyproxy.io/owning-gateway-name=greenops-aigw \
     -n envoy-gateway-system --for=condition=Ready
-  ${K} apply -f "${HERE}/02-metrics-and-catalog.yaml"
-  ${K} apply -f "${HERE}/03-consumer-apps.yaml"
+  apply_file "${HERE}/02-metrics-and-catalog.yaml"
+  apply_file "${HERE}/03-consumer-apps.yaml"
 }
 
 deploy_mistral_eu() {
-  # Optional 2nd provider: Mistral on Azure AI Foundry (EU zone) — proves the
-  # sovereignty engine is zone-aware (the EU app yields ZERO violation). Skipped
-  # cleanly if no key is present, so the OpenAI-only demo still works.
+  # 2nd provider: Mistral on Azure AI Foundry (EU zone), enabled by default so
+  # the real demo always has four app flows when the Foundry deployment is ready.
   step "4b/6 Mistral EU app (sovereignty zone test)"
-  if [ "${MISTRAL_READY}" != "true" ]; then
-    echo "Mistral Foundry not preflight-ready — skipping the optional EU app."
-    echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > docs/mistralkey.txt"
+  if [ "${ENABLE_MISTRAL_DEMO}" != "true" ]; then
+    echo "Mistral demo disabled (ENABLE_MISTRAL_DEMO=false) - ensuring it is absent."
+    ${K} delete -f "${HERE}/05-mistral-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
     return 0
   fi
-  local mkey; mkey="$(tr -d '\r\n' < "${REPO}/docs/mistralkey.txt")"
+  if [ "${MISTRAL_READY}" != "true" ]; then
+    echo "Mistral Foundry not preflight-ready — skipping the optional EU app."
+    echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > docs/foundrykey.txt"
+    return 0
+  fi
+  local mkey
+  mkey="$(load_foundry_key)" || exit 1
   ${K} -n default create secret generic greenops-mistral-apikey \
-    --from-literal=apiKey="${mkey}" --dry-run=client -o yaml | ${K} apply -f - >/dev/null
-  ${K} apply -f "${HERE}/05-mistral-eu.yaml"
+    --from-literal=apiKey="${mkey}" --dry-run=client -o yaml | apply_stdin >/dev/null
+  apply_file "${HERE}/05-mistral-eu.yaml"
+}
+
+wait_consumer_apps() {
+  step "4c/6 wait for the four verification apps"
+  ${K} -n rh rollout status deploy/chatbot-rh --timeout=180s
+  ${K} -n finance rollout status deploy/risk-assistant --timeout=180s
+  ${K} -n legal rollout status deploy/contract-review --timeout=180s
+  if [ "${ENABLE_MISTRAL_DEMO}" = "true" ] && [ "${MISTRAL_READY}" = "true" ]; then
+    ${K} -n marketing rollout status deploy/content-writer --timeout=180s
+  fi
 }
 
 deploy_observability() {
@@ -208,18 +316,91 @@ deploy_observability() {
     --from-file=ai-finops-overview.json="${REPO}/dashboards/ai-finops-overview.json" \
     --dry-run=client -o yaml | ${K} apply -f - >/dev/null
   ${K} label cm demo-grafana-dashboard -n "${NS_OP}" aiops.imperium.io/demo=true --overwrite >/dev/null
-  ${K} apply -f "${AUTO}/demo/observability.yaml"
+  apply_file "${AUTO}/demo/observability.yaml"
   ${K} -n "${NS_OP}" rollout status deploy/demo-prometheus --timeout=120s
   ${K} -n "${NS_OP}" rollout status deploy/demo-grafana --timeout=120s
 }
 
+ensure_tetragon() {
+  step "6/6 Tetragon shadow-AI plane"
+  if [ "${ENABLE_TETRAGON}" != "true" ]; then
+    echo "Tetragon disabled (ENABLE_TETRAGON=false)."
+    return 0
+  fi
+  KCTX="${CTX}" TETRAGON_NS="${TETRAGON_NS}" "${AUTO}/tetragon/install.sh"
+}
+
+deploy_shadow_ai() {
+  local i shadow_json
+  step "6b/6 Shadow-AI rogue workload"
+  if [ "${ENABLE_TETRAGON}" != "true" ]; then
+    echo "Skipping shadow-AI workload because Tetragon is disabled."
+    return 0
+  fi
+  if [ "${ENABLE_SHADOW_ROGUE}" != "true" ]; then
+    echo "Shadow-AI rogue workload disabled (ENABLE_SHADOW_ROGUE=false) — ensuring it is absent."
+    ${K} -n finance delete deploy/shadow-ai-rogue --ignore-not-found >/dev/null 2>&1 || true
+    ${K} -n "${SHADOW_NS}" delete configmap shadow-egress --ignore-not-found >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  apply_file "${AUTO}/tetragon/rogue-app.yaml"
+  ${K} -n finance rollout status deploy/shadow-ai-rogue --timeout=120s
+
+  shadow_json="[]"
+  for i in $(seq 1 "${SHADOW_REFRESH_RETRIES}"); do
+    if [ "${i}" -eq 1 ]; then
+      echo "waiting ${SHADOW_WAIT}s for Tetragon to export fresh events"
+      sleep "${SHADOW_WAIT}"
+    else
+      echo "shadow-egress still empty after refresh $((i - 1))/${SHADOW_REFRESH_RETRIES}; retrying in ${SHADOW_REFRESH_INTERVAL}s"
+      sleep "${SHADOW_REFRESH_INTERVAL}"
+    fi
+    NS="${SHADOW_NS}" KCTX="${CTX}" TETRAGON_NS="${TETRAGON_NS}" "${AUTO}/tetragon/forwarder.sh"
+    shadow_json="$(${K} -n "${SHADOW_NS}" get configmap shadow-egress -o jsonpath='{.data.egress\.json}' 2>/dev/null || echo '[]')"
+    if [ -n "${shadow_json}" ] && [ "${shadow_json}" != "[]" ]; then
+      echo "shadow-egress populated: ${shadow_json}"
+      break
+    fi
+  done
+
+  ${K} -n "${SHADOW_NS}" annotate aisovereigntypolicy regulated-france-policy \
+    demo/reconcile="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+
+  if [ -z "${shadow_json}" ] || [ "${shadow_json}" = "[]" ]; then
+    if [ "${REQUIRE_SHADOW_EGRESS}" = "true" ]; then
+      echo "shadow-egress is empty after ${SHADOW_REFRESH_RETRIES} refresh attempts." >&2
+      return 1
+    fi
+    echo "WARNING: Tetragon is installed but shadow-egress is still empty on this platform."
+    echo "         The Grafana Shadow-AI panels stay empty until real egress is captured."
+  fi
+}
+
+refresh_operator_status() {
+  step "6c/6 refresh operator status from live traffic"
+  sleep "${STATUS_REFRESH_WAIT:-45}"
+  ${K} -n default annotate aifinopsreport ai-report-all \
+    demo/reconcile="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+  ${K} -n default annotate aisovereigntypolicy regulated-france-policy \
+    demo/reconcile="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+  for budget in finance-budget rh-budget legal-budget marketing-budget; do
+    ${K} -n default annotate aibudgetpolicy "${budget}" \
+      demo/reconcile="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+  done
+  sleep 10
+  ${K} get aigw,aiprov,aimodel,aisov,aibudget,aireport -A
+}
+
 up() {
-  preflight; ensure_cluster; ensure_operator_image; ensure_operator; ensure_envoy
-  deploy_gateway_and_apps; deploy_mistral_eu; deploy_observability
+  preflight; ensure_cluster; isolate_existing_gitops; ensure_operator_image; ensure_operator; cleanup_legacy_aiops_state; ensure_envoy
+  deploy_gateway_and_apps; deploy_mistral_eu; wait_consumer_apps; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status
   step "Done — real demo is live"
-  echo "Apps in ns rh/finance/legal call OpenAI through Envoy AI Gateway; the operator"
-  echo "reads real token usage and computes cost/sovereignty/budget per app."
-  echo "finance-budget can reroute gpt-4o -> gpt-4o-mini live once the budget turns Critical."
+  echo "Apps in ns rh/finance/legal call Azure Foundry Cohere; marketing calls Mistral EU."
+  echo "The operator reads real token usage and computes cost/sovereignty/budget per app."
+  echo "Budgets stay fully real, but no fake cheaper-model fallback is configured while only one"
+  echo "non-French live deployment exists in this Foundry account."
+  echo "Shadow-AI is enabled: finance/shadow-ai-rogue bypasses the gateway and Tetragon feeds shadow-egress."
   echo
   echo "Open Grafana:  ./deploy.sh grafana   (then http://localhost:3000)"
   echo "Watch cost:    ${K} -n default get aifinopsreport ai-report-all -o yaml | grep -A4 'status:'"
@@ -236,16 +417,29 @@ test_call() {
   svc="$(${K} get svc -n envoy-gateway-system --selector=gateway.envoyproxy.io/owning-gateway-name=greenops-aigw -o jsonpath='{.items[0].metadata.name}')"
   ep="http://${svc}.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions"
   ${K} -n default run aigw-test --rm -i --restart=Never --image=curlimages/curl:8.10.1 --quiet -- \
-    sh -c "curl -s -m 60 -H 'Content-Type: application/json' -d '{\"model\":\"gpt-4o\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":20}' ${ep}"
+    sh -c "curl -s -m 60 -H 'Content-Type: application/json' -d '{\"model\":\"cohere-command-a-latest\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: ok\"}],\"max_tokens\":20}' ${ep}"
 }
 
 down() {
   step "Removing the real demo"
+  ${K} -n finance delete deploy/shadow-ai-rogue --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n "${SHADOW_NS}" delete configmap shadow-egress --ignore-not-found >/dev/null 2>&1 || true
   ${K} delete -f "${HERE}/05-mistral-eu.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/03-consumer-apps.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/02-metrics-and-catalog.yaml" --ignore-not-found
-  ${K} delete -f "${HERE}/01-gateway-openai.yaml" --ignore-not-found
-  ${K} -n default delete secret greenops-openai-apikey greenops-mistral-apikey --ignore-not-found
+  ${K} delete -f "${HERE}/01-gateway-cohere.yaml" --ignore-not-found
+  ${K} -n default delete \
+    aigatewayroute.aigateway.envoyproxy.io/greenops-openai \
+    aiservicebackend.aigateway.envoyproxy.io/greenops-openai \
+    backendsecuritypolicy.aigateway.envoyproxy.io/greenops-openai-apikey \
+    backend.gateway.envoyproxy.io/greenops-openai \
+    backendtlspolicy.gateway.networking.k8s.io/greenops-openai-tls \
+    aiproviders.aiops.imperium.io/openai-us \
+    aiproviders.aiops.imperium.io/openai-us-mini \
+    aimodels.aiops.imperium.io/gpt-4o \
+    aimodels.aiops.imperium.io/gpt-4o-mini \
+    --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete secret greenops-foundry-apikey greenops-openai-apikey greenops-mistral-apikey --ignore-not-found
   ${K} -n "${NS_OP}" delete deploy,svc,configmap -l aiops.imperium.io/demo=true --ignore-not-found
   echo "Operator + Envoy control planes kept (helm uninstall greenops / eg / aieg to remove)."
 }

@@ -6,8 +6,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 require docker
 require kind
 
-log "building image ${IMAGE_REPO}:${IMAGE_TAG}..."
-DOCKER_BUILDKIT=0 docker build -t "${IMAGE_REPO}:${IMAGE_TAG}" "${REPO_ROOT}"
+if [ "${SKIP_BUILD:-false}" != "true" ]; then
+  log "building image ${IMAGE_REPO}:${IMAGE_TAG}..."
+  DOCKER_BUILDKIT=0 docker build -t "${IMAGE_REPO}:${IMAGE_TAG}" "${REPO_ROOT}"
+else
+  log "skipping build for image ${IMAGE_REPO}:${IMAGE_TAG}..."
+fi
 
 log "loading image into kind cluster '${CLUSTER_NAME}'..."
 kind load docker-image "${IMAGE_REPO}:${IMAGE_TAG}" --name "${CLUSTER_NAME}"

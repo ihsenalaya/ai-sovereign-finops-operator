@@ -38,7 +38,7 @@ export HF_TOKEN="${HF_TOKEN:-}"                        # for gated models (optio
 
 # --- Operator image (from the GHCR push) ---
 export OPERATOR_IMAGE="${OPERATOR_IMAGE:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator}"
-export OPERATOR_TAG="${OPERATOR_TAG:-0.1.0}"
+export OPERATOR_TAG="${OPERATOR_TAG:-0.3.7}"
 
 # --- Key Vault (secrets: OpenAI key, HF token, gateway creds) ---
 # KV names are global + 3-24 chars; derive a stable suffix from the subscription.

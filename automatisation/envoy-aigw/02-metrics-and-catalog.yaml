@@ -29,73 +29,48 @@ spec:
     mode: aigw
     metricsEndpoint: /metrics
 ---
-# Two real OpenAI (US) models, each priced and attributed to the app that uses it.
+# One real non-French Azure Foundry deployment, priced with the official Azure
+# list price and converted to EUR with the ECB USD/EUR daily rate on 2026-06-12
+# (1 EUR = 1.1567 USD, so 1 USD = 0.8645 EUR).
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIProvider
 metadata:
-  name: openai-us
+  name: cohere-global
   namespace: default
   labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
 spec:
-  type: openai
-  region: eastus
-  dataResidency: us
+  type: azure-openai
+  region: francecentral
+  dataResidency: global
   managed: true
-  # Real gpt-4o list price (USD 2.50/10.00 -> EUR x0.92). Source: openai.com/api/pricing
-  pricing: { currency: EUR, inputTokenPricePerMillion: "2.30", outputTokenPricePerMillion: "9.20" }
-  compliance: { allowedForSensitiveData: false, allowedCountries: [US] }
----
-apiVersion: aiops.imperium.io/v1alpha1
-kind: AIProvider
-metadata:
-  name: openai-us-mini
-  namespace: default
-  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
-spec:
-  type: openai
-  region: eastus
-  dataResidency: us
-  managed: true
-  # Real gpt-4o-mini list price (USD 0.15/0.60 -> EUR x0.92).
-  pricing: { currency: EUR, inputTokenPricePerMillion: "0.14", outputTokenPricePerMillion: "0.55" }
-  compliance: { allowedForSensitiveData: false, allowedCountries: [US] }
+  # Azure pricing page: Cohere Command A Global = USD 0.0025 / 0.01 per 1K
+  # tokens => EUR 2.16 / 8.65 per 1M tokens with the ECB rate above.
+  pricing: { currency: EUR, inputTokenPricePerMillion: "2.16", outputTokenPricePerMillion: "8.65" }
+  compliance: { allowedForSensitiveData: false }
 ---
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIModel
 metadata:
-  name: gpt-4o
+  name: cohere-command-a
   namespace: default
   labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
 spec:
-  providerRef: openai-us
-  modelName: gpt-4o
+  providerRef: cohere-global
+  modelName: cohere-command-a-latest
   type: llm
   qualityTier: high
   costTier: high
   sensitiveDataAllowed: false
-  # Attribute this model's gateway telemetry to the finance risk-assistant app.
+  # Default attribution only; real per-request namespace/app comes from the
+  # sidecar-injected headers that AI Gateway exports as metric labels.
   servesNamespace: finance
   servesApplication: risk-assistant
   servesTeam: finance
 ---
-apiVersion: aiops.imperium.io/v1alpha1
-kind: AIModel
-metadata:
-  name: gpt-4o-mini
-  namespace: default
-  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
-spec:
-  providerRef: openai-us-mini
-  modelName: gpt-4o-mini
-  type: llm
-  qualityTier: medium
-  costTier: low
-  sensitiveDataAllowed: false
-  servesNamespace: rh
-  servesApplication: chatbot-rh
-  servesTeam: rh
----
-# EU-only sovereignty: both apps route to OpenAI US -> real per-app violations.
+# Regulated policy: EU/FR only. The live Cohere deployment uses Azure Foundry's
+# GlobalStandard SKU, which Microsoft documents as "may be processed in any
+# Azure region"; we therefore encode it as GLOBAL and forbid it explicitly for
+# this regulated demo.
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AISovereigntyPolicy
 metadata:
@@ -103,7 +78,7 @@ metadata:
   namespace: default
   labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
 spec:
-  dataResidency: { allowedZones: [FR, EU], forbiddenZones: [US, CN] }
+  dataResidency: { allowedZones: [FR, EU], forbiddenZones: [US, CN, GLOBAL] }
   sensitiveData: { externalProvidersAllowed: false, requireAnonymization: true }
   enforcementMode: reportOnly
 ---
@@ -128,19 +103,16 @@ spec:
   target: { namespace: finance, team: finance, application: risk-assistant }
   period: monthly
   # Tight real cap so the live demo reaches Critical/Exceeded in a couple of
-  # minutes and actuates the managed fallback.
+  # minutes from real traffic. No fake fallback is configured: only one
+  # non-French live deployment exists in this Foundry account today.
   budgetEUR: "0.02"
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100
-  actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
-  fallbackModelRef: gpt-4o-mini
-  enforcementMode: enforce
-  fallbackOnPhase: Critical
-  minFallbackQualityTier: medium
+  actions: { onWarning: [alert], onCritical: [alert], onHardLimit: [blockOrRequireApproval] }
+  enforcementMode: reportOnly
 ---
-# rh budget — comfortable cap (rh runs cheap gpt-4o-mini) => stays WithinBudget,
-# contrasting with finance (tight cap, over budget).
+# rh budget — comfortable cap so it contrasts with the tighter finance budget.
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIBudgetPolicy
 metadata:
@@ -154,11 +126,10 @@ spec:
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100
-  actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
-  fallbackModelRef: gpt-4o-mini
+  actions: { onWarning: [alert], onCritical: [alert], onHardLimit: [blockOrRequireApproval] }
 ---
-# legal budget — comfortable cap; legal also runs the cheap gpt-4o-mini, in a
-# different namespace, which keeps the shared-model attribution demo alive.
+# legal budget — comfortable cap; legal shares the same live model as rh and
+# finance, which keeps the shared-model attribution demo alive.
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIBudgetPolicy
 metadata:
@@ -172,5 +143,4 @@ spec:
   warningThresholdPercent: 70
   criticalThresholdPercent: 90
   hardLimitPercent: 100
-  actions: { onWarning: [alert], onCritical: [routeToCheaperModel], onHardLimit: [blockOrRequireApproval] }
-  fallbackModelRef: gpt-4o-mini
+  actions: { onWarning: [alert], onCritical: [alert], onHardLimit: [blockOrRequireApproval] }

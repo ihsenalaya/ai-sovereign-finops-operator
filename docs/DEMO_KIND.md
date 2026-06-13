@@ -28,12 +28,14 @@ make run     # tourne en avant-plan ; Ctrl-C pour arrêter
 Option B — déployé dans le cluster (image) :
 
 ```bash
-make docker-build IMG=greenops:dev
-kind load docker-image greenops:dev --name greenops
-make deploy IMG=greenops:dev
+make docker-build IMG=ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7
+kind load docker-image ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7 --name greenops
+make deploy IMG=ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7
 # ou via Helm :
 helm install greenops charts/ai-sovereign-finops-operator \
-  --set image.repository=greenops --set image.tag=dev
+  --set image.repository=ghcr.io/ihsenalaya/ai-sovereign-finops-operator \
+  --set image.tag=0.3.7 \
+  --set image.pullPolicy=Never
 ```
 
 ## 4. Appliquer les exemples

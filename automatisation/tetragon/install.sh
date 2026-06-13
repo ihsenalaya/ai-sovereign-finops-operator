@@ -33,11 +33,6 @@ echo "==> Applying egress TracingPolicy"
 
 cat <<EOF
 
-Tetragon installed. Next:
-  1. (optional) deploy the shadow-AI demo workload:  kubectl apply -f ${HERE}/rogue-app.yaml
-  2. start the forwarder (writes the shadow-egress ConfigMap the operator reads):
-       NS=default ${HERE}/forwarder.sh
-  3. watch the operator classify it:  the AISovereigntyPolicy reconcile emits
-     ai_finops_shadow_ai_egress and the Grafana "Shadow-AI egress details" /
-     "Shadow-AI hotspots by workload" panels light up.
+Tetragon installed. The real-demo automation now deploys the shadow-AI workload,
+runs the forwarder, and refreshes the operator status automatically.
 EOF

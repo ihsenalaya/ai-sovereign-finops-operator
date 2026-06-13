@@ -5,9 +5,10 @@
 # is attributed PER NAMESPACE / APP even when two apps in different namespaces
 # use the SAME model. No API key in the apps — the gateway holds it.
 #
-# `rh/chatbot-rh` and `legal/contract-review` BOTH use gpt-4o-mini yet are
-# attributed separately, by namespace/app. `finance/risk-assistant` stays on the
-# more expensive gpt-4o so the budget fallback can reroute it live.
+# All three apps use the same live non-French model
+# (`cohere-command-a-latest`) and are still attributed separately by
+# namespace/app. `finance/risk-assistant` is simply the busiest app, so its
+# budget phase advances fastest.
 ---
 apiVersion: v1
 kind: Service
@@ -63,7 +64,7 @@ spec:
           resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
           env:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
-            - { name: MODEL, value: "gpt-4o-mini" }
+            - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "chatbot-rh" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
@@ -72,13 +73,14 @@ spec:
             - |
               set -eu
               PROMPTS='Explique la politique de conges en une phrase.|Redige un accueil pour un nouvel employe.|Comment soumettre une note de frais ?'
+              sleep 0
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
                   -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":220}" \
                   "$GATEWAY" || true
-                sleep 3
+                sleep 210
               done
 ---
 apiVersion: apps/v1
@@ -102,7 +104,7 @@ spec:
           resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
           env:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
-            - { name: MODEL, value: "gpt-4o" }
+            - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "risk-assistant" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
@@ -111,16 +113,17 @@ spec:
             - |
               set -eu
               PROMPTS='Summarize key counterparty risks for a new supplier.|List three liquidity-risk indicators.|Explain value-at-risk in two sentences.'
+              sleep 15
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
                   -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":320}" \
                   "$GATEWAY" || true
-                sleep 4
+                sleep 210
               done
 ---
-# Same model as rh (gpt-4o-mini) but a different namespace -> proves
+# Same model as rh and finance but a different namespace -> proves
 # per-namespace attribution works even on a shared model.
 apiVersion: apps/v1
 kind: Deployment
@@ -143,7 +146,7 @@ spec:
           resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
           env:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
-            - { name: MODEL, value: "gpt-4o-mini" }
+            - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "contract-review" }
             - name: NS
               valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
@@ -152,11 +155,12 @@ spec:
             - |
               set -eu
               PROMPTS='Summarize the liability clauses of a SaaS contract.|List risks in an auto-renewal clause.|Explain an indemnification clause simply.'
+              sleep 30
               while true; do
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (RANDOM % 3) + 1 ))p")
                 curl -s -m 60 -o /dev/null -w "$NS/$APP($MODEL): %{http_code}\n" \
                   -H 'Content-Type: application/json' \
                   -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":300}" \
                   "$GATEWAY" || true
-                sleep 5
+                sleep 210
               done
