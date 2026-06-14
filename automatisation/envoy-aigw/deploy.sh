@@ -50,6 +50,7 @@ ENABLE_MISTRAL_DEMO="${ENABLE_MISTRAL_DEMO:-true}"
 ENABLE_TETRAGON="${ENABLE_TETRAGON:-true}"
 ENABLE_SHADOW_ROGUE="${ENABLE_SHADOW_ROGUE:-true}"
 REQUIRE_SHADOW_EGRESS="${REQUIRE_SHADOW_EGRESS:-true}"
+REQUIRE_LATENCY_TELEMETRY="${REQUIRE_LATENCY_TELEMETRY:-true}"
 SHADOW_NS="${SHADOW_NS:-default}"
 TETRAGON_NS="${TETRAGON_NS:-kube-system}"
 SHADOW_WAIT="${SHADOW_WAIT:-20}"
@@ -117,6 +118,7 @@ collect_evidence() {
     echo "enable_mistral_demo=${ENABLE_MISTRAL_DEMO}"
     echo "enable_tetragon=${ENABLE_TETRAGON}"
     echo "enable_shadow_rogue=${ENABLE_SHADOW_ROGUE}"
+    echo "require_latency_telemetry=${REQUIRE_LATENCY_TELEMETRY}"
   } >"${dir}/run.env"
 
   if ! cluster_exists; then
@@ -142,6 +144,7 @@ collect_evidence() {
   capture_cmd "${dir}/logs/envoy-gateway.log" kubectl --context "${CTX}" -n envoy-gateway-system logs deploy/envoy-gateway --tail=300
   capture_cmd "${dir}/logs/aigw-controller.log" kubectl --context "${CTX}" -n envoy-ai-gateway-system logs deploy/ai-gateway-controller --tail=300
   capture_cmd "${dir}/metrics/gateway_metrics.txt" kubectl --context "${CTX}" -n default run metrics-scrape --rm -i --restart=Never --image=curlimages/curl:8.10.1 --quiet -- curl -s -m 20 http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+  capture_cmd "${dir}/metrics/operator_metrics.txt" kubectl --context "${CTX}" -n default run operator-metrics-scrape --rm -i --restart=Never --image=curlimages/curl:8.10.1 --quiet -- curl -s -m 20 "http://greenops-ai-sovereign-finops-operator-metrics.${NS_OP}.svc.cluster.local:8080/metrics"
 
   pod="$(kubectl --context "${CTX}" -n "${TETRAGON_NS}" get pods -l app.kubernetes.io/name=tetragon -o name 2>/dev/null | head -1 || true)"
   if [ -n "${pod}" ]; then
@@ -483,9 +486,65 @@ refresh_operator_status() {
   ${K} get aigw,aiprov,aimodel,aisov,aibudget,aireport -A
 }
 
+scrape_gateway_metrics() {
+  ${K} -n default run "gateway-metrics-check-$(date +%s%N)" --rm -i --restart=Never \
+    --image=curlimages/curl:8.10.1 --quiet -- \
+    curl -s -m 20 http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+}
+
+scrape_operator_metrics() {
+  ${K} -n default run "operator-metrics-check-$(date +%s%N)" --rm -i --restart=Never \
+    --image=curlimages/curl:8.10.1 --quiet -- \
+    curl -s -m 20 "http://greenops-ai-sovereign-finops-operator-metrics.${NS_OP}.svc.cluster.local:8080/metrics"
+}
+
+validate_latency_telemetry() {
+  local available score latencies gateway_metrics operator_metrics metric
+  step "6d/6 validate real latency telemetry"
+  if [ "${REQUIRE_LATENCY_TELEMETRY}" != "true" ]; then
+    echo "Latency telemetry validation skipped (REQUIRE_LATENCY_TELEMETRY=false)."
+    return 0
+  fi
+
+  gateway_metrics="$(scrape_gateway_metrics || true)"
+  if ! printf '%s\n' "${gateway_metrics}" | grep -q '^gen_ai_server_request_duration_seconds_'; then
+    echo "Envoy AI Gateway did not expose gen_ai_server_request_duration_seconds_*; refusing to claim measured latency." >&2
+    return 1
+  fi
+
+  available="$(${K} -n default get aifinopsreport ai-report-all -o jsonpath='{.status.latencyTelemetryAvailable}' 2>/dev/null || true)"
+  if [ "${available}" != "true" ]; then
+    echo "AIFinOpsReport status latencyTelemetryAvailable=${available:-<empty>}; expected true for the real AIGW demo." >&2
+    ${K} -n default get aifinopsreport ai-report-all -o yaml >&2 || true
+    return 1
+  fi
+
+  score="$(${K} -n default get aifinopsreport ai-report-all -o jsonpath='{.status.routingScores[0].score}' 2>/dev/null || true)"
+  if [ -z "${score}" ]; then
+    echo "AIFinOpsReport has no routingScores; latency score cannot be verified." >&2
+    ${K} -n default get aifinopsreport ai-report-all -o yaml >&2 || true
+    return 1
+  fi
+
+  latencies="$(${K} -n default get aifinopsreport ai-report-all -o jsonpath='{.status.routingScores[*].observedLatencyMillis}' 2>/dev/null || true)"
+  if ! printf '%s\n' "${latencies}" | grep -Eq '(^| )[1-9][0-9]*(\.[0-9]+)?($| )'; then
+    echo "No positive observedLatencyMillis found in routingScores: ${latencies:-<empty>}." >&2
+    return 1
+  fi
+
+  operator_metrics="$(scrape_operator_metrics || true)"
+  for metric in ai_finops_latency_score ai_finops_measured_latency_millis ai_finops_latency_telemetry_available ai_finops_routing_score; do
+    if ! printf '%s\n' "${operator_metrics}" | grep -q "^${metric}"; then
+      echo "Operator /metrics does not expose ${metric}; dashboard latency panel would have no real source." >&2
+      return 1
+    fi
+  done
+  echo "Latency telemetry OK: gateway duration histogram observed, report status true, routing score=${score}."
+}
+
 up() {
   preflight; ensure_cluster; isolate_existing_gitops; ensure_operator_image; ensure_operator; cleanup_legacy_aiops_state; ensure_envoy
-  deploy_gateway_and_apps; deploy_mistral_eu; wait_consumer_apps; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status
+  deploy_gateway_and_apps; deploy_mistral_eu; wait_consumer_apps; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status; validate_latency_telemetry
   step "Done — real demo is live"
   echo "Apps in ns rh/finance/legal call Azure Foundry Cohere; marketing calls Mistral EU."
   echo "The operator reads real token usage and computes cost/sovereignty/budget per app."

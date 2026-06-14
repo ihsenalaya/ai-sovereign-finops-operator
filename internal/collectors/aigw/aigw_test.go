@@ -18,6 +18,7 @@ package aigw
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,6 +57,14 @@ gen_ai_client_token_usage_count{gen_ai_request_model="gpt-4o",gen_ai_token_type=
 gen_ai_client_token_usage_bucket{gen_ai_request_model="gpt-4o",gen_ai_token_type="cache_read_input",le="+Inf"} 4
 gen_ai_client_token_usage_sum{gen_ai_request_model="gpt-4o",gen_ai_token_type="cache_read_input"} 9999
 gen_ai_client_token_usage_count{gen_ai_request_model="gpt-4o",gen_ai_token_type="cache_read_input"} 4
+# Real Envoy AI Gateway duration histogram, seconds.
+# TYPE gen_ai_server_request_duration_seconds histogram
+gen_ai_server_request_duration_seconds_bucket{gen_ai_request_model="mistral-large",k8s_namespace="marketing",k8s_app="content-writer",le="+Inf"} 10
+gen_ai_server_request_duration_seconds_sum{gen_ai_request_model="mistral-large",k8s_namespace="marketing",k8s_app="content-writer"} 12.5
+gen_ai_server_request_duration_seconds_count{gen_ai_request_model="mistral-large",k8s_namespace="marketing",k8s_app="content-writer"} 10
+gen_ai_server_request_duration_seconds_bucket{gen_ai_request_model="gpt-4o",le="+Inf"} 4
+gen_ai_server_request_duration_seconds_sum{gen_ai_request_model="gpt-4o"} 3.2
+gen_ai_server_request_duration_seconds_count{gen_ai_request_model="gpt-4o"} 4
 `
 
 func newFakeClient(t *testing.T) client.Client {
@@ -116,6 +125,9 @@ func TestCollect(t *testing.T) {
 	if mk.Team != "marketing" {
 		t.Errorf("mistral-large team = %q, want marketing (follows header namespace)", mk.Team)
 	}
+	if math.Abs(mk.LatencyMillis-1250) > 0.001 {
+		t.Errorf("mistral-large latency = %.0fms, want 1250ms", mk.LatencyMillis)
+	}
 
 	// Same model, second namespace stays separated (shared-model attribution).
 	if s := byKey["sales/lead-bot/mistral-large"]; s.InputTokens != 600 || s.Requests != 3 {
@@ -129,6 +141,9 @@ func TestCollect(t *testing.T) {
 	}
 	if gk.Team != "finance-team" {
 		t.Errorf("gpt-4o team = %q, want finance-team (catalog ServesTeam)", gk.Team)
+	}
+	if math.Abs(gk.LatencyMillis-800) > 0.001 {
+		t.Errorf("gpt-4o latency = %.0fms, want 800ms", gk.LatencyMillis)
 	}
 	// The cached token type must not leak into output tokens.
 	if gk.OutputTokens != 0 {

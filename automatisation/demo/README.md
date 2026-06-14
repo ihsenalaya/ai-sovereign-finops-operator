@@ -6,7 +6,7 @@ cluster kind local, avec **Prometheus + Grafana** déployés pour visualiser les
 ## Prérequis
 - Un cluster **kind** nommé `greenops` (contexte `kind-greenops`) — créé via `automatisation/` (`make local`).
 - `kubectl`, et `helm` si l'opérateur n'est pas déjà installé (le script l'installe sinon).
-- L'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7` publiée sur GHCR.
+- L'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.8` publiée sur GHCR.
 
 > Contexte différent ? `KCTX=<mon-context> ./demo.sh up`
 
@@ -18,7 +18,7 @@ cd automatisation/demo
 ```
 
 `./demo.sh up` enchaîne :
-1. **Opérateur** — vérifie/installe le déploiement (Helm, image 0.3.7).
+1. **Opérateur** — vérifie/installe le déploiement (Helm, image 0.3.8).
 2. **CRs** — applique `config/samples/` + `demo-extra.yaml` (catalogue, providers FR/US, policy de
    souveraineté, budgets, break-even, rapports) et déclenche les réconciliations.
 3. **Observabilité** — déploie un **Prometheus** (scrape l'opérateur) + une **Grafana** légers, avec le
@@ -41,12 +41,12 @@ cd automatisation/demo
 | 4 | **Budget & dégradation gracieuse** | `rh-tight-budget` à **120 %** → phase `Exceeded` (vs `rh-budget` 12 % `WithinBudget`) |
 | 5 | **Break-even managé vs auto-hébergé** | `AIBreakEvenAnalysis.status` : recommandation + économie |
 | 6 | **Reporting** | ConfigMap `<report>-report` (clés `report.md` / `report.json`) |
-| 7 | **Observabilité** | métriques `ai_finops_*` dans Prometheus + dashboard Grafana (9 panels, dont **« Sovereignty findings by application »**) |
+| 7 | **Observabilité** | métriques `ai_finops_*` dans Prometheus + dashboard Grafana, dont coût, souveraineté, enforcement, shadow-AI et score de latence |
 
 ## Dans Grafana
 Ouvrir `http://localhost:3000` → dashboard **« AI Sovereign FinOps — Overview »** :
-coût total, requêtes, jauge budget, findings critiques, coût/tokens par namespace, économies break-even,
-recommandations, et **violations de souveraineté par application** (nouveau panel).
+coût total, requêtes, jauge budget, findings critiques, coût/tokens par namespace, recommandations,
+enforcement, shadow-AI et **score de latence**.
 
 ## Notes
 - Stack volontairement **légère** (faibles requests CPU/mémoire) pour tenir sur un petit cluster kind.

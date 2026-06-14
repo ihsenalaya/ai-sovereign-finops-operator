@@ -22,6 +22,7 @@ package reporting
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,7 @@ type Data struct {
 	ProjectedMonthly float64 // run-rate monthly forecast
 	Sovereignty      []aiopsv1alpha1.SovereigntyFinding
 	Recommends       []aiopsv1alpha1.Recommendation
+	RoutingScores    []aiopsv1alpha1.RoutingScore
 }
 
 // jsonReport is the curated JSON shape (stable contract for downstream tooling).
@@ -60,6 +62,7 @@ type jsonReport struct {
 	ByTeam            []lineJSON             `json:"byTeam"`
 	Sovereignty       []findingJSON          `json:"sovereigntyFindings"`
 	Recommendations   []recommendationJSON   `json:"recommendations"`
+	RoutingScores     []routingScoreJSON     `json:"routingScores"`
 	Assumptions       []string               `json:"assumptions"`
 	Meta              map[string]interface{} `json:"meta,omitempty"`
 }
@@ -90,6 +93,24 @@ type recommendationJSON struct {
 	SavingsEUR float64 `json:"estimatedSavingsEUR,omitempty"`
 }
 
+type routingScoreJSON struct {
+	Namespace                 string  `json:"namespace,omitempty"`
+	Application               string  `json:"application,omitempty"`
+	Provider                  string  `json:"provider,omitempty"`
+	Model                     string  `json:"model,omitempty"`
+	Requests                  int64   `json:"requests,omitempty"`
+	Score                     float64 `json:"score"`
+	CostScore                 float64 `json:"costScore"`
+	QualityScore              float64 `json:"qualityScore"`
+	LatencyScore              float64 `json:"latencyScore"`
+	ReliabilityScore          float64 `json:"reliabilityScore"`
+	CostEUR                   float64 `json:"costEUR"`
+	CostPerRequestEUR         float64 `json:"costPerRequestEUR"`
+	ObservedLatencyMillis     float64 `json:"observedLatencyMillis"`
+	LatencyTelemetryAvailable bool    `json:"latencyTelemetryAvailable"`
+	LatencySource             string  `json:"latencySource"`
+}
+
 // Assumptions documents the MVP limitations surfaced in every report.
 func Assumptions() []string {
 	return []string{
@@ -98,6 +119,7 @@ func Assumptions() []string {
 		"Mixed currencies are not converted; the dominant currency is reported as-is.",
 		"This report supports audit preparation; it is not a legal compliance attestation.",
 		"The MVP is reportOnly and never blocks or modifies gateway traffic.",
+		"Latency scores use observed telemetry when available; if no real latency is observed, latencyTelemetryAvailable is false and the latency component is neutral.",
 	}
 }
 
@@ -144,6 +166,25 @@ func RenderJSON(d Data) ([]byte, error) {
 		}
 		r.Recommendations = append(r.Recommendations, rj)
 	}
+	for _, sc := range d.RoutingScores {
+		r.RoutingScores = append(r.RoutingScores, routingScoreJSON{
+			Namespace:                 sc.Namespace,
+			Application:               sc.Application,
+			Provider:                  sc.Provider,
+			Model:                     sc.Model,
+			Requests:                  sc.Requests,
+			Score:                     parseDecimal(sc.Score),
+			CostScore:                 parseDecimal(sc.CostScore),
+			QualityScore:              parseDecimal(sc.QualityScore),
+			LatencyScore:              parseDecimal(sc.LatencyScore),
+			ReliabilityScore:          parseDecimal(sc.ReliabilityScore),
+			CostEUR:                   parseDecimal(sc.CostEUR),
+			CostPerRequestEUR:         parseDecimal(sc.CostPerRequestEUR),
+			ObservedLatencyMillis:     parseDecimal(sc.ObservedLatencyMillis),
+			LatencyTelemetryAvailable: sc.LatencyTelemetryAvailable,
+			LatencySource:             sc.LatencySource,
+		})
+	}
 	return json.MarshalIndent(r, "", "  ")
 }
 
@@ -172,6 +213,7 @@ func RenderMarkdown(d Data) string {
 	writeTable(&sb, "Cost by model", costengine.TopByCost(b.ByModel, 0), cur)
 	writeTable(&sb, "Cost by provider", costengine.TopByCost(b.ByProvider, 0), cur)
 	writeTable(&sb, "Consumption by team", costengine.TopByCost(b.ByTeam, 0), cur)
+	writeRoutingScoreTable(&sb, d.RoutingScores)
 
 	sb.WriteString("## Sovereignty findings\n\n")
 	if len(d.Sovereignty) == 0 {
@@ -210,6 +252,31 @@ func RenderMarkdown(d Data) string {
 		fmt.Fprintf(&sb, "- %s\n", a)
 	}
 	return sb.String()
+}
+
+func writeRoutingScoreTable(sb *strings.Builder, scores []aiopsv1alpha1.RoutingScore) {
+	sb.WriteString("## Runtime routing scores\n\n")
+	if len(scores) == 0 {
+		sb.WriteString("_No usage to score._\n\n")
+		return
+	}
+	sb.WriteString("| Namespace | Application | Model | Score | Latency score | Measured latency (ms) | Latency telemetry |\n")
+	sb.WriteString("|-----|-----|-----|-----:|-----:|-----:|-----|\n")
+	for _, s := range scores {
+		lat := "n/a"
+		if s.LatencyTelemetryAvailable {
+			lat = s.ObservedLatencyMillis
+		}
+		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %t |\n",
+			nonEmpty(s.Namespace, "(unknown)"), nonEmpty(s.Application, "(unknown)"),
+			nonEmpty(s.Model, "(unknown)"), s.Score, s.LatencyScore, lat, s.LatencyTelemetryAvailable)
+	}
+	sb.WriteString("\n")
+}
+
+func parseDecimal(v string) float64 {
+	f, _ := strconv.ParseFloat(v, 64)
+	return f
 }
 
 func writeTable(sb *strings.Builder, title string, items []costengine.LineItem, cur string) {

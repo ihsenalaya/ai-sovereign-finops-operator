@@ -16,12 +16,14 @@ limitations under the License.
 
 // Package aigw is a TelemetryCollector for the Envoy AI Gateway. It scrapes the
 // gateway's OpenTelemetry Prometheus endpoint and reads the real per-request
-// token usage emitted as the `gen_ai_client_token_usage` histogram
+// token usage emitted as the `gen_ai_client_token_usage` histogram plus observed
+// request duration from `gen_ai_server_request_duration_seconds` when present
 // (labels gen_ai_request_model + gen_ai_token_type input/output; the histogram
 // _sum is the token total, _count the request count). Token usage is real
-// (measured by the gateway from provider responses). The gateway metric carries
-// only the model, so the collector attributes each model's usage to the workload
-// that consumes it via the AIModel catalog (providerRef + serves{Namespace,
+// (measured by the gateway from provider responses), and latency is only filled
+// from the observed duration histogram. The gateway metric carries only the
+// model, so the collector attributes each model's usage to the workload that
+// consumes it via the AIModel catalog (providerRef + serves{Namespace,
 // Application,Team}).
 package aigw
 
@@ -39,7 +41,10 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors"
 )
 
-const tokenMetric = "gen_ai_client_token_usage"
+const (
+	tokenMetric    = "gen_ai_client_token_usage"
+	durationMetric = "gen_ai_server_request_duration_seconds"
+)
 
 // Collector scrapes an Envoy AI Gateway metrics endpoint.
 type Collector struct {
@@ -107,6 +112,15 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 
 	attr := c.modelAttribution(ctx)
 	bySample := map[string]*collectors.UsageSample{}
+	getSample := func(ns, app, team, provider, model string) *collectors.UsageSample {
+		key := ns + "\x1f" + app + "\x1f" + model
+		s, ok := bySample[key]
+		if !ok {
+			s = &collectors.UsageSample{Namespace: ns, Application: app, Team: team, Provider: provider, Model: model}
+			bySample[key] = s
+		}
+		return s
+	}
 	for _, m := range fam.GetMetric() {
 		h := m.GetHistogram()
 		if h == nil {
@@ -155,12 +169,7 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 		if prov == "" {
 			prov = provider
 		}
-		key := ns + "\x1f" + app + "\x1f" + model
-		s, ok := bySample[key]
-		if !ok {
-			s = &collectors.UsageSample{Namespace: ns, Application: app, Team: team, Provider: prov, Model: model}
-			bySample[key] = s
-		}
+		s := getSample(ns, app, team, prov, model)
 		switch tokenType {
 		case "input":
 			s.InputTokens += sum
@@ -169,6 +178,52 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 			}
 		case "output":
 			s.OutputTokens += sum
+		}
+	}
+
+	if fam, ok := families[durationMetric]; ok {
+		for _, m := range fam.GetMetric() {
+			h := m.GetHistogram()
+			if h == nil || h.GetSampleCount() == 0 {
+				continue
+			}
+			var model, provider, hdrNS, hdrApp string
+			for _, l := range m.GetLabel() {
+				switch l.GetName() {
+				case "gen_ai_request_model":
+					model = l.GetValue()
+				case "gen_ai_provider_name":
+					provider = l.GetValue()
+				case "k8s_namespace":
+					hdrNS = l.GetValue()
+				case "k8s_app":
+					hdrApp = l.GetValue()
+				}
+			}
+			if model == "" {
+				continue
+			}
+			a := attr[model]
+			ns, app, team := hdrNS, hdrApp, a.team
+			if ns == "" {
+				ns = a.namespace
+			}
+			if app == "" {
+				app = a.application
+			}
+			if hdrNS != "" {
+				team = hdrNS
+			}
+			prov := a.provider
+			if prov == "" {
+				prov = provider
+			}
+			s := getSample(ns, app, team, prov, model)
+			count := int64(h.GetSampleCount())
+			if count > s.Requests {
+				s.Requests = count
+			}
+			s.LatencyMillis = h.GetSampleSum() / float64(h.GetSampleCount()) * 1000
 		}
 	}
 

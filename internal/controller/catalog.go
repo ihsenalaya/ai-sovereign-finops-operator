@@ -31,6 +31,7 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/collectors/fake"
 	promcollector "github.com/imperium/ai-sovereign-finops-operator/internal/collectors/prometheus"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/costengine"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/routingscore"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
 )
 
@@ -76,6 +77,15 @@ func (cat catalog) priceBook() costengine.PriceBook {
 		}
 	}
 	return pb
+}
+
+func (cat catalog) routingModelInfo() map[string]routingscore.ModelInfo {
+	out := map[string]routingscore.ModelInfo{}
+	for i := range cat.models {
+		m := cat.models[i]
+		out[m.Spec.ModelName] = routingscore.ModelInfo{QualityTier: string(m.Spec.QualityTier)}
+	}
+	return out
 }
 
 // unknownModels returns the distinct provider-side model ids in samples that are

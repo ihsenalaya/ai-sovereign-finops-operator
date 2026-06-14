@@ -890,6 +890,148 @@
         },
         "overrides": []
       }
+    },
+    {
+      "type": "table",
+      "title": "Latency score and observed latency",
+      "description": "Runtime latency scoring. Observed latency is shown only when the operator scraped real gateway duration telemetry; otherwise telemetry_available/source exposes the missing measurement and the score uses the neutral component.",
+      "datasource": "${datasource}",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "pluginVersion": "11.2.2",
+      "targets": [
+        {
+          "datasource": null,
+          "expr": "ai_finops_latency_score or ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "instance": true,
+              "job": true
+            },
+            "renameByName": {
+              "__name__": "Metric",
+              "namespace": "Namespace",
+              "application": "Application",
+              "model": "Model",
+              "telemetry_available": "Telemetry available",
+              "source": "Source",
+              "Value": "Value"
+            },
+            "indexByName": {
+              "__name__": 0,
+              "namespace": 1,
+              "application": 2,
+              "model": 3,
+              "telemetry_available": 4,
+              "source": 5,
+              "Value": 6
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": "",
+            "sort": [
+              {
+                "field": "Namespace",
+                "desc": false
+              },
+              {
+                "field": "Application",
+                "desc": false
+              },
+              {
+                "field": "Metric",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Telemetry available"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "true": {
+                        "color": "green",
+                        "index": 0
+                      },
+                      "false": {
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

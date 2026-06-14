@@ -87,6 +87,36 @@ var (
 		Help: "Estimated EUR saving of a cost-saving recommendation, by namespace/application and current/recommended model.",
 	}, []string{"namespace", "application", "current_model", "recommended_model"})
 
+	// MeasuredLatencyMillis is the observed mean gateway latency per
+	// namespace/application/model over the reporting window. It is set only when
+	// the configured telemetry source provides real latency.
+	MeasuredLatencyMillis = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_measured_latency_millis",
+		Help: "Observed mean LLM gateway latency in milliseconds, by namespace/application/model, over the reporting window.",
+	}, []string{"namespace", "application", "model", "source"})
+
+	// LatencyScore is the higher-is-better latency component used by the runtime
+	// routing score. When telemetry is unavailable, it is a neutral score and the
+	// telemetry_available label is false.
+	LatencyScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_latency_score",
+		Help: "Higher-is-better runtime latency score by namespace/application/model; neutral when measured latency is unavailable.",
+	}, []string{"namespace", "application", "model", "telemetry_available"})
+
+	// RoutingScore is the final higher-is-better runtime governance score per
+	// observed namespace/application/model.
+	RoutingScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_routing_score",
+		Help: "Higher-is-better runtime governance score by namespace/application/model over the reporting window.",
+	}, []string{"namespace", "application", "model", "latency_telemetry"})
+
+	// LatencyTelemetryAvailable is 1 when latency was measured for a
+	// namespace/application/model and 0 when the score used a neutral component.
+	LatencyTelemetryAvailable = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_latency_telemetry_available",
+		Help: "Whether real latency telemetry was available for a namespace/application/model routing score (1=true, 0=false).",
+	}, []string{"namespace", "application", "model", "source"})
+
 	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
 	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_projected_monthly_cost_eur",
@@ -161,6 +191,10 @@ var all = []prometheus.Collector{
 	PotentialSavingsEUR,
 	PotentialSavingsByAppEUR,
 	CostSavingEUR,
+	MeasuredLatencyMillis,
+	LatencyScore,
+	RoutingScore,
+	LatencyTelemetryAvailable,
 	ProjectedMonthlyCostEUR,
 	BudgetUsagePercent,
 	SovereigntyFindings,

@@ -146,6 +146,12 @@ spec:
                 description: GeneratedAt is when this report was last produced.
                 format: date-time
                 type: string
+              latencyTelemetryAvailable:
+                description: |-
+                  LatencyTelemetryAvailable is true when at least one routing score used
+                  observed latency telemetry. If false, routing scores still exist but use a
+                  neutral latency component and never pretend latency was measured.
+                type: boolean
               observedGeneration:
                 description: ObservedGeneration is the .metadata.generation last reconciled.
                 format: int64
@@ -197,6 +203,89 @@ spec:
                   required:
                   - message
                   - type
+                  type: object
+                type: array
+              routingScores:
+                description: RoutingScores explain the runtime score per observed
+                  namespace/app/model.
+                items:
+                  description: |-
+                    RoutingScore explains how observed workload/model traffic scores under the
+                    runtime governance scoring model. Score values are higher-is-better and in
+                    [0,1]. The score is always emitted when usage exists; if latency is not
+                    observed, LatencyTelemetryAvailable is false and the latency component is a
+                    documented neutral value rather than a fabricated measurement.
+                  properties:
+                    application:
+                      description: Application is the workload application.
+                      type: string
+                    costEUR:
+                      description: CostEUR is the computed spend for this workload/model
+                        over the window, as a decimal string.
+                      type: string
+                    costPerRequestEUR:
+                      description: CostPerRequestEUR is CostEUR divided by Requests
+                        when Requests > 0, as a decimal string.
+                      type: string
+                    costScore:
+                      description: CostScore is the normalized cost component in [0,1],
+                        as a decimal string.
+                      type: string
+                    latencyScore:
+                      description: |-
+                        LatencyScore is the normalized measured-latency component in [0,1], or a
+                        neutral value when LatencyTelemetryAvailable is false, as a decimal string.
+                      type: string
+                    latencySource:
+                      description: 'LatencySource describes the latency component
+                        source: observed or unavailable.'
+                      type: string
+                    latencyTelemetryAvailable:
+                      description: |-
+                        LatencyTelemetryAvailable states whether ObservedLatencyMillis came from
+                        real telemetry. False means the score used a neutral latency component.
+                      type: boolean
+                    model:
+                      description: Model is the provider-side model identifier.
+                      type: string
+                    namespace:
+                      description: Namespace is the workload namespace.
+                      type: string
+                    observedLatencyMillis:
+                      description: ObservedLatencyMillis is the measured mean latency
+                        when telemetry exists, as a decimal string.
+                      type: string
+                    provider:
+                      description: Provider is the resolved provider.
+                      type: string
+                    qualityScore:
+                      description: QualityScore is derived from the catalog quality
+                        tier in [0,1], as a decimal string.
+                      type: string
+                    reliabilityScore:
+                      description: ReliabilityScore is derived from observed request/error
+                        counts in [0,1], as a decimal string.
+                      type: string
+                    requests:
+                      description: Requests is the request count used for this score.
+                      format: int64
+                      type: integer
+                    score:
+                      description: |-
+                        Score is the final higher-is-better runtime routing score in [0,1],
+                        serialized as a decimal string for CRD portability.
+                      type: string
+                  required:
+                  - costEUR
+                  - costPerRequestEUR
+                  - costScore
+                  - latencyScore
+                  - latencySource
+                  - latencyTelemetryAvailable
+                  - observedLatencyMillis
+                  - qualityScore
+                  - reliabilityScore
+                  - score
                   type: object
                 type: array
               sovereigntyFindings:
@@ -279,6 +368,8 @@ spec:
                 description: TotalOutputTokens over the period.
                 format: int64
                 type: integer
+            required:
+            - latencyTelemetryAvailable
             type: object
         type: object
     served: true

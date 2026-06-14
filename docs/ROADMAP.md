@@ -81,6 +81,6 @@ Statut : ✅ fait · 🛠️ en cours · ⬜ à venir
 
 ## Post-MVP (engagé / en cours)
 - **Enforcement `block`** au gateway pour un modèle interdit **sans** fallback conforme (retrait/deny de la route).
-- **Télémétrie** : durcir le chemin Envoy/OTel — latence, erreurs, **détection de reset** des compteurs gateway.
+- **Télémétrie** : durcir le chemin Envoy/OTel — erreurs, **détection de reset** des compteurs gateway.
 - Multi-devise, FX ; persistance historique ; export S3/PDF du dossier d'audit.
 - Webhooks de validation/défaut, conversion de versions d'API.

@@ -69,9 +69,9 @@ type Risk struct {
 // Recommendation is one actionable suggestion. EstimatedSavingsEUR is over the
 // same observation window as the input usage (0 when not a saving).
 type Recommendation struct {
-	Type    string
+	Type     string
 	Severity string
-	Message string
+	Message  string
 	// Namespace and Application identify the workload the recommendation targets
 	// (empty for catalog-wide recommendations such as data-quality). They let
 	// consumers attribute each action to an owner without parsing the message.

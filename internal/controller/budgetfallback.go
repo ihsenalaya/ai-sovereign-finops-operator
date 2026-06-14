@@ -156,7 +156,7 @@ func budgetPhaseRank(phase string) int {
 }
 
 func collectorSupportsLatency(name string) bool {
-	return name == "configmap" || name == "fake"
+	return name == "configmap" || name == "fake" || name == "prometheus" || name == "aigw"
 }
 
 func collectorSupportsErrors(name string) bool {

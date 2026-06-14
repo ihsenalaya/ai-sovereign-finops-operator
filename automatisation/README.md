@@ -24,7 +24,7 @@ make up REPO_URL=https://github.com/<vous>/greenops REVISION=main
 
 `make up` enchaîne :
 1. `01-create-cluster.sh` — crée le cluster kind (`kind/kind-config.yaml`).
-2. `02-build-load-image.sh` — build l'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7` et la charge dans kind.
+2. `02-build-load-image.sh` — build l'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.8` et la charge dans kind.
 3. `03-install-argocd.sh` — installe ArgoCD, expose l'UI sur `http://localhost:30080`.
 4. `04-bootstrap-apps.sh` — crée l'`AppProject` + 2 `Application` :
    - `greenops-operator` → chart Helm `charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: Never`),
@@ -63,7 +63,8 @@ make local
 Ce chemin ne seed rien et ne simule rien: de vraies apps tournent dans le cluster,
 passent par Envoy AI Gateway, le webhook de l'opérateur injecte les sidecars
 d’attribution, Tetragon capture le shadow-AI qui contourne le gateway, et Grafana
-affiche les vraies métriques `ai_finops_*`.
+affiche les vraies métriques `ai_finops_*`, dont le score de latence basé sur la
+durée réelle `gen_ai_server_request_duration_seconds` quand elle est observée.
 
 ```bash
 cd automatisation
@@ -89,8 +90,10 @@ utilisez `make real-demo-verify`. Cette cible:
 1. recrée le cluster kind;
 2. lance les 4 apps avec un seul succès réel cible par app et des tentatives bornées;
 3. collecte les preuves (`kubectl get`, CRD YAML, logs, métriques gateway, Tetragon);
-4. scale les apps consommatrices à zéro;
-5. supprime le cluster kind même en cas d'échec.
+4. vérifie que la latence réelle AIGW alimente `latencyTelemetryAvailable=true` et les métriques
+   `ai_finops_latency_*`;
+5. scale les apps consommatrices à zéro;
+6. supprime le cluster kind même en cas d'échec.
 
 Important : ce chemin requiert une **clé Azure AI Foundry réellement utilisable**
 dans `docs/foundrykey.txt` (ou `docs/mistralkey.txt` pour compatibilité). Le
@@ -106,10 +109,11 @@ Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 |----------|--------|------|
 | `CLUSTER_NAME` | `greenops` | nom du cluster kind |
 | `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
-| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.3.7` | image de l'opérateur |
+| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.3.8` | image de l'opérateur |
 | `ENABLE_MISTRAL_DEMO` | `true` | active la 4e app `marketing/content-writer` sur Mistral EU |
 | `ENABLE_TETRAGON` / `ENABLE_SHADOW_ROGUE` | `true` / `true` | installe Tetragon et lance le workload shadow-AI |
 | `REQUIRE_SHADOW_EGRESS` | `true` | fait échouer la démo si `shadow-egress` reste vide |
+| `REQUIRE_LATENCY_TELEMETRY` | `true` | fait échouer la démo réelle si aucune latence AIGW réelle n'est observée |
 | `REAL_DEMO_ISOLATE_GITOPS` | `true` | désactive l'auto-sync ArgoCD existant et nettoie les anciens samples avant la démo réelle |
 | `RESET_CLUSTER` | `false` | supprime/recrée le cluster avant la démo (`make real-demo-reset`) |
 | `EVIDENCE_DIR` | `experimentation/results-live-kind-<date>` en mode verify | dossier des preuves collectées |

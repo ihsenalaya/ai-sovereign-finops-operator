@@ -18,8 +18,8 @@ type TelemetryCollector interface {
 ## Implémentations
 | Impl | Package | État | Description |
 |------|---------|------|-------------|
-| `aigw` | `collectors/aigw` | ✔ | **Chemin réel de production.** Scrute l'endpoint OpenTelemetry/Prometheus d'**Envoy AI Gateway** et lit l'histogramme `gen_ai_client_token_usage` (tokens mesurés sur les réponses fournisseur). Attribue chaque modèle au workload via les headers `x-greenops-*` puis, à défaut, le catalogue `AIModel` (`serves*`). Testé (`aigw_test.go`). |
-| `prometheus` | `collectors/prometheus` | ✔ | Scrute un endpoint text-exposition, parse des compteurs `ai_finops_*` labellisés `namespace/application/team/provider/model`. `Parse(io.Reader)` testable hors HTTP. |
+| `aigw` | `collectors/aigw` | ✔ | **Chemin réel de production.** Scrute l'endpoint OpenTelemetry/Prometheus d'**Envoy AI Gateway**, lit `gen_ai_client_token_usage` (tokens mesurés sur les réponses fournisseur) et `gen_ai_server_request_duration_seconds` quand l'histogramme de durée réel est exposé. Attribue chaque modèle au workload via les headers `x-greenops-*` puis, à défaut, le catalogue `AIModel` (`serves*`). Testé (`aigw_test.go`). |
+| `prometheus` | `collectors/prometheus` | ✔ | Scrute un endpoint text-exposition, parse des compteurs `ai_finops_*` labellisés `namespace/application/team/provider/model`, dont `ai_finops_latency_millis` si une source réelle l'expose. `Parse(io.Reader)` testable hors HTTP. |
 | `configmap` | `collectors/configmap` | ✔ | Lit des échantillons d'usage réels depuis une `ConfigMap` (clé `usage.json`) dans le namespace de la gateway. |
 | `fake` | `collectors/fake` | opt-in | Jeu de données déterministe pour démo/tests **uniquement sur `mode: fake` explicite** — jamais un repli silencieux. |
 
@@ -34,6 +34,13 @@ jamais servir des données fabriquées qu'on pourrait prendre pour de la vraie d
 et le controller pose une condition de status explicite (`NoTelemetrySource`). Le collector `fake` n'est
 retourné que sur `mode: fake` explicite (démo).
 
+## Latence
+La latence n'est jamais déduite d'un catalogue. `LatencyMillis` est rempli seulement depuis une
+télémétrie observée (`gen_ai_server_request_duration_seconds` pour `aigw`, `ai_finops_latency_millis`
+pour `prometheus`, ou champ explicite des samples `configmap`). Le score de routage reste calculé
+quand l'usage existe, mais `latencyTelemetryAvailable=false` signale clairement que le composant
+latence est neutre.
+
 ## Évolutions
-Durcir le chemin Envoy/OTel (latence, erreurs, détection de reset des compteurs gateway).
+Durcir le chemin Envoy/OTel (erreurs, détection de reset des compteurs gateway).
 Lié : [AIGateway](../crds/aigateway.md), [costengine](costengine.md).

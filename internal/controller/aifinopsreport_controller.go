@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -39,6 +40,7 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/recommendationengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/reporting"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/routingscore"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
 )
 
@@ -157,6 +159,7 @@ func (r *AIFinOpsReportReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	r.applyCostToStatus(&report, cat, breakdown, series)
 	r.applySovereigntyToStatus(ctx, &report, cat, samples)
 	r.applyRecommendations(ctx, &report, cat, samples, breakdown, series)
+	r.applyRoutingScores(&report, cat, samples, series)
 	// Prune the series this report emitted before but not now (and never the ones
 	// it still emits, so persistent series don't flap). Cleanup on delete is the
 	// finalizer's job above.
@@ -390,6 +393,60 @@ func (r *AIFinOpsReportReconciler) applyRecommendations(ctx context.Context, rep
 	metrics.PotentialSavingsEUR.Set(total)
 }
 
+func (r *AIFinOpsReportReconciler) applyRoutingScores(report *aiopsv1alpha1.AIFinOpsReport, cat catalog, samples []collectors.UsageSample, series *reportSeriesSet) {
+	scores := routingscore.Compute(samples, cat.priceBook(), cat.routingModelInfo(), routingscore.DefaultWeights())
+	report.Status.RoutingScores = make([]aiopsv1alpha1.RoutingScore, 0, len(scores))
+	report.Status.LatencyTelemetryAvailable = false
+
+	for _, sc := range scores {
+		if sc.LatencyTelemetryAvailable {
+			report.Status.LatencyTelemetryAvailable = true
+		}
+		report.Status.RoutingScores = append(report.Status.RoutingScores, aiopsv1alpha1.RoutingScore{
+			Namespace:                 sc.Namespace,
+			Application:               sc.Application,
+			Provider:                  sc.Provider,
+			Model:                     sc.Model,
+			Requests:                  sc.Requests,
+			Score:                     decimalString(sc.Score, 3),
+			CostScore:                 decimalString(sc.CostScore, 3),
+			QualityScore:              decimalString(sc.QualityScore, 3),
+			LatencyScore:              decimalString(sc.LatencyScore, 3),
+			ReliabilityScore:          decimalString(sc.ReliabilityScore, 3),
+			CostEUR:                   decimalString(sc.CostEUR, 6),
+			CostPerRequestEUR:         decimalString(sc.CostPerRequestEUR, 6),
+			ObservedLatencyMillis:     decimalString(sc.ObservedLatencyMillis, 3),
+			LatencyTelemetryAvailable: sc.LatencyTelemetryAvailable,
+			LatencySource:             sc.LatencySource,
+		})
+
+		available := boolMetricLabel(sc.LatencyTelemetryAvailable)
+		metrics.RoutingScore.WithLabelValues(sc.Namespace, sc.Application, sc.Model, available).Set(sc.Score)
+		series.addRoutingScore(sc.Namespace, sc.Application, sc.Model, available)
+		metrics.LatencyScore.WithLabelValues(sc.Namespace, sc.Application, sc.Model, available).Set(sc.LatencyScore)
+		series.addLatencyScore(sc.Namespace, sc.Application, sc.Model, available)
+		latAvail := 0.0
+		if sc.LatencyTelemetryAvailable {
+			latAvail = 1.0
+			metrics.MeasuredLatencyMillis.WithLabelValues(sc.Namespace, sc.Application, sc.Model, sc.LatencySource).Set(sc.ObservedLatencyMillis)
+			series.addMeasuredLatency(sc.Namespace, sc.Application, sc.Model, sc.LatencySource)
+		}
+		metrics.LatencyTelemetryAvailable.WithLabelValues(sc.Namespace, sc.Application, sc.Model, sc.LatencySource).Set(latAvail)
+		series.addLatencyAvailable(sc.Namespace, sc.Application, sc.Model, sc.LatencySource)
+	}
+}
+
+func boolMetricLabel(v bool) string {
+	if v {
+		return "true"
+	}
+	return "false"
+}
+
+func decimalString(v float64, decimals int) string {
+	return strconv.FormatFloat(v, 'f', decimals, 64)
+}
+
 // writeReportConfigMap renders the report to Markdown + JSON and upserts a
 // ConfigMap named "<report>-report" owned by the report (GC'd with it).
 func (r *AIFinOpsReportReconciler) writeReportConfigMap(ctx context.Context, report *aiopsv1alpha1.AIFinOpsReport, b costengine.Breakdown, collectorName string) error {
@@ -407,6 +464,7 @@ func (r *AIFinOpsReportReconciler) writeReportConfigMap(ctx context.Context, rep
 		ProjectedMonthly: b.Total.CostTotal * monthlyFactor(report.Spec.Target.Period),
 		Sovereignty:      report.Status.SovereigntyFindings,
 		Recommends:       report.Status.Recommendations,
+		RoutingScores:    report.Status.RoutingScores,
 	}
 	md := reporting.RenderMarkdown(data)
 	jsonBytes, err := reporting.RenderJSON(data)

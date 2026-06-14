@@ -14,8 +14,9 @@
   un périmètre volontairement prudent : uniquement vers un `AIProvider.managed=true`, uniquement si le
   fallback est réellement moins cher sur le mix de tokens observé, uniquement sur des modèles **non
   partagés** hors cible, et jamais si une policy de souveraineté est déjà en `enforce`. Les garde-fous
-  latence/erreur exigent une télémétrie qui expose ces signaux ; le collector `aigw` ne les porte pas
-  encore aujourd'hui.
+  latence/erreur exigent une télémétrie qui expose ces signaux ; `aigw` porte désormais la latence
+  observée via `gen_ai_server_request_duration_seconds`, tandis que les erreurs restent dépendantes
+  d'une source qui les expose explicitement.
 - **Pas d'attestation juridique.** Le produit prépare un dossier d'audit (RGPD, AI Act, politiques
   internes) ; il ne garantit pas la conformité.
 
@@ -23,8 +24,9 @@
 - **Télémétrie** : `aigw` (Envoy AI Gateway / OpenTelemetry — **chemin réel**), `prometheus` et
   `configmap` opérationnels ; `fake` réservé à l'opt-in explicite. **Aucun repli `fake` silencieux** :
   sans source réelle, l'opérateur remonte `NoTelemetrySource` au lieu d'inventer des chiffres. Le mode
-  télémétrie `litellm` (stub) a été retiré. À durcir : latence/erreurs et détection de reset des
-  compteurs gateway (la prévision mensuelle est faussée juste après un redémarrage de la gateway).
+  télémétrie `litellm` (stub) a été retiré. La latence n'est marquée disponible que si elle est
+  réellement observée ; à durcir : erreurs et détection de reset des compteurs gateway (la prévision
+  mensuelle est faussée juste après un redémarrage de la gateway).
 - **Coûts** : un [catalogue par défaut intégré](features/catalog.md) fournit prix + zone des
   modèles publics connus (OpenAI/Anthropic/Mistral/Gemini), donc le coût se calcule sans déclarer
   d'`AIProvider` ; un `AIProvider`/`AIModel` utilisateur **override** ces défauts. Un modèle

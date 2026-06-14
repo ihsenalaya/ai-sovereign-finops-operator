@@ -2,8 +2,8 @@
 
 Exemple end-to-end **100 % réel** : des applications déployées dans le cluster
 font des appels bornés à de vrais LLM **à travers Envoy AI Gateway** (projet CNCF).
-La gateway **mesure les vrais tokens** ; l'opérateur les **lit** et calcule
-**coût, souveraineté et budget par application**, exposés dans **Grafana**. Le scénario
+La gateway **mesure les vrais tokens et la durée des requêtes** ; l'opérateur les **lit** et calcule
+**coût, souveraineté, budget et score de latence par application**, exposés dans **Grafana**. Le scénario
 valide aussi le plan shadow-AI : un workload contourne la gateway et Tetragon
 alimente `shadow-egress` avec des événements réels.
 
@@ -12,7 +12,7 @@ alimente `shadow-egress` avec des événements réels.
  marketing ────────► Envoy AI Gateway ──► Azure Foundry Mistral (EU)
  finance/rogue ────► api.openai.com direct ──► Tetragon ──► shadow-egress
 
- Envoy gen_ai_* metrics ──► operator collector "aigw" ──► cost/sovereignty/budget
+ Envoy gen_ai_* metrics ──► operator collector "aigw" ──► cost/sovereignty/budget/latency score
 ```
 
 ## Versions (IMPORTANT, testées)
@@ -67,13 +67,19 @@ collecte les preuves, scale les apps à zéro, puis supprime le cluster kind.
   Prérequis : clé Foundry dans `docs/foundrykey.txt`.
 - `deploy.sh` — installe et câble le tout (versions épinglées), avec mode `verify`.
 
-## Comment l'opérateur lit les vrais tokens
+## Comment l'opérateur lit les vrais tokens et la latence réelle
 Envoy AI Gateway expose l'histogramme OpenTelemetry
 `gen_ai_client_token_usage` (labels `gen_ai_request_model`, `gen_ai_token_type`
 input/output ; `_sum` = tokens, `_count` = requêtes). Le collector **`aigw`**
 (`internal/collectors/aigw`) scrape cet endpoint, et **attribue** chaque modèle à
 l'app qui le consomme via le catalogue `AIModel` (`providerRef` + `serves*`).
 Le coût = tokens réels × prix réel du modèle (sur l'`AIProvider`).
+
+Pour la latence, le même collector lit uniquement l'histogramme réel
+`gen_ai_server_request_duration_seconds`. Si cette métrique n'est pas exposée,
+l'opérateur continue à calculer un score de routage, mais marque explicitement
+`latencyTelemetryAvailable=false` et n'émet pas `ai_finops_measured_latency_millis`.
+Il n'y a pas de latence de catalogue présentée comme une mesure.
 
 ## Attribution automatique PAR NAMESPACE / APP (même modèle partagé)
 
@@ -102,8 +108,10 @@ restreignent l'injection au host de la gateway via
 - **Souveraineté** : les apps Cohere global produisent des findings ; l'app Mistral EU reste dans la zone EU.
 - **Budget** : les budgets sont calculés sur les tokens réels observés, sans forcer de faux dépassement.
 - **Shadow-AI** : `finance/shadow-ai-rogue` appelle `api.openai.com` directement sans clé; Tetragon capture l'egress réel.
-- **Honnêteté des garde-fous** : la démo n'active pas de garde-fous latence/erreur, car le collector
-  `aigw` ne publie pas encore ces signaux.
+- **Honnêteté de la latence** : le score de latence vient de
+  `gen_ai_server_request_duration_seconds`. Le mode `verify` échoue si la démo réelle ne produit pas
+  cette télémétrie, au lieu d'afficher une fausse latence. Les garde-fous d'erreur restent dépendants
+  d'une source qui expose des erreurs observées.
 
 ## Comprendre les critères qui pilotent la démo
 
@@ -118,7 +126,7 @@ Ouvrir : `kubectl -n greenops-system port-forward svc/demo-grafana 3000:3000`
 Réconciliation opérateur toutes les **60 s** (dashboard vivant). Toutes les valeurs
 proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 
-### Les 10 panneaux, un par un
+### Les panneaux principaux, un par un
 
 | # | Panneau | Ce qu'il montre | Requête PromQL | Comment le lire |
 |---|---------|-----------------|----------------|-----------------|
@@ -132,6 +140,7 @@ proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 | 8 | **Cost-saving recommendations (action + gain €)** | **Table** : une ligne = une action cost-saving concrète, avec le **modèle actuel → modèle recommandé** et le **gain €** par app | `ai_finops_cost_saving_eur` (labels `namespace`, `application`, `current_model`, `recommended_model` ; valeur = € économisables) | « To-do » d'économies : *qui*, *quel swap de modèle*, *combien*. Voir « Comment lire la table » ci-dessous. |
 | 9 | **Potential savings (EUR)** | Économie **potentielle** totale si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. |
 | 10 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs zone interdite/global | `ai_finops_cost_by_zone_eur` (label `zone`) | La part hors zone autorisée = exposition souveraineté. |
+| 11 | **Latency score and observed latency** | Score de latence, disponibilité de télémétrie et latence moyenne observée quand elle existe | `ai_finops_latency_score or ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available` | Si `telemetry_available=false`, le score existe mais la latence mesurée est absente : pas de valeur inventée. |
 
 #### Comment lire la table « Cost-saving recommendations (action + gain €) »
 
@@ -165,7 +174,9 @@ Exemple typique quand le catalogue contient plusieurs modèles conformes :
 `ai_finops_sovereignty_findings` / `ai_finops_sovereignty_requests`,
 `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
 `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
-`ai_finops_projected_monthly_cost_eur`. Détail dans
+`ai_finops_projected_monthly_cost_eur`, `ai_finops_latency_score`,
+`ai_finops_measured_latency_millis`, `ai_finops_latency_telemetry_available`,
+`ai_finops_routing_score`. Détail dans
 [`docs/features/metrics.md`](../../docs/features/metrics.md).
 
 > Note de véracité : les métriques `gen_ai_*` de la gateway sont **cumulatives**

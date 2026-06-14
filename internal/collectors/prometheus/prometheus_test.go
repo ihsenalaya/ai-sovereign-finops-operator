@@ -28,6 +28,7 @@ ai_finops_requests_total{namespace="rh",team="rh",application="chatbot",provider
 ai_finops_input_tokens_total{namespace="rh",team="rh",application="chatbot",provider="az",model="gpt-4o"} 2000000
 ai_finops_output_tokens_total{namespace="rh",team="rh",application="chatbot",provider="az",model="gpt-4o"} 1000000
 ai_finops_errors_total{namespace="rh",team="rh",application="chatbot",provider="az",model="gpt-4o"} 3
+ai_finops_latency_millis{namespace="rh",team="rh",application="chatbot",provider="az",model="gpt-4o"} 842
 ai_finops_requests_total{namespace="finance",team="finance",application="risk",provider="oa",model="mistral-small"} 50
 `
 
@@ -42,7 +43,7 @@ func TestParse(t *testing.T) {
 	for _, s := range samples {
 		switch s.Model {
 		case "gpt-4o":
-			if s.Requests != 100 || s.InputTokens != 2_000_000 || s.OutputTokens != 1_000_000 || s.Errors != 3 {
+			if s.Requests != 100 || s.InputTokens != 2_000_000 || s.OutputTokens != 1_000_000 || s.Errors != 3 || s.LatencyMillis != 842 {
 				t.Errorf("gpt-4o sample wrong: %+v", s)
 			}
 			if s.Namespace != "rh" || s.Team != "rh" || s.Application != "chatbot" || s.Provider != "az" {

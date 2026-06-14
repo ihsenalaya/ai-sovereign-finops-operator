@@ -33,6 +33,10 @@ type reportSeriesSet struct {
 	savingsByApp    [][]string // {namespace, application}
 	costSaving      [][]string // {namespace, application, current_model, recommended_model}
 	zone            [][]string // {zone}
+	measuredLatency [][]string // {namespace, application, model, source}
+	latencyScore    [][]string // {namespace, application, model, telemetry_available}
+	routingScore    [][]string // {namespace, application, model, latency_telemetry}
+	latencyAvail    [][]string // {namespace, application, model, source}
 }
 
 func (s *reportSeriesSet) addRecommendation(typ, ns, app, sev string) {
@@ -46,6 +50,18 @@ func (s *reportSeriesSet) addCostSaving(ns, app, current, recommended string) {
 }
 func (s *reportSeriesSet) addZone(zone string) {
 	s.zone = append(s.zone, []string{zone})
+}
+func (s *reportSeriesSet) addRoutingScore(ns, app, model, telemetry string) {
+	s.routingScore = append(s.routingScore, []string{ns, app, model, telemetry})
+}
+func (s *reportSeriesSet) addLatencyScore(ns, app, model, available string) {
+	s.latencyScore = append(s.latencyScore, []string{ns, app, model, available})
+}
+func (s *reportSeriesSet) addMeasuredLatency(ns, app, model, source string) {
+	s.measuredLatency = append(s.measuredLatency, []string{ns, app, model, source})
+}
+func (s *reportSeriesSet) addLatencyAvailable(ns, app, model, source string) {
+	s.latencyAvail = append(s.latencyAvail, []string{ns, app, model, source})
 }
 
 // reportMetricTracker remembers, per report UID, the series each AIFinOpsReport
@@ -83,6 +99,10 @@ func (t *reportMetricTracker) retire(uid types.UID, now *reportSeriesSet) {
 		deleteStale(metrics.PotentialSavingsByAppEUR, prev.savingsByApp, now.savingsByApp)
 		deleteStale(metrics.CostSavingEUR, prev.costSaving, now.costSaving)
 		deleteStale(metrics.CostByZoneEUR, prev.zone, now.zone)
+		deleteStale(metrics.MeasuredLatencyMillis, prev.measuredLatency, now.measuredLatency)
+		deleteStale(metrics.LatencyScore, prev.latencyScore, now.latencyScore)
+		deleteStale(metrics.RoutingScore, prev.routingScore, now.routingScore)
+		deleteStale(metrics.LatencyTelemetryAvailable, prev.latencyAvail, now.latencyAvail)
 	}
 	t.byUID[uid] = now
 }
@@ -100,6 +120,10 @@ func (t *reportMetricTracker) forget(uid types.UID) {
 	deleteStale(metrics.PotentialSavingsByAppEUR, prev.savingsByApp, nil)
 	deleteStale(metrics.CostSavingEUR, prev.costSaving, nil)
 	deleteStale(metrics.CostByZoneEUR, prev.zone, nil)
+	deleteStale(metrics.MeasuredLatencyMillis, prev.measuredLatency, nil)
+	deleteStale(metrics.LatencyScore, prev.latencyScore, nil)
+	deleteStale(metrics.RoutingScore, prev.routingScore, nil)
+	deleteStale(metrics.LatencyTelemetryAvailable, prev.latencyAvail, nil)
 	delete(t.byUID, uid)
 }
 

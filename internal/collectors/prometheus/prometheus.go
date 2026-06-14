@@ -39,6 +39,7 @@ const (
 	metricInputTokens  = "ai_finops_input_tokens_total"
 	metricOutputTokens = "ai_finops_output_tokens_total"
 	metricErrors       = "ai_finops_errors_total"
+	metricLatencyMS    = "ai_finops_latency_millis"
 )
 
 // Collector scrapes a metrics endpoint exposing ai_finops_* counters.
@@ -115,6 +116,8 @@ func Parse(r io.Reader) ([]collectors.UsageSample, error) {
 				s.OutputTokens += int64(v)
 			case metricErrors:
 				s.Errors += int64(v)
+			case metricLatencyMS:
+				s.LatencyMillis = v
 			}
 		}
 	}

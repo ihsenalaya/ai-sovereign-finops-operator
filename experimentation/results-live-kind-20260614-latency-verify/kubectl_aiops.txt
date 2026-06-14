@@ -1,0 +1,22 @@
+NAMESPACE   NAME                                       TYPE    ENDPOINT                                                                   READY   AGE
+default     aigateway.aiops.imperium.io/main-gateway   envoy   http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064   True    3m8s
+
+NAMESPACE   NAME                                         TYPE           RESIDENCY   MANAGED   AGE
+default     aiprovider.aiops.imperium.io/cohere-global   azure-openai   global      true      3m9s
+default     aiprovider.aiops.imperium.io/mistral-eu      mistral        eu          true      3m9s
+
+NAMESPACE   NAME                                         PROVIDER        MODEL                     COSTTIER   AGE
+default     aimodel.aiops.imperium.io/cohere-command-a   cohere-global   cohere-command-a-latest   high       3m11s
+default     aimodel.aiops.imperium.io/mistral-large      mistral-eu      mistral-large-latest      high       3m9s
+
+NAMESPACE   NAME                                                            MODE         FINDINGS   AGE
+default     aisovereigntypolicy.aiops.imperium.io/regulated-france-policy   reportOnly   7          3m11s
+
+NAMESPACE   NAME                                                BUDGET(EUR)   USAGE%   PHASE          AGE
+default     aibudgetpolicy.aiops.imperium.io/finance-budget     20m           14       WithinBudget   3m11s
+default     aibudgetpolicy.aiops.imperium.io/legal-budget       200m          1        WithinBudget   3m11s
+default     aibudgetpolicy.aiops.imperium.io/marketing-budget   200m                   WithinBudget   3m8s
+default     aibudgetpolicy.aiops.imperium.io/rh-budget          200m          1        WithinBudget   3m11s
+
+NAMESPACE   NAME                                             NAMESPACE-TARGET   PERIOD    TOTALCOST(EUR)   GENERATED
+default     aifinopsreport.aiops.imperium.io/ai-report-all                      monthly   7655u            15s

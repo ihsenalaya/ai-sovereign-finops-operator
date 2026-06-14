@@ -21,6 +21,10 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 | `ai_finops_potential_savings_eur` | gauge | (none) | AIFinOpsReport (recommendation engine) |
 | `ai_finops_potential_savings_by_app_eur` | gauge | `namespace,application` | AIFinOpsReport (recommendation engine) |
 | `ai_finops_cost_saving_eur` | gauge | `namespace,application,current_model,recommended_model` | AIFinOpsReport |
+| `ai_finops_measured_latency_millis` | gauge | `namespace,application,model,source` | AIFinOpsReport (routing score) |
+| `ai_finops_latency_score` | gauge | `namespace,application,model,telemetry_available` | AIFinOpsReport (routing score) |
+| `ai_finops_latency_telemetry_available` | gauge | `namespace,application,model,source` | AIFinOpsReport (routing score) |
+| `ai_finops_routing_score` | gauge | `namespace,application,model,latency_telemetry` | AIFinOpsReport (routing score) |
 | `ai_finops_projected_monthly_cost_eur` | gauge | `namespace` | AIFinOpsReport |
 
 > Ce sont des **agrégats dérivés par fenêtre de reporting** (positionnés à chaque réconciliation),
@@ -38,6 +42,11 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 > `ai_finops_shadow_ai_egress` est le **plan de souveraineté indépendant de la gateway** : il compte les
 > connexions egress (observées par eBPF/Tetragon) vers un endpoint LLM connu dans une zone non conforme —
 > c.-à-d. le **shadow-AI** qui contourne la gateway. Voir [`shadowengine.md`](shadowengine.md).
+>
+> Les métriques de latence respectent une règle stricte : `ai_finops_measured_latency_millis` est émise
+> uniquement quand une latence réelle a été observée. Si aucune latence réelle n'est disponible, le score
+> existe quand même, `ai_finops_latency_telemetry_available=0`, le label `telemetry_available=false` est
+> visible, et le composant latence reste neutre au lieu de simuler une mesure.
 
 ## Accès
 ```bash
@@ -48,5 +57,6 @@ curl -s localhost:8080/metrics | grep ai_finops_
 ## Dashboard
 [`dashboards/ai-finops-overview.json`](../../dashboards/ai-finops-overview.json) : coût total, budget
 %, findings critiques, coût/tokens par namespace, dépense par zone de souveraineté, recommandations
-cost-saving (action + gain €) et **décisions d'enforcement** (par workload / mode / action).
+cost-saving (action + gain €), **décisions d'enforcement** et fenêtre **Latency score and observed
+latency**.
 Un `ServiceMonitor` (Prometheus Operator) est activable via `metrics.serviceMonitor.enabled` du chart.

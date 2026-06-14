@@ -91,6 +91,47 @@ type Recommendation struct {
 	EstimatedSavingsEUR *resource.Quantity `json:"estimatedSavingsEUR,omitempty"`
 }
 
+// RoutingScore explains how observed workload/model traffic scores under the
+// runtime governance scoring model. Score values are higher-is-better and in
+// [0,1]. The score is always emitted when usage exists; if latency is not
+// observed, LatencyTelemetryAvailable is false and the latency component is a
+// documented neutral value rather than a fabricated measurement.
+type RoutingScore struct {
+	// Namespace is the workload namespace.
+	Namespace string `json:"namespace,omitempty"`
+	// Application is the workload application.
+	Application string `json:"application,omitempty"`
+	// Provider is the resolved provider.
+	Provider string `json:"provider,omitempty"`
+	// Model is the provider-side model identifier.
+	Model string `json:"model,omitempty"`
+	// Requests is the request count used for this score.
+	Requests int64 `json:"requests,omitempty"`
+	// Score is the final higher-is-better runtime routing score in [0,1],
+	// serialized as a decimal string for CRD portability.
+	Score string `json:"score"`
+	// CostScore is the normalized cost component in [0,1], as a decimal string.
+	CostScore string `json:"costScore"`
+	// QualityScore is derived from the catalog quality tier in [0,1], as a decimal string.
+	QualityScore string `json:"qualityScore"`
+	// LatencyScore is the normalized measured-latency component in [0,1], or a
+	// neutral value when LatencyTelemetryAvailable is false, as a decimal string.
+	LatencyScore string `json:"latencyScore"`
+	// ReliabilityScore is derived from observed request/error counts in [0,1], as a decimal string.
+	ReliabilityScore string `json:"reliabilityScore"`
+	// CostEUR is the computed spend for this workload/model over the window, as a decimal string.
+	CostEUR string `json:"costEUR"`
+	// CostPerRequestEUR is CostEUR divided by Requests when Requests > 0, as a decimal string.
+	CostPerRequestEUR string `json:"costPerRequestEUR"`
+	// ObservedLatencyMillis is the measured mean latency when telemetry exists, as a decimal string.
+	ObservedLatencyMillis string `json:"observedLatencyMillis"`
+	// LatencyTelemetryAvailable states whether ObservedLatencyMillis came from
+	// real telemetry. False means the score used a neutral latency component.
+	LatencyTelemetryAvailable bool `json:"latencyTelemetryAvailable"`
+	// LatencySource describes the latency component source: observed or unavailable.
+	LatencySource string `json:"latencySource"`
+}
+
 // AIFinOpsReportSpec defines the desired state of AIFinOpsReport.
 type AIFinOpsReportSpec struct {
 	// Target scopes the report.
@@ -140,6 +181,15 @@ type AIFinOpsReportStatus struct {
 	// Recommendations surfaced by the engines.
 	// +optional
 	Recommendations []Recommendation `json:"recommendations,omitempty"`
+
+	// LatencyTelemetryAvailable is true when at least one routing score used
+	// observed latency telemetry. If false, routing scores still exist but use a
+	// neutral latency component and never pretend latency was measured.
+	LatencyTelemetryAvailable bool `json:"latencyTelemetryAvailable"`
+
+	// RoutingScores explain the runtime score per observed namespace/app/model.
+	// +optional
+	RoutingScores []RoutingScore `json:"routingScores,omitempty"`
 
 	// Conditions represent the latest available observations of the report state.
 	// +optional

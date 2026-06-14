@@ -69,7 +69,7 @@ func TestBudgetFallbackSkipsSharedModel(t *testing.T) {
 	}
 }
 
-func TestBudgetFallbackLatencyGuardrailRequiresTelemetry(t *testing.T) {
+func TestBudgetFallbackLatencyGuardrailRequiresObservedFallbackLatency(t *testing.T) {
 	cat := testBudgetCatalog()
 	spec := aiopsv1alpha1.AIBudgetPolicySpec{
 		Target:                   aiopsv1alpha1.BudgetTarget{Namespace: "finance", Application: "risk"},
@@ -85,8 +85,8 @@ func TestBudgetFallbackLatencyGuardrailRequiresTelemetry(t *testing.T) {
 	if len(got.desired) != 0 {
 		t.Fatalf("desired = %+v, want latency guardrail to block actuation", got.desired)
 	}
-	if !strings.Contains(got.reason, "does not provide it") {
-		t.Fatalf("reason = %q, want missing-latency explanation", got.reason)
+	if !strings.Contains(got.reason, "no observed latency yet") {
+		t.Fatalf("reason = %q, want missing observed latency explanation", got.reason)
 	}
 }
 

@@ -40,6 +40,13 @@ func sampleData() Data {
 		Breakdown:   costengine.Compute(samples, prices),
 		Sovereignty: []aiopsv1alpha1.SovereigntyFinding{{Severity: "critical", Message: "US provider in use"}},
 		Recommends:  []aiopsv1alpha1.Recommendation{{Type: "cost-optimization", Message: "route to cheaper model"}},
+		RoutingScores: []aiopsv1alpha1.RoutingScore{{
+			Namespace: "rh", Application: "chatbot", Provider: "az", Model: "gpt-4o",
+			Requests: 100, Score: "0.720", CostScore: "0.800", QualityScore: "1.000", LatencyScore: "0.500",
+			ReliabilityScore: "1.000", CostEUR: "25.000000", CostPerRequestEUR: "0.250000",
+			ObservedLatencyMillis:     "0.000",
+			LatencyTelemetryAvailable: false, LatencySource: "unavailable",
+		}},
 	}
 }
 
@@ -53,6 +60,8 @@ func TestRenderMarkdown(t *testing.T) {
 		"## Sovereignty findings",
 		"CRITICAL",
 		"## Recommendations",
+		"## Runtime routing scores",
+		"false",
 		"## Limits & assumptions",
 	} {
 		if !strings.Contains(md, want) {
@@ -75,5 +84,13 @@ func TestRenderJSON(t *testing.T) {
 	}
 	if got["currency"].(string) != "EUR" {
 		t.Errorf("currency = %v, want EUR", got["currency"])
+	}
+	routing := got["routingScores"].([]interface{})
+	if len(routing) != 1 {
+		t.Fatalf("routingScores length = %d, want 1", len(routing))
+	}
+	score := routing[0].(map[string]interface{})
+	if score["latencyTelemetryAvailable"].(bool) {
+		t.Fatal("latencyTelemetryAvailable must remain false in JSON when no measured latency exists")
 	}
 }

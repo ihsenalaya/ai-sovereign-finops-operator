@@ -1,0 +1,23 @@
+NAMESPACE                 NAME                                                    READY   STATUS    RESTARTS   AGE     IP            NODE                     NOMINATED NODE   READINESS GATES
+envoy-ai-gateway-system   ai-gateway-controller-897c74ddb-569dg                   1/1     Running   0          3m41s   10.244.0.8    greenops-control-plane   <none>           <none>
+envoy-gateway-system      envoy-default-greenops-aigw-dac3126f-54f887cbf5-zsrds   3/3     Running   0          3m24s   10.244.0.9    greenops-control-plane   <none>           <none>
+envoy-gateway-system      envoy-gateway-6b9486fbbc-hb97m                          1/1     Running   0          4m1s    10.244.0.7    greenops-control-plane   <none>           <none>
+finance                   risk-assistant-659f569787-j82rz                         2/2     Running   0          3m4s    10.244.0.12   greenops-control-plane   <none>           <none>
+finance                   shadow-ai-rogue-8489765678-dm7pg                        1/1     Running   0          104s    10.244.0.17   greenops-control-plane   <none>           <none>
+greenops-system           demo-grafana-5f67d7699d-qj2gs                           1/1     Running   0          2m47s   10.244.0.15   greenops-control-plane   <none>           <none>
+greenops-system           demo-prometheus-7fc44f9f78-s8bkk                        1/1     Running   0          2m47s   10.244.0.14   greenops-control-plane   <none>           <none>
+greenops-system           greenops-ai-sovereign-finops-operator-8df4bd976-6l6xr   1/1     Running   0          4m48s   10.244.0.5    greenops-control-plane   <none>           <none>
+kube-system               coredns-7d764666f9-jc8c7                                1/1     Running   0          5m10s   10.244.0.4    greenops-control-plane   <none>           <none>
+kube-system               coredns-7d764666f9-z5242                                1/1     Running   0          5m10s   10.244.0.2    greenops-control-plane   <none>           <none>
+kube-system               etcd-greenops-control-plane                             1/1     Running   0          5m14s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               kindnet-fpv4t                                           1/1     Running   0          5m10s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               kube-apiserver-greenops-control-plane                   1/1     Running   0          5m16s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               kube-controller-manager-greenops-control-plane          1/1     Running   0          5m18s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               kube-proxy-6zn6p                                        1/1     Running   0          5m10s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               kube-scheduler-greenops-control-plane                   1/1     Running   0          5m14s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               tetragon-8bdmb                                          2/2     Running   0          2m10s   172.19.0.2    greenops-control-plane   <none>           <none>
+kube-system               tetragon-operator-7c9f964ff5-4h2wv                      1/1     Running   0          2m10s   10.244.0.16   greenops-control-plane   <none>           <none>
+legal                     contract-review-787956-gg7d5                            2/2     Running   0          3m4s    10.244.0.11   greenops-control-plane   <none>           <none>
+local-path-storage        local-path-provisioner-67b8995b4b-sg5p9                 1/1     Running   0          5m10s   10.244.0.3    greenops-control-plane   <none>           <none>
+marketing                 content-writer-8594bcdf64-xxd2m                         2/2     Running   0          3m2s    10.244.0.13   greenops-control-plane   <none>           <none>
+rh                        chatbot-rh-5b6476cc45-wczrb                             2/2     Running   0          3m4s    10.244.0.10   greenops-control-plane   <none>           <none>

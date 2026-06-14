@@ -6,8 +6,8 @@ démo** et explique **comment chacun donne son sens à un panneau** du dashboard
 proviennent des manifestes de `automatisation/envoy-aigw/` — rien n'est inventé ni simulé.
 
 > Principe : de vraies apps appellent OpenAI **à travers Envoy AI Gateway**, qui
-> **mesure les vrais tokens**. L'opérateur lit ces tokens et applique les critères
-> ci-dessous pour calculer **coût / souveraineté / budget / recommandations**. Dans
+> **mesure les vrais tokens et la durée des requêtes**. L'opérateur lit ces signaux et applique les critères
+> ci-dessous pour calculer **coût / souveraineté / budget / recommandations / score de latence**. Dans
 > cette démo, la souveraineté reste `reportOnly`, mais le budget finance peut
 > **rerouter réellement** `gpt-4o -> gpt-4o-mini`.
 
@@ -20,7 +20,7 @@ proviennent des manifestes de `automatisation/envoy-aigw/` — rien n'est invent
    sidecar webhook injecte        mesure gen_ai_* (tokens réels)
    les en-têtes x-greenops-*               │
         │                                │
-        └──────────► Opérateur (collector "aigw") lit les tokens
+        └──────────► Opérateur (collector "aigw") lit tokens + durée observée
                           applique les critères (§2)
                                    │
                           /metrics ai_finops_*  ──►  Prometheus  ──►  Grafana
@@ -104,6 +104,17 @@ autorisent le reroute live vers `gpt-4o-mini` dès que le budget entre en zone c
 | `sovereignty` | l'app envoie du trafic vers une **zone interdite** | critical |
 | `data-quality` | un modèle consommé **sans prix** dans le catalogue (coût incalculable) | warning |
 
+### 2.6 Score de routage et latence observée
+
+Le score de routage est calculé pour chaque couple namespace/application/modèle observé. Il combine
+coût, qualité du catalogue, fiabilité et latence. La latence n'est utilisée comme mesure que si
+Envoy AI Gateway expose `gen_ai_server_request_duration_seconds`.
+
+| Cas | Effet dans le status/dashboard |
+|-----|--------------------------------|
+| Durée AIGW observée | `latencyTelemetryAvailable=true`, `latencySource=observed`, `observedLatencyMillis>0`, métrique `ai_finops_measured_latency_millis` |
+| Durée AIGW absente | `latencyTelemetryAvailable=false`, pas de latence mesurée, composant latence neutre, score total toujours présent |
+
 ---
 
 ## 3. Comment les critères donnent du sens à chaque panneau
@@ -119,6 +130,7 @@ autorisent le reroute live vers `gpt-4o-mini` dès que le budget entre en zone c
 | 7 | *(idem #6 selon disposition)* | — | — |
 | 8 | **Recommendations (actions, by app)** | règles §2.5 | 3 lignes `sovereignty` (les 3 apps US) ; **aucune pour `marketing`** (EU, conforme) + lignes `cost-saving` (gpt-4o & mistral-large, chers) |
 | 9 | **Potential savings (EUR)** | écart de prix gpt-4o → gpt-4o-mini | économie *potentielle* si on appliquait les recos cost-saving |
+| 10 | **Latency score and observed latency** | règles §2.6 + durée AIGW | score présent pour chaque usage ; latence mesurée affichée seulement si la durée réelle est observée |
 
 ### Lecture de la table #8 « Recommendations (actions, by app) »
 
@@ -166,7 +178,9 @@ Exemple typique :
 > `ai_finops_requests`, `ai_finops_budget_usage_percent`,
 > `ai_finops_sovereignty_requests`,
 > `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
-> `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`.
+> `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
+> `ai_finops_latency_score`, `ai_finops_measured_latency_millis`,
+> `ai_finops_latency_telemetry_available`, `ai_finops_routing_score`.
 > Détail : [`docs/features/metrics.md`](../../docs/features/metrics.md).
 
 ---

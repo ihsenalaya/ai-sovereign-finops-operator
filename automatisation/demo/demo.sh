@@ -14,7 +14,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../.." && pwd)"
 NS="greenops-system"
 CTX="${KCTX:-kind-greenops}"
-IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.7"
+IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.8"
 K="kubectl --context ${CTX}"
 
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -137,8 +137,9 @@ tour() {
 
   bold "7) Observability — metrics + Grafana"
   echo "  Prometheus metrics: ai_finops_{cost_eur,requests,input/output_tokens,budget_usage_percent,"
-  echo "                      sovereignty_findings{namespace,application,severity},breakeven_savings_eur,recommendations}_*"
-  echo "  Grafana dashboard 'AI Sovereign FinOps — Overview' (9 panels incl. 'Sovereignty findings by application')."
+  echo "                      sovereignty_findings{namespace,application,severity},breakeven_savings_eur,"
+  echo "                      recommendations,latency_score,routing_score}_*"
+  echo "  Grafana dashboard 'AI Sovereign FinOps — Overview' with cost, sovereignty, enforcement, shadow-AI and latency panels."
 }
 
 open_grafana() {
