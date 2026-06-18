@@ -10,8 +10,9 @@ objects when an explicit enforcement path is configured. Next steps:
    kubectl apply -k config/samples/
 
 3. Inspect results:
-   kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport -A
+   kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport,aiqgate -A
    kubectl get configmap <report-name>-report -o jsonpath='{.data.report\.md}'
+   make export-report REPORT=<report-name> NAMESPACE=<report-namespace>
 
 4. Metrics (Prometheus ai_finops_*):
    kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "operator.fullname" . }}-metrics {{ .Values.metrics.port }}:{{ .Values.metrics.port }}

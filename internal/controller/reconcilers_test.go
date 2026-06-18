@@ -283,4 +283,112 @@ var _ = Describe("aiops reconcilers", func() {
 			Expect(meta.IsStatusConditionTrue(got.Status.Conditions, aiopsv1alpha1.ConditionReady)).To(BeTrue())
 		})
 	})
+
+	Context("AIQualityGate", func() {
+		It("passes when dataset, evidence and telemetry satisfy the gate", func() {
+			usage := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{Name: "qg-usage", Namespace: testNamespace},
+				Data: map[string]string{"usage.json": `[
+					{"namespace":"finance","application":"risk-assistant","team":"finance","provider":"azure-us","model":"gpt-us-mini","requests":10,"inputTokens":100,"outputTokens":200,"latencyMillis":1000,"errors":0},
+					{"namespace":"finance","application":"risk-assistant","team":"finance","provider":"azure-fr","model":"gpt-france-mini","requests":10,"inputTokens":100,"outputTokens":200,"latencyMillis":900,"errors":0}
+				]`},
+			}
+			Expect(k8sClient.Create(ctx, usage)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, usage) })
+
+			gw := &aiopsv1alpha1.AIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "qg-gw", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AIGatewaySpec{
+					Type:     "litellm",
+					Endpoint: "http://qg-gateway.test",
+					Telemetry: aiopsv1alpha1.TelemetrySpec{
+						Mode:            aiopsv1alpha1.TelemetryModeConfigMap,
+						SourceConfigMap: "qg-usage",
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, gw)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, gw) })
+
+			dataset := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{Name: "finance-golden", Namespace: testNamespace},
+				Data: map[string]string{"prompts.yaml": `
+- id: risk-summary
+  prompt: "Summarize supplier risk."
+- id: var-explain
+  prompt: "Explain value at risk."
+`},
+			}
+			Expect(k8sClient.Create(ctx, dataset)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, dataset) })
+
+			evidence := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{Name: "finance-evidence", Namespace: testNamespace},
+				Data: map[string]string{"results.yaml": `
+- id: risk-summary
+  model: gpt-france-mini
+  schemaValid: true
+  unexpectedRefusal: false
+  sensitiveDataLeak: false
+  requiredKeywordsPresent: true
+- id: var-explain
+  model: gpt-france-mini
+  schemaValid: true
+  unexpectedRefusal: false
+  sensitiveDataLeak: false
+  requiredKeywordsPresent: true
+`},
+			}
+			Expect(k8sClient.Create(ctx, evidence)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, evidence) })
+
+			gate := &aiopsv1alpha1.AIQualityGate{
+				ObjectMeta: metav1.ObjectMeta{Name: "finance-quality", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AIQualityGateSpec{
+					Target:         aiopsv1alpha1.AIQualityGateTarget{Namespace: "finance", Application: "risk-assistant"},
+					SourceModel:    "gpt-us-mini",
+					CandidateModel: "gpt-france-mini",
+					GoldenDatasetRef: aiopsv1alpha1.ConfigMapDataReference{
+						Name: "finance-golden",
+					},
+					EvidenceRef: &aiopsv1alpha1.ConfigMapDataReference{Name: "finance-evidence"},
+					RequiredChecks: aiopsv1alpha1.AIQualityRequiredChecks{
+						SchemaValid:               true,
+						NoUnexpectedRefusal:       true,
+						NoSensitiveDataLeak:       true,
+						RequiredKeywords:          []string{"risk"},
+						MaxErrorRatePercent:       2,
+						MaxLatencyIncreasePercent: 20,
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, gate)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, gate) })
+
+			r := &AIQualityGateReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err := r.Reconcile(ctx, reqFor("finance-quality"))
+			Expect(err).NotTo(HaveOccurred())
+
+			got := &aiopsv1alpha1.AIQualityGate{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "finance-quality", Namespace: testNamespace}, got)).To(Succeed())
+			Expect(got.Status.Phase).To(Equal(aiopsv1alpha1.AIQualityGatePassed))
+			Expect(got.Status.Verdict).To(Equal("candidate-safe"))
+			Expect(got.Status.CheckedSamples).To(Equal(int32(2)))
+			Expect(got.Status.FailedChecks).To(Equal(int32(0)))
+			Expect(got.Status.CandidateObservation).NotTo(BeNil())
+			Expect(meta.IsStatusConditionTrue(got.Status.Conditions, aiopsv1alpha1.ConditionReady)).To(BeTrue())
+		})
+	})
+
+	Context("Gateway actuator", func() {
+		It("ignores a missing Envoy route CRD only when there is no desired actuation", func() {
+			got, err := actuateReroutesWithAnnotation(ctx, k8sClient, testNamespace, nil, budgetRerouteAnnotation)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(got).To(BeEmpty())
+
+			_, err = actuateReroutesWithAnnotation(ctx, k8sClient, testNamespace, map[string]string{"gpt-4o": "mistral-small"}, budgetRerouteAnnotation)
+			Expect(err).To(HaveOccurred())
+			Expect(meta.IsNoMatchError(err)).To(BeTrue())
+		})
+	})
 })

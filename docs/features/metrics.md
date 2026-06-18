@@ -25,6 +25,8 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 | `ai_finops_latency_score` | gauge | `namespace,application,model,telemetry_available` | AIFinOpsReport (routing score) |
 | `ai_finops_latency_telemetry_available` | gauge | `namespace,application,model,source` | AIFinOpsReport (routing score) |
 | `ai_finops_routing_score` | gauge | `namespace,application,model,latency_telemetry` | AIFinOpsReport (routing score) |
+| `ai_finops_quality_gate_passed` | gauge | `namespace,quality_gate,target_namespace,application,source_model,candidate_model` | AIQualityGate |
+| `ai_finops_quality_gate_failed_checks` | gauge | `namespace,quality_gate,target_namespace,application` | AIQualityGate |
 | `ai_finops_projected_monthly_cost_eur` | gauge | `namespace` | AIFinOpsReport |
 
 > Ce sont des **agrégats dérivés par fenêtre de reporting** (positionnés à chaque réconciliation),
@@ -57,6 +59,5 @@ curl -s localhost:8080/metrics | grep ai_finops_
 ## Dashboard
 [`dashboards/ai-finops-overview.json`](../../dashboards/ai-finops-overview.json) : coût total, budget
 %, findings critiques, coût/tokens par namespace, dépense par zone de souveraineté, recommandations
-cost-saving (action + gain €), **décisions d'enforcement** et fenêtre **Latency score and observed
-latency**.
+cost-saving (action + gain €), **décisions d'enforcement** et fenêtre **Observed latency telemetry**.
 Un `ServiceMonitor` (Prometheus Operator) est activable via `metrics.serviceMonitor.enabled` du chart.

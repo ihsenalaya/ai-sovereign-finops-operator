@@ -16,8 +16,8 @@ az aks get-credentials -g <rg> -n <cluster>
 ```bash
 # Avec ACR :
 az acr login -n <acr>
-docker build -t <acr>.azurecr.io/ai-sovereign-finops-operator:0.3.9 .
-docker push <acr>.azurecr.io/ai-sovereign-finops-operator:0.3.9
+docker build -t <acr>.azurecr.io/ai-sovereign-finops-operator:0.4.0 .
+docker push <acr>.azurecr.io/ai-sovereign-finops-operator:0.4.0
 ```
 
 ## 3. Déploiement Helm
@@ -25,7 +25,7 @@ docker push <acr>.azurecr.io/ai-sovereign-finops-operator:0.3.9
 helm upgrade --install greenops charts/ai-sovereign-finops-operator \
   -n greenops-system --create-namespace \
   --set image.repository=<acr>.azurecr.io/ai-sovereign-finops-operator \
-  --set image.tag=0.3.9
+  --set image.tag=0.4.0
 ```
 > Sur AKS, laisser `image.pullPolicy=IfNotPresent` (défaut) — ne pas utiliser `Never` (réservé à kind).
 

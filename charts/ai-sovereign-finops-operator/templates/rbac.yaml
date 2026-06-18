@@ -24,6 +24,7 @@ rules:
   - aibudgetpolicies
   - aifinopsreports
   - aigateways
+  - aiqualitygates
   - aimodels
   - aiproviders
   - aisovereigntypolicies
@@ -34,6 +35,7 @@ rules:
   - aibudgetpolicies/finalizers
   - aifinopsreports/finalizers
   - aigateways/finalizers
+  - aiqualitygates/finalizers
   - aimodels/finalizers
   - aiproviders/finalizers
   - aisovereigntypolicies/finalizers
@@ -44,6 +46,7 @@ rules:
   - aibudgetpolicies/status
   - aifinopsreports/status
   - aigateways/status
+  - aiqualitygates/status
   - aimodels/status
   - aiproviders/status
   - aisovereigntypolicies/status

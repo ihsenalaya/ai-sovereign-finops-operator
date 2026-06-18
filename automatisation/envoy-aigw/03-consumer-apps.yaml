@@ -66,8 +66,8 @@ spec:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "chatbot-rh" }
-            - { name: SUCCESS_TARGET, value: "1" }
-            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: SUCCESS_TARGET, value: "999" }
+            - { name: ATTEMPT_LIMIT, value: "5" }
             - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
             - { name: START_DELAY_SECONDS, value: "20" }
             - name: NS
@@ -80,7 +80,7 @@ spec:
               sleep "${START_DELAY_SECONDS:-20}"
               attempt=0
               success=0
-              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-4}" ] && [ "$success" -lt "${SUCCESS_TARGET:-1}" ]; do
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-5}" ] && [ "$success" -lt "${SUCCESS_TARGET:-999}" ]; do
                 attempt=$((attempt + 1))
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
                 code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
@@ -90,7 +90,7 @@ spec:
                 [ -n "$code" ] || code="000"
                 echo "$NS/$APP($MODEL): $code"
                 case "$code" in 2*) success=$((success + 1));; esac
-                [ "$success" -ge "${SUCCESS_TARGET:-1}" ] && break
+                [ "$success" -ge "${SUCCESS_TARGET:-999}" ] && break
                 sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
               done
               echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
@@ -119,8 +119,8 @@ spec:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "risk-assistant" }
-            - { name: SUCCESS_TARGET, value: "1" }
-            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: SUCCESS_TARGET, value: "999" }
+            - { name: ATTEMPT_LIMIT, value: "5" }
             - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
             - { name: START_DELAY_SECONDS, value: "85" }
             - name: NS
@@ -133,7 +133,7 @@ spec:
               sleep "${START_DELAY_SECONDS:-85}"
               attempt=0
               success=0
-              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-4}" ] && [ "$success" -lt "${SUCCESS_TARGET:-1}" ]; do
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-5}" ] && [ "$success" -lt "${SUCCESS_TARGET:-999}" ]; do
                 attempt=$((attempt + 1))
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
                 code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
@@ -143,7 +143,7 @@ spec:
                 [ -n "$code" ] || code="000"
                 echo "$NS/$APP($MODEL): $code"
                 case "$code" in 2*) success=$((success + 1));; esac
-                [ "$success" -ge "${SUCCESS_TARGET:-1}" ] && break
+                [ "$success" -ge "${SUCCESS_TARGET:-999}" ] && break
                 sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
               done
               echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
@@ -174,8 +174,8 @@ spec:
             - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
             - { name: MODEL, value: "cohere-command-a-latest" }
             - { name: APP, value: "contract-review" }
-            - { name: SUCCESS_TARGET, value: "1" }
-            - { name: ATTEMPT_LIMIT, value: "4" }
+            - { name: SUCCESS_TARGET, value: "999" }
+            - { name: ATTEMPT_LIMIT, value: "5" }
             - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
             - { name: START_DELAY_SECONDS, value: "150" }
             - name: NS
@@ -188,7 +188,7 @@ spec:
               sleep "${START_DELAY_SECONDS:-150}"
               attempt=0
               success=0
-              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-4}" ] && [ "$success" -lt "${SUCCESS_TARGET:-1}" ]; do
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-5}" ] && [ "$success" -lt "${SUCCESS_TARGET:-999}" ]; do
                 attempt=$((attempt + 1))
                 P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
                 code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
@@ -198,7 +198,7 @@ spec:
                 [ -n "$code" ] || code="000"
                 echo "$NS/$APP($MODEL): $code"
                 case "$code" in 2*) success=$((success + 1));; esac
-                [ "$success" -ge "${SUCCESS_TARGET:-1}" ] && break
+                [ "$success" -ge "${SUCCESS_TARGET:-999}" ] && break
                 sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
               done
               echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"

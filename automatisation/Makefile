@@ -3,8 +3,11 @@
 
 SHELL := /usr/bin/env bash
 SCRIPTS := scripts
+REPORT ?= ai-report-all
+NAMESPACE ?= default
+EXPORT_DIR ?= ../exports/reports
 
-.PHONY: up up-gitea down cluster image argocd gitea apps wait local help real-demo real-demo-reset real-demo-verify real-demo-test real-demo-down full-demo
+.PHONY: up up-gitea down cluster image argocd gitea apps wait local shadow-ai export-report help real-demo real-demo-reset real-demo-verify real-demo-test real-demo-down full-demo
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -15,8 +18,17 @@ up: ## GitOps bring-up from the workspace origin/REPO_URL (kind + image + ArgoCD
 up-gitea: ## Self-contained GitOps bring-up with in-cluster Gitea
 	@GITOPS_SOURCE=gitea $(SCRIPTS)/up.sh
 
-local: ## Offline bring-up (kind + image + Helm, no ArgoCD)
+local: ## Offline bring-up (kind + image + Helm + samples + Shadow-AI, no ArgoCD)
 	@$(SCRIPTS)/install-local.sh
+
+shadow-ai: ## Install/refresh Tetragon + shadow-ai rogue workload + shadow-egress
+	@$(SCRIPTS)/06-install-shadow-ai.sh
+
+export-report: ## Export report.md/report.json from the operator report ConfigMap
+	@mkdir -p "$(EXPORT_DIR)/$(REPORT)"
+	@kubectl -n "$(NAMESPACE)" get cm "$(REPORT)-report" -o jsonpath='{.data.report\.md}' > "$(EXPORT_DIR)/$(REPORT)/report.md"
+	@kubectl -n "$(NAMESPACE)" get cm "$(REPORT)-report" -o jsonpath='{.data.report\.json}' > "$(EXPORT_DIR)/$(REPORT)/report.json"
+	@echo "Exported $(REPORT) to $(EXPORT_DIR)/$(REPORT)/report.md and report.json"
 
 real-demo: ## Full zero-manual demo: 4 apps + AI Gateway + Tetragon shadow-AI
 	@envoy-aigw/deploy.sh up

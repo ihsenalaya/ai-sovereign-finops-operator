@@ -1,6 +1,9 @@
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
+REPORT ?= ai-report-all
+NAMESPACE ?= default
+EXPORT_DIR ?= exports/reports
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.31.0
 
@@ -63,6 +66,13 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out
+
+.PHONY: export-report
+export-report: ## Export an AIFinOpsReport ConfigMap to Markdown and JSON (REPORT=ai-report-all NAMESPACE=default)
+	mkdir -p "$(EXPORT_DIR)/$(REPORT)"
+	$(KUBECTL) -n "$(NAMESPACE)" get cm "$(REPORT)-report" -o jsonpath='{.data.report\.md}' > "$(EXPORT_DIR)/$(REPORT)/report.md"
+	$(KUBECTL) -n "$(NAMESPACE)" get cm "$(REPORT)-report" -o jsonpath='{.data.report\.json}' > "$(EXPORT_DIR)/$(REPORT)/report.json"
+	@echo "Exported $(REPORT) to $(EXPORT_DIR)/$(REPORT)/report.md and report.json"
 
 # Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.
 .PHONY: test-e2e  # Run the e2e tests against a Kind k8s instance that is spun up.

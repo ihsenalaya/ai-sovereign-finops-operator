@@ -17,6 +17,7 @@
 | AISovereigntyPolicy | [crds/aisovereigntypolicy.md](crds/aisovereigntypolicy.md) | Règles de souveraineté |
 | AIBreakEvenAnalysis | [crds/aibreakevenanalysis.md](crds/aibreakevenanalysis.md) | Point mort GPU |
 | AIFinOpsReport | [crds/aifinopsreport.md](crds/aifinopsreport.md) | Rapport généré |
+| AIQualityGate | [crds/aiqualitygate.md](crds/aiqualitygate.md) | Validation qualité par application |
 
 ## Fonctionnalités (par package/moteur)
 | Fonctionnalité | Doc |

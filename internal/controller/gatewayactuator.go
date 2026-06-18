@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -98,6 +99,14 @@ type routeActuationResult struct {
 	blocked  map[string]bool
 }
 
+func emptyRouteActuationResult() routeActuationResult {
+	return routeActuationResult{rerouted: map[string]bool{}, blocked: map[string]bool{}}
+}
+
+func routeControlsEmpty(reroutes map[string]string, blocked map[string]bool) bool {
+	return len(reroutes) == 0 && len(blocked) == 0
+}
+
 // actuateRouteControls makes the gateway apply each forbidden model control:
 // reroute forbiddenModel -> compliant targetModel when a target exists, or block
 // the model by pointing it at gatewayreroute.BlockBackendName when no compliant
@@ -107,13 +116,19 @@ type routeActuationResult struct {
 func actuateRouteControlsWithAnnotation(ctx context.Context, c client.Client, namespace string, reroutes map[string]string, blocked map[string]bool, annotationKey string) (routeActuationResult, error) {
 	mb, err := modelBackends(ctx, c, namespace)
 	if err != nil {
+		if routeControlsEmpty(reroutes, blocked) && meta.IsNoMatchError(err) {
+			return emptyRouteActuationResult(), nil
+		}
 		return routeActuationResult{}, err
 	}
 	routes, err := listAIGatewayRoutes(ctx, c, namespace)
 	if err != nil {
+		if routeControlsEmpty(reroutes, blocked) && meta.IsNoMatchError(err) {
+			return emptyRouteActuationResult(), nil
+		}
 		return routeActuationResult{}, err
 	}
-	out := routeActuationResult{rerouted: map[string]bool{}, blocked: map[string]bool{}}
+	out := emptyRouteActuationResult()
 	for i := range routes.Items {
 		route := &routes.Items[i]
 		ann := route.GetAnnotations()

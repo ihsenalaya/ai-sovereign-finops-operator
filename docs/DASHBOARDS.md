@@ -14,7 +14,7 @@ Le dashboard agrège **deux plans indépendants** :
 
 | Plan | Source de la donnée | Voit… | Alimente les panneaux |
 |------|---------------------|-------|-----------------------|
-| **Gateway** | Envoy AI Gateway (tokens + durée mesurés) → collecteur `aigw` de l'opérateur | le trafic qui **passe par** la gateway | coût, tokens, requêtes, budget, zone, souveraineté (gateway), recommandations, score de latence |
+| **Gateway** | Envoy AI Gateway (tokens + durée mesurés) → collecteur `aigw` de l'opérateur | le trafic qui **passe par** la gateway | coût, tokens, requêtes, budget, zone, souveraineté (gateway), recommandations, latence observée |
 | **eBPF / Shadow-AI** | Tetragon (egress par pod) → ConfigMap `shadow-egress` → opérateur | le trafic qui **contourne** la gateway | Shadow-AI egress |
 
 ## Exigences globales (pour voir *quelque chose*)
@@ -40,10 +40,9 @@ Stack de démo prête à l'emploi : [`automatisation/demo/observability.yaml`](.
 | 9 | Potential savings (EUR) | stat | économie potentielle | Gateway + apps + catalogue |
 | 10 | Spend by sovereignty zone (EUR) | piechart | part de dépense par zone (EU vs US) | Gateway + apps + providers (zone) |
 | 11 | Enforcement actions (sovereignty) | table | décisions d'enforcement par workload | `AISovereigntyPolicy` (warn/enforce pour actuer) |
-| 12 | Enforcement decisions by action | table | décisions par policy/action/actuated | idem |
-| 13 | **Shadow-AI egress details** | table | pods appelant un LLM **hors gateway**, par zone | **Tetragon + forwarder** (ConfigMap `shadow-egress`) + `AISovereigntyPolicy` |
-| 14 | **Shadow-AI hotspots by workload** | bargauge | connexions shadow-AI par workload/zone | idem #13 |
-| 15 | **Latency score and observed latency** | table | score de latence, latence mesurée en ms si disponible, disponibilité de télémétrie | Gateway + apps + métrique réelle `gen_ai_server_request_duration_seconds` |
+| 12 | **Shadow-AI egress details** | table | pods appelant un LLM **hors gateway**, par zone | **Tetragon + forwarder** (ConfigMap `shadow-egress`) + `AISovereigntyPolicy` |
+| 13 | **Shadow-AI hotspots by workload** | bargauge | connexions shadow-AI par workload/zone | idem #12 |
+| 14 | **Observed latency telemetry** | table | latence mesurée en ms si disponible, disponibilité de télémétrie | Gateway + apps + métrique réelle `gen_ai_server_request_duration_seconds` |
 
 > **La zone par défaut marche sans CR** : grâce au [catalogue intégré](features/catalog.md), le coût
 > et la zone d'un modèle connu (`gpt-4o`…) se résolvent même **sans** AIProvider/AIModel — les CRs
@@ -56,8 +55,8 @@ Il faut un **vrai trafic** via l'Envoy AI Gateway. Démo réelle clé en main :
 [`automatisation/envoy-aigw/`](../automatisation/envoy-aigw/README.md) (`deploy.sh up`) — installe
 Envoy Gateway + Envoy AI Gateway, le catalogue, et des **apps consommatrices** qui font de vrais
 appels OpenAI (US) + Mistral (EU). L'opérateur lit les tokens mesurés et, quand elle existe, la
-durée réelle via le collecteur `aigw`. Si la durée n'est pas observée, le dashboard affiche quand
-même un score avec `telemetry_available=false`, sans latence mesurée inventée.
+durée réelle via le collecteur `aigw`. Si la durée n'est pas observée, le dashboard affiche
+`latency_telemetry_available=0`, sans latence mesurée inventée.
 
 ### Plan eBPF (Shadow-AI egress)
 Il faut **Tetragon** + le forwarder : [`automatisation/tetragon/`](../automatisation/tetragon/README.md).
@@ -76,8 +75,8 @@ L'opérateur classe l'egress par zone à la réconciliation de l'`AISovereigntyP
 - **Severity** (souveraineté & shadow) : `critical` = zone interdite, `warning` = hors zones autorisées.
 - **Shadow-AI egress** : nombre de **connexions** (pas un %) vers un endpoint LLM hors gateway.
 - **Enforcement `actuated`** : `false` = recommandé/observé, `true` = réellement actué dans la gateway.
-- **Latency score** : score calculé pour tout usage observé ; `ai_finops_measured_latency_millis`
-  apparaît seulement si une latence réelle a été scrapée, sinon `latency_telemetry_available=0`.
+- **Observed latency telemetry** : `ai_finops_measured_latency_millis` apparaît seulement si
+  une latence réelle a été scrapée, sinon `latency_telemetry_available=0`.
 
 ## Accès rapide
 ```bash

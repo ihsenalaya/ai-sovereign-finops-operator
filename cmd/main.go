@@ -195,6 +195,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AIFinOpsReport")
 		os.Exit(1)
 	}
+	if err = (&controller.AIQualityGateReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("aiqualitygate-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIQualityGate")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	mgr.GetWebhookServer().Register("/mutate-v1-pod", &admission.Webhook{

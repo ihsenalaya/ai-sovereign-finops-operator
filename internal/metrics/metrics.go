@@ -117,6 +117,22 @@ var (
 		Help: "Whether real latency telemetry was available for a namespace/application/model routing score (1=true, 0=false).",
 	}, []string{"namespace", "application", "model", "source"})
 
+	// QualityGatePassed is 1 when an AIQualityGate passes for a candidate model,
+	// 0 when it is pending or failed. Labels keep the decision attributable to the
+	// protected app and the exact source/candidate model pair.
+	QualityGatePassed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_gate_passed",
+		Help: "Whether an AIQualityGate passed for a target application and source/candidate model pair (1=true, 0=false).",
+	}, []string{"namespace", "quality_gate", "target_namespace", "application", "source_model", "candidate_model"})
+
+	// QualityGateFailedChecks is the number of failed AIQualityGate checks for
+	// the latest reconcile. Missing telemetry keeps the gate pending and is
+	// explained in status.failureMessages, but does not count as a failed check.
+	QualityGateFailedChecks = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_gate_failed_checks",
+		Help: "Number of failed checks for an AIQualityGate.",
+	}, []string{"namespace", "quality_gate", "target_namespace", "application"})
+
 	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
 	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_projected_monthly_cost_eur",
@@ -195,6 +211,8 @@ var all = []prometheus.Collector{
 	LatencyScore,
 	RoutingScore,
 	LatencyTelemetryAvailable,
+	QualityGatePassed,
+	QualityGateFailedChecks,
 	ProjectedMonthlyCostEUR,
 	BudgetUsagePercent,
 	SovereigntyFindings,

@@ -130,7 +130,7 @@ Envoy AI Gateway expose `gen_ai_server_request_duration_seconds`.
 | 7 | *(idem #6 selon disposition)* | — | — |
 | 8 | **Recommendations (actions, by app)** | règles §2.5 | 3 lignes `sovereignty` (les 3 apps US) ; **aucune pour `marketing`** (EU, conforme) + lignes `cost-saving` (gpt-4o & mistral-large, chers) |
 | 9 | **Potential savings (EUR)** | écart de prix gpt-4o → gpt-4o-mini | économie *potentielle* si on appliquait les recos cost-saving |
-| 10 | **Latency score and observed latency** | règles §2.6 + durée AIGW | score présent pour chaque usage ; latence mesurée affichée seulement si la durée réelle est observée |
+| 10 | **Observed latency telemetry** | règles §2.6 + durée AIGW | latence mesurée affichée seulement si la durée réelle est observée ; le score est réservé aux futurs panneaux de décision |
 
 ### Lecture de la table #8 « Recommendations (actions, by app) »
 
@@ -179,7 +179,7 @@ Exemple typique :
 > `ai_finops_sovereignty_requests`,
 > `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
 > `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
-> `ai_finops_latency_score`, `ai_finops_measured_latency_millis`,
+> `ai_finops_measured_latency_millis`,
 > `ai_finops_latency_telemetry_available`, `ai_finops_routing_score`.
 > Détail : [`docs/features/metrics.md`](../../docs/features/metrics.md).
 

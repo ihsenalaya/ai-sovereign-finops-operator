@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-golden-prompts
+  namespace: default
+data:
+  prompts.yaml: |
+    - id: risk-summary
+      prompt: "Summarize key counterparty risks for a new supplier."
+      expected:
+        requiredKeywords: ["counterparty", "liquidity", "risk"]
+        maxTokens: 300
+        mustBeJSON: false
+    - id: var-explain
+      prompt: "Explain value-at-risk in two sentences."
+      expected:
+        requiredKeywords: ["loss", "confidence", "portfolio"]
+        maxTokens: 120
+        mustBeJSON: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-quality-evidence
+  namespace: default
+data:
+  results.yaml: |
+    - id: risk-summary
+      model: gpt-france-mini
+      schemaValid: true
+      unexpectedRefusal: false
+      sensitiveDataLeak: false
+      requiredKeywordsPresent: true
+    - id: var-explain
+      model: gpt-france-mini
+      schemaValid: true
+      unexpectedRefusal: false
+      sensitiveDataLeak: false
+      requiredKeywordsPresent: true
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: finance-risk-assistant-quality-gate
+  namespace: default
+spec:
+  target:
+    namespace: finance
+    application: risk-assistant
+  sourceModel: gpt-us-mini
+  candidateModel: gpt-france-mini
+  goldenDatasetRef:
+    name: finance-golden-prompts
+    namespace: default
+  evidenceRef:
+    name: finance-quality-evidence
+    namespace: default
+  period: monthly
+  requiredChecks:
+    schemaValid: true
+    noUnexpectedRefusal: true
+    noSensitiveDataLeak: true
+    requiredKeywords:
+      - risk
+      - liquidity
+    maxErrorRatePercent: 2
+    maxLatencyIncreasePercent: 20
+  canary:
+    enabled: true
+    percent: 5
+    duration: 30m
+  rollback:
+    enabled: true
+    onErrorRatePercent: 3
+    onLatencyIncreasePercent: 30

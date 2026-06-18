@@ -47,7 +47,7 @@ compatibilité). La présence d'une clé seule ne suffit pas : `deploy.sh` fait 
 **préflight Cohere et Mistral** avant de démarrer.
 
 `verify` est le mode recommandé pour une preuve reproductible sans laisser
-d'app consommatrice tourner. Il borne les clients à un succès réel cible par app,
+d'app consommatrice tourner. Il borne les clients à environ une minute de trafic par app,
 collecte les preuves, scale les apps à zéro, puis supprime le cluster kind.
 
 ## Fichiers
@@ -140,7 +140,7 @@ proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 | 8 | **Cost-saving recommendations (action + gain €)** | **Table** : une ligne = une action cost-saving concrète, avec le **modèle actuel → modèle recommandé** et le **gain €** par app | `ai_finops_cost_saving_eur` (labels `namespace`, `application`, `current_model`, `recommended_model` ; valeur = € économisables) | « To-do » d'économies : *qui*, *quel swap de modèle*, *combien*. Voir « Comment lire la table » ci-dessous. |
 | 9 | **Potential savings (EUR)** | Économie **potentielle** totale si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. |
 | 10 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs zone interdite/global | `ai_finops_cost_by_zone_eur` (label `zone`) | La part hors zone autorisée = exposition souveraineté. |
-| 11 | **Latency score and observed latency** | Score de latence, disponibilité de télémétrie et latence moyenne observée quand elle existe | `ai_finops_latency_score or ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available` | Si `telemetry_available=false`, le score existe mais la latence mesurée est absente : pas de valeur inventée. |
+| 11 | **Observed latency telemetry** | Disponibilité de télémétrie et latence moyenne observée quand elle existe | `ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available` | Si `latency_telemetry_available=0`, la latence mesurée est absente : pas de valeur inventée. |
 
 #### Comment lire la table « Cost-saving recommendations (action + gain €) »
 

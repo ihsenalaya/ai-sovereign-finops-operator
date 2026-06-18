@@ -508,7 +508,7 @@
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 30
       },
@@ -519,111 +519,6 @@
       "pluginVersion": "11.2.2",
       "targets": [
         {
-          "expr": "ai_finops_enforcement_actions",
-          "format": "table",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "instance": true,
-              "job": true,
-              "Value": true
-            },
-            "renameByName": {
-              "policy": "Policy",
-              "namespace": "Namespace",
-              "application": "Application",
-              "mode": "Mode",
-              "action": "Action",
-              "actuated": "Actuated"
-            },
-            "indexByName": {
-              "namespace": 0,
-              "application": 1,
-              "mode": 2,
-              "action": 3,
-              "actuated": 4,
-              "policy": 5
-            }
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Action"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "block": {
-                        "color": "red",
-                        "index": 0
-                      },
-                      "reroute": {
-                        "color": "orange",
-                        "index": 1
-                      },
-                      "warn": {
-                        "color": "yellow",
-                        "index": 2
-                      },
-                      "report": {
-                        "color": "blue",
-                        "index": 3
-                      }
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "table",
-      "title": "Enforcement decisions by action",
-      "description": "How many enforcement decisions the operator took, by policy / action / actuated. report=observed, reroute/block=acted at the gateway.",
-      "datasource": "${datasource}",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 30
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
-      },
-      "pluginVersion": "11.2.2",
-      "targets": [
-        {
-          "datasource": null,
           "expr": "ai_finops_enforcement_actions",
           "format": "table",
           "instant": true,
@@ -893,8 +788,8 @@
     },
     {
       "type": "table",
-      "title": "Latency score and observed latency",
-      "description": "Runtime latency scoring. Observed latency is shown only when the operator scraped real gateway duration telemetry; otherwise telemetry_available/source exposes the missing measurement and the score uses the neutral component.",
+      "title": "Observed latency telemetry",
+      "description": "Observed latency is shown only when the operator scraped real gateway duration telemetry. The telemetry-available series makes missing measurements explicit. Quality/routing scores are intentionally left to the future score/star panels.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -910,7 +805,7 @@
       "targets": [
         {
           "datasource": null,
-          "expr": "ai_finops_latency_score or ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available",
+          "expr": "ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available",
           "format": "table",
           "instant": true,
           "refId": "A"

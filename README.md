@@ -87,6 +87,9 @@ Six moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les c
   **Envoy AI Gateway** : reroute vers un backend conforme quand il existe, sinon blocage par backend
   réservé absent (`aiops-blocked`). Les mutations de l'`AIGatewayRoute` sont réversibles. C'est le
   passage d'**observateur** à **plan de contrôle**.
+- **Quality gate par application** — `AIQualityGate` vérifie qu'un modèle candidat ne dégrade pas une
+  application avant reroute : golden dataset, preuves déterministes, télémétrie réelle source/candidat,
+  seuils erreur/latence et verdict auditable `candidate-safe` / `candidate-risk` / `insufficient-data`.
 
 Transverse :
 
@@ -140,6 +143,7 @@ Transverse :
 | **AISovereigntyPolicy** | `aisov` | Règles de résidence / données sensibles / audit | `dataResidency.{allowed,forbidden}Zones`, `sensitiveData.externalProvidersAllowed`, `audit`, `enforcementMode` | `findingsCount` |
 | **AIBreakEvenAnalysis** | `aibreakeven` | Point mort API managée vs auto-hébergement | `currentModelRef`, `alternativeSelfHosted`, `analysisWindowDays` | `managed/selfHostedMonthlyCostEUR`, `monthlySavingsEUR`, `paybackMonths`, `recommendation` |
 | **AIFinOpsReport** | `aireport` | Rapport consolidé généré | `target`, `period`, `gatewayRef` | `totalCostEUR`, `totalInput/OutputTokens`, `topModels`, `sovereigntyFindings`, `recommendations` |
+| **AIQualityGate** | `aiqgate` | Validation qualité par application avant changement de modèle | `target`, `sourceModel`, `candidateModel`, `goldenDatasetRef`, `evidenceRef`, `requiredChecks`, `canary`, `rollback` | `phase`, `verdict`, `failedChecks`, `source/candidateObservation` |
 
 Documentation détaillée par CRD : [`docs/crds/`](docs/crds/) · par moteur : [`docs/features/`](docs/features/).
 
@@ -183,6 +187,7 @@ Métriques exposées (`/metrics`, par défaut `:8080`) :
 | `ai_finops_recommendations` | recommandations émises (par type/app/sévérité) |
 | `ai_finops_cost_saving_eur` / `ai_finops_potential_savings_eur` | économie d'un swap / total potentiel |
 | `ai_finops_enforcement_actions` | **décisions d'enforcement** (policy, namespace, app, mode, action, actuated) |
+| `ai_finops_quality_gate_passed` / `ai_finops_quality_gate_failed_checks` | verdict et échecs des `AIQualityGate` par application |
 | `ai_finops_breakeven_savings_eur` | économie estimée managé vs auto-hébergé |
 
 Dashboard Grafana prêt à l'emploi : [`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json)
@@ -198,7 +203,8 @@ Dashboard Grafana prêt à l'emploi : [`dashboards/ai-finops-overview.json`](das
 make install                 # CRDs dans le cluster courant
 make run                     # lance le manager depuis l'hôte (Ctrl-C pour arrêter)
 kubectl apply -k config/samples/         # catalogue + policies d'exemple
-kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport
+kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport,aiqgate
+make export-report REPORT=ai-report-all NAMESPACE=default
 ```
 
 ### Via Helm
@@ -246,7 +252,7 @@ make up-gitea  # même chaîne, avec dépôt Gitea in-cluster auto-contenu
 
 ```bash
 cd automatisation
-make local     # kind + image + Helm, aucun composant GitOps requis
+make local     # kind + image + Helm + samples + Shadow-AI, aucun composant GitOps requis
 ```
 
 ### C. Azure / AKS (déploiement cloud)

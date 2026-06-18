@@ -26,6 +26,9 @@ kubectl -n greenops-system rollout status deploy/greenops-ai-sovereign-finops-op
 log "applying demo catalog & policies..."
 kubectl apply -k "${REPO_ROOT}/config/samples/"
 
+"${DIR}/06-install-shadow-ai.sh"
+
 log "Done. Inspect with:"
 log "  kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport -A"
+log "  kubectl get cm shadow-egress -o jsonpath='{.data.egress\\.json}'"
 log "  kubectl get cm monthly-ai-report-rh-report -o jsonpath='{.data.report\\.md}'"
