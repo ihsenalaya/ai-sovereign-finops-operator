@@ -58,6 +58,6 @@ curl -s localhost:8080/metrics | grep ai_finops_
 
 ## Dashboard
 [`dashboards/ai-finops-overview.json`](../../dashboards/ai-finops-overview.json) : coût total, budget
-%, findings critiques, coût/tokens par namespace, dépense par zone de souveraineté, recommandations
-cost-saving (action + gain €), **décisions d'enforcement** et fenêtre **Observed latency telemetry**.
+%, findings critiques, coût/tokens par namespace, dépense par zone de souveraineté,
+**décisions d'enforcement** et fenêtre **Observed latency telemetry**.
 Un `ServiceMonitor` (Prometheus Operator) est activable via `metrics.serviceMonitor.enabled` du chart.

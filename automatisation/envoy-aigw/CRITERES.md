@@ -128,27 +128,8 @@ Envoy AI Gateway expose `gen_ai_server_request_duration_seconds`.
 | 5 | **Cost by namespace** | prix §2.2 par namespace | finance coûte plus que rh/legal tant que le fallback n'a pas encore basculé sur `gpt-4o-mini` |
 | 6 | **Requests violating sovereignty (by app)** | politique §2.3 (US interdit) | **volume** de requêtes fautives par app : rh/finance/legal (US) >0 ; **`marketing` (Mistral EU) absent = 0** (cf. §6) |
 | 7 | *(idem #6 selon disposition)* | — | — |
-| 8 | **Recommendations (actions, by app)** | règles §2.5 | 3 lignes `sovereignty` (les 3 apps US) ; **aucune pour `marketing`** (EU, conforme) + lignes `cost-saving` (gpt-4o & mistral-large, chers) |
-| 9 | **Potential savings (EUR)** | écart de prix gpt-4o → gpt-4o-mini | économie *potentielle* si on appliquait les recos cost-saving |
-| 10 | **Observed latency telemetry** | règles §2.6 + durée AIGW | latence mesurée affichée seulement si la durée réelle est observée ; le score est réservé aux futurs panneaux de décision |
-
-### Lecture de la table #8 « Recommendations (actions, by app) »
-
-Une **ligne = une action**. Colonnes :
-
-- **Namespace / Application** → **QUI** doit agir.
-- **Type** → **QUOI** : `sovereignty` 🔴 conformité · `cost-saving` 🟢 économie · `data-quality` 🟠 prix manquant.
-- **Severity** → **urgence** : `critical` 🔴 prioritaire · `warning` 🟠 · `info` 🟢 optionnel.
-
-Exemple typique :
-
-| Namespace | Application | Type | Severity |
-|-----------|-------------|------|----------|
-| rh | chatbot-rh | sovereignty | 🔴 critical |
-| legal | contract-review | sovereignty | 🔴 critical |
-| finance | risk-assistant | sovereignty | 🔴 critical |
-| legal | contract-review | cost-saving | 🟢 info |
-| finance | risk-assistant | cost-saving / reroute | 🟢 info / enforcement |
+| 8 | **Spend by sovereignty zone (EUR)** | prix §2.2 + résidence provider | part de dépense par zone ; la zone US matérialise l'exposition |
+| 9 | **Observed latency telemetry** | règles §2.6 + durée AIGW | latence mesurée affichée seulement si la durée réelle est observée ; le score est réservé aux futurs panneaux de décision |
 
 ---
 
@@ -171,14 +152,12 @@ Exemple typique :
   zéro** (les valeurs repartent du bas, c'est normal).
 - Si tu **arrêtes les apps** (`scale --replicas=0`), les chiffres **se figent** au
   dernier état mesuré — ils ne bougent plus jusqu'à ce que tu relances les apps.
-- Le panneau **#9 Potential savings** est un *potentiel* (et-si), **pas un gain réalisé**.
 - Réconciliation de l'opérateur **toutes les ~60 s** → le dashboard est vivant.
 
 > Métriques exposées : `ai_finops_cost_eur`, `ai_finops_input/output_tokens`,
 > `ai_finops_requests`, `ai_finops_budget_usage_percent`,
 > `ai_finops_sovereignty_requests`,
 > `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
-> `ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
 > `ai_finops_measured_latency_millis`,
 > `ai_finops_latency_telemetry_available`, `ai_finops_routing_score`.
 > Détail : [`docs/features/metrics.md`](../../docs/features/metrics.md).

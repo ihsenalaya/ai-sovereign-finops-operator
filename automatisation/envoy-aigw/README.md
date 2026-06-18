@@ -137,35 +137,8 @@ proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 | 5 | **Cost (EUR) by namespace** | Coût réel par namespace dans le temps | `ai_finops_cost_eur` (par `namespace`) | Compare la dépense des équipes ; courbes croissantes. |
 | 6 | **Tokens by namespace (input / output)** | Tokens entrée/sortie réels par namespace | `ai_finops_input_tokens`, `ai_finops_output_tokens` | Profil de consommation par équipe (out ≫ in pour les générations). |
 | 7 | **Requests violating sovereignty (by app)** | Nb de requêtes envoyées par chaque app vers un fournisseur **non conforme** (zone interdite) | `sum by (namespace, application) (ai_finops_sovereignty_requests{severity="critical"})` | Volume réel **à risque** par app. 0 = conforme ; >0 = violation (rouge). |
-| 8 | **Cost-saving recommendations (action + gain €)** | **Table** : une ligne = une action cost-saving concrète, avec le **modèle actuel → modèle recommandé** et le **gain €** par app | `ai_finops_cost_saving_eur` (labels `namespace`, `application`, `current_model`, `recommended_model` ; valeur = € économisables) | « To-do » d'économies : *qui*, *quel swap de modèle*, *combien*. Voir « Comment lire la table » ci-dessous. |
-| 9 | **Potential savings (EUR)** | Économie **potentielle** totale si on appliquait les recos cost-saving (sur la fenêtre observée) | `ai_finops_potential_savings_eur` (total) · `ai_finops_potential_savings_by_app_eur` (par app) | ⚠️ *Potentiel*, pas réalisé : coût actuel − coût avec modèle moins cher. |
-| 10 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs zone interdite/global | `ai_finops_cost_by_zone_eur` (label `zone`) | La part hors zone autorisée = exposition souveraineté. |
-| 11 | **Observed latency telemetry** | Disponibilité de télémétrie et latence moyenne observée quand elle existe | `ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available` | Si `latency_telemetry_available=0`, la latence mesurée est absente : pas de valeur inventée. |
-
-#### Comment lire la table « Cost-saving recommendations (action + gain €) »
-
-Ce panneau a remplacé l'ancien **camembert** « Recommendations by type » : un camembert ne
-montrait qu'un *compte par type*, sans dire **quelle app**, **quoi faire**, ni **combien on
-gagne**. La table répond aux trois — **chaque ligne = une action d'économie chiffrée**.
-
-| Colonne | Question | Sens |
-|---------|----------|------|
-| **Namespace / Application** | **QUI ?** | L'équipe / l'app concernée. |
-| **Modèle actuel → Recommandé** | **QUOI ?** | Le swap de modèle proposé quand un modèle moins cher et conforme existe dans le catalogue. |
-| **Gain (€)** | **COMBIEN ?** | Économie estimée sur la fenêtre observée si on applique le swap. |
-
-Exemple typique quand le catalogue contient plusieurs modèles conformes :
-
-| Namespace | Application | Modèle actuel | Recommandé | Gain (€) |
-|-----------|-------------|---------------|-----------|---------:|
-| finance | risk-assistant | modèle coûteux | modèle conforme moins cher | valeur mesurée |
-| legal | contract-review | modèle coûteux | modèle conforme moins cher | valeur mesurée |
-| marketing | content-writer | mistral-large-latest | *(modèle conforme le moins cher)* | … |
-
-- Le moteur de recos est désormais **zone-aware** : le modèle proposé reste dans une **zone
-  autorisée** (il ne recommandera pas un provider qui violerait la souveraineté).
-- Le **total** € est dans le panneau **#9 Potential savings** ; la répartition zone EU/US
-  dans le panneau **#10 Spend by sovereignty zone**.
+| 8 | **Spend by sovereignty zone (EUR)** | Part de la dépense réelle par **zone de souveraineté** (résidence du provider) : **EU conforme** vs zone interdite/global | `ai_finops_cost_by_zone_eur` (label `zone`) | La part hors zone autorisée = exposition souveraineté. |
+| 9 | **Observed latency telemetry** | Disponibilité de télémétrie et latence moyenne observée quand elle existe | `ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available` | Si `latency_telemetry_available=0`, la latence mesurée est absente : pas de valeur inventée. |
 
 ### Métriques sous-jacentes
 Émises par l'opérateur sur `/metrics` (:8080), scrapées par Prometheus :
@@ -173,7 +146,6 @@ Exemple typique quand le catalogue contient plusieurs modèles conformes :
 `ai_finops_requests`, `ai_finops_budget_usage_percent`,
 `ai_finops_sovereignty_findings` / `ai_finops_sovereignty_requests`,
 `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
-`ai_finops_potential_savings_eur` / `ai_finops_potential_savings_by_app_eur`,
 `ai_finops_projected_monthly_cost_eur`, `ai_finops_latency_score`,
 `ai_finops_measured_latency_millis`, `ai_finops_latency_telemetry_available`,
 `ai_finops_routing_score`. Détail dans

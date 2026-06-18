@@ -4,7 +4,7 @@
   },
   "editable": true,
   "schemaVersion": 39,
-  "title": "AI Sovereign FinOps \u2014 Overview",
+  "title": "AI Sovereign FinOps — Overview",
   "tags": [
     "ai-finops",
     "sovereignty",
@@ -28,7 +28,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR) \u2014 observed",
+      "title": "Total cost (EUR) — observed",
       "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
       "gridPos": {
@@ -257,167 +257,6 @@
       ]
     },
     {
-      "type": "table",
-      "title": "Cost-saving recommendations (action + gain \u20ac)",
-      "description": "Only cost-saving recommendations. Each row is one concrete action: route an app's traffic from its current model to a cheaper one, and the EUR saved over the observed window. Source: ai_finops_cost_saving_eur (labels current_model/recommended_model).",
-      "datasource": "${datasource}",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 14
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": true,
-          "reducer": [
-            "sum"
-          ],
-          "fields": [
-            "Value"
-          ]
-        }
-      },
-      "pluginVersion": "11.2.2",
-      "targets": [
-        {
-          "expr": "ai_finops_cost_saving_eur",
-          "format": "table",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "instance": true,
-              "job": true
-            },
-            "renameByName": {
-              "namespace": "Namespace",
-              "application": "Application",
-              "current_model": "Mod\u00e8le actuel",
-              "recommended_model": "Recommand\u00e9",
-              "Value": "Gain (\u20ac)"
-            },
-            "indexByName": {
-              "namespace": 0,
-              "application": 1,
-              "current_model": 2,
-              "recommended_model": 3,
-              "Value": 4
-            }
-          }
-        },
-        {
-          "id": "sortBy",
-          "options": {
-            "fields": "",
-            "sort": [
-              {
-                "field": "Gain (\u20ac)",
-                "desc": true
-              }
-            ]
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Gain (\u20ac)"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyEUR"
-              },
-              {
-                "id": "decimals",
-                "value": 4
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-background",
-                  "mode": "gradient"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "continuous-GrYlRd"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Recommand\u00e9"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Potential savings (EUR)",
-      "description": "Total EUR the cost-saving recommendations would save over the observation window (real tokens x cheaper-model prices).",
-      "datasource": "${datasource}",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 14
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "currencyEUR",
-          "decimals": 4,
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "green"
-          }
-        }
-      },
-      "targets": [
-        {
-          "expr": "ai_finops_potential_savings_eur",
-          "instant": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
       "type": "piechart",
       "title": "Spend by sovereignty zone (EUR)",
       "description": "How much real spend goes to each sovereignty zone (provider data residency). EU = compliant (allowed); US = forbidden by the policy. The share leaving the EU is the sovereign-spend exposure. Source: ai_finops_cost_by_zone_eur.",
@@ -426,7 +265,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 22
+        "y": 14
       },
       "options": {
         "reduceOptions": {
@@ -504,13 +343,13 @@
     {
       "type": "table",
       "title": "Enforcement actions (sovereignty)",
-      "description": "Ce que l'op\u00e9rateur D\u00c9CIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (mod\u00e8le interdit -> backend conforme, R\u00c9\u00c9CRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqu\u00e9 de bout en bout : warn/report toujours, et reroute d\u00e9sormais ACTU\u00c9 dans le plan de donn\u00e9es (slice 2). Source: ai_finops_enforcement_actions.",
+      "description": "Ce que l'opérateur DÉCIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (modèle interdit -> backend conforme, RÉÉCRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqué de bout en bout : warn/report toujours, et reroute désormais ACTUÉ dans le plan de données (slice 2). Source: ai_finops_enforcement_actions.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 22
       },
       "options": {
         "showHeader": true,
@@ -614,7 +453,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 30
       },
       "options": {
         "showHeader": true,
@@ -731,7 +570,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 30
       },
       "options": {
         "displayMode": "basic",
@@ -752,7 +591,7 @@
         {
           "datasource": null,
           "expr": "sum by (namespace, application, zone) (ai_finops_shadow_ai_egress)",
-          "legendFormat": "{{namespace}} / {{application}} \u2192 {{zone}}",
+          "legendFormat": "{{namespace}} / {{application}} → {{zone}}",
           "refId": "A",
           "instant": true
         }
@@ -795,7 +634,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 38
       },
       "options": {
         "showHeader": true,

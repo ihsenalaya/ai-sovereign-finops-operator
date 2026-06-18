@@ -36,13 +36,11 @@ Stack de démo prête à l'emploi : [`automatisation/demo/observability.yaml`](.
 | 5 | Cost (EUR) by namespace | timeseries | coût par namespace dans le temps | Gateway + apps |
 | 6 | Tokens by namespace | timeseries | tokens in/out par namespace | Gateway + apps |
 | 7 | Requests violating sovereignty (by app) | bargauge | requêtes vers provider non conforme | Gateway + apps + `AISovereigntyPolicy` |
-| 8 | Cost-saving recommendations (action + gain €) | table | reco priorisées (swap modèle, €) | Gateway + apps + catalogue |
-| 9 | Potential savings (EUR) | stat | économie potentielle | Gateway + apps + catalogue |
-| 10 | Spend by sovereignty zone (EUR) | piechart | part de dépense par zone (EU vs US) | Gateway + apps + providers (zone) |
-| 11 | Enforcement actions (sovereignty) | table | décisions d'enforcement par workload | `AISovereigntyPolicy` (warn/enforce pour actuer) |
-| 12 | **Shadow-AI egress details** | table | pods appelant un LLM **hors gateway**, par zone | **Tetragon + forwarder** (ConfigMap `shadow-egress`) + `AISovereigntyPolicy` |
-| 13 | **Shadow-AI hotspots by workload** | bargauge | connexions shadow-AI par workload/zone | idem #12 |
-| 14 | **Observed latency telemetry** | table | latence mesurée en ms si disponible, disponibilité de télémétrie | Gateway + apps + métrique réelle `gen_ai_server_request_duration_seconds` |
+| 8 | Spend by sovereignty zone (EUR) | piechart | part de dépense par zone (EU vs US) | Gateway + apps + providers (zone) |
+| 9 | Enforcement actions (sovereignty) | table | décisions d'enforcement par workload | `AISovereigntyPolicy` (warn/enforce pour actuer) |
+| 10 | **Shadow-AI egress details** | table | pods appelant un LLM **hors gateway**, par zone | **Tetragon + forwarder** (ConfigMap `shadow-egress`) + `AISovereigntyPolicy` |
+| 11 | **Shadow-AI hotspots by workload** | bargauge | connexions shadow-AI par workload/zone | idem #10 |
+| 12 | **Observed latency telemetry** | table | latence mesurée en ms si disponible, disponibilité de télémétrie | Gateway + apps + métrique réelle `gen_ai_server_request_duration_seconds` |
 
 > **La zone par défaut marche sans CR** : grâce au [catalogue intégré](features/catalog.md), le coût
 > et la zone d'un modèle connu (`gpt-4o`…) se résolvent même **sans** AIProvider/AIModel — les CRs
@@ -50,7 +48,7 @@ Stack de démo prête à l'emploi : [`automatisation/demo/observability.yaml`](.
 
 ## Comment remplir chaque plan
 
-### Plan gateway (coût / tokens / requêtes / budget / souveraineté / reco)
+### Plan gateway (coût / tokens / requêtes / budget / souveraineté)
 Il faut un **vrai trafic** via l'Envoy AI Gateway. Démo réelle clé en main :
 [`automatisation/envoy-aigw/`](../automatisation/envoy-aigw/README.md) (`deploy.sh up`) — installe
 Envoy Gateway + Envoy AI Gateway, le catalogue, et des **apps consommatrices** qui font de vrais
