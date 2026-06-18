@@ -1,321 +1,729 @@
 # AI Sovereign FinOps Operator
 
-> **Plan de contrôle FinOps & souveraineté pour l'IA d'entreprise**, packagé comme opérateur Kubernetes
-> natif. Il gouverne les appels LLM d'une organisation — **coût, attribution, fournisseurs, résidence
-> des données, budgets et arbitrage API managée vs auto-hébergement** — en pur déclaratif (CRDs).
-
-Stack 100 % **open-source / CNCF** : Kubernetes, controller-runtime, Prometheus, Grafana, Helm,
-Kustomize, ArgoCD, Envoy. Apache 2.0 · Go 1.25 · API `aiops.imperium.io/v1alpha1`.
+Un opérateur Kubernetes qui observe le trafic vers les LLM, calcule les coûts réels, vérifie la conformité de souveraineté des données, et recommande ou applique automatiquement le meilleur fournisseur pour chaque application.
 
 ---
 
-## 1. Le problème
+## Table des matières
 
-Les entreprises adoptent les LLM plus vite qu'elles ne savent les gouverner. Trois angles morts
-reviennent systématiquement dans les organisations régulées (santé, finance, assurance, secteur public,
-industrie critique) :
-
-| Problème | Sans l'opérateur | Avec l'opérateur |
-|---|---|---|
-| **Opacité des coûts** | personne ne sait quelle équipe/app dépense quoi, ni quand un modèle moins cher suffirait | coût attribué par modèle / équipe / namespace / application, exposé en métriques et rapports |
-| **Souveraineté & conformité** | la résidence des données et l'usage de données sensibles sont gérés au cas par cas, voire pas du tout | politiques déclaratives de zones autorisées/interdites et de données sensibles, avec détection des violations |
-| **Managé vs auto-hébergé** | aucune visibilité sur le volume à partir duquel l'auto-hébergement devient rentable | calcul du **point mort** (break-even) et recommandation à partir de l'usage réel |
-
-L'opérateur transforme ces décisions ad hoc en **politiques Kubernetes versionnées, auditables et
-réconciliées en continu**.
-
-> ⚠️ **Le produit ne promet pas la conformité juridique.** Il produit une **traçabilité exploitable et
-> un dossier de préparation à l'audit** (RGPD, AI Act, politiques internes). L'`enforcementMode` d'une
-> `AISovereigntyPolicy` pilote la réaction : `reportOnly` (constat seul), `warn` (alerte différenciée —
-> Events Kubernetes + métrique `ai_finops_enforcement_actions`, sans blocage), `enforce` (**agit
-> réellement** dans le plan de données Envoy AI Gateway : reroute vers un backend conforme quand il existe,
-> sinon blocage via le backend réservé absent `aiops-blocked`). C'est un vrai **plan de contrôle**, pas un
-> simple observateur.
+1. [Vue d'ensemble](#vue-densemble)
+2. [Architecture](#architecture)
+3. [Exigences de l'environnement](#exigences-de-lenvironnement)
+4. [Installation](#installation)
+5. [CRDs — référence complète](#crds--référence-complète)
+   - [AIProvider](#aiprovider)
+   - [AIModel](#aimodel)
+   - [AIGateway](#aigateway)
+   - [AIFinOpsReport](#aifinopsreport)
+   - [AIBudgetPolicy](#aibudgetpolicy)
+   - [AISovereigntyPolicy](#aisovereigntypolicy)
+   - [AIQualityGate](#aiqualitygate)
+   - [AIBreakEvenAnalysis](#aibreakevenanalysis)
+   - [AIRoutingPolicy](#airoutingpolicy)
+   - [AIRouteOverride](#airouteoverride)
+   - [AIChangeRequest](#aichangerequest)
+6. [Calcul des scores](#calcul-des-scores)
+7. [Métriques Prometheus](#métriques-prometheus)
+8. [Dashboard Grafana](#dashboard-grafana)
 
 ---
 
-## 2. Comment ça marche
+## Vue d'ensemble
 
-Le **plan de données** reste dans la gateway IA (Envoy / LiteLLM / Gateway API / custom). L'opérateur
-est le **plan de contrôle** : il lit la télémétrie, applique les politiques déclarées en CRDs, et publie
-coûts, constats de souveraineté, états de budget et rapports.
+Les entreprises utilisent des LLM via plusieurs fournisseurs (Azure OpenAI, Mistral, Anthropic...) sans visibilité consolidée sur les coûts, la latence ou la conformité réglementaire (RGPD, AI Act). L'**AI Sovereign FinOps Operator** résout ce problème en :
+
+- **Observant** le trafic réel via l'Envoy AI Gateway (métriques OpenTelemetry `gen_ai_*`)
+- **Attribuant** chaque dépense à un namespace, une application et une équipe
+- **Vérifiant** la souveraineté des données : zone de résidence, données sensibles, fournisseurs autorisés
+- **Calculant** un score de routage multi-critères (coût, qualité, latence, fiabilité, souveraineté)
+- **Recommandant** ou **appliquant** automatiquement le meilleur modèle, avec approbation humaine optionnelle
+
+Toutes les décisions sont auditables dans Kubernetes (status des CRs, Events) et dans Grafana via des métriques Prometheus.
+
+---
+
+## Architecture
 
 ```
-                     ┌──────────────────────────────────────────────┐
-   Applications ───► │   Gateway IA (Envoy / LiteLLM / Gateway API)  │ ───► Fournisseurs LLM
-                     │                 [ plan de données ]           │      (OpenAI, Mistral/Foundry,
-                     └───────────────┬──────────────────────────────┘       auto-hébergé, …)
-                                     │ télémétrie (aigw/OTel · Prometheus · configmap)
-                                     ▼
-   CRDs (déclaratif)   ┌──────────────────────────────────────────────┐
-   AIGateway           │        AI Sovereign FinOps Operator           │
-   AIProvider/AIModel  │             [ plan de contrôle ]              │
-   AIBudgetPolicy      │  costengine · budgetengine · sovereigntyengine│
-   AISovereigntyPolicy │  breakevenengine · reporting                  │
-   AIBreakEvenAnalysis └───────────────┬──────────────────────────────┘
-   AIFinOpsReport                      │
-                                       ├─► métriques  ai_finops_*  (Prometheus → Grafana)
-                                       ├─► .status des CRDs (coût, budget, constats, reco)
-                                       └─► rapport Markdown/JSON (ConfigMap)
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Cluster Kubernetes                                                       │
+│                                                                          │
+│  Applications utilisatrices                                              │
+│  (marketing/content-writer, finance/risk-assistant, legal/sovereignty-demo) │
+│         │                                                                │
+│         ▼  HTTP /v1/chat/completions                                     │
+│  ┌─────────────────┐                                                     │
+│  │  Envoy AI       │  ──── x-ai-eg-model header ──▶  gpt-france-mini    │
+│  │  Gateway        │                                   gpt-us-mini       │
+│  └────────┬────────┘                                   mistral-large-latest │
+│           │ gen_ai_client_token_usage (OTel)                             │
+│           ▼                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐ │
+│  │  AI Sovereign FinOps Operator                                        │ │
+│  │                                                                      │ │
+│  │  Collector aigw ──▶ CostEngine ──▶ RoutingScoreEngine               │ │
+│  │                                         │                            │ │
+│  │  AIProvider / AIModel (catalogue) ──────┘                            │ │
+│  │  AISovereigntyPolicy ──────────────▶ SovereigntyEngine               │ │
+│  │  AIBudgetPolicy ───────────────────▶ BudgetEngine                    │ │
+│  │  AIQualityGate ────────────────────▶ QualityEngine                   │ │
+│  │                                         │                            │ │
+│  │  Status des CRDs ◀──── AIFinOpsReport ◀─┘                           │ │
+│  │  Métriques Prometheus ◀─────────────────┘                            │ │
+│  └─────────────────────────────────────────────────────────────────────┘ │
+│           │                                                              │
+│           ▼                                                              │
+│  Grafana (dashboard radar, coûts, souveraineté, budgets)                │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## 3. Fonctionnalités
-
-Six moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les controllers :
-
-- **Cost engine** — calcule le coût (EUR) par requête/modèle/équipe/namespace à partir des prix par
-  million de tokens déclarés sur chaque `AIProvider` ; agrège les tokens d'entrée/sortie et le % d'économies.
-- **Budget engine** — suit la dépense par cible (namespace/équipe/app) sur une période, calcule le %
-  d'usage et la **phase** (`ok` → `warning` → `critical` → `hardLimit`), avec actions par seuil et
-  **modèle de repli**. En mode `enforce`, l'opérateur peut **rerouter réellement** vers un fallback
-  **managé** moins cher au gateway, sous garde-fous mesurés.
-- **Sovereignty engine** — confronte chaque appel aux règles de **résidence** (zones autorisées /
-  interdites, l'UE couvrant les États membres) et de **données sensibles** (fournisseurs externes
-  autorisés ou non), et remonte les **constats de violation**.
-- **Break-even engine** — calcule le point mort entre **API managée** et **auto-hébergement** (coût
-  mensuel comparé, économie, **payback** en mois) et émet une recommandation.
-- **Reporting engine** — consolide coûts, top modèles, constats de souveraineté et recommandations dans
-  un **rapport Markdown/JSON** publié en `ConfigMap`, et dans le `.status` des CRDs.
-- **Recommendation engine** — produit des recommandations chiffrées et **conscientes de la souveraineté** :
-  un swap cost-saving n'est **jamais** proposé vers un modèle en zone interdite, si bon marché soit-il
-  (il reroute uniquement vers le modèle conforme le moins cher).
-- **Enforcement engine** — transforme les constats critiques en **décisions d'enforcement** selon
-  l'`enforcementMode` (`report` / `warn` / `reroute` / `block`), portées par des Events Kubernetes et la
-  métrique `ai_finops_enforcement_actions`. En mode `enforce`, l'opérateur **actue réellement** dans
-  **Envoy AI Gateway** : reroute vers un backend conforme quand il existe, sinon blocage par backend
-  réservé absent (`aiops-blocked`). Les mutations de l'`AIGatewayRoute` sont réversibles. C'est le
-  passage d'**observateur** à **plan de contrôle**.
-- **Quality gate par application** — `AIQualityGate` vérifie qu'un modèle candidat ne dégrade pas une
-  application avant reroute : golden dataset, preuves déterministes, télémétrie réelle source/candidat,
-  seuils erreur/latence et verdict auditable `candidate-safe` / `candidate-risk` / `insufficient-data`.
-
-Transverse :
-
-- **Catalogue par défaut (autonomie)** — catalogue intégré des providers/modèles connus (prix de liste
-  publics + zone) et `EndpointToZone(host)` : l'opérateur produit coût **et** souveraineté **dès
-  l'installation**, sans écrire un seul `AIProvider`/`AIModel` (les CRs ne font qu'affiner/override). Un
-  modèle inconnu génère un **AIModel stub** + une reco `data-quality`. Voir
-  [`docs/features/catalog.md`](docs/features/catalog.md).
-- **Plan eBPF / Shadow-AI (indépendant de la gateway)** — un plan de souveraineté qui capte le trafic
-  **contournant** la gateway : **Tetragon** (eBPF) observe l'egress par pod, l'opérateur classe la
-  destination par zone (`EndpointToZone`) et expose `ai_finops_shadow_ai_egress`. C'est l'angle mort que
-  les collecteurs gateway ne voient pas. Voir [`docs/features/shadowengine.md`](docs/features/shadowengine.md).
-- **Collecteurs de télémétrie** : `aigw` (Envoy AI Gateway / OpenTelemetry — chemin réel de production,
-  lit `gen_ai_client_token_usage`), `prometheus` et `configmap` opérationnels. **Aucun repli `fake`
-  silencieux** : sans source de télémétrie réelle, l'opérateur remonte une condition `NoTelemetrySource`
-  explicite plutôt que d'inventer des chiffres. Le mode `fake` n'existe que sur opt-in explicite (démo).
-- **Observabilité** : famille de métriques `ai_finops_*` (§7) + **dashboard Grafana** fourni
-  ([`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json)) + `ServiceMonitor`
-  optionnel (Prometheus Operator).
-- **Réconciliation native** : `observedGeneration`, conditions standard, events, logs structurés ; les
-  `AIModel` re-réconcilient sur changement de leur `AIProvider`.
+L'opérateur ne modifie jamais les flux applicatifs directement. Il observe, calcule, et — lorsque configuré en mode `enforce` — modifie les ressources `AIGatewayRoute` d'Envoy pour rerouter automatiquement le trafic.
 
 ---
 
-## 4. Avantages
+## Exigences de l'environnement
 
-- **Déclaratif et GitOps-natif** : toute la gouvernance (budgets, souveraineté, catalogue) est en YAML
-  versionné, réconcilié en continu, déployable via ArgoCD.
-- **Intrusion contrôlée** : lecture seule par défaut ; l'opérateur ne mute le plan de données que
-  dans des chemins d'enforcement explicitement déclarés (`AISovereigntyPolicy` ou fallback budget
-  managé sur `AIBudgetPolicy`).
-- **Souveraineté de premier plan** : contraintes dures de résidence et de données sensibles — absentes
-  des routeurs cost/quality classiques et des gateways génériques.
-- **FinOps actionnable** : attribution fine + budgets avec dégradation gracieuse + point mort
-  managé/auto-hébergé, le tout exposé en métriques exploitables.
-- **Préparation à l'audit** : constats horodatés et rapports reproductibles pour RGPD / AI Act.
-- **100 % OSS/CNCF** : pas de dépendance propriétaire ; portable sur n'importe quel cluster conforme.
-- **Sécurisé par défaut** : conteneur non-root, FS racine en lecture seule, capabilities `drop ALL`,
-  RBAC au moindre privilège, `seccomp RuntimeDefault`.
+| Composant | Version minimale | Rôle |
+|-----------|-----------------|------|
+| Kubernetes | 1.28 | Cluster cible |
+| Helm | 3.12 | Déploiement de l'opérateur |
+| Envoy AI Gateway | 0.6.x | Source de télémétrie (`gen_ai_*`) |
+| Prometheus | 2.x | Collecte des métriques de l'opérateur |
+| Grafana | 11.x | Visualisation (plugin `ae3e-plotly-panel` requis pour le radar) |
+
+**Droits RBAC requis** : l'opérateur a besoin de lire/écrire les CRDs `aiops.imperium.io/*`, lire les `AIGatewayRoute` d'Envoy, et lire les `ConfigMap`/`Secret` dans son namespace.
 
 ---
 
-## 5. Les CRDs (`aiops.imperium.io/v1alpha1`)
+## Installation
 
-| CRD | shortName | Rôle | Champs clés (spec) | Résultat (status) |
-|---|---|---|---|---|
-| **AIGateway** | `aigw` | Gateway IA observée + mode de télémétrie | `type`, `endpoint`, `telemetry.mode`, `namespaceSelector` | `governedNamespaces` |
-| **AIProvider** | `aiprov` | Fournisseur (managé/auto-hébergé), pricing, conformité | `region`, `dataResidency`, `managed`, `pricing.{input,output}TokenPricePerMillion`, `compliance.{allowedForSensitiveData,allowedCountries}` | conditions |
-| **AIModel** | — | Modèle catalogué, lié à un provider | `providerRef`, `modelName`, `qualityTier`, `costTier`, `contextWindow`, `sensitiveDataAllowed` | `resolvedProvider` |
-| **AIBudgetPolicy** | `aibudget` | Budget par namespace/équipe/app + seuils + fallback managé optionnel | `target`, `period`, `budgetEUR`, `warning/critical/hardLimitPercent`, `actions`, `fallbackModelRef`, `enforcementMode`, `fallbackOnPhase` | `currentSpendEUR`, `usagePercent`, `phase`, `activeFallbackModel`, `fallbackActuated` |
-| **AISovereigntyPolicy** | `aisov` | Règles de résidence / données sensibles / audit | `dataResidency.{allowed,forbidden}Zones`, `sensitiveData.externalProvidersAllowed`, `audit`, `enforcementMode` | `findingsCount` |
-| **AIBreakEvenAnalysis** | `aibreakeven` | Point mort API managée vs auto-hébergement | `currentModelRef`, `alternativeSelfHosted`, `analysisWindowDays` | `managed/selfHostedMonthlyCostEUR`, `monthlySavingsEUR`, `paybackMonths`, `recommendation` |
-| **AIFinOpsReport** | `aireport` | Rapport consolidé généré | `target`, `period`, `gatewayRef` | `totalCostEUR`, `totalInput/OutputTokens`, `topModels`, `sovereigntyFindings`, `recommendations` |
-| **AIQualityGate** | `aiqgate` | Validation qualité par application avant changement de modèle | `target`, `sourceModel`, `candidateModel`, `goldenDatasetRef`, `evidenceRef`, `requiredChecks`, `canary`, `rollback` | `phase`, `verdict`, `failedChecks`, `source/candidateObservation` |
+### 1. Prérequis — Envoy AI Gateway
 
-Documentation détaillée par CRD : [`docs/crds/`](docs/crds/) · par moteur : [`docs/features/`](docs/features/).
+L'opérateur lit les métriques de l'Envoy AI Gateway. Celui-ci doit déjà être déployé et exposer un service `<nom>-metrics` sur le port `1064`.
 
----
-
-## 6. Dépendances
-
-**Exécution (runtime) :**
-
-- **Kubernetes ≥ 1.29** (compilé contre `k8s.io/*` v0.29, `sigs.k8s.io/controller-runtime` v0.17).
-- **Prometheus client** (`prometheus/client_golang`) pour l'exposition des métriques.
-- *Optionnel* : **Prometheus** (collecteur de télémétrie + scraping), **Grafana** (dashboard fourni),
-  **Prometheus Operator** (`ServiceMonitor`), une **gateway IA** (Envoy AI Gateway, LiteLLM, Gateway
-  API…) comme plan de données.
-
-**Build / développement :** Go 1.25 · Kubebuilder 3.14 · controller-gen v0.18.0 · kustomize v5.4.3 ·
-kind 0.31 (k8s 1.35) · envtest k8s 1.31 · Helm.
-
-**Automatisation :** `docker`, `kind`, `kubectl`, `helm` ; `git` (mode GitOps) ; `az` (chemin Azure/AKS).
-Tout est CNCF/OSS.
-
----
-
-## 7. Observabilité
-
-Métriques exposées (`/metrics`, par défaut `:8080`) :
-
-> **Convention de nommage** — ces métriques sont des **agrégats par fenêtre de reporting** (gauges), pas
-> des compteurs monotones : elles n'ont donc **pas** le suffixe `_total` (qui, par convention Prometheus,
-> casse `rate()`/`increase()` sur une gauge). Les compteurs cumulés côté gateway gardent `_total` dans
-> leurs propres exporters.
-
-| Métrique | Description |
-|---|---|
-| `ai_finops_cost_eur` | coût observé (EUR) par namespace |
-| `ai_finops_input_tokens` / `ai_finops_output_tokens` | tokens entrée / sortie par namespace |
-| `ai_finops_requests` | volume de requêtes par namespace |
-| `ai_finops_cost_by_zone_eur` | dépense par zone de souveraineté (UE vs US…) |
-| `ai_finops_budget_usage_percent` | % d'usage d'un budget |
-| `ai_finops_sovereignty_findings` / `ai_finops_sovereignty_requests` | constats / requêtes à risque |
-| `ai_finops_recommendations` | recommandations émises (par type/app/sévérité) |
-| `ai_finops_cost_saving_eur` / `ai_finops_potential_savings_eur` | économie d'un swap / total potentiel |
-| `ai_finops_enforcement_actions` | **décisions d'enforcement** (policy, namespace, app, mode, action, actuated) |
-| `ai_finops_quality_gate_passed` / `ai_finops_quality_gate_failed_checks` | verdict et échecs des `AIQualityGate` par application |
-| `ai_finops_breakeven_savings_eur` | économie estimée managé vs auto-hébergé |
-
-Dashboard Grafana prêt à l'emploi : [`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json)
-(inclut le tableau **Enforcement actions** et la dépense par zone de souveraineté).
-
----
-
-## 8. Démarrage rapide
-
-### Local (kind, sans build d'image)
+### 2. Ajouter le dépôt Helm
 
 ```bash
-make install                 # CRDs dans le cluster courant
-make run                     # lance le manager depuis l'hôte (Ctrl-C pour arrêter)
-kubectl apply -k config/samples/         # catalogue + policies d'exemple
-kubectl get aigw,aiprov,aimodel,aibudget,aisov,aibreakeven,aireport,aiqgate
-make export-report REPORT=ai-report-all NAMESPACE=default
+helm repo add ai-sovereign-finops https://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts
+helm repo update
 ```
 
-### Via Helm
+### 3. Installer l'opérateur
 
 ```bash
-helm install greenops charts/ai-sovereign-finops-operator \
-  --namespace greenops-system --create-namespace
-# kind / image locale :
-#   --set image.repository=greenops --set image.tag=dev --set image.pullPolicy=Never
+helm install greenops ai-sovereign-finops/ai-sovereign-finops-operator \
+  --namespace greenops-system \
+  --create-namespace
 ```
 
-Le chart installe CRDs, Deployment (non-root, sécurisé), RBAC, Service métriques et `ServiceMonitor`
-optionnel. Valeurs : [`charts/ai-sovereign-finops-operator/values.yaml`](charts/ai-sovereign-finops-operator/values.yaml).
+### 4. Vérifier le déploiement
 
-Guide de démo détaillé : [`docs/DEMO_KIND.md`](docs/DEMO_KIND.md).
+```bash
+kubectl get pods -n greenops-system
+# greenops-ai-sovereign-finops-operator-xxx   1/1   Running
+
+kubectl get crd | grep aiops.imperium.io
+# 11 CRDs installés
+```
+
+### 5. Mise à jour (Helm ne met pas à jour les CRDs automatiquement)
+
+Lors d'un `helm upgrade`, les CRDs existants ne sont **pas** mis à jour par Helm. Appliquez-les manuellement :
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/.../config/crd/bases/
+```
 
 ---
 
-## 9. Automatisations (`automatisation/`)
+## CRDs — référence complète
 
-Déploiement **de bout en bout, sans bricolage** — voir [`automatisation/README.md`](automatisation/README.md).
+### AIProvider
 
-### A. GitOps avec ArgoCD
+**Rôle** : déclare un fournisseur de modèles IA avec ses tarifs et ses attributs de souveraineté. C'est la source de vérité sur le prix et la zone de résidence des données.
 
-```bash
-cd automatisation
-make up        # kind → image → ArgoCD → Applications depuis le repo GitHub/origin → wait sync
-# ou:
-make up-gitea  # même chaîne, avec dépôt Gitea in-cluster auto-contenu
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: azure-openai-fr
+  namespace: default
+spec:
+  # Type du fournisseur
+  # Valeurs : openai | azure-openai | mistral | anthropic | bedrock | vertex | self-hosted | custom
+  type: azure-openai
+
+  # Région cloud du fournisseur (ex: francecentral, westeurope, eastus)
+  region: francecentral
+
+  # Zone de résidence des données — utilisée par le moteur de souveraineté
+  # Valeurs libres, en majuscules dans la politique (FR, EU, US, CN...)
+  dataResidency: fr
+
+  # true = API managée, false = GPU auto-hébergé
+  managed: true
+
+  pricing:
+    # Code ISO 4217
+    currency: EUR
+    # Prix pour 1 000 000 tokens d'entrée
+    inputTokenPricePerMillion: "0.15"
+    # Prix pour 1 000 000 tokens de sortie
+    outputTokenPricePerMillion: "0.60"
+    # Coût fixe mensuel optionnel (engagement, capacité réservée)
+    fixedMonthlyCost: "0"
+
+  compliance:
+    # Ce fournisseur peut-il traiter des données sensibles ?
+    allowedForSensitiveData: true
+    # Codes pays/zones autorisés
+    allowedCountries: [FR, EU]
 ```
 
-`make up` enchaîne des étapes scriptées et idempotentes :
-
-| Étape | Cible | Action |
-|---|---|---|
-| 1 | `cluster` | crée le cluster **kind** ([`kind/kind-config.yaml`](automatisation/kind/kind-config.yaml)) |
-| 2 | `image` | build l'image de l'opérateur et la **charge dans kind** |
-| 3 | `argocd` | installe **ArgoCD** (UI sur `:30080`) |
-| 4 | `apps` | crée l'`AppProject` + 2 `Application` : opérateur (chart Helm) + samples (catalogue/policies) |
-| 5 | `wait` | attend que les Applications soient **Synced + Healthy** |
-
-`make down` détruit le cluster. Manifests ArgoCD : [`automatisation/argocd/`](automatisation/argocd/).
-
-### B. Offline (Helm direct, sans ArgoCD)
-
-```bash
-cd automatisation
-make local     # kind + image + Helm + samples + Shadow-AI, aucun composant GitOps requis
-```
-
-### C. Azure / AKS (déploiement cloud)
-
-[`automatisation/azure/`](automatisation/azure/) automatise un déploiement **discipliné en coût** sur
-**AKS (Free tier)** : création du cluster, **Azure Key Vault** (RBAC + addon CSI) pour les secrets,
-synchronisation des secrets vers Kubernetes (`kv-to-k8s.sh`), déploiement de la stack et d'un fournisseur
-**Mistral via Azure AI Foundry** (zone de données UE). `down.sh` arrête/supprime pour ne pas payer à
-l'arrêt. Cloud-agnostique par ailleurs : voir [`docs/INSTALL_AKS.md`](docs/INSTALL_AKS.md).
-
-### D. Démonstration complète (une commande)
-
-[`automatisation/demo/`](automatisation/demo/) montre **toutes les fonctionnalités** sur kind, avec
-**Prometheus + Grafana** déployés :
-
-```bash
-cd automatisation/demo && ./demo.sh up
-```
-
-Déploie l'opérateur + des CRs couvrant tous les moteurs, imprime un **tour guidé** (catalogue, coûts,
-souveraineté par flux, dépassement de budget, break-even, rapport), puis ouvre le dashboard Grafana
-sur `http://localhost:3000`. Détails : [`automatisation/demo/README.md`](automatisation/demo/README.md).
-
-### E. Envoy local
-
-[`automatisation/envoy-local/`](automatisation/envoy-local/) lance un **Envoy réel** en frontal du
-fournisseur pour mesurer le surcoût du plan de données (overhead négligeable, 0 erreur).
+**Status** : `conditions[type=Ready]` indique si l'objet a été reconcilié correctement.
 
 ---
 
-## 10. Développement
+### AIModel
 
-```bash
-make manifests generate     # régénère CRDs, RBAC, code deepcopy
-make test                   # tests unitaires (moteurs) + envtest (controllers)
-make build                  # binaire manager
-make docker-build IMG=…     # image conteneur
-make lint                   # golangci-lint + yamllint
+**Rôle** : catalogue un modèle disponible via un fournisseur. Associe un nom de déploiement côté fournisseur à un niveau de qualité, un niveau de coût, et optionnellement à l'application qui l'utilise (pour l'attribution du trafic gateway).
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: gpt-france-mini
+  namespace: default
+spec:
+  # Référence vers l'AIProvider (même namespace)
+  providerRef: azure-openai-fr
+
+  # Identifiant exact côté fournisseur — doit correspondre au header x-ai-eg-model
+  # envoyé à l'Envoy AI Gateway
+  modelName: gpt-france-mini
+
+  # Type de modèle
+  # Valeurs : llm | embedding | reranker | vision | audio
+  type: llm
+
+  # Taille de la fenêtre de contexte en tokens (optionnel)
+  contextWindow: 128000
+
+  # Niveau de qualité catalogué — utilisé dans le score de qualité
+  # Valeurs : low | medium | high
+  qualityTier: high
+
+  # Niveau de coût catalogué — informatif
+  # Valeurs : low | medium | high
+  costTier: low
+
+  # Ce modèle peut-il traiter des données sensibles ?
+  sensitiveDataAllowed: true
+
+  # Attribution du trafic gateway :
+  # L'Envoy AI Gateway émet des métriques avec les labels k8s_namespace et k8s_app.
+  # Ces trois champs indiquent quelle application utilise ce modèle,
+  # permettant d'attribuer les coûts et scores par namespace/application.
+  servesNamespace: marketing
+  servesApplication: content-writer
+  servesTeam: marketing
 ```
 
-Conventions et architecture : [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) ·
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+**Status** : `resolvedProvider` contient le type du fournisseur une fois la référence résolue.
+
+> **Important** : `modelName` doit correspondre exactement à la valeur du header `x-ai-eg-model` que l'application envoie à l'Envoy AI Gateway. C'est ce label qui apparaît dans `gen_ai_request_model` des métriques OTel.
 
 ---
 
-## 11. Statut & limites
+### AIGateway
 
-MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image déployée par Helm** : 7 CRDs,
-7 controllers, 6 moteurs, collecteurs, observabilité, reporting, chart, automatisation.
+**Rôle** : pointe l'opérateur vers une instance d'Envoy AI Gateway pour collecter la télémétrie. Un seul AIGateway suffit pour gouverner l'ensemble du cluster.
 
-**Enforcement livré (slices 1, 2 et budget fallback managé)** : l'opérateur **agit** selon l'`enforcementMode`
-— Events Kubernetes différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les
-violations US et les reroutes budgétaires. En mode `enforce`, le contrôle est **actué dans le plan de
-données** Envoy AI Gateway : reroute vers backend conforme/fallback budgétaire avec réécriture du `model`,
-ou blocage via `aiops-blocked` quand aucun fallback conforme n'existe. Le revert est automatique au retour
-en `reportOnly`/`warn` ou à la suppression de la policy (finalizer). Reste : budget reroute plus fin qu'au
-niveau modèle partagé, durcissement télémétrie (latence/erreurs, reset compteurs).
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIGateway
+metadata:
+  name: greenops-aigw
+  namespace: default
+spec:
+  # Type de gateway
+  # Valeurs : litellm | envoy | kong | gateway-api | custom
+  type: envoy
 
-Détails : [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) · toute la
-doc : [`docs/README.md`](docs/README.md).
+  # URL du gateway (utilisée pour les requêtes de contrôle)
+  endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80
+
+  telemetry:
+    # Mode de collecte de télémétrie
+    # aigw      : lit directement les métriques gen_ai_* de l'Envoy AI Gateway
+    # prometheus : scrape un endpoint Prometheus générique
+    # configmap  : lit des samples JSON depuis un ConfigMap (utile pour les tests)
+    # fake       : génère des données synthétiques (développement uniquement)
+    mode: aigw
+```
+
+**Status** : `governedNamespaces` liste les namespaces couverts par le sélecteur.
 
 ---
 
-## 12. Licence
+### AIFinOpsReport
 
-Apache 2.0.
+**Rôle** : déclenche la génération d'un rapport FinOps complet pour un namespace ou tout le cluster. L'opérateur remplit le `.status` avec les coûts observés, les findings de souveraineté, les recommandations, et les scores de routage par application/modèle.
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIFinOpsReport
+metadata:
+  name: ai-report-all
+  namespace: default
+spec:
+  target:
+    # Namespace à couvrir (vide = tout le cluster)
+    namespace: ""
+    # Fenêtre d'observation
+    # Valeurs : daily | weekly | monthly
+    period: monthly
+
+  # Optionnel : restreindre la collecte à un AIGateway spécifique
+  gatewayRef: greenops-aigw
+```
+
+**Status généré** :
+
+| Champ | Description |
+|-------|-------------|
+| `totalCostEUR` | Dépense totale observée sur la période |
+| `projectedMonthlyCostEUR` | Projection sur un mois complet (run-rate) |
+| `totalInputTokens` / `totalOutputTokens` | Volume de tokens consommés |
+| `topModels` | Classement des modèles par coût décroissant |
+| `sovereigntyFindings` | Violations de souveraineté détectées |
+| `recommendations` | Recommandations d'optimisation (coût, souveraineté) |
+| `routingScores` | Score multi-critères par tuple namespace/application/modèle |
+
+---
+
+### AIBudgetPolicy
+
+**Rôle** : définit un plafond de dépense pour un namespace, une équipe ou une application. L'opérateur suit la dépense en temps réel et passe par les phases `WithinBudget → Warning → Critical → Exceeded`. En mode `enforce`, il peut déclencher un reroute vers un modèle moins cher.
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: marketing-budget
+  namespace: default
+spec:
+  target:
+    namespace: marketing
+    team: marketing
+    application: content-writer
+
+  # Fenêtre budgétaire
+  period: monthly
+
+  # Plafond en EUR
+  budgetEUR: "10.00"
+
+  # Seuils d'alerte (en % du budget)
+  warningThresholdPercent: 70   # → phase Warning
+  criticalThresholdPercent: 90  # → phase Critical
+  hardLimitPercent: 100          # → phase Exceeded
+
+  actions:
+    onWarning: [alert]
+    onCritical: [alert]
+    onHardLimit: [blockOrRequireApproval]
+
+  # Modèle de repli moins cher (référence un AIModel)
+  fallbackModelRef: gpt-us-mini
+
+  # Mode d'application du repli
+  # reportOnly : recommandation uniquement (défaut)
+  # warn       : alerte différenciée
+  # enforce    : reroute actif dans l'Envoy AI Gateway
+  enforcementMode: reportOnly
+
+  # Phase à partir de laquelle le repli est activé (si enforce)
+  fallbackOnPhase: Exceeded
+
+  # Guardrails sur le modèle de repli
+  maxFallbackLatencyMillis: 2000
+  maxFallbackErrorPercent: 5
+  minFallbackQualityTier: medium
+```
+
+**Status** : `phase`, `usagePercent`, `currentSpendEUR`, `projectedMonthlySpendEUR`, `fallbackActuated`.
+
+---
+
+### AISovereigntyPolicy
+
+**Rôle** : déclare les règles de souveraineté des données applicables au namespace. L'opérateur évalue chaque modèle observé contre cette politique : un modèle dont le fournisseur est dans une zone interdite reçoit un **score de souveraineté de 0** et son score global est forcé à 0 (il ne sera jamais recommandé).
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AISovereigntyPolicy
+metadata:
+  name: eu-sovereignty
+  namespace: default
+spec:
+  dataResidency:
+    # Zones autorisées (codes libres, comparés en majuscules avec AIProvider.dataResidency)
+    allowedZones: [FR, EU]
+    # Zones explicitement interdites
+    forbiddenZones: [US, CN]
+
+  sensitiveData:
+    # Les fournisseurs externes managés peuvent-ils recevoir des données sensibles ?
+    externalProvidersAllowed: false
+    # Faut-il anonymiser les prompts avant envoi ?
+    requireAnonymization: false
+
+  audit:
+    retainLogsDays: 90
+    immutableLogs: true
+
+  # Réaction aux violations
+  # reportOnly : enregistre les findings sans bloquer
+  # warn       : lève des alertes Kubernetes Events + métriques
+  # enforce    : bloque ou rereoute le trafic non-conforme
+  enforcementMode: reportOnly
+```
+
+**Status** : `findingsCount` — nombre de violations détectées au dernier cycle.
+
+---
+
+### AIQualityGate
+
+**Rôle** : valide qu'un modèle candidat est sûr pour remplacer le modèle actuel d'une application. Combine des vérifications déterministes (golden dataset) et des observations opérationnelles (taux d'erreur, latence).
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: content-writer-gate
+  namespace: default
+spec:
+  target:
+    namespace: marketing
+    application: content-writer
+
+  # Modèle actuel (source)
+  sourceModel: gpt-france-mini
+
+  # Modèle candidat à valider
+  candidateModel: gpt-us-mini
+
+  # ConfigMap contenant le golden dataset (fichier prompts.yaml ou prompts.json)
+  goldenDatasetRef:
+    name: content-writer-prompts
+    namespace: marketing
+
+  # ConfigMap optionnel avec les résultats CI du golden run (requis pour schemaValid)
+  evidenceRef:
+    name: content-writer-evidence
+    namespace: marketing
+
+  period: monthly
+
+  requiredChecks:
+    # Le modèle candidat doit produire des réponses conformes au schéma attendu
+    schemaValid: true
+    # Le modèle ne doit pas refuser des prompts valides
+    noUnexpectedRefusal: true
+    # Pas de fuite de données sensibles
+    noSensitiveDataLeak: true
+    # Mots-clés obligatoires dans les réponses
+    requiredKeywords: [conformité, RGPD]
+    # Taux d'erreur HTTP max (%)
+    maxErrorRatePercent: 5
+    # Augmentation de latence max par rapport au modèle source (%)
+    maxLatencyIncreasePercent: 30
+
+  canary:
+    enabled: true
+    percent: 10
+    duration: 30m
+
+  rollback:
+    enabled: true
+    onErrorRatePercent: 10
+    onLatencyIncreasePercent: 50
+```
+
+**Status** : `phase` (Pending/Passed/Failed), `verdict` (candidate-safe/candidate-risk/insufficient-data), `failureMessages`, `sourceObservation`, `candidateObservation`.
+
+---
+
+### AIBreakEvenAnalysis
+
+**Rôle** : compare le coût réel d'une API managée avec le coût estimé d'un déploiement GPU auto-hébergé, et calcule la durée de retour sur investissement.
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBreakEvenAnalysis
+metadata:
+  name: finance-breakeven
+  namespace: default
+spec:
+  target:
+    namespace: finance
+    application: risk-assistant
+
+  # Modèle managé actuellement utilisé
+  currentModelRef: gpt-france-mini
+
+  # Option auto-hébergée à comparer
+  alternativeSelfHosted:
+    modelName: llama-3-70b
+    runtime: vllm           # vllm | tgi | ollama | sglang
+    gpuType: l40s
+    gpuCount: 2
+    monthlyGpuCostEUR: "2400"
+    estimatedOpsCostEUR: "300"
+    storageNetworkCostEUR: "50"
+    migrationCostEUR: "5000"
+
+  # Fenêtre d'extrapolation (jours)
+  analysisWindowDays: 30
+```
+
+**Status** : `managedMonthlyCostEUR`, `selfHostedMonthlyCostEUR`, `monthlySavingsEUR`, `paybackMonths`, `recommendation` (keep-managed/investigate/self-host).
+
+---
+
+### AIRoutingPolicy
+
+**Rôle** : évalue en continu tous les couples application/modèle observés et identifie le meilleur modèle disponible selon un objectif (coût, qualité, latence). Peut créer des `AIChangeRequest` pour approbation humaine avant tout reroute.
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIRoutingPolicy
+metadata:
+  name: cost-optimizer
+  namespace: default
+spec:
+  # Dimension principale d'optimisation
+  # Valeurs : cost | quality | latency
+  objective: cost
+
+  guardrails:
+    # Score minimum du modèle candidat pour être sélectionné (0-1)
+    minQualityScore: 0.70
+    # Latence mesurée maximale acceptée (ms)
+    maxLatencyMillis: 3000
+    # Rejeter les modèles non-conformes à la souveraineté
+    requireSovereigntyCompliance: true
+
+  canary:
+    enabled: true
+    percent: 10
+```
+
+**Status** : `recommendations` liste les candidats évalués avec leur score, économies estimées, et raison de blocage éventuel.
+
+---
+
+### AIRouteOverride
+
+**Rôle** : reroute manuellement le trafic d'un modèle vers un autre dans l'Envoy AI Gateway. La suppression de la ressource **reverte automatiquement** la route originale.
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIRouteOverride
+metadata:
+  name: force-fr-backend
+  namespace: default
+spec:
+  # Modèle actuellement servi
+  sourceModel: gpt-us-mini
+  # Modèle vers lequel rerouter
+  targetModel: gpt-france-mini
+  reason: "Incident US — basculement vers FR pour conformité EU"
+```
+
+**Status** : `phase` (Pending/Actuated/Failed/Reverted), `actuatedRoutes` (routes Envoy modifiées).
+
+---
+
+### AIChangeRequest
+
+**Rôle** : représente un changement de routage proposé qui nécessite une **approbation humaine** avant exécution. L'opérateur génère ces objets automatiquement (via AIRoutingPolicy ou AIBudgetPolicy) ; un opérateur humain approuve ou rejette.
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIChangeRequest
+metadata:
+  name: switch-to-fr-mini
+  namespace: default
+spec:
+  action: reroute
+  sourceModel: gpt-us-mini
+  targetModel: gpt-france-mini
+  reason: "Économie de 0.42 EUR/mois + conformité EU"
+  expectedSavingEUR: "0.42"
+  qualityScore: "0.87"
+  latencyImpact: "+40ms"
+  riskLevel: low
+  expiresAfter: 48h
+
+  # Décision humaine : Pending (défaut) | Approved | Rejected
+  approval: Pending
+```
+
+**Workflow** :
+```
+Pending ──[humain approuve]──▶ Approved ──[opérateur actue]──▶ Actuated
+Pending ──[humain rejette]───▶ Rejected
+Pending ──[délai expiré]─────▶ Expired
+```
+
+**Status** : `phase`, `message`, `actuatedAt`, `expiresAt`, `actuatedRoutes`.
+
+---
+
+## Calcul des scores
+
+### Score de routage global
+
+Le score final est un agrégat pondéré de quatre composantes, toutes dans [0, 1] (plus haut = meilleur) :
+
+```
+Score = 0.40 × CostScore
+      + 0.30 × QualityScore
+      + 0.20 × LatencyScore
+      + 0.10 × ReliabilityScore
+```
+
+> **Règle de souveraineté (hard gate)** : si le fournisseur du modèle est dans une zone interdite par l'`AISovereigntyPolicy` active, le score est forcé à **0**, indépendamment des autres composantes. Ce modèle ne peut jamais être recommandé.
+
+Les poids par défaut peuvent être surchargés dans l'`AIRoutingPolicy`.
+
+---
+
+### CostScore — score de coût
+
+Normalisation inverse sur l'ensemble des modèles observés simultanément. Le modèle le moins cher obtient 1, le plus cher obtient 0.
+
+```
+CostPerRequest = (inputTokens × prixInput + outputTokens × prixOutput) / nbRequêtes
+
+CostScore = 1 − (CostPerRequest − min) / (max − min)
+```
+
+Si tous les modèles ont le même coût unitaire : CostScore = 1 pour tous.
+
+---
+
+### QualityScore — score de qualité
+
+Dérivé du champ `qualityTier` de l'`AIModel` :
+
+| `qualityTier` | QualityScore |
+|---------------|-------------|
+| `high`        | 1.00        |
+| `medium`      | 0.75        |
+| `low`         | 0.50        |
+| (absent)      | 0.60        |
+
+---
+
+### LatencyScore — score de latence
+
+Normalisation inverse sur la latence moyenne mesurée (en ms), lorsque la télémétrie est disponible :
+
+```
+LatencyScore = 1 − (latenceMoyenne − min) / (max − min)
+```
+
+Si la télémétrie de latence n'est pas disponible pour un modèle (ex: aucun header de timing dans les réponses), la composante latence prend la **valeur neutre** `0.5` et le champ `latencyTelemetryAvailable` est `false`. Le score n'est jamais fabriqué.
+
+---
+
+### ReliabilityScore — score de fiabilité
+
+Dérivé du taux d'erreur HTTP observé sur la fenêtre :
+
+```
+ReliabilityScore = 1 − (erreurs / requêtes)
+```
+
+0 erreur → 1.0 | 100% d'erreurs → 0.0
+
+---
+
+### SovereigntyScore — score de souveraineté
+
+Binaire, calculé à partir de la politique `AISovereigntyPolicy` active dans le namespace :
+
+```
+SovereigntyScore = 1  si AIProvider.dataResidency ∈ allowedZones
+                 = 0  si AIProvider.dataResidency ∈ forbiddenZones
+                        ou non présent dans allowedZones
+```
+
+Une zone vide dans `forbiddenZones` signifie "pas de zone explicitement interdite" — la logique s'appuie alors sur `allowedZones` seul.
+
+---
+
+## Métriques Prometheus
+
+L'opérateur expose les métriques suivantes sur le port `8080` (chemin `/metrics`) :
+
+### Scores par application/modèle
+
+| Métrique | Labels | Description |
+|----------|--------|-------------|
+| `ai_finops_routing_score` | namespace, application, model | Score global [0,1] |
+| `ai_finops_cost_score` | namespace, application, model | Composante coût [0,1] |
+| `ai_finops_quality_score` | namespace, application, model | Composante qualité [0,1] |
+| `ai_finops_latency_score` | namespace, application, model | Composante latence [0,1] |
+| `ai_finops_reliability_score` | namespace, application, model | Composante fiabilité [0,1] |
+| `ai_finops_sovereignty_score` | namespace, application, model | 1=conforme, 0=violation |
+
+> Les modèles sans trafic réel (catalogue uniquement) portent le label `application="catalog"`. Les modèles avec trafic réel portent le namespace et l'application de l'app consommatrice.
+
+### Coûts et volumes
+
+| Métrique | Labels | Description |
+|----------|--------|-------------|
+| `ai_finops_cost_eur` | namespace, application, model | Coût EUR observé |
+| `ai_finops_cost_by_zone_eur` | zone | Coût EUR agrégé par zone de résidence |
+| `ai_finops_input_tokens` | namespace, application, model | Tokens d'entrée |
+| `ai_finops_output_tokens` | namespace, application, model | Tokens de sortie |
+| `ai_finops_requests` | namespace, application, model | Nombre de requêtes |
+| `ai_finops_budget_usage_percent` | namespace, application | % du budget consommé |
+
+### Souveraineté
+
+| Métrique | Labels | Description |
+|----------|--------|-------------|
+| `ai_finops_sovereignty_findings` | namespace, application, severity | Violations détectées |
+| `ai_finops_sovereignty_requests` | namespace, application, zone | Requêtes par zone |
+| `ai_finops_shadow_ai_egress` | namespace | Trafic IA non-gouverné (eBPF) |
+
+---
+
+## Dashboard Grafana
+
+Le dashboard **AI FinOps Overview** (`dashboards/ai-finops-overview.json`) requiert le plugin [`ae3e-plotly-panel`](https://grafana.com/grafana/plugins/ae3e-plotly-panel/) pour le panneau radar. Construire une image Grafana avec le plugin pré-installé :
+
+```dockerfile
+# Dockerfile.grafana
+FROM grafana/grafana:11.2.2
+RUN grafana-cli plugins install ae3e-plotly-panel
+```
+
+**Panneaux principaux** :
+
+| Panneau | Description |
+|---------|-------------|
+| Routing Score par app | Score global de routage par application (time series) |
+| Radar multi-dimensionnel | Comparaison visuelle des modèles sur les 5 axes (spider chart) |
+| Coûts par namespace/zone | Répartition des dépenses par zone de résidence |
+| Budget par application | % de consommation budgétaire avec seuils |
+| Findings de souveraineté | Violations par namespace et sévérité |
+| Quality Gate | Résultats des AIQualityGate (Passed/Failed/Pending) |
+| Break-even analysis | Comparaison managé vs auto-hébergé |
+| Latence observée | Latence moyenne par modèle |
