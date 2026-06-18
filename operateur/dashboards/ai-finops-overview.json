@@ -28,7 +28,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR) — observed",
+      "title": "Total cost (EUR) \u2014 observed",
       "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
       "gridPos": {
@@ -343,7 +343,7 @@
     {
       "type": "table",
       "title": "Enforcement actions (sovereignty)",
-      "description": "Ce que l'opérateur DÉCIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (modèle interdit -> backend conforme, RÉÉCRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqué de bout en bout : warn/report toujours, et reroute désormais ACTUÉ dans le plan de données (slice 2). Source: ai_finops_enforcement_actions.",
+      "description": "Ce que l'op\u00e9rateur D\u00c9CIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (mod\u00e8le interdit -> backend conforme, R\u00c9\u00c9CRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqu\u00e9 de bout en bout : warn/report toujours, et reroute d\u00e9sormais ACTU\u00c9 dans le plan de donn\u00e9es (slice 2). Source: ai_finops_enforcement_actions.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -445,335 +445,8 @@
       }
     },
     {
-      "type": "table",
-      "title": "Shadow-AI egress details",
-      "description": "Direct LLM egress detected outside the gateway. This is the operational panel: who bypassed the gateway, which provider/zone was hit, and how many connections were observed.",
-      "datasource": "${datasource}",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 30
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
-      },
-      "pluginVersion": "11.2.2",
-      "targets": [
-        {
-          "datasource": null,
-          "expr": "ai_finops_shadow_ai_egress",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "instance": true,
-              "job": true
-            },
-            "renameByName": {
-              "namespace": "Namespace",
-              "application": "Application",
-              "provider": "Provider",
-              "zone": "Zone",
-              "severity": "Severity",
-              "Value": "Connections"
-            },
-            "indexByName": {
-              "namespace": 0,
-              "application": 1,
-              "provider": 2,
-              "zone": 3,
-              "severity": 4,
-              "Value": 5
-            }
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Severity"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "critical": {
-                        "color": "red",
-                        "index": 0
-                      },
-                      "warning": {
-                        "color": "orange",
-                        "index": 1
-                      },
-                      "info": {
-                        "color": "blue",
-                        "index": 2
-                      }
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Connections"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "short"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "bargauge",
-      "title": "Shadow-AI hotspots by workload",
-      "description": "Most actionable Shadow-AI view: which workload bypasses the gateway, in which zone, and with how many direct connections.",
-      "datasource": "${datasource}",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 30
-      },
-      "options": {
-        "displayMode": "basic",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": false,
-        "text": {},
-        "valueMode": "color"
-      },
-      "pluginVersion": "11.2.2",
-      "targets": [
-        {
-          "datasource": null,
-          "expr": "sum by (namespace, application, zone) (ai_finops_shadow_ai_egress)",
-          "legendFormat": "{{namespace}} / {{application}} → {{zone}}",
-          "refId": "A",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 5
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "table",
-      "title": "Observed latency telemetry",
-      "description": "Observed latency is shown only when the operator scraped real gateway duration telemetry. The telemetry-available series makes missing measurements explicit. Quality/routing scores are intentionally left to the future score/star panels.",
-      "datasource": "${datasource}",
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 38
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
-      },
-      "pluginVersion": "11.2.2",
-      "targets": [
-        {
-          "datasource": null,
-          "expr": "ai_finops_measured_latency_millis or ai_finops_latency_telemetry_available",
-          "format": "table",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "instance": true,
-              "job": true
-            },
-            "renameByName": {
-              "__name__": "Metric",
-              "namespace": "Namespace",
-              "application": "Application",
-              "model": "Model",
-              "telemetry_available": "Telemetry available",
-              "source": "Source",
-              "Value": "Value (ms)"
-            },
-            "indexByName": {
-              "__name__": 0,
-              "namespace": 1,
-              "application": 2,
-              "model": 3,
-              "telemetry_available": 4,
-              "source": 5,
-              "Value (ms)": 6
-            }
-          }
-        },
-        {
-          "id": "sortBy",
-          "options": {
-            "fields": "",
-            "sort": [
-              {
-                "field": "Namespace",
-                "desc": false
-              },
-              {
-                "field": "Application",
-                "desc": false
-              },
-              {
-                "field": "Metric",
-                "desc": false
-              }
-            ]
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value (ms)"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 3
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-background",
-                  "mode": "gradient"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "continuous-GrYlRd"
-                }
-              },
-              {
-                "id": "unit",
-                "value": "ms"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Telemetry available"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "true": {
-                        "color": "green",
-                        "index": 0
-                      },
-                      "false": {
-                        "color": "red",
-                        "index": 1
-                      }
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       "type": "row",
-      "title": "Routing Score & Souveraineté",
+      "title": "Routing Score & Souverainet\u00e9",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -784,8 +457,8 @@
     },
     {
       "type": "table",
-      "title": "Score de routage par application / modèle",
-      "description": "Score composite [0–1] : 40% coût + 30% qualité + 20% latence + 10% fiabilité. Score = 0 si le modèle viole la politique de souveraineté active.",
+      "title": "Score de routage par application / mod\u00e8le",
+      "description": "Score composite [0\u20131] : 40% co\u00fbt + 30% qualit\u00e9 + 20% latence + 10% fiabilit\u00e9. Score = 0 si le mod\u00e8le viole la politique de souverainet\u00e9 active.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 10,
@@ -819,7 +492,7 @@
             "renameByName": {
               "namespace": "Namespace",
               "application": "Application",
-              "model": "Modèle",
+              "model": "Mod\u00e8le",
               "latency_telemetry": "Latence dispo",
               "Value": "Score final [0-1]"
             },
@@ -895,8 +568,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Évolution du score de routage dans le temps",
-      "description": "Suivi temporel du score composite par application/modèle. Un score tombant à 0 indique une violation de souveraineté détectée.",
+      "title": "\u00c9volution du score de routage dans le temps",
+      "description": "Suivi temporel du score composite par application/mod\u00e8le. Un score tombant \u00e0 0 indique une violation de souverainet\u00e9 d\u00e9tect\u00e9e.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 10,
@@ -918,7 +591,7 @@
         {
           "datasource": null,
           "expr": "ai_finops_routing_score",
-          "legendFormat": "{{namespace}}/{{application}} — {{model}}",
+          "legendFormat": "{{namespace}}/{{application}} \u2014 {{model}}",
           "refId": "A"
         }
       ],
@@ -959,14 +632,14 @@
         "x": 0,
         "y": 68
       },
-      "title": "Radar — Comparaison multi-dimensionnelle des modèles",
+      "title": "Radar \u2014 Comparaison multi-dimensionnelle des mod\u00e8les",
       "type": "row"
     },
     {
       "type": "ae3e-plotly-panel",
       "id": 50,
-      "title": "Radar — Score par dimension pour chaque modèle",
-      "description": "Chaque polygone = un modèle. Les 5 axes = Coût · Qualité · Latence · Fiabilité · Souveraineté (0 = mauvais, 1 = parfait). Un grand polygone = un bon modèle.",
+      "title": "Radar \u2014 Score par dimension pour chaque mod\u00e8le",
+      "description": "Chaque polygone = un mod\u00e8le. Les 5 axes = Co\u00fbt \u00b7 Qualit\u00e9 \u00b7 Latence \u00b7 Fiabilit\u00e9 \u00b7 Souverainet\u00e9 (0 = mauvais, 1 = parfait). Un grand polygone = un bon mod\u00e8le.",
       "gridPos": {
         "h": 16,
         "w": 14,
@@ -974,7 +647,7 @@
         "y": 69
       },
       "options": {
-        "script": "\nvar dims = {cost: 0, quality: 1, latency: 2, reliability: 3, sovereignty: 4};\nvar theta = ['Coût', 'Qualité', 'Latence', 'Fiabilité', 'Souveraineté', 'Coût'];\nvar models = {};\n\n(data.series || []).forEach(function(frame) {\n  var refId = (frame.refId || '').toLowerCase();\n  if (!dims.hasOwnProperty(refId)) return;\n  (frame.fields || []).forEach(function(field) {\n    if (field.type !== 'number') return;\n    var labels = field.labels || {};\n    var model = labels.model || labels.Model || 'unknown';\n    if (!models[model]) models[model] = {cost:0, quality:0, latency:0, reliability:0, sovereignty:0};\n    var vals = field.values;\n    var v = (vals && vals.length > 0) ? vals[vals.length - 1] : (vals && vals.get ? vals.get(0) : 0);\n    models[model][refId] = v || 0;\n  });\n});\n\nvar traces = Object.keys(models).map(function(model, idx) {\n  var s = models[model];\n  var r = [s.cost, s.quality, s.latency, s.reliability, s.sovereignty, s.cost];\n  return {\n    type: 'scatterpolar',\n    r: r,\n    theta: theta,\n    fill: 'toself',\n    name: model,\n    opacity: 0.75\n  };\n});\n\nreturn {\n  data: traces,\n  layout: {\n    paper_bgcolor: 'transparent',\n    plot_bgcolor: 'transparent',\n    font: {color: '#d0d0d0', size: 13},\n    polar: {\n      bgcolor: 'rgba(30,30,40,0.5)',\n      radialaxis: {\n        visible: true,\n        range: [0, 1],\n        tickfont: {size: 10},\n        gridcolor: 'rgba(200,200,200,0.2)',\n        linecolor: 'rgba(200,200,200,0.3)'\n      },\n      angularaxis: {\n        gridcolor: 'rgba(200,200,200,0.2)',\n        linecolor: 'rgba(200,200,200,0.3)'\n      }\n    },\n    showlegend: true,\n    legend: {orientation: 'h', y: -0.15},\n    margin: {t: 30, b: 60, l: 40, r: 40}\n  },\n  config: {responsive: true}\n};\n",
+        "script": "\nvar dims = {cost: 0, quality: 1, latency: 2, reliability: 3, sovereignty: 4};\nvar theta = ['Co\u00fbt', 'Qualit\u00e9', 'Latence', 'Fiabilit\u00e9', 'Souverainet\u00e9', 'Co\u00fbt'];\nvar models = {};\n\n(data.series || []).forEach(function(frame) {\n  var refId = (frame.refId || '').toLowerCase();\n  if (!dims.hasOwnProperty(refId)) return;\n  (frame.fields || []).forEach(function(field) {\n    if (field.type !== 'number') return;\n    var labels = field.labels || {};\n    var model = labels.model || labels.Model || 'unknown';\n    if (!models[model]) models[model] = {cost:0, quality:0, latency:0, reliability:0, sovereignty:0};\n    var vals = field.values;\n    var v = (vals && vals.length > 0) ? vals[vals.length - 1] : (vals && vals.get ? vals.get(0) : 0);\n    models[model][refId] = v || 0;\n  });\n});\n\nvar traces = Object.keys(models).map(function(model, idx) {\n  var s = models[model];\n  var r = [s.cost, s.quality, s.latency, s.reliability, s.sovereignty, s.cost];\n  return {\n    type: 'scatterpolar',\n    r: r,\n    theta: theta,\n    fill: 'toself',\n    name: model,\n    opacity: 0.75\n  };\n});\n\nreturn {\n  data: traces,\n  layout: {\n    paper_bgcolor: 'transparent',\n    plot_bgcolor: 'transparent',\n    font: {color: '#d0d0d0', size: 13},\n    polar: {\n      bgcolor: 'rgba(30,30,40,0.5)',\n      radialaxis: {\n        visible: true,\n        range: [0, 1],\n        tickfont: {size: 10},\n        gridcolor: 'rgba(200,200,200,0.2)',\n        linecolor: 'rgba(200,200,200,0.3)'\n      },\n      angularaxis: {\n        gridcolor: 'rgba(200,200,200,0.2)',\n        linecolor: 'rgba(200,200,200,0.3)'\n      }\n    },\n    showlegend: true,\n    legend: {orientation: 'h', y: -0.15},\n    margin: {t: 30, b: 60, l: 40, r: 40}\n  },\n  config: {responsive: true}\n};\n",
         "onclick": "",
         "onrender": ""
       },
@@ -1034,6 +707,64 @@
           "refId": "sovereignty"
         }
       ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Shadow-AI \u2014 applications contournant le gateway",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "targets": [
+        {
+          "expr": "sum by (namespace, application) (ai_finops_shadow_ai_egress)",
+          "legendFormat": "{{namespace}}/{{application}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {},
+        "valueMode": "color"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short",
+          "displayName": ""
+        },
+        "overrides": []
+      }
     }
   ]
 }

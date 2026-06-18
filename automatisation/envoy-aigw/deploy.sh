@@ -26,6 +26,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AUTO="$(cd "${HERE}/.." && pwd)"
 REPO="$(cd "${AUTO}/.." && pwd)"
+OPERATOR="${REPO}/operateur"
 
 CLUSTER="${CLUSTER:-greenops}"
 CTX="${KCTX:-kind-${CLUSTER}}"
@@ -36,7 +37,7 @@ RESET_CLUSTER="${RESET_CLUSTER:-false}"
 # matches this repo (and thus the dashboard's metric names) — never a hardcoded,
 # drifting tag again. Override OPERATOR_IMG to pin a specific image.
 CHART_APPVER="$(sed -nE 's/^appVersion:[[:space:]]*"?([0-9][0-9.]*)"?.*/\1/p' \
-  "${REPO}/charts/ai-sovereign-finops-operator/Chart.yaml" | head -1)"
+  "${OPERATOR}/charts/ai-sovereign-finops-operator/Chart.yaml" | head -1)"
 OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:${CHART_APPVER:-dev}}"
 # BUILD_OPERATOR=true (default) builds the image from the current source and loads
 # it into kind — the most reliable path (no GHCR pull, always matches this repo's
@@ -180,12 +181,12 @@ verify_cleanup() {
 
 load_foundry_key() {
   local path
-  for path in "${REPO}/docs/foundrykey.txt" "${REPO}/docs/mistralkey.txt"; do
+  for path in "${OPERATOR}/docs/foundrykey.txt" "${OPERATOR}/docs/mistralkey.txt"; do
     [ -f "${path}" ] || continue
     tr -d '\r\n' < "${path}"
     return 0
   done
-  echo "missing docs/foundrykey.txt (preferred) or docs/mistralkey.txt" >&2
+  echo "missing operateur/docs/foundrykey.txt (preferred) or operateur/docs/mistralkey.txt" >&2
   return 1
 }
 
@@ -299,7 +300,7 @@ ensure_operator_image() {
   # then finds it without any registry access). Build from source by default so the
   # operator always matches this repo's metrics/dashboard.
   if [ "${BUILD_OPERATOR}" = "true" ]; then
-    DOCKER_CONFIG="${HOME}/.docker" docker build -t "${OPERATOR_IMG}" "${REPO}"
+    DOCKER_CONFIG="${HOME}/.docker" docker build -t "${OPERATOR_IMG}" "${OPERATOR}"
   elif ! docker image inspect "${OPERATOR_IMG}" >/dev/null 2>&1; then
     DOCKER_CONFIG="${HOME}/.docker" docker pull "${OPERATOR_IMG}" \
       || { echo "cannot pull ${OPERATOR_IMG}; 'docker login ghcr.io' or set BUILD_OPERATOR=true" >&2; exit 1; }
@@ -311,8 +312,8 @@ ensure_operator() {
   step "2/6 operator (Helm, ${OPERATOR_IMG})"
   # Helm does not upgrade CRDs from charts/ on `upgrade`; apply them explicitly so
   # reusing an existing kind cluster still picks up new API fields.
-  ${K} apply -f "${REPO}/charts/ai-sovereign-finops-operator/crds" >/dev/null
-  helm --kube-context "${CTX}" upgrade --install greenops "${REPO}/charts/ai-sovereign-finops-operator" \
+  ${K} apply -f "${OPERATOR}/charts/ai-sovereign-finops-operator/crds" >/dev/null
+  helm --kube-context "${CTX}" upgrade --install greenops "${OPERATOR}/charts/ai-sovereign-finops-operator" \
     --namespace "${NS_OP}" --create-namespace \
     --set image.repository="${OPERATOR_IMG%:*}" --set image.tag="${OPERATOR_IMG##*:}" \
     --set image.pullPolicy=IfNotPresent
@@ -326,7 +327,7 @@ cleanup_legacy_aiops_state() {
     return 0
   fi
 
-  ${K} delete -k "${REPO}/config/samples" --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -k "${OPERATOR}/config/samples" --ignore-not-found >/dev/null 2>&1 || true
   ${K} delete -f "${AUTO}/demo/demo-extra.yaml" --ignore-not-found >/dev/null 2>&1 || true
   ${K} -n default delete \
     aigatewayroute.aigateway.envoyproxy.io/greenops-openai \
@@ -384,7 +385,7 @@ deploy_mistral_eu() {
   fi
   if [ "${MISTRAL_READY}" != "true" ]; then
     echo "Mistral Foundry not preflight-ready — skipping the optional EU app."
-    echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > docs/foundrykey.txt"
+    echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > operateur/docs/foundrykey.txt"
     return 0
   fi
   local mkey
@@ -404,10 +405,26 @@ wait_consumer_apps() {
   fi
 }
 
+build_grafana_image() {
+  # Build the custom Grafana image with ae3e-plotly-panel pre-installed (radar chart).
+  # Required because Kind pods have no internet access on startup.
+  local img="grafana-radar:11.2.2"
+  local dockerfile="${AUTO}/demo/Dockerfile.grafana"
+  if docker image inspect "${img}" >/dev/null 2>&1; then
+    echo "Grafana radar image ${img} already built — skipping."
+  else
+    step "Building Grafana image with ae3e-plotly-panel (radar)"
+    DOCKER_BUILDKIT=0 docker build -t "${img}" -f "${dockerfile}" "$(dirname "${dockerfile}")"
+  fi
+  echo "Loading ${img} into kind cluster '${CLUSTER}'..."
+  kind load docker-image "${img}" --name "${CLUSTER}"
+}
+
 deploy_observability() {
-  step "5/5 Prometheus + Grafana (dashboard)"
+  step "5/5 Prometheus + Grafana (dashboard + radar)"
+  build_grafana_image
   ${K} -n "${NS_OP}" create configmap demo-grafana-dashboard \
-    --from-file=ai-finops-overview.json="${REPO}/dashboards/ai-finops-overview.json" \
+    --from-file=ai-finops-overview.json="${OPERATOR}/dashboards/ai-finops-overview.json" \
     --dry-run=client -o yaml | ${K} apply -f - >/dev/null
   ${K} label cm demo-grafana-dashboard -n "${NS_OP}" aiops.imperium.io/demo=true --overwrite >/dev/null
   apply_file "${AUTO}/demo/observability.yaml"

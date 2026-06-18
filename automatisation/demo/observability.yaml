@@ -96,13 +96,16 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: grafana/grafana:11.2.2
+          # Custom image with ae3e-plotly-panel pre-installed (radar chart).
+          # Built and loaded into kind by deploy.sh — see Dockerfile.grafana.
+          image: grafana-radar:11.2.2
+          imagePullPolicy: Never
           env:
             # Anonymous admin so the demo opens straight to the dashboard.
             - { name: GF_AUTH_ANONYMOUS_ENABLED, value: "true" }
             - { name: GF_AUTH_ANONYMOUS_ORG_ROLE, value: "Admin" }
             - { name: GF_SECURITY_ADMIN_PASSWORD, value: "admin" }
-            - { name: GF_USERS_DEFAULT_THEME, value: "light" }
+            - { name: GF_USERS_DEFAULT_THEME, value: "dark" }
           ports: [{ containerPort: 3000 }]
           resources:
             requests: { cpu: 50m, memory: 128Mi }
@@ -121,7 +124,7 @@ spec:
             name: demo-grafana-provisioning
             items: [{ key: dashboards.yaml, path: dashboards.yaml }]
         - name: dashboards
-          configMap: { name: demo-grafana-dashboard }   # created by demo.sh from dashboards/ai-finops-overview.json
+          configMap: { name: demo-grafana-dashboard }   # created by demo.sh from operateur/dashboards/ai-finops-overview.json
 ---
 apiVersion: v1
 kind: Service
