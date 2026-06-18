@@ -14,7 +14,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../.." && pwd)"
 NS="greenops-system"
 CTX="${KCTX:-kind-greenops}"
-IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.8"
+IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.3.9"
 K="kubectl --context ${CTX}"
 
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }

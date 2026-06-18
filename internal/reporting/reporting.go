@@ -118,7 +118,7 @@ func Assumptions() []string {
 		"Costs use each model's AIProvider price per million tokens (the demo uses real published list prices, EUR = USD x 0.92); models without an AIProvider are reported as unpriced.",
 		"Mixed currencies are not converted; the dominant currency is reported as-is.",
 		"This report supports audit preparation; it is not a legal compliance attestation.",
-		"The MVP is reportOnly and never blocks or modifies gateway traffic.",
+		"Gateway traffic is modified only when a policy explicitly uses enforcementMode=enforce; reportOnly remains observational.",
 		"Latency scores use observed telemetry when available; if no real latency is observed, latencyTelemetryAvailable is false and the latency component is neutral.",
 	}
 }

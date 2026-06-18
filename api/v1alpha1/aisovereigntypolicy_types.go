@@ -56,9 +56,9 @@ type AuditRule struct {
 
 // EnforcementMode controls how the sovereignty engine reacts to violations.
 // reportOnly records findings only; warn raises differentiated alerts (Kubernetes
-// Events + enforcement metric) without blocking; enforce additionally decides to
-// block or reroute non-compliant traffic to a compliant model (the decision is
-// produced and surfaced now; gateway-level actuation lands in a later slice).
+// Events + enforcement metric) without blocking; enforce additionally blocks or
+// reroutes non-compliant traffic at the Envoy AI Gateway when the route can be
+// mutated safely.
 // +kubebuilder:validation:Enum=reportOnly;warn;enforce
 type EnforcementMode string
 
@@ -113,8 +113,7 @@ type AISovereigntyPolicyStatus struct {
 //+kubebuilder:printcolumn:name="Findings",type=integer,JSONPath=`.status.findingsCount`
 //+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// AISovereigntyPolicy defines data-residency and sovereignty rules. In the MVP
-// it produces findings only (reportOnly) and never blocks traffic.
+// AISovereigntyPolicy defines data-residency and sovereignty rules.
 type AISovereigntyPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -161,9 +161,9 @@ var (
 	// EnforcementActions is the enforcement decision taken for a policy violation,
 	// by policy, namespace, application, mode (reportOnly/warn/enforce), action
 	// (report/warn/block/reroute) and whether it was actually actuated end-to-end
-	// (warn/report are; block/reroute await the gateway integration). It turns the
-	// operator from an observer into a control plane: a dashboard/alert can see what
-	// the operator decided to do about each non-compliant workload.
+	// (warn/report are immediate; block/reroute reflect gateway mutation success).
+	// This turns the operator from an observer into a control plane: a dashboard or
+	// alert can see what the operator decided to do about each non-compliant workload.
 	EnforcementActions = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_enforcement_actions",
 		Help: "Enforcement decisions by policy, namespace, application, mode, action and actuated.",

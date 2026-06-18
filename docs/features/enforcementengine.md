@@ -34,17 +34,18 @@ func DecideSovereignty(mode string, violations []Violation, fallbackModel string
 | `reportOnly` | `report` | `true` | Le constat est enregistré, rien d'autre. |
 | `warn` | `warn` | `true` | Alerte levée (Event + métrique) ; le trafic n'est pas touché. |
 | `enforce` (+ fallback conforme) | `reroute` | `true`* | Reroute **réellement actué** vers le modèle conforme **le moins cher** (`fallbackModel`). |
-| `enforce` (sans fallback) | `block` | `false` | Blocage du trafic vers la zone interdite (actuation gateway à venir). |
+| `enforce` (sans fallback) | `block` | `true`* | Blocage **réellement actué** en pointant la règle vers le backend réservé absent `aiops-blocked`. |
 
 \* `Actuated` passe à `true` **uniquement** quand l'actuation gateway a réussi (route patchée).
 
-## Actuation dans le plan de données (slice 2) — `gatewayactuator`
-En mode `enforce`, le controller appelle `actuateReroutes` qui **mute réellement** l'`AIGatewayRoute`
+## Actuation dans le plan de données — `gatewayactuator`
+En mode `enforce`, le controller appelle l'actuateur qui **mute réellement** l'`AIGatewayRoute`
 d'Envoy AI Gateway (client *unstructured*, aucune dépendance Go sur l'API Envoy AI Gateway) :
-- la règle qui matche `x-ai-eg-model: <modèle interdit>` voit son `backendRefs[0].name` basculé vers le
-  **backend conforme** (celui qui sert le modèle cible) ;
-- un `bodyMutation.set` réécrit le champ `model` du corps de requête vers le modèle conforme — le
-  fournisseur interdit n'est **jamais** atteint et la requête **aboutit** côté conforme.
+- `reroute` : la règle qui matche `x-ai-eg-model: <modèle interdit>` voit son `backendRefs[0].name`
+  basculé vers le **backend conforme** (celui qui sert le modèle cible), et un `bodyMutation.set`
+  réécrit le champ `model` du corps de requête vers le modèle conforme ;
+- `block` : quand aucun modèle conforme n'existe, la règle est pointée vers le backend réservé absent
+  `aiops-blocked`, ce qui empêche la résolution de backend et bloque l'appel au fournisseur interdit.
 
 **Réversible** : le backend d'origine par modèle est stocké dans l'annotation
 `aiops.imperium.io/enforced-reroutes` de la route. Le revert est automatique au retour en

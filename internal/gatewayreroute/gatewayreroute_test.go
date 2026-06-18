@@ -139,6 +139,71 @@ func TestApply_UnknownTargetBackendSkipped(t *testing.T) {
 	}
 }
 
+func TestApplyControls_Block(t *testing.T) {
+	rules := []any{rule("gpt-4o", "openai-backend")}
+	saved := map[string]string{}
+
+	res := ApplyControls(rules, saved, nil, map[string]bool{"gpt-4o": true}, nil)
+	if !res.Changed {
+		t.Fatal("expected changed=true")
+	}
+	if !res.Blocked["gpt-4o"] {
+		t.Fatalf("expected gpt-4o blocked, got %+v", res)
+	}
+	if len(res.Rerouted) != 0 {
+		t.Fatalf("expected no reroute actuation, got %+v", res.Rerouted)
+	}
+	r0 := rules[0].(map[string]any)
+	if got := backendOf(t, r0); got != BlockBackendName {
+		t.Fatalf("blocked backend = %q, want %s", got, BlockBackendName)
+	}
+	if hasBodyMutation(r0) {
+		t.Fatal("block must remove any bodyMutation")
+	}
+	if saved["gpt-4o"] != "openai-backend" {
+		t.Fatalf("saved original = %q, want openai-backend", saved["gpt-4o"])
+	}
+}
+
+func TestApplyControls_RevertBlock(t *testing.T) {
+	rules := []any{rule("gpt-4o", "openai-backend")}
+	saved := map[string]string{}
+
+	ApplyControls(rules, saved, nil, map[string]bool{"gpt-4o": true}, nil)
+	res := ApplyControls(rules, saved, nil, nil, nil)
+	if !res.Changed {
+		t.Fatal("expected changed=true on block revert")
+	}
+	if got := backendOf(t, rules[0].(map[string]any)); got != "openai-backend" {
+		t.Fatalf("reverted backend = %q, want openai-backend", got)
+	}
+	if _, ok := saved["gpt-4o"]; ok {
+		t.Fatal("expected saved entry cleared after block revert")
+	}
+}
+
+func TestApplyControls_SwitchRerouteToBlock(t *testing.T) {
+	rules := []any{rule("gpt-4o", "openai-backend")}
+	saved := map[string]string{}
+	backends := map[string]string{"gpt-4o": "openai-backend", "mistral-large": "mistral-backend"}
+
+	ApplyControls(rules, saved, map[string]string{"gpt-4o": "mistral-large"}, nil, backends)
+	res := ApplyControls(rules, saved, nil, map[string]bool{"gpt-4o": true}, backends)
+	if !res.Blocked["gpt-4o"] {
+		t.Fatalf("expected block after reroute, got %+v", res)
+	}
+	r0 := rules[0].(map[string]any)
+	if got := backendOf(t, r0); got != BlockBackendName {
+		t.Fatalf("backend = %q, want %s", got, BlockBackendName)
+	}
+	if hasBodyMutation(r0) {
+		t.Fatal("expected bodyMutation removed when switching to block")
+	}
+	if saved["gpt-4o"] != "openai-backend" {
+		t.Fatalf("saved original corrupted: %q", saved["gpt-4o"])
+	}
+}
+
 func TestApply_Idempotent(t *testing.T) {
 	rules := []any{rule("gpt-4o", "openai-backend")}
 	saved := map[string]string{}

@@ -29,9 +29,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: |-
-          AISovereigntyPolicy defines data-residency and sovereignty rules. In the MVP
-          it produces findings only (reportOnly) and never blocks traffic.
+        description: AISovereigntyPolicy defines data-residency and sovereignty rules.
         properties:
           apiVersion:
             description: |-

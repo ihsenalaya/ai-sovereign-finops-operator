@@ -28,8 +28,8 @@ dashboards/             Grafana
 
 ## Décisions clés
 
-- **Enforcement = plan de contrôle (slices 1 & 2)** : selon `AISovereigntyPolicy.enforcementMode`,
-  l'opérateur **agit** — `reportOnly` (constat), `warn` (alerte : Events + métrique), `enforce` (reroute
+- **Enforcement = plan de contrôle** : selon `AISovereigntyPolicy.enforcementMode`, l'opérateur **agit**
+  — `reportOnly` (constat), `warn` (alerte : Events + métrique), `enforce` (reroute ou block
   **réellement actué** dans Envoy AI Gateway via mutation réversible de l'`AIGatewayRoute` —
   `internal/controller/gatewayactuator.go`, client unstructured). Décision dans le moteur pur
   `enforcementengine` ; actuation + revert (annotation, finalizer) dans le controller.

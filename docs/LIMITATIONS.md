@@ -1,15 +1,13 @@
 # Limites & hypothèses du MVP
 
 ## Périmètre assumé
-- **Enforcement (slices 1 & 2) : décision, notification ET actuation réelle du reroute.** Selon
+- **Enforcement : décision, notification ET actuation réelle dans Envoy AI Gateway.** Selon
   `AISovereigntyPolicy.enforcementMode`, l'opérateur **agit** : `reportOnly` (constat seul), `warn`
   (alerte différenciée — Events Kubernetes + métrique `ai_finops_enforcement_actions`, sans blocage),
-  `enforce` (**reroute réellement** le trafic du modèle non conforme vers le backend conforme dans le
-  plan de données **Envoy AI Gateway** — mutation réversible de l'`AIGatewayRoute` : backend + réécriture
-  du `model` ; `actuated=true`). Revert automatique au retour en `reportOnly`/`warn` ou à la suppression
-  (finalizer). **Limites actuelles** : l'action `block` (modèle interdit *sans* fallback conforme) reste
-  décidée mais non actuée ; le reroute est **par modèle** (pas par namespace/app — le routage gateway
-  matche sur `x-ai-eg-model`).
+  `enforce` (**reroute réellement** le trafic du modèle non conforme vers le backend conforme quand il
+  existe, sinon **bloque réellement** la règle via le backend réservé absent `aiops-blocked`). Revert
+  automatique au retour en `reportOnly`/`warn` ou à la suppression (finalizer). **Limite actuelle** : le
+  contrôle reste **par modèle** (pas par namespace/app — le routage gateway matche sur `x-ai-eg-model`).
 - **Enforcement budget** : le fallback managé est réellement actué depuis `AIBudgetPolicy`, mais avec
   un périmètre volontairement prudent : uniquement vers un `AIProvider.managed=true`, uniquement si le
   fallback est réellement moins cher sur le mix de tokens observé, uniquement sur des modèles **non

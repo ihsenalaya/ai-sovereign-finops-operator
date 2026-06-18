@@ -16,8 +16,8 @@ limitations under the License.
 
 // Package sovereigntyengine evaluates which providers are in use against a
 // sovereignty policy (allowed/forbidden zones, sensitive-data rules) and emits
-// findings. It is pure (no Kubernetes dependency) and never blocks traffic — the
-// MVP is reportOnly and produces an audit-ready trail, not a legal guarantee.
+// findings. It is pure (no Kubernetes dependency) and never mutates traffic
+// itself; controllers turn its findings into report/warn/enforce actions.
 package sovereigntyengine
 
 import (

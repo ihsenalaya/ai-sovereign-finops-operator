@@ -17,12 +17,12 @@ limitations under the License.
 // Package enforcementengine turns a policy's enforcement mode and the observed
 // violations into concrete enforcement Decisions. It is pure (no Kubernetes
 // dependency) and is the single place that decides WHAT should happen for a
-// violation; controllers then carry the decision out (emit events/metrics now;
-// actuate at the gateway in a later slice).
+// violation; controllers then carry the decision out and replace Actuated with
+// the real data-plane outcome.
 //
 // Modes (sovereignty): reportOnly (record only), warn (raise an alert — fully
-// actuated today), enforce (block, or reroute to a compliant model — the decision
-// is produced now and marked not-yet-actuated until the gateway integration lands).
+// actuated immediately), enforce (block, or reroute to a compliant model through
+// the gateway actuator).
 package enforcementengine
 
 import "fmt"
@@ -47,10 +47,10 @@ type Violation struct {
 	Requests                                      int64
 }
 
-// Decision is the enforcement action chosen for a single violation. Actuated is
-// true when the operator can fully carry the action out today (report, warn);
-// false for actions that need the gateway integration (block, reroute), so the
-// status/metric can be honest about what is and isn't yet enforced end-to-end.
+// Decision is the enforcement action chosen for a single violation. The pure
+// engine marks report/warn as actuated immediately and leaves gateway-dependent
+// actions false; the controller flips block/reroute to true only after the route
+// mutation succeeds.
 type Decision struct {
 	Mode        string
 	Action      Action
@@ -93,14 +93,14 @@ func DecideSovereignty(mode string, violations []Violation, fallbackModel string
 			if fallbackModel != "" {
 				d.Action = ActionReroute
 				d.RerouteTo = fallbackModel
-				d.Message = fmt.Sprintf("enforce: %s/%s — reroute %q to compliant %q (gateway actuation pending)",
+				d.Message = fmt.Sprintf("enforce: %s/%s — reroute %q to compliant %q",
 					v.Namespace, v.Application, v.Model, fallbackModel)
 			} else {
 				d.Action = ActionBlock
-				d.Message = fmt.Sprintf("enforce: %s/%s — block traffic to forbidden zone %s, no compliant fallback (gateway actuation pending)",
+				d.Message = fmt.Sprintf("enforce: %s/%s — block traffic to forbidden zone %s, no compliant fallback",
 					v.Namespace, v.Application, v.Zone)
 			}
-			d.Actuated = false // carried out at the gateway in the next slice
+			d.Actuated = false // controller sets true only after the gateway route is mutated
 		default: // reportOnly (or unknown) — never blocks
 			d.Action = ActionReport
 			d.Actuated = true

@@ -77,7 +77,7 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 	if !policy.DeletionTimestamp.IsZero() {
 		if controllerutil.ContainsFinalizer(&policy, sovereigntyFinalizer) {
 			if _, err := actuateReroutes(ctx, r.Client, policy.Namespace, nil); err != nil {
-				logger.Error(err, "reverting gateway reroutes on delete")
+				logger.Error(err, "reverting gateway enforcement controls on delete")
 			}
 			enforcementMetrics.forget(policy.UID)
 			shadowMetrics.forget(policy.UID)
@@ -160,27 +160,35 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 	decisions := enforcementengine.DecideSovereignty(mode, violations, fallback)
 
-	// Actuate reroute decisions at the gateway. In enforce mode, reroute each
-	// forbidden model to its compliant target; in any other mode `desired` is empty,
-	// so actuateReroutes reverts any reroute this policy previously applied.
-	desired := map[string]string{}
+	// Actuate enforcement decisions at the gateway. In enforce mode, reroute each
+	// forbidden model to its compliant target when available; otherwise block its
+	// model route. In any other mode both desired sets are empty, so the actuator
+	// reverts any route mutation this policy previously applied.
+	desiredReroutes := map[string]string{}
+	desiredBlocks := map[string]bool{}
 	if mode == enforcementengine.ModeEnforce {
 		for _, d := range decisions {
 			if d.Action == enforcementengine.ActionReroute && d.RerouteTo != "" {
-				desired[d.Model] = d.RerouteTo
+				desiredReroutes[d.Model] = d.RerouteTo
+			}
+			if d.Action == enforcementengine.ActionBlock {
+				desiredBlocks[d.Model] = true
 			}
 		}
 	}
-	gwActuated, err := actuateReroutes(ctx, r.Client, policy.Namespace, desired)
+	gwActuated, err := actuateSovereigntyControls(ctx, r.Client, policy.Namespace, desiredReroutes, desiredBlocks)
 	if err != nil {
-		logger.Error(err, "gateway reroute actuation failed")
+		logger.Error(err, "gateway enforcement actuation failed")
 	}
 
 	var enfSeries [][]string
 	for _, d := range decisions {
 		// A reroute is actuated only once the gateway route was actually patched.
 		if d.Action == enforcementengine.ActionReroute {
-			d.Actuated = gwActuated[d.Model]
+			d.Actuated = gwActuated.rerouted[d.Model]
+		}
+		if d.Action == enforcementengine.ActionBlock {
+			d.Actuated = gwActuated.blocked[d.Model]
 		}
 		actuated := "false"
 		msg := d.Message
@@ -189,6 +197,10 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 			if d.Action == enforcementengine.ActionReroute {
 				msg = fmt.Sprintf("enforce: %s/%s — rerouted %q to compliant %q at the Envoy AI Gateway",
 					d.Namespace, d.Application, d.Model, d.RerouteTo)
+			}
+			if d.Action == enforcementengine.ActionBlock {
+				msg = fmt.Sprintf("enforce: %s/%s — blocked model %q at the Envoy AI Gateway (no compliant fallback)",
+					d.Namespace, d.Application, d.Model)
 			}
 		}
 		metrics.EnforcementActions.WithLabelValues(policy.Name, d.Namespace, d.Application, d.Mode, string(d.Action), actuated).Set(1)

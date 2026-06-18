@@ -52,6 +52,7 @@ Statut : ✅ fait · 🛠️ en cours · ⬜ à venir
 
 ## Sprint 8 — Enforcement slice 2 : actuation Envoy AI Gateway ✅
 - [x] `gatewayactuator` : reroute réversible du modèle interdit vers le backend conforme (mutation de l'`AIGatewayRoute` via client unstructured : backend + `bodyMutation.set model`)
+- [x] `block` réversible quand aucun fallback conforme n'existe : la règle pointe vers le backend réservé absent `aiops-blocked`
 - [x] Revert automatique (annotation `aiops.imperium.io/enforced-reroutes`) au changement de mode et à la suppression (finalizer)
 - [x] RBAC `aigateway.envoyproxy.io/aigatewayroutes` ; `actuated=true` reflète l'état réel de la route
 - [x] Validé en réel sur kind (la route gpt-4o bascule vers le backend Mistral EU, puis revert)

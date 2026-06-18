@@ -24,7 +24,7 @@ Sur chaque réconciliation, les findings **critiques** (zone interdite) sont tra
 |------|--------|-------|
 | `reportOnly` | `report` | Constat seul, aucune action (défaut). |
 | `warn` | `warn` | **Alerte différenciée** : Event Kubernetes `Warning`/`Enforcement` + série `ai_finops_enforcement_actions{action="warn",actuated="true"}`. Ne bloque pas. |
-| `enforce` | `reroute` ou `block` | **Reroute réellement actué** dans Envoy AI Gateway : la route du modèle interdit bascule vers le backend conforme (+ réécriture du `model`), `actuated="true"`, réversible (annotation + finalizer). Sans fallback conforme : `block` (décidé, actuation à venir). |
+| `enforce` | `reroute` ou `block` | **Actuation réelle** dans Envoy AI Gateway : reroute vers le backend conforme (+ réécriture du `model`) quand un fallback existe, sinon blocage via le backend réservé absent `aiops-blocked`. `actuated="true"` uniquement si la route est patchée, réversible (annotation + finalizer). |
 
 ## Status
 `observedGeneration`, `findingsCount`, `conditions[]` (`Ready`, dont le message résume la posture

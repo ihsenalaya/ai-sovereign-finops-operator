@@ -27,17 +27,16 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/gatewayreroute"
 )
 
-// This is enforcement slice 2: the operator actuates sovereignty decisions in the
-// real Envoy AI Gateway data plane. An AIGatewayRoute routes by the request's
-// `x-ai-eg-model` header to an AIServiceBackend. To enforce "forbidden zone", we
-// reroute a forbidden model's rule to the compliant backend AND rewrite the request
-// body `model` field to the compliant model (bodyMutation.set) — so the forbidden
-// provider is never reached and the request still succeeds on the compliant one.
+// The operator actuates sovereignty decisions in the real Envoy AI Gateway data
+// plane. An AIGatewayRoute routes by the request's `x-ai-eg-model` header to an
+// AIServiceBackend. To enforce "forbidden zone", we either reroute a forbidden
+// model's rule to a compliant backend and rewrite the request body `model` field,
+// or block the rule by pointing it to the reserved absent backend `aiops-blocked`.
 //
-// The change is fully reversible: the original backend name per model is stored on
-// the route in an annotation, and reverted when the policy leaves enforce mode (or
-// is deleted). We use the unstructured client so the operator needs no compile-time
-// dependency on the Envoy AI Gateway Go API.
+// The change is fully reversible: the original backend name per model is stored
+// on the route in an annotation, and reverted when the policy leaves enforce mode
+// or is deleted. We use the unstructured client so the operator needs no
+// compile-time dependency on the Envoy AI Gateway Go API.
 
 const sovereigntyRerouteAnnotation = "aiops.imperium.io/enforced-reroutes"
 
@@ -56,7 +55,8 @@ func listAIGatewayRoutes(ctx context.Context, c client.Client, namespace string)
 
 // modelBackends maps each routed model name to the backend currently serving it,
 // across all AIGatewayRoutes in the namespace. Reroute targets resolve their
-// backend through this index (the compliant model's real backend).
+// backend through this index (the compliant model's real backend). The reserved
+// block backend is ignored so it can never become a reroute target.
 func modelBackends(ctx context.Context, c client.Client, namespace string) (map[string]string, error) {
 	routes, err := listAIGatewayRoutes(ctx, c, namespace)
 	if err != nil {
@@ -82,7 +82,7 @@ func modelBackends(ctx context.Context, c client.Client, namespace string) (map[
 				// Ignore a backend that is itself a stored-original reroute target; we
 				// want the genuine serving backend, which modelBackends sees for the
 				// target model's own (untouched) rule.
-				if name, _, _ := unstructured.NestedString(b0, "name"); name != "" {
+				if name, _, _ := unstructured.NestedString(b0, "name"); name != "" && name != gatewayreroute.BlockBackendName {
 					if _, exists := out[model]; !exists {
 						out[model] = name
 					}
@@ -93,21 +93,27 @@ func modelBackends(ctx context.Context, c client.Client, namespace string) (map[
 	return out, nil
 }
 
-// actuateReroutes makes the gateway route each forbidden model in `desired`
-// (forbiddenModel -> compliant targetModel) to the target's backend, rewriting the
-// request body `model` to the target. Models previously rerouted but absent from
-// `desired` are reverted to their original backend. Passing an empty/nil `desired`
-// reverts everything. Returns the set of models actually actuated at the gateway.
-func actuateReroutesWithAnnotation(ctx context.Context, c client.Client, namespace string, desired map[string]string, annotationKey string) (map[string]bool, error) {
+type routeActuationResult struct {
+	rerouted map[string]bool
+	blocked  map[string]bool
+}
+
+// actuateRouteControls makes the gateway apply each forbidden model control:
+// reroute forbiddenModel -> compliant targetModel when a target exists, or block
+// the model by pointing it at gatewayreroute.BlockBackendName when no compliant
+// target exists. Models absent from both desired sets are reverted to their
+// original backend. Passing empty/nil desired sets reverts everything tracked by
+// annotationKey. Returns the models actually actuated at the gateway.
+func actuateRouteControlsWithAnnotation(ctx context.Context, c client.Client, namespace string, reroutes map[string]string, blocked map[string]bool, annotationKey string) (routeActuationResult, error) {
 	mb, err := modelBackends(ctx, c, namespace)
 	if err != nil {
-		return nil, err
+		return routeActuationResult{}, err
 	}
 	routes, err := listAIGatewayRoutes(ctx, c, namespace)
 	if err != nil {
-		return nil, err
+		return routeActuationResult{}, err
 	}
-	actuated := map[string]bool{}
+	out := routeActuationResult{rerouted: map[string]bool{}, blocked: map[string]bool{}}
 	for i := range routes.Items {
 		route := &routes.Items[i]
 		ann := route.GetAnnotations()
@@ -121,11 +127,14 @@ func actuateReroutesWithAnnotation(ctx context.Context, c client.Client, namespa
 		rules, _, _ := unstructured.NestedSlice(route.Object, "spec", "rules")
 		// The actual rule mutation lives in the pure, unit-tested gatewayreroute
 		// package; here we only handle I/O (read annotation, persist the route).
-		routeActuated, changed := gatewayreroute.Apply(rules, saved, desired, mb)
-		for m := range routeActuated {
-			actuated[m] = true
+		routeActuated := gatewayreroute.ApplyControls(rules, saved, reroutes, blocked, mb)
+		for m := range routeActuated.Rerouted {
+			out.rerouted[m] = true
 		}
-		if !changed {
+		for m := range routeActuated.Blocked {
+			out.blocked[m] = true
+		}
+		if !routeActuated.Changed {
 			continue
 		}
 		_ = unstructured.SetNestedSlice(route.Object, rules, "spec", "rules")
@@ -137,10 +146,21 @@ func actuateReroutesWithAnnotation(ctx context.Context, c client.Client, namespa
 		}
 		route.SetAnnotations(ann)
 		if err := c.Update(ctx, route); err != nil {
-			return actuated, err
+			return out, err
 		}
 	}
-	return actuated, nil
+	return out, nil
+}
+
+// actuateReroutesWithAnnotation preserves the reroute-only API used by budget
+// fallback actuation.
+func actuateReroutesWithAnnotation(ctx context.Context, c client.Client, namespace string, desired map[string]string, annotationKey string) (map[string]bool, error) {
+	res, err := actuateRouteControlsWithAnnotation(ctx, c, namespace, desired, nil, annotationKey)
+	return res.rerouted, err
+}
+
+func actuateSovereigntyControls(ctx context.Context, c client.Client, namespace string, reroutes map[string]string, blocked map[string]bool) (routeActuationResult, error) {
+	return actuateRouteControlsWithAnnotation(ctx, c, namespace, reroutes, blocked, sovereigntyRerouteAnnotation)
 }
 
 func actuateReroutes(ctx context.Context, c client.Client, namespace string, desired map[string]string) (map[string]bool, error) {

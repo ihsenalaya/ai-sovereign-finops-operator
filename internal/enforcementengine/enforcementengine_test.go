@@ -48,7 +48,7 @@ func TestEnforceReroutesWhenFallbackExists(t *testing.T) {
 		t.Errorf("reroute target = %q, want mistral-large", d[0].RerouteTo)
 	}
 	if d[0].Actuated {
-		t.Error("reroute must be marked not-yet-actuated (gateway integration pending)")
+		t.Error("pure engine must leave reroute unactuated until the controller mutates the gateway")
 	}
 }
 
@@ -58,7 +58,7 @@ func TestEnforceBlocksWithoutFallback(t *testing.T) {
 		t.Fatalf("enforce without fallback action = %s, want block", d[0].Action)
 	}
 	if d[0].Actuated {
-		t.Error("block must be marked not-yet-actuated (gateway integration pending)")
+		t.Error("pure engine must leave block unactuated until the controller mutates the gateway")
 	}
 }
 

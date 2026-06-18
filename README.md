@@ -28,9 +28,9 @@ réconciliées en continu**.
 > un dossier de préparation à l'audit** (RGPD, AI Act, politiques internes). L'`enforcementMode` d'une
 > `AISovereigntyPolicy` pilote la réaction : `reportOnly` (constat seul), `warn` (alerte différenciée —
 > Events Kubernetes + métrique `ai_finops_enforcement_actions`, sans blocage), `enforce` (**agit
-> réellement** : reroute le trafic du modèle non conforme vers le backend conforme **dans le plan de
-> données Envoy AI Gateway** — mutation réversible de l'`AIGatewayRoute` : backend conforme + réécriture
-> du champ `model`). C'est un vrai **plan de contrôle**, pas un simple observateur.
+> réellement** dans le plan de données Envoy AI Gateway : reroute vers un backend conforme quand il existe,
+> sinon blocage via le backend réservé absent `aiops-blocked`). C'est un vrai **plan de contrôle**, pas un
+> simple observateur.
 
 ---
 
@@ -83,9 +83,10 @@ Six moteurs purs (testés unitairement, sans dépendance K8s) pilotés par les c
   (il reroute uniquement vers le modèle conforme le moins cher).
 - **Enforcement engine** — transforme les constats critiques en **décisions d'enforcement** selon
   l'`enforcementMode` (`report` / `warn` / `reroute` / `block`), portées par des Events Kubernetes et la
-  métrique `ai_finops_enforcement_actions`. En mode `enforce`, l'opérateur **actue réellement** le reroute
-  dans **Envoy AI Gateway** (mutation réversible de l'`AIGatewayRoute` : bascule vers le backend conforme
-  + réécriture du `model` via `bodyMutation`). C'est le passage d'**observateur** à **plan de contrôle**.
+  métrique `ai_finops_enforcement_actions`. En mode `enforce`, l'opérateur **actue réellement** dans
+  **Envoy AI Gateway** : reroute vers un backend conforme quand il existe, sinon blocage par backend
+  réservé absent (`aiops-blocked`). Les mutations de l'`AIGatewayRoute` sont réversibles. C'est le
+  passage d'**observateur** à **plan de contrôle**.
 
 Transverse :
 
@@ -298,11 +299,11 @@ MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image dépl
 
 **Enforcement livré (slices 1, 2 et budget fallback managé)** : l'opérateur **agit** selon l'`enforcementMode`
 — Events Kubernetes différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les
-violations US et les reroutes budgétaires. En mode `enforce`, le reroute est **actué dans le plan de
-données** Envoy AI Gateway (mutation réversible de l'`AIGatewayRoute` : backend conforme ou fallback budgétaire
-+ réécriture du `model`), `actuated=true`. Le revert est automatique au retour en `reportOnly`/`warn` ou à la
-suppression de la policy (finalizer). Reste : action `block` au gateway (sans fallback conforme), budget
-reroute plus fin qu'au niveau modèle partagé, durcissement télémétrie (latence/erreurs, reset compteurs).
+violations US et les reroutes budgétaires. En mode `enforce`, le contrôle est **actué dans le plan de
+données** Envoy AI Gateway : reroute vers backend conforme/fallback budgétaire avec réécriture du `model`,
+ou blocage via `aiops-blocked` quand aucun fallback conforme n'existe. Le revert est automatique au retour
+en `reportOnly`/`warn` ou à la suppression de la policy (finalizer). Reste : budget reroute plus fin qu'au
+niveau modèle partagé, durcissement télémétrie (latence/erreurs, reset compteurs).
 
 Détails : [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) · toute la
 doc : [`docs/README.md`](docs/README.md).
