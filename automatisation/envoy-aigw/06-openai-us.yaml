@@ -1,0 +1,198 @@
+# Third provider — OpenAI US (api.openai.com, gpt-4o), routed through the same
+# Envoy AI Gateway. Goal: demonstrate non-sovereign US traffic vs the EU-sovereign
+# Mistral provider and the GLOBAL Cohere provider. The sovereignty engine flags
+# this app with a HIGH-severity violation (dataResidency=us is in the forbiddenZones
+# list of regulated-france-policy). The app key is held in a Secret — NOT in this
+# file — created from operateur/docs/openaikey.txt at deploy time.
+#
+# API endpoint:  https://api.openai.com
+# Model:         gpt-4o
+# Auth:          Bearer <sk-proj-...> (standard OpenAI API key)
+---
+# Route gpt-4o (by model header) to the OpenAI backend.
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: greenops-openai
+  namespace: default
+spec:
+  parentRefs:
+    - name: greenops-aigw
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: gpt-4o
+      backendRefs:
+        - name: greenops-openai
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: greenops-openai
+  namespace: default
+spec:
+  schema:
+    name: OpenAI
+  backendRef:
+    name: greenops-openai
+    kind: Backend
+    group: gateway.envoyproxy.io
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: BackendSecurityPolicy
+metadata:
+  name: greenops-openai-apikey
+  namespace: default
+spec:
+  targetRefs:
+    - group: aigateway.envoyproxy.io
+      kind: AIServiceBackend
+      name: greenops-openai
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: greenops-openai-apikey
+      namespace: default
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: greenops-openai
+  namespace: default
+spec:
+  endpoints:
+    - fqdn:
+        hostname: api.openai.com
+        port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha3
+kind: BackendTLSPolicy
+metadata:
+  name: greenops-openai-tls
+  namespace: default
+spec:
+  targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-openai
+  validation:
+    wellKnownCACertificates: "System"
+    hostname: api.openai.com
+---
+# Catalogue : fournisseur US (zone us) => VIOLATION de souveraineté contre
+# la politique regulated-france-policy (zones autorisées FR, EU uniquement).
+# allowedForSensitiveData=false => warning supplémentaire sur les données.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: openai-us
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: openai
+  region: us-east-1
+  dataResidency: us
+  managed: true
+  # OpenAI list pricing (USD) converted to EUR at ECB rate 2026-06-12 (1 USD = 0.8645 EUR).
+  # gpt-4o: USD 2.50 input / 10.00 output per 1M tokens.
+  pricing: { currency: EUR, inputTokenPricePerMillion: "2.16", outputTokenPricePerMillion: "8.65" }
+  compliance: { allowedForSensitiveData: false }
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: gpt-4o
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  providerRef: openai-us
+  modelName: gpt-4o
+  type: llm
+  qualityTier: high
+  costTier: high
+  sensitiveDataAllowed: false
+  servesNamespace: innovation
+  servesApplication: idea-generator
+  servesTeam: innovation
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: innovation
+  labels:
+    aiops.imperium.io/sidecar-injection: "true"
+---
+# REAL consumer app calling gpt-4o (OpenAI US) through the gateway.
+# Deliberately produces sovereignty violations — useful for the demo.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idea-generator
+  namespace: innovation
+  labels: { app: idea-generator, aiops.imperium.io/demo: "true" }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: idea-generator } }
+  template:
+    metadata:
+      labels: { app: idea-generator, aiops.imperium.io/demo: "true" }
+      annotations:
+        aiops.imperium.io/target-hosts: greenops-aigw.envoy-gateway-system.svc.cluster.local
+    spec:
+      containers:
+        - name: client
+          image: curlimages/curl:8.10.1
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
+          env:
+            - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
+            - { name: MODEL, value: "gpt-4o" }
+            - { name: APP, value: "idea-generator" }
+            - { name: SUCCESS_TARGET, value: "999" }
+            - { name: ATTEMPT_LIMIT, value: "5" }
+            - { name: ATTEMPT_SLEEP_SECONDS, value: "30" }
+            - { name: START_DELAY_SECONDS, value: "20" }
+            - name: NS
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              PROMPTS='Propose trois idees de produit innovant pour 2026.|Quels secteurs beneficieront le plus de l IA generative ?|Comment mesurer le ROI d un projet IA en entreprise ?'
+              sleep "${START_DELAY_SECONDS:-20}"
+              attempt=0
+              success=0
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-5}" ] && [ "$success" -lt "${SUCCESS_TARGET:-999}" ]; do
+                attempt=$((attempt + 1))
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
+                code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
+                  -H 'Content-Type: application/json' \
+                  -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":150}" \
+                  "$GATEWAY" || true)"
+                [ -n "$code" ] || code="000"
+                echo "$NS/$APP($MODEL): $code"
+                case "$code" in 2*) success=$((success + 1));; esac
+                [ "$success" -ge "${SUCCESS_TARGET:-999}" ] && break
+                sleep "${ATTEMPT_SLEEP_SECONDS:-30}"
+              done
+              echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
+              tail -f /dev/null
+---
+# innovation budget — tight cap; OpenAI gpt-4o is the most expensive model in the demo.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: innovation-budget
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: innovation, team: innovation, application: idea-generator }
+  period: monthly
+  budgetEUR: "0.10"
+  warningThresholdPercent: 60
+  criticalThresholdPercent: 85
+  hardLimitPercent: 100
+  actions: { onWarning: [alert], onCritical: [alert], onHardLimit: [blockOrRequireApproval] }

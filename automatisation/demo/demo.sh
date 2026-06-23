@@ -12,6 +12,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../.." && pwd)"
+OPERATOR="${REPO}/operateur"
 NS="greenops-system"
 CTX="${KCTX:-kind-greenops}"
 IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.4.0"
@@ -33,7 +34,7 @@ ensure_operator() {
   if ! ${K} -n "${NS}" get deploy greenops-ai-sovereign-finops-operator >/dev/null 2>&1; then
     bold "Operator not found — installing via Helm (image ${IMG})"
     if command -v helm >/dev/null; then
-      helm --kube-context "${CTX}" upgrade --install greenops "${REPO}/charts/ai-sovereign-finops-operator" \
+      helm --kube-context "${CTX}" upgrade --install greenops "${OPERATOR}/charts/ai-sovereign-finops-operator" \
         --namespace "${NS}" --create-namespace \
         --set image.repository="${IMG%:*}" --set image.tag="${IMG##*:}" --set image.pullPolicy=IfNotPresent
     else
@@ -45,7 +46,7 @@ ensure_operator() {
 
 seed_usage() {
   step "Real telemetry (live LLM calls -> measured tokens)"
-  local key_path="${OPENAI_KEY:-${REPO}/docs/openaikey.txt}"
+  local key_path="${OPENAI_KEY:-${OPERATOR}/docs/openaikey.txt}"
   local fbase="${FOUNDRY_BASE:-https://greenops-foundry.services.ai.azure.com/models}"
   local fdeploy="${FOUNDRY_DEPLOYMENT:-mistral-large-latest}"
   local fver="${FOUNDRY_API_VERSION:-2024-05-01-preview}"
@@ -63,7 +64,7 @@ seed_usage() {
   else
     warn "No Foundry key (az not logged in / resource absent) — seeding OpenAI flows only."
   fi
-  ( cd "${REPO}" && go run ./cmd/seed-usage "${args[@]}" )
+  ( cd "${OPERATOR}" && go run ./cmd/seed-usage "${args[@]}" )
   ${K} -n default create configmap greenops-usage \
     --from-file=usage.json=/tmp/greenops-usage.json --dry-run=client -o yaml | ${K} apply -f - >/dev/null
   ${K} label configmap greenops-usage -n default aiops.imperium.io/demo=true --overwrite >/dev/null
@@ -74,7 +75,7 @@ warn() { printf '\033[33mWARN:\033[0m %s\n' "$*" >&2; }
 
 apply_crs() {
   step "Applying CRs (catalogue + policies + reports)"
-  ${K} apply -k "${REPO}/config/samples/" >/dev/null
+  ${K} apply -k "${OPERATOR}/config/samples/" >/dev/null
   ${K} apply -f "${HERE}/demo-extra.yaml" >/dev/null
   # Nudge the report/policy/budget reconcilers so statuses are fresh.
   for kind_name in "aifinopsreport/monthly-ai-report-rh" "aifinopsreport/all-flows-report" \
@@ -89,7 +90,7 @@ deploy_observability() {
   step "Observability (Prometheus + Grafana)"
   # (Re)create the dashboard ConfigMap from the repo's dashboard so it stays in sync.
   ${K} -n "${NS}" create configmap demo-grafana-dashboard \
-    --from-file=ai-finops-overview.json="${REPO}/dashboards/ai-finops-overview.json" \
+    --from-file=ai-finops-overview.json="${OPERATOR}/dashboards/ai-finops-overview.json" \
     --dry-run=client -o yaml | ${K} apply -f - >/dev/null
   ${K} label configmap demo-grafana-dashboard -n "${NS}" aiops.imperium.io/demo=true --overwrite >/dev/null
   ${K} apply -f "${HERE}/observability.yaml" >/dev/null
@@ -138,8 +139,8 @@ tour() {
   bold "7) Observability — metrics + Grafana"
   echo "  Prometheus metrics: ai_finops_{cost_eur,requests,input/output_tokens,budget_usage_percent,"
   echo "                      sovereignty_findings{namespace,application,severity},breakeven_savings_eur,"
-  echo "                      recommendations,latency_score,routing_score}_*"
-  echo "  Grafana dashboard 'AI Sovereign FinOps — Overview' with cost, sovereignty, enforcement, shadow-AI and latency panels."
+  echo "                      recommendations,latency_score,routing_score,quality_score}_*"
+  echo "  Grafana dashboard 'AI Sovereign FinOps — Overview' with cost, sovereignty, enforcement, shadow-AI, latency and quality radar panels."
 }
 
 open_grafana() {

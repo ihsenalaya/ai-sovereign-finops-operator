@@ -2,7 +2,7 @@
 # greenops demo. Real apps call this gateway; Envoy AI Gateway translates the
 # OpenAI-format request to the Azure-compatible deployment path and emits real
 # token-usage metrics per request. The Foundry API key is NOT in this file — it
-# is created as a Secret from docs/foundrykey.txt (or docs/mistralkey.txt for
+# is created as a Secret from operateur/docs/foundrykey.txt (or operateur/docs/mistralkey.txt for
 # backward compatibility) at deploy time.
 #
 # Real path verified on 2026-06-12 against the live account:
@@ -60,6 +60,19 @@ spec:
       name: greenops-aigw
   connection:
     bufferLimit: 50Mi
+---
+# Stable data-plane Service used by consumer apps and quality evaluation Jobs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: greenops-aigw
+  namespace: envoy-gateway-system
+  labels: { app: greenops-aigw }
+spec:
+  selector:
+    gateway.envoyproxy.io/owning-gateway-name: greenops-aigw
+  ports:
+    - { name: http, port: 80, targetPort: 10080 }
 ---
 # Route the non-French live deployment by the model header.
 apiVersion: aigateway.envoyproxy.io/v1beta1

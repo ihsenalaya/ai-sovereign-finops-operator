@@ -96,7 +96,7 @@ spec:
     spec:
       containers:
         - name: grafana
-          # Custom image with ae3e-plotly-panel pre-installed (radar chart).
+          # Custom image with volkovlabs-echarts-panel pre-installed (radar chart).
           # Built and loaded into kind by deploy.sh — see Dockerfile.grafana.
           image: grafana-radar:11.2.2
           imagePullPolicy: Never

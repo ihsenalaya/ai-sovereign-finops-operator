@@ -101,7 +101,7 @@ L'opérateur ne modifie jamais les flux applicatifs directement. Il observe, cal
 | Helm | 3.12 | Déploiement de l'opérateur |
 | Envoy AI Gateway | 0.6.x | Source de télémétrie (`gen_ai_*`) |
 | Prometheus | 2.x | Collecte des métriques de l'opérateur |
-| Grafana | 11.x | Visualisation (plugin `ae3e-plotly-panel` requis pour le radar) |
+| Grafana | 11.x | Visualisation (plugin `volkovlabs-echarts-panel` requis pour le radar qualité) |
 
 **Droits RBAC requis** : l'opérateur a besoin de lire/écrire les CRDs `aiops.imperium.io/*`, lire les `AIGatewayRoute` d'Envoy, et lire les `ConfigMap`/`Secret` dans son namespace.
 
@@ -437,6 +437,11 @@ spec:
     name: content-writer-evidence
     namespace: marketing
 
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+    maxTokens: 120
+    timeoutSeconds: 60
+
   period: monthly
 
   requiredChecks:
@@ -464,7 +469,7 @@ spec:
     onLatencyIncreasePercent: 50
 ```
 
-**Status** : `phase` (Pending/Passed/Failed), `verdict` (candidate-safe/candidate-risk/insufficient-data), `failureMessages`, `sourceObservation`, `candidateObservation`.
+**Status** : `phase` (Pending/Passed/Failed), `verdict` (candidate-safe/candidate-risk/insufficient-data), `qualityScore`, `scoreBreakdown`, `evaluationJobPhase`, `failureMessages`, `sourceObservation`, `candidateObservation`.
 
 ---
 
@@ -628,16 +633,18 @@ Si tous les modèles ont le même coût unitaire : CostScore = 1 pour tous.
 
 ---
 
-### QualityScore — score de qualité
+### AI Quality Score — score qualité composite
 
-Dérivé du champ `qualityTier` de l'`AIModel` :
+Calcule un score auditable `0..100` pour un couple application/modèle à partir
+du golden dataset, de l'evidence de réponses et de la télémétrie réelle gateway :
 
-| `qualityTier` | QualityScore |
-|---------------|-------------|
-| `high`        | 1.00        |
-| `medium`      | 0.75        |
-| `low`         | 0.50        |
-| (absent)      | 0.60        |
+```
+Q = 0.40×Correctness + 0.20×Reliability + 0.15×Latency + 0.15×Semantic + 0.10×Judged
+```
+
+Les poids sont configurables dans `AIQualityGate.spec.weights`. Sans golden
+dataset suffisant ou sans télémétrie réelle, le verdict reste
+`insufficient-data` et l'opérateur n'invente pas de score.
 
 ---
 
@@ -689,7 +696,7 @@ L'opérateur expose les métriques suivantes sur le port `8080` (chemin `/metric
 |----------|--------|-------------|
 | `ai_finops_routing_score` | namespace, application, model | Score global [0,1] |
 | `ai_finops_cost_score` | namespace, application, model | Composante coût [0,1] |
-| `ai_finops_quality_score` | namespace, application, model | Composante qualité [0,1] |
+| `ai_finops_quality_score` | namespace, app, provider, model, dimension | Score qualité composite [0,100] ; `dimension=overall` pour le score agrégé |
 | `ai_finops_latency_score` | namespace, application, model | Composante latence [0,1] |
 | `ai_finops_reliability_score` | namespace, application, model | Composante fiabilité [0,1] |
 | `ai_finops_sovereignty_score` | namespace, application, model | 1=conforme, 0=violation |
@@ -917,6 +924,11 @@ spec:
   goldenDatasetRef:
     name: content-writer-prompts
     namespace: marketing
+  evidenceRef:
+    name: content-writer-evidence
+    namespace: marketing
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
   period: weekly
   requiredChecks:
     maxErrorRatePercent: 5
@@ -1249,12 +1261,12 @@ spec:
 
 ## Dashboard Grafana
 
-Le dashboard **AI FinOps Overview** (`dashboards/ai-finops-overview.json`) requiert le plugin [`ae3e-plotly-panel`](https://grafana.com/grafana/plugins/ae3e-plotly-panel/) pour le panneau radar. Construire une image Grafana avec le plugin pré-installé :
+Le dashboard **AI FinOps Overview** (`dashboards/ai-finops-overview.json`) requiert le plugin [`volkovlabs-echarts-panel`](https://grafana.com/grafana/plugins/volkovlabs-echarts-panel/) pour le panneau radar. Construire une image Grafana avec le plugin pré-installé :
 
 ```dockerfile
 # Dockerfile.grafana
 FROM grafana/grafana:11.2.2
-RUN grafana-cli plugins install ae3e-plotly-panel
+RUN grafana-cli plugins install volkovlabs-echarts-panel
 ```
 
 **Panneaux principaux** :
@@ -1287,20 +1299,23 @@ Causes fréquentes :
 
 ### Mistral / nouveau modèle n'apparaît pas dans le radar Grafana
 
-Le radar n'affiche que les modèles avec du trafic réel passant par l'Envoy AI Gateway. Vérifier :
+Le radar qualité n'affiche que les fournisseurs avec un `AIQualityGate` terminé
+et des métriques `ai_finops_quality_score`. Vérifier :
 
 ```bash
-# 1. Le modèle a-t-il du trafic dans le gateway ?
-curl -s http://<metrics-svc>:1064/metrics | grep gen_ai_client_token_usage | grep <model-name>
+# 1. Le job d'évaluation a-t-il terminé ?
+kubectl -n default get jobs -l aiops.imperium.io/quality-evaluator=true
 
 # 2. L'AIModel a-t-il un servesNamespace/Application ?
 kubectl get aimodel <nom> -o jsonpath='{.spec.servesNamespace} {.spec.servesApplication}'
 
 # 3. Le score est-il calculé ?
-curl -s http://localhost:8082/metrics | grep ai_finops_cost_score | grep <model-name>
+curl -s http://localhost:8082/metrics | grep ai_finops_quality_score | grep <model-name>
 ```
 
-Si le modèle n'a pas de trafic gateway, seuls `ai_finops_quality_score` et `ai_finops_sovereignty_score` sont émis (avec `application="catalog"`). Le radar affiche quand même le modèle avec les dimensions disponibles (les autres à 0).
+Si le modèle candidat est non conforme à `AISovereigntyPolicy`, le controller
+ne l'appelle pas et le gate reste `insufficient-data`. Le radar qualité n'affiche
+que les fournisseurs dont `ai_finops_quality_score{dimension="overall"}` existe.
 
 ### Les métriques Prometheus sont vides
 

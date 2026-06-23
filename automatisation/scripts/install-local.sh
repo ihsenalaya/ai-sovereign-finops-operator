@@ -12,10 +12,10 @@ require kubectl
 "${DIR}/02-build-load-image.sh"
 
 log "applying CRDs (upgrade-safe)..."
-kubectl apply -f "${REPO_ROOT}/charts/ai-sovereign-finops-operator/crds"
+kubectl apply -f "${OPERATOR_DIR}/charts/ai-sovereign-finops-operator/crds"
 
 log "installing the operator Helm chart..."
-helm upgrade --install greenops "${REPO_ROOT}/charts/ai-sovereign-finops-operator" \
+helm upgrade --install greenops "${OPERATOR_DIR}/charts/ai-sovereign-finops-operator" \
   -n greenops-system --create-namespace \
   --set image.repository="${IMAGE_REPO}" \
   --set image.tag="${IMAGE_TAG}" \
@@ -24,7 +24,7 @@ helm upgrade --install greenops "${REPO_ROOT}/charts/ai-sovereign-finops-operato
 kubectl -n greenops-system rollout status deploy/greenops-ai-sovereign-finops-operator --timeout=180s
 
 log "applying demo catalog & policies..."
-kubectl apply -k "${REPO_ROOT}/config/samples/"
+kubectl apply -k "${OPERATOR_DIR}/config/samples/"
 
 "${DIR}/06-install-shadow-ai.sh"
 

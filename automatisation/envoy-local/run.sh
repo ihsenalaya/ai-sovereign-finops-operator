@@ -4,7 +4,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../.." && pwd)"
-KEY="${KEY_PATH:-${REPO}/docs/openaikey.txt}"
+KEY="${KEY_PATH:-${REPO}/operateur/docs/openaikey.txt}"
 MODEL="${MODEL:-gpt-4o-mini}"
 CONC="${CONC:-8}"
 REQ="${REQ:-48}"

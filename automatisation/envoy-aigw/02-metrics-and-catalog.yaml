@@ -103,8 +103,8 @@ spec:
   target: { namespace: finance, team: finance, application: risk-assistant }
   period: monthly
   # Tight real cap so the live demo reaches Critical/Exceeded in a couple of
-  # minutes from real traffic. No fake fallback is configured: only one
-  # non-French live deployment exists in this Foundry account today.
+  # minutes from real traffic. No fake fallback is configured; sovereignty and
+  # QualityScore providers are validated through their real gateway routes.
   budgetEUR: "0.02"
   warningThresholdPercent: 70
   criticalThresholdPercent: 90

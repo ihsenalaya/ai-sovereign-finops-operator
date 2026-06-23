@@ -3,16 +3,18 @@
 Exemple end-to-end **100 % réel** : des applications déployées dans le cluster
 font des appels bornés à de vrais LLM **à travers Envoy AI Gateway** (projet CNCF).
 La gateway **mesure les vrais tokens et la durée des requêtes** ; l'opérateur les **lit** et calcule
-**coût, souveraineté, budget et score de latence par application**, exposés dans **Grafana**. Le scénario
+**coût, souveraineté, budget, score de latence et AI Quality Score par application**, exposés dans **Grafana**. Le scénario
 valide aussi le plan shadow-AI : un workload contourne la gateway et Tetragon
 alimente `shadow-egress` avec des événements réels.
 
 ```
- rh/finance/legal ──► Envoy AI Gateway ──► Azure Foundry Cohere (global)
- marketing ────────► Envoy AI Gateway ──► Azure Foundry Mistral (EU)
+ rh/legal ─────────► Envoy AI Gateway ──► Azure OpenAI France (FR)
+ finance ──────────► Envoy AI Gateway ──► Azure OpenAI US (US)
+ marketing ────────► Envoy AI Gateway ──► Azure Foundry Mistral Large (EU)
+ quality jobs ─────► Envoy AI Gateway ──► Azure Foundry Mistral Small (EU, optional third radar provider)
  finance/rogue ────► api.openai.com direct ──► Tetragon ──► shadow-egress
 
- Envoy gen_ai_* metrics ──► operator collector "aigw" ──► cost/sovereignty/budget/latency score
+ Envoy gen_ai_* metrics ──► operator collector "aigw" ──► cost/sovereignty/budget/latency/quality score
 ```
 
 ## Versions (IMPORTANT, testées)
@@ -42,9 +44,10 @@ make real-demo-down
 ```
 
 Prérequis : `kind`, `kubectl`, `helm`, Docker, et une clé Azure AI Foundry
-réellement utilisable dans `docs/foundrykey.txt` (ou `docs/mistralkey.txt` pour
+réellement utilisable dans `operateur/docs/foundrykey.txt` (ou `operateur/docs/mistralkey.txt` pour
 compatibilité). La présence d'une clé seule ne suffit pas : `deploy.sh` fait un
-**préflight Cohere et Mistral** avant de démarrer.
+**préflight Cohere, Mistral Large et Mistral Small** avant de démarrer quand
+`REQUIRE_THIRD_QUALITY_PROVIDER=true`.
 
 `verify` est le mode recommandé pour une preuve reproductible sans laisser
 d'app consommatrice tourner. Il borne les clients à environ une minute de trafic par app,
@@ -64,7 +67,17 @@ collecte les preuves, scale les apps à zéro, puis supprime le cluster kind.
   via le schéma `AzureOpenAI` + catalogue `mistral-eu`/`mistral-large` + 4ᵉ app
   `marketing/content-writer`. Sert à **vérifier la souveraineté zone-aware** (l'app EU
   ne produit aucune violation de zone, contrairement au provider global).
-  Prérequis : clé Foundry dans `docs/foundrykey.txt`.
+  Prérequis : clé Foundry dans `operateur/docs/foundrykey.txt`.
+- `05b-mistral-small-eu.yaml` — provider EU optionnel `mistral-small-eu` pour le
+  troisième polygone du radar QualityScore. `deploy.sh` ne l'applique qu'après
+  un préflight réel sur le déploiement Foundry `mistral-small-latest`.
+- `08-quality-gates.yaml` — golden datasets des 4 apps et `AIQualityGate` sans evidence préremplie ;
+  l'opérateur crée les Jobs `quality-eval-*`, appelle la gateway réelle, écrit `evidenceRef`, puis expose
+  `ai_finops_quality_score` pour le radar Grafana. Les Jobs n'appellent que les providers conformes à
+  `AISovereigntyPolicy` ; les providers US/GLOBAL restent visibles dans les findings de souveraineté mais
+  ne sont pas scorés par QualityScore. Quand `mistral-small-eu` existe réellement,
+  `deploy.sh` applique ces mêmes 4 gates en remplaçant le candidat marketing par
+  `mistral-small-latest`, ce qui garde 4 Jobs tout en alimentant 3 providers radar.
 - `deploy.sh` — installe et câble le tout (versions épinglées), avec mode `verify`.
 
 ## Comment l'opérateur lit les vrais tokens et la latence réelle
@@ -105,7 +118,7 @@ restreignent l'injection au host de la gateway via
 
 ## Ce que la démo vérifie en plus
 
-- **Souveraineté** : les apps Cohere global produisent des findings ; l'app Mistral EU reste dans la zone EU.
+- **Souveraineté** : `finance/risk-assistant` sur Azure OpenAI US produit des findings ; les providers FR/EU restent conformes.
 - **Budget** : les budgets sont calculés sur les tokens réels observés, sans forcer de faux dépassement.
 - **Shadow-AI** : `finance/shadow-ai-rogue` appelle `api.openai.com` directement sans clé; Tetragon capture l'egress réel.
 - **Honnêteté de la latence** : le score de latence vient de
@@ -122,7 +135,7 @@ il relie chaque critère de configuration à la signification de chaque chart.
 ## Grafana — dashboard « AI Sovereign FinOps — Overview »
 
 Ouvrir : `kubectl -n greenops-system port-forward svc/demo-grafana 3000:3000`
-→ http://localhost:3000 (admin anonyme). Source : `dashboards/ai-finops-overview.json`.
+→ http://localhost:3000 (admin anonyme). Source : `operateur/dashboards/ai-finops-overview.json`.
 Réconciliation opérateur toutes les **60 s** (dashboard vivant). Toutes les valeurs
 proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 
@@ -149,7 +162,7 @@ proviennent du **vrai trafic** des apps via Envoy AI Gateway.
 `ai_finops_projected_monthly_cost_eur`, `ai_finops_latency_score`,
 `ai_finops_measured_latency_millis`, `ai_finops_latency_telemetry_available`,
 `ai_finops_routing_score`. Détail dans
-[`docs/features/metrics.md`](../../docs/features/metrics.md).
+[`operateur/docs/features/metrics.md`](../../operateur/docs/features/metrics.md).
 
 > Note de véracité : les métriques `gen_ai_*` de la gateway sont **cumulatives**
 > depuis son démarrage → le coût **observé** est exact. La prévision mensuelle

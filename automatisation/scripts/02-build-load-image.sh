@@ -8,7 +8,7 @@ require kind
 
 if [ "${SKIP_BUILD:-false}" != "true" ]; then
   log "building image ${IMAGE_REPO}:${IMAGE_TAG}..."
-  DOCKER_BUILDKIT=0 docker build -t "${IMAGE_REPO}:${IMAGE_TAG}" "${REPO_ROOT}"
+  DOCKER_BUILDKIT=0 docker build -t "${IMAGE_REPO}:${IMAGE_TAG}" "${OPERATOR_DIR}"
 else
   log "skipping build for image ${IMAGE_REPO}:${IMAGE_TAG}..."
 fi

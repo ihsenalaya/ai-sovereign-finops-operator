@@ -16,11 +16,11 @@ client workloads -> Envoy AI Gateway -> {OpenAI, provider#2, self-hosted vLLM}
 ```
 
 ## How to bring it up
-- Operator + CRDs + RBAC: Helm chart in `../../charts/ai-sovereign-finops-operator` or the end-to-end
+- Operator + CRDs + RBAC: Helm chart in `../../operateur/charts/ai-sovereign-finops-operator` or the end-to-end
   GitOps flow in `../../automatisation` (kind + ArgoCD).
 - Envoy AI Gateway: install the Envoy Gateway + AI Gateway extension (CNCF), define an `AIGateway` CR
   pointing at it (`telemetry.mode: prometheus`).
-- Prometheus/Grafana: scrape the operator `/metrics`; import `../../dashboards/ai-finops-overview.json`.
+- Prometheus/Grafana: scrape the operator `/metrics`; import `../../operateur/dashboards/ai-finops-overview.json`.
 - Collect live metrics into the analysis with `../scripts/collect_metrics.sh`.
 
 ## Deferred (Azure phase)

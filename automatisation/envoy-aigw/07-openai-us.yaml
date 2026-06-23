@@ -1,0 +1,186 @@
+# Provider 4 — Azure OpenAI US East (greenops-us-ec0e82-06181356.openai.azure.com)
+# Deployment: gpt-us-mini (gpt-4.1-mini, Standard SKU = données traitées aux US)
+# Zone: US → VIOLATION de souveraineté contre regulated-france-policy
+# Apps: finance/risk-assistant
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: greenops-openai-us
+  namespace: default
+spec:
+  parentRefs:
+    - name: greenops-aigw
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: gpt-us-mini
+      backendRefs:
+        - name: greenops-openai-us
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: greenops-openai-us
+  namespace: default
+spec:
+  schema:
+    name: AzureOpenAI
+    version: "2024-05-01-preview"
+  backendRef:
+    name: greenops-openai-us
+    kind: Backend
+    group: gateway.envoyproxy.io
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: BackendSecurityPolicy
+metadata:
+  name: greenops-openai-us-apikey
+  namespace: default
+spec:
+  targetRefs:
+    - group: aigateway.envoyproxy.io
+      kind: AIServiceBackend
+      name: greenops-openai-us
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: greenops-openai-us-apikey
+      namespace: default
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: greenops-openai-us
+  namespace: default
+spec:
+  endpoints:
+    - fqdn:
+        hostname: greenops-us-ec0e82-06181356.openai.azure.com
+        port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha3
+kind: BackendTLSPolicy
+metadata:
+  name: greenops-openai-us-tls
+  namespace: default
+spec:
+  targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-openai-us
+  validation:
+    wellKnownCACertificates: "System"
+    hostname: greenops-us-ec0e82-06181356.openai.azure.com
+---
+# Catalogue : provider US (zone us) → VIOLATION critique de souveraineté.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: openai-us
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: azure-openai
+  region: eastus
+  dataResidency: us
+  managed: true
+  # gpt-4.1-mini Azure OpenAI Standard (USD 0.40/1.60 per 1M tokens → EUR ×0.92)
+  pricing: { currency: EUR, inputTokenPricePerMillion: "0.37", outputTokenPricePerMillion: "1.47" }
+  compliance: { allowedForSensitiveData: false }
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: gpt-us-mini
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  providerRef: openai-us
+  modelName: gpt-us-mini
+  type: llm
+  qualityTier: high
+  costTier: low
+  sensitiveDataAllowed: false
+  servesNamespace: finance
+  servesApplication: risk-assistant
+  servesTeam: finance
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finance
+  labels:
+    aiops.imperium.io/sidecar-injection: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-assistant
+  namespace: finance
+  labels: { app: risk-assistant, aiops.imperium.io/demo: "true" }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: risk-assistant } }
+  template:
+    metadata:
+      labels: { app: risk-assistant, aiops.imperium.io/demo: "true" }
+      annotations:
+        aiops.imperium.io/target-hosts: greenops-aigw.envoy-gateway-system.svc.cluster.local
+    spec:
+      containers:
+        - name: client
+          image: curlimages/curl:8.10.1
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
+          env:
+            - { name: GATEWAY, value: "http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions" }
+            - { name: MODEL, value: "gpt-us-mini" }
+            - { name: APP, value: "risk-assistant" }
+            - { name: SUCCESS_TARGET, value: "999" }
+            - { name: ATTEMPT_LIMIT, value: "5" }
+            - { name: ATTEMPT_SLEEP_SECONDS, value: "15" }
+            - { name: START_DELAY_SECONDS, value: "40" }
+            - name: NS
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              PROMPTS='Summarize key counterparty risks for a new supplier.|List three liquidity-risk indicators.|Explain value-at-risk in two sentences.'
+              sleep "${START_DELAY_SECONDS:-40}"
+              attempt=0; success=0
+              while [ "$attempt" -lt "${ATTEMPT_LIMIT:-5}" ] && [ "$success" -lt "${SUCCESS_TARGET:-999}" ]; do
+                attempt=$((attempt + 1))
+                P=$(echo "$PROMPTS" | tr '|' '\n' | sed -n "$(( (attempt % 3) + 1 ))p")
+                code="$(curl -s -m 60 -o /dev/null -w "%{http_code}" \
+                  -H 'Content-Type: application/json' \
+                  -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"$P\"}],\"max_tokens\":250}" \
+                  "$GATEWAY" || true)"
+                [ -n "$code" ] || code="000"
+                echo "$NS/$APP($MODEL): $code"
+                case "$code" in 2*) success=$((success + 1));; esac
+                [ "$success" -ge "${SUCCESS_TARGET:-999}" ] && break
+                sleep "${ATTEMPT_SLEEP_SECONDS:-15}"
+              done
+              echo "$NS/$APP($MODEL): successes=$success attempts=$attempt; idling"
+              tail -f /dev/null
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: finance-budget
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: finance, team: finance, application: risk-assistant }
+  period: monthly
+  budgetEUR: "0.02"
+  warningThresholdPercent: 70
+  criticalThresholdPercent: 90
+  hardLimitPercent: 100
+  actions: { onWarning: [alert], onCritical: [alert], onHardLimit: [blockOrRequireApproval] }
+  enforcementMode: reportOnly

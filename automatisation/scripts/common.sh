@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AUTOMATISATION_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${AUTOMATISATION_DIR}/.." && pwd)"
+OPERATOR_DIR="${REPO_ROOT}/operateur"
+export OPERATOR_DIR
 
 git_origin_url() {
   local url

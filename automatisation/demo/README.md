@@ -19,10 +19,10 @@ cd automatisation/demo
 
 `./demo.sh up` enchaîne :
 1. **Opérateur** — vérifie/installe le déploiement (Helm, image 0.4.0).
-2. **CRs** — applique `config/samples/` + `demo-extra.yaml` (catalogue, providers FR/US, policy de
+2. **CRs** — applique `operateur/config/samples/` + `demo-extra.yaml` (catalogue, providers FR/US, policy de
    souveraineté, budgets, break-even, rapports) et déclenche les réconciliations.
 3. **Observabilité** — déploie un **Prometheus** (scrape l'opérateur) + une **Grafana** légers, avec le
-   dashboard `dashboards/ai-finops-overview.json` auto-provisionné.
+   dashboard `operateur/dashboards/ai-finops-overview.json` auto-provisionné.
 4. **Tour guidé** — imprime, moteur par moteur, les résultats réels (voir ci-dessous).
 5. **Grafana** — port-forward sur `http://localhost:3000` (admin anonyme) et Prometheus sur `:9090`.
 
@@ -41,7 +41,7 @@ cd automatisation/demo
 | 4 | **Budget & dégradation gracieuse** | `rh-tight-budget` à **120 %** → phase `Exceeded` (vs `rh-budget` 12 % `WithinBudget`) |
 | 5 | **Break-even managé vs auto-hébergé** | `AIBreakEvenAnalysis.status` : recommandation + économie |
 | 6 | **Reporting** | ConfigMap `<report>-report` (clés `report.md` / `report.json`) |
-| 7 | **Observabilité** | métriques `ai_finops_*` dans Prometheus + dashboard Grafana, dont coût, souveraineté, enforcement, shadow-AI et score de latence |
+| 7 | **Observabilité** | métriques `ai_finops_*` dans Prometheus + dashboard Grafana, dont coût, souveraineté, enforcement, shadow-AI, score de latence et radar qualité |
 
 ## Dans Grafana
 Ouvrir `http://localhost:3000` → dashboard **« AI Sovereign FinOps — Overview »** :

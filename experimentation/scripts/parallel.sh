@@ -10,19 +10,19 @@
 #   scripts/parallel.sh                      # no args -> built-in demo job set
 set -uo pipefail
 
-# Run from the Go module root so `go ./...` paths resolve; keep logs under experimentation/results.
-MODULE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "${MODULE_ROOT}"
-OUTDIR="experimentation/results/parallel"
+# Run from the experimentation module root; operator checks jump into ../operateur.
+EXPERIMENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${EXPERIMENT_DIR}"
+OUTDIR="results/parallel"
 mkdir -p "${OUTDIR}"
 MAX_PAR="${MAX_PAR:-$( (nproc 2>/dev/null) || echo 4 )}"
 
 # Default demo set if no jobs given: two quick, independent jobs (proves the runner).
 if [ "$#" -eq 0 ]; then
   set -- \
-    "build::go build ./..." \
-    "router-tests::go test ./experimentation/internal/router/..." \
-    "engine-tests::go test ./internal/costengine/... ./internal/budgetengine/... ./internal/sovereigntyengine/... ./internal/breakevenengine/..."
+    "operator-build::cd ../operateur && go build ./..." \
+    "router-tests::go test ./internal/router/..." \
+    "engine-tests::cd ../operateur && go test ./internal/costengine/... ./internal/budgetengine/... ./internal/sovereigntyengine/... ./internal/breakevenengine/..."
 fi
 
 declare -a LABELS PIDS

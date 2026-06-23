@@ -40,7 +40,7 @@ manifests/           live-platform integration notes (Envoy + operator + Prometh
 ## Run it
 ```bash
 # 1) real experiments (RQ1-RQ6 + ablation); ~10-15 min, responses cached to results/cache.json
-scripts/run_experiment.sh            # uses ../docs/openaikey.txt, judge=gpt-4o
+scripts/run_experiment.sh            # uses ../operateur/docs/openaikey.txt, judge=gpt-4o
 
 # 2) analysis + figures + summary
 python3 scripts/analyze_results.py   # needs pandas matplotlib scipy tabulate
@@ -54,7 +54,7 @@ Delete it to force fresh calls.
 ## Testing standard
 Every test is journaled (status, **duration**, details) in `results/TEST_STATUS.md` +
 `results/journal.jsonl`. **No test is skipped**: any API error aborts the run, so results are never
-silently missing. Unit tests cover the router/engines (`go test ./experimentation/...`).
+silently missing. Unit tests cover the router/engines (`go test ./...` from `experimentation/`).
 
 ## Headline result
 Two-provider run (OpenAI US + **Mistral EU** via Azure AI Foundry, DataZone EU):
@@ -80,5 +80,5 @@ Two-provider run (OpenAI US + **Mistral EU** via Azure AI Foundry, DataZone EU):
 
 ## Plugging the real operator (later)
 The experiment already imports the operator's pure engines. For live, in-cluster runs, deploy the
-operator (`../charts`, `../automatisation`), route through Envoy, and feed the Prometheus
+operator (`../operateur/charts`, `../automatisation`), route through Envoy, and feed the Prometheus
 `ai_finops_*` metrics into `scripts/collect_metrics.sh`. See `manifests/README.md`.

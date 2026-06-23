@@ -43,7 +43,7 @@ case "${OPERATOR_IMAGE}" in
 esac
 
 log "installing AI Sovereign FinOps Operator (${OPERATOR_IMAGE}:${OPERATOR_TAG})..."
-helm upgrade --install greenops "${REPO_ROOT}/charts/ai-sovereign-finops-operator" \
+helm upgrade --install greenops "${OPERATOR_DIR}/charts/ai-sovereign-finops-operator" \
   -n greenops-system --create-namespace \
   --set image.repository="${OPERATOR_IMAGE}" \
   --set image.tag="${OPERATOR_TAG}" \

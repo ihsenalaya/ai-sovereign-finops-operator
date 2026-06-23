@@ -41,7 +41,7 @@ Independent work runs concurrently with `experimentation/scripts/parallel.sh` (b
 ```bash
 # Overlap local OpenAI experiments with the Azure GPU benchmark — no idle waiting:
 experimentation/scripts/parallel.sh \
-  "local-suite::cd experimentation && go run ./cmd/experiment -key ../docs/openaikey.txt" \
+  "local-suite::cd experimentation && go run ./cmd/experiment -key ../operateur/docs/openaikey.txt" \
   "gpu-bench::automatisation/azure/scripts/05-run-bench.sh"
 ```
 - GPU jobs are kept **sequential on one node** (cost/quota); CPU-side work (local experiments, load

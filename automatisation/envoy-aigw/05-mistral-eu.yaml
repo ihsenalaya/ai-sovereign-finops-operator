@@ -10,8 +10,9 @@
 #   Azure-OpenAI path /openai/deployments/<deploy>/chat/completions?api-version=…
 #   deployment:       mistral-large-latest  (model Mistral-Large-3, DataZoneStandard = EU)
 #   auth:             Authorization: Bearer <key>  (API key from Azure, in a Secret)
-# The key is NOT in this file — it is created as a Secret from docs/foundrykey.txt
-# (or docs/mistralkey.txt for backward compatibility) at deploy time.
+# The key is NOT in this file — it is created as a Secret from
+# operateur/docs/foundrykey.txt (or operateur/docs/mistralkey.txt for backward
+# compatibility) at deploy time.
 ---
 # Route mistral-large-latest (by the model header) to the Azure/Foundry backend.
 apiVersion: aigateway.envoyproxy.io/v1beta1

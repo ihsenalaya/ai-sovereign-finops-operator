@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Présentation AI Sovereign FinOps Operator — orientée 'une fonctionnalité = un problème'.
-Contenu strictement aligné sur README.md, docs/features/*, docs/LIMITATIONS.md."""
+Contenu strictement aligné sur operateur/README.md, operateur/docs/features/*,
+operateur/docs/LIMITATIONS.md."""
+
+from pathlib import Path
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -570,6 +573,6 @@ txt(s, Inches(0.9), Inches(6.1), Inches(11.6), Inches(0.5),
 txt(s, Inches(0.9), Inches(6.7), Inches(11.6), Inches(0.4),
     [[("Merci — questions ?", 16, True, GREEN)]])
 
-out = "/mnt/c/Users/IhsenAlaya/Documents/ihsen/kubebuilder/greenops/AI-Sovereign-FinOps-Presentation.pptx"
+out = Path(__file__).with_name("AI-Sovereign-FinOps-Presentation.pptx")
 prs.save(out)
 print("OK ->", out, "| slides:", len(prs.slides._sldIdLst))

@@ -17,7 +17,7 @@ TAIL="${TAIL:-2000}"                 # lines of export log to scan
 CM="shadow-egress"
 KCTX="${KCTX:-}"
 
-# Known LLM hostnames — keep in sync with internal/catalog/defaults.go knownHosts.
+# Known LLM hostnames — keep in sync with operateur/internal/catalog/defaults.go knownHosts.
 HOSTS="api.openai.com api.anthropic.com api.mistral.ai api.cohere.com api.cohere.ai api.groq.com generativelanguage.googleapis.com"
 
 K=(kubectl)

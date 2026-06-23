@@ -7,6 +7,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AZURE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${AZURE_DIR}/../.." && pwd)"
+OPERATOR_DIR="${REPO_ROOT}/operateur"
+export OPERATOR_DIR
 
 # --- Azure resources ---
 export RG="${RG:-greenops-rg}"
@@ -46,8 +48,8 @@ _subid="$(az account show --query id -o tsv 2>/dev/null | tr -d '-' || echo 0000
 export KEYVAULT="${KEYVAULT:-greenops-kv-${_subid:0:6}}"
 export KV_OPENAI_SECRET="${KV_OPENAI_SECRET:-openai-api-key}"
 export KV_HF_SECRET="${KV_HF_SECRET:-hf-token}"
-# Local source file (never printed/committed; docs/openaikey.txt is gitignored).
-export OPENAI_KEY_FILE="${OPENAI_KEY_FILE:-${REPO_ROOT}/docs/openaikey.txt}"
+# Local source file (never printed/committed; operateur/docs/openaikey.txt is gitignored).
+export OPENAI_KEY_FILE="${OPENAI_KEY_FILE:-${OPERATOR_DIR}/docs/openaikey.txt}"
 
 log()  { printf '\033[1;36m[azure]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[azure]\033[0m %s\n' "$*"; }

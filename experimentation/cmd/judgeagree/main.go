@@ -26,7 +26,7 @@ type cacheFile struct {
 }
 
 func main() {
-	keyPath := flag.String("key", "../docs/openaikey.txt", "OpenAI key file")
+	keyPath := flag.String("key", "../operateur/docs/openaikey.txt", "OpenAI key file")
 	cachePath := flag.String("cache", "results/cache.json", "answer cache to sample from")
 	datasetsDir := flag.String("datasets", "datasets", "datasets dir")
 	results := flag.String("results", "results", "results dir")

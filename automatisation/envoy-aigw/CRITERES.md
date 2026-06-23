@@ -69,7 +69,7 @@ sont les **tarifs publics OpenAI** convertis en EUR (USD × 0,92).
 > `mistral-eu` est en **zone EU** avec `allowedForSensitiveData: true` → **zéro violation**
 > (ni zone, ni données sensibles). Le provider Mistral est **Azure AI Foundry**
 > (`greenops-foundry`, francecentral, SKU DataZoneStandard), routé via le schéma
-> `AzureOpenAI` d'Envoy AI Gateway (clé Azure dans un Secret, depuis `docs/mistralkey.txt`).
+> `AzureOpenAI` d'Envoy AI Gateway (clé Azure dans un Secret, depuis `operateur/docs/mistralkey.txt`).
 
 ### 2.3 Politique de souveraineté (`AISovereigntyPolicy`)
 
@@ -160,7 +160,7 @@ Envoy AI Gateway expose `gen_ai_server_request_duration_seconds`.
 > `ai_finops_recommendations` (labels `type`/`namespace`/`application`/`severity`),
 > `ai_finops_measured_latency_millis`,
 > `ai_finops_latency_telemetry_available`, `ai_finops_routing_score`.
-> Détail : [`docs/features/metrics.md`](../../docs/features/metrics.md).
+> Détail : [`operateur/docs/features/metrics.md`](../../operateur/docs/features/metrics.md).
 
 ---
 
@@ -174,7 +174,7 @@ externe ». Critère discriminant : une app sur un provider **EU autorisé** ne 
 **Mistral (Azure AI Foundry, zone EU)** à travers la même gateway. Tout le reste est
 identique aux apps OpenAI (vrai trafic, mesure des tokens, attribution par namespace).
 
-**Pourquoi `marketing` est conforme** (cf. moteur, [`internal/sovereigntyengine`](../../internal/sovereigntyengine/sovereigntyengine.go)) :
+**Pourquoi `marketing` est conforme** (cf. moteur, [`operateur/internal/sovereigntyengine`](../../operateur/internal/sovereigntyengine/sovereigntyengine.go)) :
 
 | Règle du moteur | OpenAI US | Mistral EU |
 |-----------------|-----------|------------|

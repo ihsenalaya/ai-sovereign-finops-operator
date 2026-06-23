@@ -48,6 +48,8 @@ AIGW_VERSION="${AIGW_VERSION:-v0.7.0}"
 SKIP_PROVIDER_PREFLIGHT="${SKIP_PROVIDER_PREFLIGHT:-false}"
 REAL_DEMO_ISOLATE_GITOPS="${REAL_DEMO_ISOLATE_GITOPS:-true}"
 ENABLE_MISTRAL_DEMO="${ENABLE_MISTRAL_DEMO:-true}"
+ENABLE_MISTRAL_SMALL_PROVIDER="${ENABLE_MISTRAL_SMALL_PROVIDER:-true}"
+REQUIRE_THIRD_QUALITY_PROVIDER="${REQUIRE_THIRD_QUALITY_PROVIDER:-true}"
 ENABLE_TETRAGON="${ENABLE_TETRAGON:-true}"
 ENABLE_SHADOW_ROGUE="${ENABLE_SHADOW_ROGUE:-true}"
 REQUIRE_SHADOW_EGRESS="${REQUIRE_SHADOW_EGRESS:-true}"
@@ -64,7 +66,9 @@ FOUNDRY_ENDPOINT="${FOUNDRY_ENDPOINT:-https://greenops-foundry.services.ai.azure
 FOUNDRY_HOST="${FOUNDRY_HOST:-greenops-foundry.services.ai.azure.com}"
 FOUNDRY_API_VERSION="${FOUNDRY_API_VERSION:-2024-05-01-preview}"
 FOUNDRY_PRIMARY_DEPLOYMENT="${FOUNDRY_PRIMARY_DEPLOYMENT:-cohere-command-a-latest}"
+MISTRAL_SMALL_DEPLOYMENT="mistral-small-latest"
 MISTRAL_READY="false"
+MISTRAL_SMALL_READY="false"
 
 if [ -n "${EVIDENCE_DIR}" ] && [[ "${EVIDENCE_DIR}" != /* ]]; then
   EVIDENCE_DIR="${REPO}/${EVIDENCE_DIR}"
@@ -117,6 +121,8 @@ collect_evidence() {
     echo "operator_image=${OPERATOR_IMG}"
     echo "build_operator=${BUILD_OPERATOR}"
     echo "enable_mistral_demo=${ENABLE_MISTRAL_DEMO}"
+    echo "enable_mistral_small_provider=${ENABLE_MISTRAL_SMALL_PROVIDER}"
+    echo "require_third_quality_provider=${REQUIRE_THIRD_QUALITY_PROVIDER}"
     echo "enable_tetragon=${ENABLE_TETRAGON}"
     echo "enable_shadow_rogue=${ENABLE_SHADOW_ROGUE}"
     echo "require_latency_telemetry=${REQUIRE_LATENCY_TELEMETRY}"
@@ -132,8 +138,10 @@ collect_evidence() {
   capture_cmd "${dir}/kubectl_deployments.txt" kubectl --context "${CTX}" get deploy -A
   capture_cmd "${dir}/kubectl_services.txt" kubectl --context "${CTX}" get svc -A
   capture_cmd "${dir}/kubectl_events.txt" kubectl --context "${CTX}" get events -A --sort-by=.lastTimestamp
-  capture_cmd "${dir}/kubectl_aiops.txt" kubectl --context "${CTX}" get aigw,aiprov,aimodel,aisov,aibudget,aireport -A
-  capture_cmd "${dir}/yaml/aiops.yaml" kubectl --context "${CTX}" get aigw,aiprov,aimodel,aisov,aibudget,aireport -A -o yaml
+  capture_cmd "${dir}/kubectl_aiops.txt" kubectl --context "${CTX}" get aigw,aiprov,aimodel,aiqgate,aisov,aibudget,aireport -A
+  capture_cmd "${dir}/kubectl_quality_jobs.txt" kubectl --context "${CTX}" get jobs,pods -A -l aiops.imperium.io/quality-evaluator=true -o wide
+  capture_cmd "${dir}/yaml/aiops.yaml" kubectl --context "${CTX}" get aigw,aiprov,aimodel,aiqgate,aisov,aibudget,aireport -A -o yaml
+  capture_cmd "${dir}/yaml/quality-jobs.yaml" kubectl --context "${CTX}" get jobs,pods -A -l aiops.imperium.io/quality-evaluator=true -o yaml
   capture_cmd "${dir}/yaml/aigateway-envoy.yaml" kubectl --context "${CTX}" get gateway,gatewayclass,aigatewayroute,aiservicebackend,backend,backendtlspolicy -A -o yaml
   capture_cmd "${dir}/shadow-egress.json" kubectl --context "${CTX}" -n "${SHADOW_NS}" get configmap shadow-egress -o jsonpath='{.data.egress\.json}'
   capture_cmd "${dir}/logs/operator.log" kubectl --context "${CTX}" -n "${NS_OP}" logs deploy/greenops-ai-sovereign-finops-operator --tail=500
@@ -144,6 +152,7 @@ collect_evidence() {
   capture_cmd "${dir}/logs/shadow-ai-rogue.log" kubectl --context "${CTX}" -n finance logs deploy/shadow-ai-rogue --all-containers --tail=200
   capture_cmd "${dir}/logs/envoy-gateway.log" kubectl --context "${CTX}" -n envoy-gateway-system logs deploy/envoy-gateway --tail=300
   capture_cmd "${dir}/logs/aigw-controller.log" kubectl --context "${CTX}" -n envoy-ai-gateway-system logs deploy/ai-gateway-controller --tail=300
+  capture_cmd "${dir}/logs/quality-eval-pods.log" kubectl --context "${CTX}" -n default logs -l aiops.imperium.io/quality-evaluator=true --all-containers --tail=300 --prefix
   capture_cmd "${dir}/metrics/gateway_metrics.txt" kubectl --context "${CTX}" -n default run metrics-scrape --rm -i --restart=Never --image=curlimages/curl:8.10.1 --quiet -- curl -s -m 20 http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
   capture_cmd "${dir}/metrics/operator_metrics.txt" kubectl --context "${CTX}" -n default run operator-metrics-scrape --rm -i --restart=Never --image=curlimages/curl:8.10.1 --quiet -- curl -s -m 20 "http://greenops-ai-sovereign-finops-operator-metrics.${NS_OP}.svc.cluster.local:8080/metrics"
 
@@ -190,14 +199,14 @@ load_foundry_key() {
   return 1
 }
 
-probe_foundry() {
-  local key body code
+probe_foundry_deployment() {
+  local deploy="$1" label="$2" key body code
   key="$(load_foundry_key)" || return 1
   [ -n "${key}" ] || { echo "empty Foundry key" >&2; return 1; }
   body="$(mktemp)"
   code="$(
     curl -sS -o "${body}" -w '%{http_code}' \
-      "${FOUNDRY_ENDPOINT}/openai/deployments/${FOUNDRY_PRIMARY_DEPLOYMENT}/chat/completions?api-version=${FOUNDRY_API_VERSION}" \
+      "${FOUNDRY_ENDPOINT}/openai/deployments/${deploy}/chat/completions?api-version=${FOUNDRY_API_VERSION}" \
       -H "Authorization: Bearer ${key}" \
       -H 'Content-Type: application/json' \
       -d '{"messages":[{"role":"user","content":"Reply with exactly: ok"}],"max_tokens":8}'
@@ -206,32 +215,22 @@ probe_foundry() {
     rm -f "${body}"
     return 0
   fi
-  echo "Azure Foundry Cohere preflight failed (HTTP ${code})." >&2
+  echo "${label} Foundry preflight failed for deployment ${deploy} (HTTP ${code})." >&2
   sed -n '1,20p' "${body}" >&2
   rm -f "${body}"
   return 1
 }
 
+probe_foundry() {
+  probe_foundry_deployment "${FOUNDRY_PRIMARY_DEPLOYMENT}" "Azure Foundry Cohere"
+}
+
 probe_mistral() {
-  local key body code
-  key="$(load_foundry_key)" || return 1
-  [ -n "${key}" ] || return 1
-  body="$(mktemp)"
-  code="$(
-    curl -sS -o "${body}" -w '%{http_code}' \
-      "${FOUNDRY_ENDPOINT}/openai/deployments/mistral-large-latest/chat/completions?api-version=${FOUNDRY_API_VERSION}" \
-      -H "Authorization: Bearer ${key}" \
-      -H 'Content-Type: application/json' \
-      -d '{"messages":[{"role":"user","content":"ping"}],"max_tokens":1}'
-  )"
-  if [ "${code}" = "200" ]; then
-    rm -f "${body}"
-    return 0
-  fi
-  echo "Mistral Foundry preflight failed (HTTP ${code}); skipping the optional EU app." >&2
-  sed -n '1,20p' "${body}" >&2
-  rm -f "${body}"
-  return 1
+  probe_foundry_deployment "mistral-large-latest" "Mistral Large"
+}
+
+probe_mistral_small() {
+  probe_foundry_deployment "${MISTRAL_SMALL_DEPLOYMENT}" "Mistral Small"
 }
 
 preflight() {
@@ -251,6 +250,21 @@ preflight() {
       echo "Mistral Foundry probe OK."
     else
       MISTRAL_READY="false"
+      echo "Mistral Large is required by the demo quality gates; aborting before applying partial state." >&2
+      return 1
+    fi
+  fi
+  if [ "${ENABLE_MISTRAL_SMALL_PROVIDER}" = "true" ]; then
+    if probe_mistral_small; then
+      MISTRAL_SMALL_READY="true"
+      echo "Mistral Small Foundry probe OK."
+    else
+      MISTRAL_SMALL_READY="false"
+      if [ "${REQUIRE_THIRD_QUALITY_PROVIDER}" = "true" ]; then
+        echo "Third QualityScore provider is required, but ${MISTRAL_SMALL_DEPLOYMENT} is not reachable." >&2
+        echo "Provision it as an Azure AI Foundry DataZoneStandard deployment, or rerun with REQUIRE_THIRD_QUALITY_PROVIDER=false." >&2
+        return 1
+      fi
     fi
   fi
 }
@@ -328,6 +342,13 @@ cleanup_legacy_aiops_state() {
   fi
 
   ${K} delete -k "${OPERATOR}/config/samples" --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -f "${HERE}/08-quality-gates.yaml" --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete aiqualitygate finance-risk-assistant-mistral-small-quality --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete jobs -l aiops.imperium.io/quality-evaluator=true --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete configmap \
+    finance-quality-evidence finance-mistral-small-quality-evidence rh-quality-evidence legal-quality-evidence marketing-quality-evidence \
+    --ignore-not-found >/dev/null 2>&1 || true
   ${K} delete -f "${AUTO}/demo/demo-extra.yaml" --ignore-not-found >/dev/null 2>&1 || true
   ${K} -n default delete \
     aigatewayroute.aigateway.envoyproxy.io/greenops-openai \
@@ -361,7 +382,9 @@ ensure_envoy() {
 }
 
 deploy_gateway_and_apps() {
-  step "4/5 Gateway + Cohere Foundry route + catalog + consumer apps"
+  step "4/5 Gateway + routage + catalog (sans consumer apps — voir étapes 4b/4c/4d)"
+  # Créer le gateway, les routes de base et le catalogue de souveraineté.
+  # Les consumer apps arrivent dans les étapes suivantes avec leur provider respectif.
   local fkey
   fkey="$(load_foundry_key)" || exit 1
   [ -n "${fkey}" ] || { echo "no Foundry key found" >&2; exit 1; }
@@ -371,21 +394,70 @@ deploy_gateway_and_apps() {
   ${K} wait pods --timeout=180s -l gateway.envoyproxy.io/owning-gateway-name=greenops-aigw \
     -n envoy-gateway-system --for=condition=Ready
   apply_file "${HERE}/02-metrics-and-catalog.yaml"
-  apply_file "${HERE}/03-consumer-apps.yaml"
+}
+
+deploy_openai_fr() {
+  # Provider France — Azure OpenAI France Central (greenops-fr-ec0e82-06181356.openai.azure.com)
+  # Apps: rh/chatbot-rh + legal/contract-review — zone FR → conforme
+  step "4b/6 OpenAI France (souverain FR) — rh + legal"
+  local fr_key_file="${OPERATOR}/docs/openai-fr-key.txt"
+  if [ ! -f "${fr_key_file}" ]; then
+    # Récupération automatique via az CLI si disponible
+    if command -v az >/dev/null 2>&1; then
+      az cognitiveservices account keys list \
+        --name greenops-fr-ec0e82-06181356 --resource-group greenops-rg \
+        --query key1 -o tsv > "${fr_key_file}" 2>/dev/null || true
+    fi
+  fi
+  if [ ! -f "${fr_key_file}" ] || [ ! -s "${fr_key_file}" ]; then
+    echo "Clé Azure OpenAI France manquante — skip."
+    echo "  az cognitiveservices account keys list -n greenops-fr-ec0e82-06181356 -g greenops-rg --query key1 -o tsv > operateur/docs/openai-fr-key.txt"
+    return 0
+  fi
+  local frkey
+  frkey="$(tr -d '[:space:]' < "${fr_key_file}")"
+  ${K} -n default create secret generic greenops-openai-fr-apikey \
+    --from-literal=apiKey="${frkey}" --dry-run=client -o yaml | apply_stdin >/dev/null
+  apply_file "${HERE}/06-openai-fr.yaml"
+  echo "OpenAI France déployé (rh/chatbot-rh + legal/contract-review → gpt-france-mini)"
+}
+
+deploy_openai_us() {
+  # Provider US — Azure OpenAI US East (greenops-us-ec0e82-06181356.openai.azure.com)
+  # App: finance/risk-assistant — zone US → violation de souveraineté
+  step "4c/6 OpenAI US (non-souverain US) — finance"
+  local us_key_file="${OPERATOR}/docs/openai-us-key.txt"
+  if [ ! -f "${us_key_file}" ]; then
+    if command -v az >/dev/null 2>&1; then
+      az cognitiveservices account keys list \
+        --name greenops-us-ec0e82-06181356 --resource-group greenops-rg \
+        --query key1 -o tsv > "${us_key_file}" 2>/dev/null || true
+    fi
+  fi
+  if [ ! -f "${us_key_file}" ] || [ ! -s "${us_key_file}" ]; then
+    echo "Clé Azure OpenAI US manquante — skip."
+    echo "  az cognitiveservices account keys list -n greenops-us-ec0e82-06181356 -g greenops-rg --query key1 -o tsv > operateur/docs/openai-us-key.txt"
+    return 0
+  fi
+  local uskey
+  uskey="$(tr -d '[:space:]' < "${us_key_file}")"
+  ${K} -n default create secret generic greenops-openai-us-apikey \
+    --from-literal=apiKey="${uskey}" --dry-run=client -o yaml | apply_stdin >/dev/null
+  apply_file "${HERE}/07-openai-us.yaml"
+  echo "OpenAI US déployé (finance/risk-assistant → gpt-us-mini)"
 }
 
 deploy_mistral_eu() {
-  # 2nd provider: Mistral on Azure AI Foundry (EU zone), enabled by default so
-  # the real demo always has four app flows when the Foundry deployment is ready.
-  step "4b/6 Mistral EU app (sovereignty zone test)"
+  # Provider EU — Mistral sur Azure AI Foundry (greenops-foundry.services.ai.azure.com)
+  # App: marketing/content-writer — zone EU → conforme
+  step "4d/6 Mistral EU (souverain EU) — marketing"
   if [ "${ENABLE_MISTRAL_DEMO}" != "true" ]; then
-    echo "Mistral demo disabled (ENABLE_MISTRAL_DEMO=false) - ensuring it is absent."
+    echo "Mistral demo disabled (ENABLE_MISTRAL_DEMO=false)."
     ${K} delete -f "${HERE}/05-mistral-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
     return 0
   fi
   if [ "${MISTRAL_READY}" != "true" ]; then
-    echo "Mistral Foundry not preflight-ready — skipping the optional EU app."
-    echo "  get the key: az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > operateur/docs/foundrykey.txt"
+    echo "Mistral Foundry pas disponible — skip."
     return 0
   fi
   local mkey
@@ -395,25 +467,93 @@ deploy_mistral_eu() {
   apply_file "${HERE}/05-mistral-eu.yaml"
 }
 
+deploy_mistral_small_eu() {
+  # Optional provider EU — Mistral Small on Azure AI Foundry.
+  # It exists only to give the QualityScore radar a third real compliant provider
+  # polygon; no consumer app is needed because the AIQualityGate job calls it.
+  step "4d2/6 Mistral Small EU (third QualityScore provider)"
+  if [ "${ENABLE_MISTRAL_SMALL_PROVIDER}" != "true" ]; then
+    echo "Mistral Small provider disabled (ENABLE_MISTRAL_SMALL_PROVIDER=false)."
+    ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
+    return 0
+  fi
+  if [ "${MISTRAL_SMALL_READY}" != "true" ]; then
+    echo "Mistral Small Foundry deployment ${MISTRAL_SMALL_DEPLOYMENT} is not available — skip."
+    return 0
+  fi
+  local mkey
+  mkey="$(load_foundry_key)" || exit 1
+  ${K} -n default create secret generic greenops-mistral-apikey \
+    --from-literal=apiKey="${mkey}" --dry-run=client -o yaml | apply_stdin >/dev/null
+  apply_file "${HERE}/05b-mistral-small-eu.yaml"
+}
+
 wait_consumer_apps() {
-  step "4c/6 wait for the four verification apps"
-  ${K} -n rh rollout status deploy/chatbot-rh --timeout=180s
-  ${K} -n finance rollout status deploy/risk-assistant --timeout=180s
-  ${K} -n legal rollout status deploy/contract-review --timeout=180s
+  step "4e/6 wait for all consumer apps"
+  for ns_app in "rh/chatbot-rh" "finance/risk-assistant" "legal/contract-review"; do
+    ns="${ns_app%%/*}"; app="${ns_app##*/}"
+    kubectl --context "${CTX}" -n "${ns}" get deploy "${app}" >/dev/null 2>&1 && \
+      ${K} -n "${ns}" rollout status "deploy/${app}" --timeout=180s || true
+  done
   if [ "${ENABLE_MISTRAL_DEMO}" = "true" ] && [ "${MISTRAL_READY}" = "true" ]; then
     ${K} -n marketing rollout status deploy/content-writer --timeout=180s
   fi
 }
 
+deploy_quality_gates() {
+  local i jobs
+  step "4f/6 AI Quality Score gates (real gateway evaluation jobs)"
+  if [ "${ENABLE_MISTRAL_SMALL_PROVIDER}" = "true" ] && [ "${MISTRAL_SMALL_READY}" = "true" ]; then
+    local tmp
+    tmp="$(mktemp)"
+    awk '
+      /name: marketing-content-quality/ { in_marketing=1 }
+      in_marketing && /candidateModel: mistral-large-latest/ {
+        sub("mistral-large-latest", "mistral-small-latest")
+        in_marketing=0
+      }
+      { print }
+    ' "${HERE}/08-quality-gates.yaml" >"${tmp}"
+    echo "+ kubectl apply -f ${HERE}/08-quality-gates.yaml (marketing candidate=${MISTRAL_SMALL_DEPLOYMENT})"
+    ${K} apply -f "${tmp}" >/dev/null
+    rm -f "${tmp}"
+  else
+    apply_file "${HERE}/08-quality-gates.yaml"
+  fi
+
+  jobs=""
+  for i in $(seq 1 24); do
+    ${K} -n default annotate aiqualitygate --all demo/reconcile="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+    jobs="$(${K} -n default get jobs -l aiops.imperium.io/quality-evaluator=true --no-headers 2>/dev/null || true)"
+    if [ -n "${jobs}" ]; then
+      break
+    fi
+    sleep 5
+  done
+  if [ -z "${jobs}" ]; then
+    echo "AIQualityGate did not create any quality evaluation Job." >&2
+    ${K} -n default get aiqualitygate -o yaml >&2 || true
+    return 1
+  fi
+
+  ${K} -n default wait --for=condition=complete --timeout=300s \
+    jobs -l aiops.imperium.io/quality-evaluator=true || {
+      echo "Quality evaluation Jobs did not complete." >&2
+      ${K} -n default get jobs,pods -l aiops.imperium.io/quality-evaluator=true -o wide >&2 || true
+      return 1
+    }
+  echo "Quality evaluation Jobs completed."
+}
+
 build_grafana_image() {
-  # Build the custom Grafana image with ae3e-plotly-panel pre-installed (radar chart).
+  # Build the custom Grafana image with volkovlabs-echarts-panel pre-installed (radar chart).
   # Required because Kind pods have no internet access on startup.
   local img="grafana-radar:11.2.2"
   local dockerfile="${AUTO}/demo/Dockerfile.grafana"
   if docker image inspect "${img}" >/dev/null 2>&1; then
     echo "Grafana radar image ${img} already built — skipping."
   else
-    step "Building Grafana image with ae3e-plotly-panel (radar)"
+    step "Building Grafana image with volkovlabs-echarts-panel (radar)"
     DOCKER_BUILDKIT=0 docker build -t "${img}" -f "${dockerfile}" "$(dirname "${dockerfile}")"
   fi
   echo "Loading ${img} into kind cluster '${CLUSTER}'..."
@@ -516,15 +656,23 @@ scrape_operator_metrics() {
 }
 
 validate_latency_telemetry() {
-  local available score latencies gateway_metrics operator_metrics metric
+  local available i score latencies gateway_metrics operator_metrics metric
   step "6d/6 validate real latency telemetry"
   if [ "${REQUIRE_LATENCY_TELEMETRY}" != "true" ]; then
     echo "Latency telemetry validation skipped (REQUIRE_LATENCY_TELEMETRY=false)."
     return 0
   fi
 
-  gateway_metrics="$(scrape_gateway_metrics || true)"
-  if ! printf '%s\n' "${gateway_metrics}" | grep -q '^gen_ai_server_request_duration_seconds_'; then
+  gateway_metrics=""
+  for i in $(seq 1 12); do
+    gateway_metrics="$(scrape_gateway_metrics || true)"
+    if grep -q '^gen_ai_server_request_duration_seconds_' <<<"${gateway_metrics}"; then
+      break
+    fi
+    echo "gateway duration metric not visible yet (${i}/12); retrying in 5s"
+    sleep 5
+  done
+  if ! grep -q '^gen_ai_server_request_duration_seconds_' <<<"${gateway_metrics}"; then
     echo "Envoy AI Gateway did not expose gen_ai_server_request_duration_seconds_*; refusing to claim measured latency." >&2
     return 1
   fi
@@ -544,14 +692,14 @@ validate_latency_telemetry() {
   fi
 
   latencies="$(${K} -n default get aifinopsreport ai-report-all -o jsonpath='{.status.routingScores[*].observedLatencyMillis}' 2>/dev/null || true)"
-  if ! printf '%s\n' "${latencies}" | grep -Eq '(^| )[1-9][0-9]*(\.[0-9]+)?($| )'; then
+  if ! grep -Eq '(^| )[1-9][0-9]*(\.[0-9]+)?($| )' <<<"${latencies}"; then
     echo "No positive observedLatencyMillis found in routingScores: ${latencies:-<empty>}." >&2
     return 1
   fi
 
   operator_metrics="$(scrape_operator_metrics || true)"
   for metric in ai_finops_latency_score ai_finops_measured_latency_millis ai_finops_latency_telemetry_available ai_finops_routing_score; do
-    if ! printf '%s\n' "${operator_metrics}" | grep -q "^${metric}"; then
+    if ! grep -q "^${metric}" <<<"${operator_metrics}"; then
       echo "Operator /metrics does not expose ${metric}; dashboard latency panel would have no real source." >&2
       return 1
     fi
@@ -559,14 +707,78 @@ validate_latency_telemetry() {
   echo "Latency telemetry OK: gateway duration histogram observed, report status true, routing score=${score}."
 }
 
+validate_quality_score() {
+  local i statuses operator_metrics providers dimensions min_providers min_provider_default
+  step "6e/6 validate real AI Quality Score"
+  min_provider_default=2
+  if [ "${REQUIRE_THIRD_QUALITY_PROVIDER}" = "true" ]; then
+    min_provider_default=3
+  fi
+  min_providers="${QUALITY_MIN_PROVIDERS:-${min_provider_default}}"
+
+  statuses=""
+  for i in $(seq 1 36); do
+    ${K} -n default annotate aiqualitygate --all demo/reconcile="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+    sleep 5
+    statuses="$(${K} -n default get aiqualitygate -o jsonpath='{range .items[*]}{.metadata.name}{"="}{.status.verdict}{":"}{.status.qualityScore}{"\n"}{end}' 2>/dev/null || true)"
+    if [ -n "${statuses}" ] && printf '%s\n' "${statuses}" | awk -F'[=:]' '
+      NF < 3 { bad=1; next }
+      $2 != "candidate-safe" && $2 != "candidate-risk" { bad=1 }
+      ($3 + 0) <= 0 { bad=1 }
+      END { exit bad }
+    '; then
+      break
+    fi
+  done
+
+  if [ -z "${statuses}" ] || ! printf '%s\n' "${statuses}" | awk -F'[=:]' '
+    NF < 3 { bad=1; next }
+    $2 != "candidate-safe" && $2 != "candidate-risk" { bad=1 }
+    ($3 + 0) <= 0 { bad=1 }
+    END { exit bad }
+  '; then
+    echo "AIQualityGate qualityScore is not ready for all demo gates." >&2
+    printf '%s\n' "${statuses:-<empty>}" >&2
+    ${K} -n default get aiqualitygate -o yaml >&2 || true
+    return 1
+  fi
+  printf '%s\n' "${statuses}"
+
+  operator_metrics="$(scrape_operator_metrics || true)"
+  if ! grep -q '^ai_finops_quality_score' <<<"${operator_metrics}"; then
+    echo "Operator /metrics does not expose ai_finops_quality_score after quality gates completed." >&2
+    return 1
+  fi
+  providers="$(printf '%s\n' "${operator_metrics}" | awk '/^ai_finops_quality_score/ {
+    if (match($0, /provider="[^"]+"/)) {
+      print substr($0, RSTART + 10, RLENGTH - 11)
+    }
+  }' | sort -u | tr '\n' ' ')"
+  dimensions="$(printf '%s\n' "${operator_metrics}" | awk '/^ai_finops_quality_score/ {
+    if (match($0, /dimension="[^"]+"/)) {
+      print substr($0, RSTART + 11, RLENGTH - 12)
+    }
+  }' | sort -u | tr '\n' ' ')"
+  if [ "$(printf '%s\n' "${providers}" | wc -w | tr -d ' ')" -lt "${min_providers}" ]; then
+    echo "Quality score radar needs at least ${min_providers} sovereignty-compliant scored providers; got: ${providers:-<none>}" >&2
+    return 1
+  fi
+  for dimension in correctness reliability latency semantic overall; do
+    if ! grep -qw "${dimension}" <<<"${dimensions}"; then
+      echo "Quality score metric is missing dimension=${dimension}; dimensions=${dimensions:-<none>}" >&2
+      return 1
+    fi
+  done
+  echo "Quality score metrics OK: providers=${providers}; dimensions=${dimensions}"
+}
+
 up() {
   preflight; ensure_cluster; isolate_existing_gitops; ensure_operator_image; ensure_operator; cleanup_legacy_aiops_state; ensure_envoy
-  deploy_gateway_and_apps; deploy_mistral_eu; wait_consumer_apps; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status; validate_latency_telemetry
+  deploy_gateway_and_apps; deploy_openai_fr; deploy_openai_us; deploy_mistral_eu; deploy_mistral_small_eu; wait_consumer_apps; deploy_quality_gates; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status; validate_latency_telemetry; validate_quality_score
   step "Done — real demo is live"
-  echo "Apps in ns rh/finance/legal call Azure Foundry Cohere; marketing calls Mistral EU."
+  echo "Apps in ns rh/legal call Azure OpenAI France; finance calls Azure OpenAI US; marketing calls Mistral EU."
+  echo "QualityScore jobs evaluate only sovereignty-compliant candidates and require 3 scored providers by default."
   echo "The operator reads real token usage and computes cost/sovereignty/budget per app."
-  echo "Budgets stay fully real, but no fake cheaper-model fallback is configured while only one"
-  echo "non-French live deployment exists in this Foundry account."
   echo "Shadow-AI is enabled: finance/shadow-ai-rogue bypasses the gateway and Tetragon feeds shadow-egress."
   echo
   echo "Open Grafana:  ./deploy.sh grafana   (then http://localhost:3000)"
@@ -602,6 +814,13 @@ down() {
   step "Removing the real demo"
   ${K} -n finance delete deploy/shadow-ai-rogue --ignore-not-found >/dev/null 2>&1 || true
   ${K} -n "${SHADOW_NS}" delete configmap shadow-egress --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -f "${HERE}/08-quality-gates.yaml" --ignore-not-found
+  ${K} -n default delete aiqualitygate finance-risk-assistant-mistral-small-quality --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete jobs -l aiops.imperium.io/quality-evaluator=true --ignore-not-found >/dev/null 2>&1 || true
+  ${K} -n default delete configmap \
+    finance-quality-evidence finance-mistral-small-quality-evidence rh-quality-evidence legal-quality-evidence marketing-quality-evidence \
+    --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/05-mistral-eu.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/03-consumer-apps.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/02-metrics-and-catalog.yaml" --ignore-not-found
@@ -617,7 +836,7 @@ down() {
     aimodels.aiops.imperium.io/gpt-4o \
     aimodels.aiops.imperium.io/gpt-4o-mini \
     --ignore-not-found >/dev/null 2>&1 || true
-  ${K} -n default delete secret greenops-foundry-apikey greenops-openai-apikey greenops-mistral-apikey --ignore-not-found
+  ${K} -n default delete secret greenops-foundry-apikey greenops-openai-apikey greenops-openai-fr-apikey greenops-openai-us-apikey greenops-mistral-apikey --ignore-not-found
   ${K} -n "${NS_OP}" delete deploy,svc,configmap -l aiops.imperium.io/demo=true --ignore-not-found
   echo "Operator + Envoy control planes kept (helm uninstall greenops / eg / aieg to remove)."
 }

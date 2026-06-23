@@ -5,7 +5,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$HERE"
 
-KEY="${KEY_PATH:-../docs/openaikey.txt}"
+KEY="${KEY_PATH:-../operateur/docs/openaikey.txt}"
 JUDGE="${JUDGE_MODEL:-gpt-4o}"
 RESULTS="${RESULTS_DIR:-results}"
 

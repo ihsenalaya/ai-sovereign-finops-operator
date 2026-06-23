@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	keyPath := flag.String("key", "../docs/openaikey.txt", "OpenAI key file")
+	keyPath := flag.String("key", "../operateur/docs/openaikey.txt", "OpenAI key file")
 	benchDir := flag.String("benchmark", "datasets-public", "benchmark datasets (ground-truth)")
 	results := flag.String("results", "results", "results dir")
 	judgeModel := flag.String("judge", "gpt-4o", "LLM judge model")

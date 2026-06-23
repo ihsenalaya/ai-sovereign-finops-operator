@@ -1,0 +1,157 @@
+# AI Quality Score real-evaluation gates for the Kind/Azure demo.
+# These ConfigMaps contain only golden prompts. The evidence ConfigMaps named in
+# evidenceRef are intentionally absent at apply time: AIQualityGate creates a
+# Kubernetes Job that calls the production Envoy AI Gateway path and writes real
+# source/candidate outputs back to evidenceRef before scoring.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-quality-golden
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+data:
+  prompts.yaml: |
+    - id: counterparty-risk
+      prompt: "Summarize key counterparty risks for a new supplier in one concise paragraph and explicitly include: counterparty, liquidity, risk."
+      expected:
+        reference: "Counterparty risk includes liquidity exposure and operational risk."
+        requiredKeywords: ["counterparty", "liquidity", "risk"]
+        maxTokens: 80
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: finance-risk-assistant-quality
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: finance, team: finance, application: risk-assistant }
+  sourceModel: gpt-france-mini
+  candidateModel: mistral-large-latest
+  goldenDatasetRef: { name: finance-quality-golden }
+  evidenceRef: { name: finance-quality-evidence }
+  gatewayRef: main-gateway
+  latencyThresholdMs: 3000
+  minSamples: 1
+  tolerancePoints: 3
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+    maxTokens: 80
+    timeoutSeconds: 60
+  weights:
+    judged: 0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rh-quality-golden
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+data:
+  prompts.yaml: |
+    - id: leave-policy
+      prompt: "Explique la politique de conges en une phrase courte et inclus explicitement les mots: conges, manager, solde."
+      expected:
+        reference: "Le manager valide la demande de conges selon le solde disponible."
+        requiredKeywords: ["conges", "manager", "solde"]
+        maxTokens: 70
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: rh-chatbot-quality
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: rh, team: rh, application: chatbot-rh }
+  sourceModel: mistral-large-latest
+  candidateModel: gpt-france-mini
+  goldenDatasetRef: { name: rh-quality-golden }
+  evidenceRef: { name: rh-quality-evidence }
+  gatewayRef: main-gateway
+  latencyThresholdMs: 3000
+  minSamples: 1
+  tolerancePoints: 3
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+    maxTokens: 70
+    timeoutSeconds: 60
+  weights:
+    judged: 0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legal-quality-golden
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+data:
+  prompts.yaml: |
+    - id: renewal-risk
+      prompt: "List risks in an auto-renewal clause in one concise paragraph and explicitly include: notice period, renewal lock-in, termination requirements."
+      expected:
+        reference: "Auto-renewal risk includes notice period, renewal lock-in and termination requirements."
+        requiredKeywords: ["notice", "renewal", "termination"]
+        maxTokens: 90
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: legal-contract-quality
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: legal, team: legal, application: contract-review }
+  sourceModel: gpt-france-mini
+  candidateModel: mistral-large-latest
+  goldenDatasetRef: { name: legal-quality-golden }
+  evidenceRef: { name: legal-quality-evidence }
+  gatewayRef: main-gateway
+  latencyThresholdMs: 3500
+  minSamples: 1
+  tolerancePoints: 3
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+    maxTokens: 90
+    timeoutSeconds: 60
+  weights:
+    judged: 0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketing-quality-golden
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+data:
+  prompts.yaml: |
+    - id: privacy-launch
+      prompt: "List privacy checks before launching a lead-generation form and explicitly include: consent, retention, minimization, privacy notice."
+      expected:
+        reference: "Privacy checks include consent, retention, minimization and a privacy notice."
+        requiredKeywords: ["consent", "retention", "privacy"]
+        maxTokens: 90
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: marketing-content-quality
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  target: { namespace: marketing, team: marketing, application: content-writer }
+  sourceModel: gpt-france-mini
+  candidateModel: mistral-large-latest
+  goldenDatasetRef: { name: marketing-quality-golden }
+  evidenceRef: { name: marketing-quality-evidence }
+  gatewayRef: main-gateway
+  latencyThresholdMs: 3500
+  minSamples: 1
+  tolerancePoints: 3
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+    maxTokens: 90
+    timeoutSeconds: 60
+  weights:
+    judged: 0

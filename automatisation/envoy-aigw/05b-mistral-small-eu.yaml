@@ -1,0 +1,113 @@
+# Optional third compliant QualityScore provider: Mistral Small on Azure AI
+# Foundry, EU data zone. This file is applied only after deploy.sh proves that
+# the deployment answers through the real Foundry endpoint.
+#
+# Foundry endpoint:  https://greenops-foundry.services.ai.azure.com
+# deployment:        mistral-small-latest (DataZoneStandard = EU)
+# auth:              same Foundry key as Mistral Large, held in a Kubernetes Secret
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: greenops-mistral-small
+  namespace: default
+spec:
+  parentRefs:
+    - name: greenops-aigw
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: mistral-small-latest
+      backendRefs:
+        - name: greenops-mistral-small
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: greenops-mistral-small
+  namespace: default
+spec:
+  schema:
+    name: AzureOpenAI
+    version: "2024-05-01-preview"
+  backendRef:
+    name: greenops-mistral-small
+    kind: Backend
+    group: gateway.envoyproxy.io
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: BackendSecurityPolicy
+metadata:
+  name: greenops-mistral-small-apikey
+  namespace: default
+spec:
+  targetRefs:
+    - group: aigateway.envoyproxy.io
+      kind: AIServiceBackend
+      name: greenops-mistral-small
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: greenops-mistral-apikey
+      namespace: default
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: greenops-mistral-small
+  namespace: default
+spec:
+  endpoints:
+    - fqdn:
+        hostname: greenops-foundry.services.ai.azure.com
+        port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha3
+kind: BackendTLSPolicy
+metadata:
+  name: greenops-mistral-small-tls
+  namespace: default
+spec:
+  targetRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: greenops-mistral-small
+  validation:
+    wellKnownCACertificates: "System"
+    hostname: greenops-foundry.services.ai.azure.com
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: mistral-small-eu
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  type: mistral
+  region: francecentral
+  dataResidency: eu
+  managed: true
+  # Mistral Small list price (USD 0.20/0.60 per 1M tokens -> EUR x0.92).
+  pricing: { currency: EUR, inputTokenPricePerMillion: "0.18", outputTokenPricePerMillion: "0.55" }
+  compliance: { allowedForSensitiveData: true, allowedCountries: [FR] }
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: mistral-small
+  namespace: default
+  labels: { app.kubernetes.io/name: ai-sovereign-finops-operator }
+spec:
+  providerRef: mistral-small-eu
+  modelName: mistral-small-latest
+  type: llm
+  qualityTier: medium
+  costTier: low
+  sensitiveDataAllowed: true
+  servesNamespace: finance
+  servesApplication: risk-assistant
+  servesTeam: finance

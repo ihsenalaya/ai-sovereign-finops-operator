@@ -27,8 +27,8 @@ make up REPO_URL=https://github.com/<vous>/greenops REVISION=main
 2. `02-build-load-image.sh` — build l'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.4.0` et la charge dans kind.
 3. `03-install-argocd.sh` — installe ArgoCD, expose l'UI sur `http://localhost:30080`.
 4. `04-bootstrap-apps.sh` — crée l'`AppProject` + 2 `Application` :
-   - `greenops-operator` → chart Helm `charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: Never`),
-   - `greenops-samples` → `config/samples` (catalogue + policies, sync-wave 1).
+   - `greenops-operator` -> chart Helm `operateur/charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: Never`),
+   - `greenops-samples` -> `operateur/config/samples` (catalogue + policies, sync-wave 1).
 
 Si vous voulez malgré tout un dépôt Git in-cluster auto-contenu :
 
@@ -105,8 +105,8 @@ utilisez `make real-demo-verify`. Cette cible:
 6. supprime le cluster kind même en cas d'échec.
 
 Important : ce chemin requiert une **clé Azure AI Foundry réellement utilisable**
-dans `docs/foundrykey.txt` (ou `docs/mistralkey.txt` pour compatibilité). Le
-script fait un préflight Cohere et Mistral avant de démarrer, pour éviter une
+dans `operateur/docs/foundrykey.txt` (ou `operateur/docs/mistralkey.txt` pour compatibilité). Le
+script fait un préflight Cohere, Mistral Large et Mistral Small avant de démarrer, pour éviter une
 démo verte avec des workloads en erreur fournisseur.
 
 Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
@@ -120,6 +120,8 @@ Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 | `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
 | `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.4.0` | image de l'opérateur |
 | `ENABLE_MISTRAL_DEMO` | `true` | active la 4e app `marketing/content-writer` sur Mistral EU |
+| `ENABLE_MISTRAL_SMALL_PROVIDER` | `true` | applique le provider optionnel `mistral-small-eu` après préflight réel |
+| `REQUIRE_THIRD_QUALITY_PROVIDER` | `true` | fait échouer la démo si `mistral-small-latest` ne peut pas alimenter le 3e polygone QualityScore |
 | `ENABLE_TETRAGON` / `ENABLE_SHADOW_ROGUE` | `true` / `true` | installe Tetragon et lance le workload shadow-AI |
 | `REQUIRE_SHADOW_EGRESS` | `true` | fait échouer la démo si `shadow-egress` reste vide |
 | `SHADOW_NS` / `SHADOW_WORKLOAD_NS` | `default` / `finance` | namespace du ConfigMap `shadow-egress` / namespace du workload rogue |
@@ -144,4 +146,4 @@ make down        # supprime le cluster kind
 
 ArgoCD + l'opérateur tiennent sur un kind mono-nœud, mais sur une machine ~7 GiB (WSL2)
 gardez les autres clusters éteints. En cas de pression mémoire, préférez `make local`
-(sans ArgoCD). Voir `docs/DEMO_KIND.md`.
+(sans ArgoCD). Voir `operateur/docs/DEMO_KIND.md`.

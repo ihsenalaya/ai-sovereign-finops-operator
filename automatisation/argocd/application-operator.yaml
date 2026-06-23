@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: __REPO_URL__
     targetRevision: __REVISION__
-    path: charts/ai-sovereign-finops-operator
+    path: operateur/charts/ai-sovereign-finops-operator
     helm:
       values: |
         image:

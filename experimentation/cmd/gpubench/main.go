@@ -5,7 +5,7 @@
 //
 // Local validation (no GPU needed), proving the whole path before Azure:
 //
-//	go run ./cmd/gpubench -base https://api.openai.com/v1 -key ../docs/openaikey.txt \
+//	go run ./cmd/gpubench -base https://api.openai.com/v1 -key ../operateur/docs/openaikey.txt \
 //	  -model gpt-4o-mini -concurrency 4 -requests 20 -label local-openai
 //
 // On Azure (vLLM): -base http://<vllm-svc>:8000/v1 -model <served-model> -dcgm http://<dcgm>:9400/metrics
