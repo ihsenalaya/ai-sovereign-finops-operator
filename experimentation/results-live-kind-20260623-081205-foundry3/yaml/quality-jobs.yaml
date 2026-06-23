@@ -1,0 +1,1329 @@
+apiVersion: v1
+items:
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: finance-risk-assistant-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+    namespace: default
+    ownerReferences:
+    - apiVersion: aiops.imperium.io/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: AIQualityGate
+      name: finance-risk-assistant-quality
+      uid: bb158d88-61d7-4fb7-a63f-180437269b56
+    resourceVersion: "11049"
+    uid: d6d20584-6481-47aa-b046-d5216fb906a5
+  spec:
+    backoffLimit: 0
+    completionMode: NonIndexed
+    completions: 1
+    manualSelector: false
+    parallelism: 1
+    podReplacementPolicy: TerminatingOrFailed
+    selector:
+      matchLabels:
+        batch.kubernetes.io/controller-uid: d6d20584-6481-47aa-b046-d5216fb906a5
+    suspend: false
+    template:
+      metadata:
+        labels:
+          aiops.imperium.io/quality-evaluator: "true"
+          aiops.imperium.io/quality-gate: finance-risk-assistant-quality
+          app.kubernetes.io/name: ai-sovereign-finops-operator
+          batch.kubernetes.io/controller-uid: d6d20584-6481-47aa-b046-d5216fb906a5
+          batch.kubernetes.io/job-name: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+          controller-uid: d6d20584-6481-47aa-b046-d5216fb906a5
+          job-name: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+      spec:
+        containers:
+        - args:
+          - quality-eval
+          - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+          - --prompts-dir=/quality/dataset
+          - --namespace=finance
+          - --application=risk-assistant
+          - --source-model=gpt-france-mini
+          - --candidate-model=mistral-large-latest
+          - --timeout-seconds=60
+          - --max-tokens=80
+          command:
+          - /manager
+          image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+          imagePullPolicy: IfNotPresent
+          name: quality-evaluator
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /quality/dataset
+            name: golden-dataset
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Never
+        schedulerName: default-scheduler
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: finance-quality-golden
+          name: golden-dataset
+    ttlSecondsAfterFinished: 600
+  status:
+    completionTime: "2026-06-23T06:15:01Z"
+    conditions:
+    - lastProbeTime: "2026-06-23T06:15:01Z"
+      lastTransitionTime: "2026-06-23T06:15:01Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: SuccessCriteriaMet
+    - lastProbeTime: "2026-06-23T06:15:01Z"
+      lastTransitionTime: "2026-06-23T06:15:01Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: Complete
+    ready: 0
+    startTime: "2026-06-23T06:14:52Z"
+    succeeded: 1
+    terminating: 0
+    uncountedTerminatedPods: {}
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: legal-contract-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: quality-eval-legal-contract-quality-c75d3c60b7
+    namespace: default
+    ownerReferences:
+    - apiVersion: aiops.imperium.io/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: AIQualityGate
+      name: legal-contract-quality
+      uid: 18bcebe9-fe41-4565-acba-cd28c238018d
+    resourceVersion: "11052"
+    uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+  spec:
+    backoffLimit: 0
+    completionMode: NonIndexed
+    completions: 1
+    manualSelector: false
+    parallelism: 1
+    podReplacementPolicy: TerminatingOrFailed
+    selector:
+      matchLabels:
+        batch.kubernetes.io/controller-uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+    suspend: false
+    template:
+      metadata:
+        labels:
+          aiops.imperium.io/quality-evaluator: "true"
+          aiops.imperium.io/quality-gate: legal-contract-quality
+          app.kubernetes.io/name: ai-sovereign-finops-operator
+          batch.kubernetes.io/controller-uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+          batch.kubernetes.io/job-name: quality-eval-legal-contract-quality-c75d3c60b7
+          controller-uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+          job-name: quality-eval-legal-contract-quality-c75d3c60b7
+      spec:
+        containers:
+        - args:
+          - quality-eval
+          - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+          - --prompts-dir=/quality/dataset
+          - --namespace=legal
+          - --application=contract-review
+          - --source-model=gpt-france-mini
+          - --candidate-model=mistral-large-latest
+          - --timeout-seconds=60
+          - --max-tokens=90
+          command:
+          - /manager
+          image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+          imagePullPolicy: IfNotPresent
+          name: quality-evaluator
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /quality/dataset
+            name: golden-dataset
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Never
+        schedulerName: default-scheduler
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: legal-quality-golden
+          name: golden-dataset
+    ttlSecondsAfterFinished: 600
+  status:
+    completionTime: "2026-06-23T06:15:01Z"
+    conditions:
+    - lastProbeTime: "2026-06-23T06:15:01Z"
+      lastTransitionTime: "2026-06-23T06:15:01Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: SuccessCriteriaMet
+    - lastProbeTime: "2026-06-23T06:15:01Z"
+      lastTransitionTime: "2026-06-23T06:15:01Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: Complete
+    ready: 0
+    startTime: "2026-06-23T06:14:52Z"
+    succeeded: 1
+    terminating: 0
+    uncountedTerminatedPods: {}
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: marketing-content-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: quality-eval-marketing-content-quality-e4c79b8b92
+    namespace: default
+    ownerReferences:
+    - apiVersion: aiops.imperium.io/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: AIQualityGate
+      name: marketing-content-quality
+      uid: 95e3f3b2-6e01-4aea-9187-0589b1fb11a8
+    resourceVersion: "11083"
+    uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+  spec:
+    backoffLimit: 0
+    completionMode: NonIndexed
+    completions: 1
+    manualSelector: false
+    parallelism: 1
+    podReplacementPolicy: TerminatingOrFailed
+    selector:
+      matchLabels:
+        batch.kubernetes.io/controller-uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+    suspend: false
+    template:
+      metadata:
+        labels:
+          aiops.imperium.io/quality-evaluator: "true"
+          aiops.imperium.io/quality-gate: marketing-content-quality
+          app.kubernetes.io/name: ai-sovereign-finops-operator
+          batch.kubernetes.io/controller-uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+          batch.kubernetes.io/job-name: quality-eval-marketing-content-quality-e4c79b8b92
+          controller-uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+          job-name: quality-eval-marketing-content-quality-e4c79b8b92
+      spec:
+        containers:
+        - args:
+          - quality-eval
+          - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+          - --prompts-dir=/quality/dataset
+          - --namespace=marketing
+          - --application=content-writer
+          - --source-model=gpt-france-mini
+          - --candidate-model=gpt-foundry-eu-mini
+          - --timeout-seconds=60
+          - --max-tokens=90
+          command:
+          - /manager
+          image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+          imagePullPolicy: IfNotPresent
+          name: quality-evaluator
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /quality/dataset
+            name: golden-dataset
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Never
+        schedulerName: default-scheduler
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: marketing-quality-golden
+          name: golden-dataset
+    ttlSecondsAfterFinished: 600
+  status:
+    completionTime: "2026-06-23T06:15:02Z"
+    conditions:
+    - lastProbeTime: "2026-06-23T06:15:02Z"
+      lastTransitionTime: "2026-06-23T06:15:02Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: SuccessCriteriaMet
+    - lastProbeTime: "2026-06-23T06:15:02Z"
+      lastTransitionTime: "2026-06-23T06:15:02Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: Complete
+    ready: 0
+    startTime: "2026-06-23T06:14:52Z"
+    succeeded: 1
+    terminating: 0
+    uncountedTerminatedPods: {}
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: rh-chatbot-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: quality-eval-rh-chatbot-quality-d6df45a7c2
+    namespace: default
+    ownerReferences:
+    - apiVersion: aiops.imperium.io/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: AIQualityGate
+      name: rh-chatbot-quality
+      uid: 3fcd4bb3-829f-45a6-b9f4-4cc1433e6a42
+    resourceVersion: "11020"
+    uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+  spec:
+    backoffLimit: 0
+    completionMode: NonIndexed
+    completions: 1
+    manualSelector: false
+    parallelism: 1
+    podReplacementPolicy: TerminatingOrFailed
+    selector:
+      matchLabels:
+        batch.kubernetes.io/controller-uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+    suspend: false
+    template:
+      metadata:
+        labels:
+          aiops.imperium.io/quality-evaluator: "true"
+          aiops.imperium.io/quality-gate: rh-chatbot-quality
+          app.kubernetes.io/name: ai-sovereign-finops-operator
+          batch.kubernetes.io/controller-uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+          batch.kubernetes.io/job-name: quality-eval-rh-chatbot-quality-d6df45a7c2
+          controller-uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+          job-name: quality-eval-rh-chatbot-quality-d6df45a7c2
+      spec:
+        containers:
+        - args:
+          - quality-eval
+          - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+          - --prompts-dir=/quality/dataset
+          - --namespace=rh
+          - --application=chatbot-rh
+          - --source-model=mistral-large-latest
+          - --candidate-model=gpt-france-mini
+          - --timeout-seconds=60
+          - --max-tokens=70
+          command:
+          - /manager
+          image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+          imagePullPolicy: IfNotPresent
+          name: quality-evaluator
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /quality/dataset
+            name: golden-dataset
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Never
+        schedulerName: default-scheduler
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: rh-quality-golden
+          name: golden-dataset
+    ttlSecondsAfterFinished: 600
+  status:
+    completionTime: "2026-06-23T06:14:59Z"
+    conditions:
+    - lastProbeTime: "2026-06-23T06:14:59Z"
+      lastTransitionTime: "2026-06-23T06:14:59Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: SuccessCriteriaMet
+    - lastProbeTime: "2026-06-23T06:14:59Z"
+      lastTransitionTime: "2026-06-23T06:14:59Z"
+      message: Reached expected number of succeeded pods
+      reason: CompletionsReached
+      status: "True"
+      type: Complete
+    ready: 0
+    startTime: "2026-06-23T06:14:52Z"
+    succeeded: 1
+    terminating: 0
+    uncountedTerminatedPods: {}
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generateName: quality-eval-finance-risk-assistant-quality-3bc9c9a108-
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: finance-risk-assistant-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+      batch.kubernetes.io/controller-uid: d6d20584-6481-47aa-b046-d5216fb906a5
+      batch.kubernetes.io/job-name: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+      controller-uid: d6d20584-6481-47aa-b046-d5216fb906a5
+      job-name: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+    name: quality-eval-finance-risk-assistant-quality-3bc9c9a108-dx89p
+    namespace: default
+    ownerReferences:
+    - apiVersion: batch/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Job
+      name: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+      uid: d6d20584-6481-47aa-b046-d5216fb906a5
+    resourceVersion: "11048"
+    uid: 537d0754-a86c-4de4-801d-ced110b2340d
+  spec:
+    containers:
+    - args:
+      - quality-eval
+      - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      - --prompts-dir=/quality/dataset
+      - --namespace=finance
+      - --application=risk-assistant
+      - --source-model=gpt-france-mini
+      - --candidate-model=mistral-large-latest
+      - --timeout-seconds=60
+      - --max-tokens=80
+      command:
+      - /manager
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imagePullPolicy: IfNotPresent
+      name: quality-evaluator
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-25zcs
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: greenops-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Never
+    schedulerName: default-scheduler
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 420
+        name: finance-quality-golden
+      name: golden-dataset
+    - name: kube-api-access-25zcs
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:15:00Z"
+      observedGeneration: 1
+      status: "False"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:59Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:59Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 10m
+        memory: 32Mi
+      containerID: containerd://b18d69e516966f13791dbeb72b3adc3ff2150878cb51b4f5efc396d6dc911f92
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imageID: sha256:0c73909ae95cae7b13816be1207734edb8c4ad308fd1fd10b7311d2561196dab
+      lastState: {}
+      name: quality-evaluator
+      ready: false
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      restartCount: 0
+      started: false
+      state:
+        terminated:
+          containerID: containerd://b18d69e516966f13791dbeb72b3adc3ff2150878cb51b4f5efc396d6dc911f92
+          exitCode: 0
+          finishedAt: "2026-06-23T06:14:59Z"
+          message: |-
+            {
+              "samples": [
+                {
+                  "id": "counterparty-risk",
+                  "model": "gpt-france-mini",
+                  "reference": "Counterparty risk includes liquidity exposure and operational risk.",
+                  "actual": "Key counterparty risks for a new supplier primarily involve the possibility that the counterparty may fail to fulfill their contractual obligations, leading to financial losses or supply chain disruptions. Liquidity risk is also critical, as the counterparty might face cash flow problems that impair their ability to pay on time or maintain operations, increasing the likelihood of default. Assessing these risks requires thorough due diligence on the counterparty’s",
+                  "semanticScore": 53.634415584415585,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                },
+                {
+                  "id": "counterparty-risk",
+                  "model": "mistral-large-latest",
+                  "reference": "Counterparty risk includes liquidity exposure and operational risk.",
+                  "actual": "A new supplier faces **counterparty risk**—the potential that a buyer may fail to fulfill contractual obligations, such as non-payment or delayed payments, due to financial distress, insolvency, or operational disruptions. **Liquidity risk** compounds this threat, as the supplier may struggle to meet its own financial obligations if cash flows are disrupted by late or defaulted payments, particularly if",
+                  "semanticScore": 63.739495798319325,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                }
+              ]
+            }
+          reason: Completed
+          startedAt: "2026-06-23T06:14:54Z"
+      user:
+        linux:
+          gid: 65532
+          supplementalGroups:
+          - 65532
+          uid: 65532
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-25zcs
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.19.0.2
+    hostIPs:
+    - ip: 172.19.0.2
+    observedGeneration: 1
+    phase: Succeeded
+    podIP: 10.244.0.46
+    podIPs:
+    - ip: 10.244.0.46
+    qosClass: Burstable
+    startTime: "2026-06-23T06:14:52Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generateName: quality-eval-legal-contract-quality-c75d3c60b7-
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: legal-contract-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+      batch.kubernetes.io/controller-uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+      batch.kubernetes.io/job-name: quality-eval-legal-contract-quality-c75d3c60b7
+      controller-uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+      job-name: quality-eval-legal-contract-quality-c75d3c60b7
+    name: quality-eval-legal-contract-quality-c75d3c60b7-mrtqn
+    namespace: default
+    ownerReferences:
+    - apiVersion: batch/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Job
+      name: quality-eval-legal-contract-quality-c75d3c60b7
+      uid: 032bc6b2-e1b5-48cf-805c-bc1e7046c7ba
+    resourceVersion: "11050"
+    uid: d5100cbb-38d7-4c60-bc37-9e9e1080f49c
+  spec:
+    containers:
+    - args:
+      - quality-eval
+      - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      - --prompts-dir=/quality/dataset
+      - --namespace=legal
+      - --application=contract-review
+      - --source-model=gpt-france-mini
+      - --candidate-model=mistral-large-latest
+      - --timeout-seconds=60
+      - --max-tokens=90
+      command:
+      - /manager
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imagePullPolicy: IfNotPresent
+      name: quality-evaluator
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-lb7n8
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: greenops-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Never
+    schedulerName: default-scheduler
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 420
+        name: legal-quality-golden
+      name: golden-dataset
+    - name: kube-api-access-lb7n8
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:15:00Z"
+      observedGeneration: 1
+      status: "False"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:59Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:59Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 10m
+        memory: 32Mi
+      containerID: containerd://aafd0b7ba2683ab3026a6ec53424d144e9f04d0a6b1bb040d8467979f1b814d4
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imageID: sha256:0c73909ae95cae7b13816be1207734edb8c4ad308fd1fd10b7311d2561196dab
+      lastState: {}
+      name: quality-evaluator
+      ready: false
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      restartCount: 0
+      started: false
+      state:
+        terminated:
+          containerID: containerd://aafd0b7ba2683ab3026a6ec53424d144e9f04d0a6b1bb040d8467979f1b814d4
+          exitCode: 0
+          finishedAt: "2026-06-23T06:14:59Z"
+          message: |-
+            {
+              "samples": [
+                {
+                  "id": "renewal-risk",
+                  "model": "gpt-france-mini",
+                  "reference": "Auto-renewal risk includes notice period, renewal lock-in and termination requirements.",
+                  "actual": "An auto-renewal clause carries several risks, including insufficient or unclear notice periods that may prevent timely cancellation, effectively binding the party to an unwanted extension; renewal lock-in provisions that automatically extend the contract without opportunity for renegotiation, potentially leading to unfavorable terms; and stringent termination requirements that complicate or delay contract exit, increasing the likelihood of unintended commitments and financial obligations.",
+                  "semanticScore": 77.99496855345912,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                },
+                {
+                  "id": "renewal-risk",
+                  "model": "mistral-large-latest",
+                  "reference": "Auto-renewal risk includes notice period, renewal lock-in and termination requirements.",
+                  "actual": "An **auto-renewal clause** in contracts poses several risks, including **short or unclear notice periods** that may trap parties into unwanted renewals if they miss the deadline to opt out. **Renewal lock-in** can extend commitments without flexibility, forcing businesses to remain bound to unfavorable terms or outdated pricing. Additionally, **burdensome termination requirements**—such as excessive fees, complex procedures, or extended advance notice—can make exiting",
+                  "semanticScore": 77.34305923961097,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                }
+              ]
+            }
+          reason: Completed
+          startedAt: "2026-06-23T06:14:54Z"
+      user:
+        linux:
+          gid: 65532
+          supplementalGroups:
+          - 65532
+          uid: 65532
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-lb7n8
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.19.0.2
+    hostIPs:
+    - ip: 172.19.0.2
+    observedGeneration: 1
+    phase: Succeeded
+    podIP: 10.244.0.48
+    podIPs:
+    - ip: 10.244.0.48
+    qosClass: Burstable
+    startTime: "2026-06-23T06:14:52Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generateName: quality-eval-marketing-content-quality-e4c79b8b92-
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: marketing-content-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+      batch.kubernetes.io/controller-uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+      batch.kubernetes.io/job-name: quality-eval-marketing-content-quality-e4c79b8b92
+      controller-uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+      job-name: quality-eval-marketing-content-quality-e4c79b8b92
+    name: quality-eval-marketing-content-quality-e4c79b8b92-mkq7k
+    namespace: default
+    ownerReferences:
+    - apiVersion: batch/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Job
+      name: quality-eval-marketing-content-quality-e4c79b8b92
+      uid: e78592d4-1148-441b-9cfe-7cdfe6701e75
+    resourceVersion: "11081"
+    uid: 2c10f476-d3da-4ca1-8d95-4be1f72a2bb8
+  spec:
+    containers:
+    - args:
+      - quality-eval
+      - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      - --prompts-dir=/quality/dataset
+      - --namespace=marketing
+      - --application=content-writer
+      - --source-model=gpt-france-mini
+      - --candidate-model=gpt-foundry-eu-mini
+      - --timeout-seconds=60
+      - --max-tokens=90
+      command:
+      - /manager
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imagePullPolicy: IfNotPresent
+      name: quality-evaluator
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-8gx89
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: greenops-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Never
+    schedulerName: default-scheduler
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 420
+        name: marketing-quality-golden
+      name: golden-dataset
+    - name: kube-api-access-8gx89
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:15:01Z"
+      observedGeneration: 1
+      status: "False"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:15:00Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:15:00Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 10m
+        memory: 32Mi
+      containerID: containerd://5415af3238e752e4834bde3699dc80c94f154e96dbca600ec32c99bdba039d65
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imageID: sha256:0c73909ae95cae7b13816be1207734edb8c4ad308fd1fd10b7311d2561196dab
+      lastState: {}
+      name: quality-evaluator
+      ready: false
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      restartCount: 0
+      started: false
+      state:
+        terminated:
+          containerID: containerd://5415af3238e752e4834bde3699dc80c94f154e96dbca600ec32c99bdba039d65
+          exitCode: 0
+          finishedAt: "2026-06-23T06:14:59Z"
+          message: |-
+            {
+              "samples": [
+                {
+                  "id": "privacy-launch",
+                  "model": "gpt-france-mini",
+                  "reference": "Privacy checks include consent, retention, minimization and a privacy notice.",
+                  "actual": "Certainly! Here is a list of essential privacy checks to perform before launching a lead-generation form, explicitly including **consent**, **retention**, **minimization**, and **privacy notice**:\n\n1. **Consent**  \n   - Ensure that the form includes a clear and explicit consent mechanism (e.g., a checkbox) for users to agree to the collection and processing of their personal data.  \n   - Consent should be freely given, specific",
+                  "semanticScore": 84.31209206458261,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                },
+                {
+                  "id": "privacy-launch",
+                  "model": "gpt-foundry-eu-mini",
+                  "reference": "Privacy checks include consent, retention, minimization and a privacy notice.",
+                  "actual": "Certainly! Here is a list of essential privacy checks to perform before launching a lead-generation form, explicitly including **consent**, **retention**, **minimization**, and **privacy notice**:\n\n1. **Consent**\n   - Ensure that explicit, informed consent is obtained from users before collecting their personal data.\n   - Use clear, unambiguous language to explain what data is being collected and for what purpose.\n   - Provide an opt-in",
+                  "semanticScore": 75.71428571428572,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                }
+              ]
+            }
+          reason: Completed
+          startedAt: "2026-06-23T06:14:55Z"
+      user:
+        linux:
+          gid: 65532
+          supplementalGroups:
+          - 65532
+          uid: 65532
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-8gx89
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.19.0.2
+    hostIPs:
+    - ip: 172.19.0.2
+    observedGeneration: 1
+    phase: Succeeded
+    podIP: 10.244.0.49
+    podIPs:
+    - ip: 10.244.0.49
+    qosClass: Burstable
+    startTime: "2026-06-23T06:14:52Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    generateName: quality-eval-rh-chatbot-quality-d6df45a7c2-
+    generation: 1
+    labels:
+      aiops.imperium.io/quality-evaluator: "true"
+      aiops.imperium.io/quality-gate: rh-chatbot-quality
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+      batch.kubernetes.io/controller-uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+      batch.kubernetes.io/job-name: quality-eval-rh-chatbot-quality-d6df45a7c2
+      controller-uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+      job-name: quality-eval-rh-chatbot-quality-d6df45a7c2
+    name: quality-eval-rh-chatbot-quality-d6df45a7c2-2bx5v
+    namespace: default
+    ownerReferences:
+    - apiVersion: batch/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Job
+      name: quality-eval-rh-chatbot-quality-d6df45a7c2
+      uid: 1d95b97b-f14c-47fb-b3fe-5c2e4c01d6d5
+    resourceVersion: "11019"
+    uid: 93b63bed-75c3-469c-b4c5-1c25bcea5474
+  spec:
+    containers:
+    - args:
+      - quality-eval
+      - --endpoint=http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      - --prompts-dir=/quality/dataset
+      - --namespace=rh
+      - --application=chatbot-rh
+      - --source-model=mistral-large-latest
+      - --candidate-model=gpt-france-mini
+      - --timeout-seconds=60
+      - --max-tokens=70
+      command:
+      - /manager
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imagePullPolicy: IfNotPresent
+      name: quality-evaluator
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-j2558
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: greenops-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Never
+    schedulerName: default-scheduler
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 420
+        name: rh-quality-golden
+      name: golden-dataset
+    - name: kube-api-access-j2558
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:58Z"
+      observedGeneration: 1
+      status: "False"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:57Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:57Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-06-23T06:14:52Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 10m
+        memory: 32Mi
+      containerID: containerd://0dba50e0a40cf42b5de0ffe0a063c6177397efe279a0717dd89630ffe3f267a1
+      image: ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2
+      imageID: sha256:0c73909ae95cae7b13816be1207734edb8c4ad308fd1fd10b7311d2561196dab
+      lastState: {}
+      name: quality-evaluator
+      ready: false
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      restartCount: 0
+      started: false
+      state:
+        terminated:
+          containerID: containerd://0dba50e0a40cf42b5de0ffe0a063c6177397efe279a0717dd89630ffe3f267a1
+          exitCode: 0
+          finishedAt: "2026-06-23T06:14:56Z"
+          message: |-
+            {
+              "samples": [
+                {
+                  "id": "leave-policy",
+                  "model": "mistral-large-latest",
+                  "reference": "Le manager valide la demande de conges selon le solde disponible.",
+                  "actual": "\"La politique de **congés** permet aux employés de poser des jours de repos, validés par leur **manager**, tout en surveillant leur **solde** disponible.\"",
+                  "semanticScore": 71.84873949579833,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                },
+                {
+                  "id": "leave-policy",
+                  "model": "gpt-france-mini",
+                  "reference": "Le manager valide la demande de conges selon le solde disponible.",
+                  "actual": "Les congés doivent être demandés au manager en fonction du solde disponible.",
+                  "semanticScore": 74.45652173913042,
+                  "schemaValid": true,
+                  "unexpectedRefusal": false,
+                  "sensitiveDataLeak": false,
+                  "requiredKeywordsPresent": true
+                }
+              ]
+            }
+          reason: Completed
+          startedAt: "2026-06-23T06:14:54Z"
+      user:
+        linux:
+          gid: 65532
+          supplementalGroups:
+          - 65532
+          uid: 65532
+      volumeMounts:
+      - mountPath: /quality/dataset
+        name: golden-dataset
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-j2558
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.19.0.2
+    hostIPs:
+    - ip: 172.19.0.2
+    observedGeneration: 1
+    phase: Succeeded
+    podIP: 10.244.0.47
+    podIPs:
+    - ip: 10.244.0.47
+    qosClass: Burstable
+    startTime: "2026-06-23T06:14:52Z"
+kind: List
+metadata:
+  resourceVersion: ""

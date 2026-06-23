@@ -27,9 +27,32 @@ MODE=idle scripts/down.sh   # scale GPU pool to 0 (stop paying GPU); MODE=delete
 | 4 | `04-deploy-vllm.sh` | deploy vLLM (OpenAI-compatible) → **GPU scales 0→1** | **yes** |
 | 5 | `05-run-bench.sh` | port-forward vLLM+DCGM, run `gpubench` sweep | yes |
 | 6 | `06-collect-cost.sh` | record GPU node-hours / cost | yes |
+| 7 | `07-deploy-mistral-foundry.sh` | provision the three Azure AI Foundry demo deployments: Cohere, Mistral Large and GPT-4.1 Mini | no GPU |
 |   | `down.sh` (MODE=idle) | scale GPU → 0 | stops |
 
 Config is in `scripts/common.sh` (region `francecentral` for EU sovereignty, SKU, model, image).
+
+## Azure AI Foundry models for the real Kind demo
+
+The Envoy AI Gateway demo expects one Foundry account named `greenops-foundry`
+and these deployments:
+
+| Deployment | Model | Format | SKU |
+|------------|-------|--------|-----|
+| `cohere-command-a-latest` | `cohere-command-a` | Cohere | `GlobalStandard` |
+| `mistral-large-latest` | `Mistral-Large-3` | Mistral AI | `DataZoneStandard` |
+| `gpt-foundry-eu-mini` | `gpt-4.1-mini` | OpenAI | `DataZoneStandard` |
+
+Provision or verify them in the active `az` subscription:
+
+```bash
+automatisation/azure/scripts/07-deploy-mistral-foundry.sh
+az cognitiveservices account keys list -n greenops-foundry -g greenops-rg --query key1 -o tsv > operateur/docs/foundrykey.txt
+```
+
+`mistral-small-2503` is intentionally not the default third provider: in the
+current subscription it is available only as `GlobalStandard`, so it cannot be
+used as the compliant EU/DataZone radar provider.
 
 ## Cost model
 - AKS control plane: **free** (Free tier). System CPU node: cheap, keep on/off.

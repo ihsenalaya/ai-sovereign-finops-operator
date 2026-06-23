@@ -14,6 +14,7 @@
 #   3.  Envoy Gateway v1.5.0 (with AI Gateway values) + Envoy AI Gateway v0.7.0
 #   4.  Gateway + Azure Foundry Cohere route (+ key Secret) + catalog + 3 consumer apps
 #   4b. Mistral EU app (Azure Foundry) — 4th app, enabled by default
+#   4c. optional third compliant QualityScore provider: GPT-4.1 Mini on Foundry
 #   5.  Prometheus + Grafana with the AI-FinOps dashboard
 #   6.  Tetragon + shadow-AI rogue workload + shadow-egress refresh
 #
@@ -48,7 +49,7 @@ AIGW_VERSION="${AIGW_VERSION:-v0.7.0}"
 SKIP_PROVIDER_PREFLIGHT="${SKIP_PROVIDER_PREFLIGHT:-false}"
 REAL_DEMO_ISOLATE_GITOPS="${REAL_DEMO_ISOLATE_GITOPS:-true}"
 ENABLE_MISTRAL_DEMO="${ENABLE_MISTRAL_DEMO:-true}"
-ENABLE_MISTRAL_SMALL_PROVIDER="${ENABLE_MISTRAL_SMALL_PROVIDER:-true}"
+ENABLE_THIRD_QUALITY_PROVIDER="${ENABLE_THIRD_QUALITY_PROVIDER:-${ENABLE_MISTRAL_SMALL_PROVIDER:-true}}"
 REQUIRE_THIRD_QUALITY_PROVIDER="${REQUIRE_THIRD_QUALITY_PROVIDER:-true}"
 ENABLE_TETRAGON="${ENABLE_TETRAGON:-true}"
 ENABLE_SHADOW_ROGUE="${ENABLE_SHADOW_ROGUE:-true}"
@@ -66,9 +67,10 @@ FOUNDRY_ENDPOINT="${FOUNDRY_ENDPOINT:-https://greenops-foundry.services.ai.azure
 FOUNDRY_HOST="${FOUNDRY_HOST:-greenops-foundry.services.ai.azure.com}"
 FOUNDRY_API_VERSION="${FOUNDRY_API_VERSION:-2024-05-01-preview}"
 FOUNDRY_PRIMARY_DEPLOYMENT="${FOUNDRY_PRIMARY_DEPLOYMENT:-cohere-command-a-latest}"
-MISTRAL_SMALL_DEPLOYMENT="mistral-small-latest"
+THIRD_QUALITY_DEPLOYMENT="${THIRD_QUALITY_DEPLOYMENT:-gpt-foundry-eu-mini}"
+THIRD_QUALITY_PROVIDER_FILE="${HERE}/05b-openai-foundry-eu.yaml"
 MISTRAL_READY="false"
-MISTRAL_SMALL_READY="false"
+THIRD_QUALITY_READY="false"
 
 if [ -n "${EVIDENCE_DIR}" ] && [[ "${EVIDENCE_DIR}" != /* ]]; then
   EVIDENCE_DIR="${REPO}/${EVIDENCE_DIR}"
@@ -121,7 +123,7 @@ collect_evidence() {
     echo "operator_image=${OPERATOR_IMG}"
     echo "build_operator=${BUILD_OPERATOR}"
     echo "enable_mistral_demo=${ENABLE_MISTRAL_DEMO}"
-    echo "enable_mistral_small_provider=${ENABLE_MISTRAL_SMALL_PROVIDER}"
+    echo "enable_third_quality_provider=${ENABLE_THIRD_QUALITY_PROVIDER}"
     echo "require_third_quality_provider=${REQUIRE_THIRD_QUALITY_PROVIDER}"
     echo "enable_tetragon=${ENABLE_TETRAGON}"
     echo "enable_shadow_rogue=${ENABLE_SHADOW_ROGUE}"
@@ -229,8 +231,8 @@ probe_mistral() {
   probe_foundry_deployment "mistral-large-latest" "Mistral Large"
 }
 
-probe_mistral_small() {
-  probe_foundry_deployment "${MISTRAL_SMALL_DEPLOYMENT}" "Mistral Small"
+probe_third_quality_provider() {
+  probe_foundry_deployment "${THIRD_QUALITY_DEPLOYMENT}" "Third QualityScore Foundry provider"
 }
 
 preflight() {
@@ -254,14 +256,14 @@ preflight() {
       return 1
     fi
   fi
-  if [ "${ENABLE_MISTRAL_SMALL_PROVIDER}" = "true" ]; then
-    if probe_mistral_small; then
-      MISTRAL_SMALL_READY="true"
-      echo "Mistral Small Foundry probe OK."
+  if [ "${ENABLE_THIRD_QUALITY_PROVIDER}" = "true" ]; then
+    if probe_third_quality_provider; then
+      THIRD_QUALITY_READY="true"
+      echo "Third QualityScore Foundry provider probe OK (${THIRD_QUALITY_DEPLOYMENT})."
     else
-      MISTRAL_SMALL_READY="false"
+      THIRD_QUALITY_READY="false"
       if [ "${REQUIRE_THIRD_QUALITY_PROVIDER}" = "true" ]; then
-        echo "Third QualityScore provider is required, but ${MISTRAL_SMALL_DEPLOYMENT} is not reachable." >&2
+        echo "Third QualityScore provider is required, but ${THIRD_QUALITY_DEPLOYMENT} is not reachable." >&2
         echo "Provision it as an Azure AI Foundry DataZoneStandard deployment, or rerun with REQUIRE_THIRD_QUALITY_PROVIDER=false." >&2
         return 1
       fi
@@ -344,6 +346,7 @@ cleanup_legacy_aiops_state() {
   ${K} delete -k "${OPERATOR}/config/samples" --ignore-not-found >/dev/null 2>&1 || true
   ${K} delete -f "${HERE}/08-quality-gates.yaml" --ignore-not-found >/dev/null 2>&1 || true
   ${K} -n default delete aiqualitygate finance-risk-assistant-mistral-small-quality --ignore-not-found >/dev/null 2>&1 || true
+  ${K} delete -f "${THIRD_QUALITY_PROVIDER_FILE}" --ignore-not-found >/dev/null 2>&1 || true
   ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
   ${K} -n default delete jobs -l aiops.imperium.io/quality-evaluator=true --ignore-not-found >/dev/null 2>&1 || true
   ${K} -n default delete configmap \
@@ -467,25 +470,21 @@ deploy_mistral_eu() {
   apply_file "${HERE}/05-mistral-eu.yaml"
 }
 
-deploy_mistral_small_eu() {
-  # Optional provider EU — Mistral Small on Azure AI Foundry.
+deploy_third_quality_provider() {
+  # Optional provider EU — GPT-4.1 Mini on Azure AI Foundry.
   # It exists only to give the QualityScore radar a third real compliant provider
   # polygon; no consumer app is needed because the AIQualityGate job calls it.
-  step "4d2/6 Mistral Small EU (third QualityScore provider)"
-  if [ "${ENABLE_MISTRAL_SMALL_PROVIDER}" != "true" ]; then
-    echo "Mistral Small provider disabled (ENABLE_MISTRAL_SMALL_PROVIDER=false)."
-    ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
+  step "4d2/6 Foundry OpenAI EU (third QualityScore provider)"
+  if [ "${ENABLE_THIRD_QUALITY_PROVIDER}" != "true" ]; then
+    echo "Third QualityScore provider disabled (ENABLE_THIRD_QUALITY_PROVIDER=false)."
+    ${K} delete -f "${THIRD_QUALITY_PROVIDER_FILE}" --ignore-not-found >/dev/null 2>&1 || true
     return 0
   fi
-  if [ "${MISTRAL_SMALL_READY}" != "true" ]; then
-    echo "Mistral Small Foundry deployment ${MISTRAL_SMALL_DEPLOYMENT} is not available — skip."
+  if [ "${THIRD_QUALITY_READY}" != "true" ]; then
+    echo "Third QualityScore Foundry deployment ${THIRD_QUALITY_DEPLOYMENT} is not available — skip."
     return 0
   fi
-  local mkey
-  mkey="$(load_foundry_key)" || exit 1
-  ${K} -n default create secret generic greenops-mistral-apikey \
-    --from-literal=apiKey="${mkey}" --dry-run=client -o yaml | apply_stdin >/dev/null
-  apply_file "${HERE}/05b-mistral-small-eu.yaml"
+  apply_file "${THIRD_QUALITY_PROVIDER_FILE}"
 }
 
 wait_consumer_apps() {
@@ -503,18 +502,18 @@ wait_consumer_apps() {
 deploy_quality_gates() {
   local i jobs
   step "4f/6 AI Quality Score gates (real gateway evaluation jobs)"
-  if [ "${ENABLE_MISTRAL_SMALL_PROVIDER}" = "true" ] && [ "${MISTRAL_SMALL_READY}" = "true" ]; then
+  if [ "${ENABLE_THIRD_QUALITY_PROVIDER}" = "true" ] && [ "${THIRD_QUALITY_READY}" = "true" ]; then
     local tmp
     tmp="$(mktemp)"
-    awk '
+    awk -v model="${THIRD_QUALITY_DEPLOYMENT}" '
       /name: marketing-content-quality/ { in_marketing=1 }
       in_marketing && /candidateModel: mistral-large-latest/ {
-        sub("mistral-large-latest", "mistral-small-latest")
+        sub("mistral-large-latest", model)
         in_marketing=0
       }
       { print }
     ' "${HERE}/08-quality-gates.yaml" >"${tmp}"
-    echo "+ kubectl apply -f ${HERE}/08-quality-gates.yaml (marketing candidate=${MISTRAL_SMALL_DEPLOYMENT})"
+    echo "+ kubectl apply -f ${HERE}/08-quality-gates.yaml (marketing candidate=${THIRD_QUALITY_DEPLOYMENT})"
     ${K} apply -f "${tmp}" >/dev/null
     rm -f "${tmp}"
   else
@@ -774,7 +773,7 @@ validate_quality_score() {
 
 up() {
   preflight; ensure_cluster; isolate_existing_gitops; ensure_operator_image; ensure_operator; cleanup_legacy_aiops_state; ensure_envoy
-  deploy_gateway_and_apps; deploy_openai_fr; deploy_openai_us; deploy_mistral_eu; deploy_mistral_small_eu; wait_consumer_apps; deploy_quality_gates; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status; validate_latency_telemetry; validate_quality_score
+  deploy_gateway_and_apps; deploy_openai_fr; deploy_openai_us; deploy_mistral_eu; deploy_third_quality_provider; wait_consumer_apps; deploy_quality_gates; deploy_observability; ensure_tetragon; deploy_shadow_ai; refresh_operator_status; validate_latency_telemetry; validate_quality_score
   step "Done — real demo is live"
   echo "Apps in ns rh/legal call Azure OpenAI France; finance calls Azure OpenAI US; marketing calls Mistral EU."
   echo "QualityScore jobs evaluate only sovereignty-compliant candidates and require 3 scored providers by default."
@@ -820,7 +819,8 @@ down() {
   ${K} -n default delete configmap \
     finance-quality-evidence finance-mistral-small-quality-evidence rh-quality-evidence legal-quality-evidence marketing-quality-evidence \
     --ignore-not-found >/dev/null 2>&1 || true
-  ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found
+  ${K} delete -f "${THIRD_QUALITY_PROVIDER_FILE}" --ignore-not-found
+  ${K} delete -f "${HERE}/05b-mistral-small-eu.yaml" --ignore-not-found >/dev/null 2>&1 || true
   ${K} delete -f "${HERE}/05-mistral-eu.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/03-consumer-apps.yaml" --ignore-not-found
   ${K} delete -f "${HERE}/02-metrics-and-catalog.yaml" --ignore-not-found

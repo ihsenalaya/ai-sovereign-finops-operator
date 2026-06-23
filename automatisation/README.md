@@ -106,8 +106,8 @@ utilisez `make real-demo-verify`. Cette cible:
 
 Important : ce chemin requiert une **clé Azure AI Foundry réellement utilisable**
 dans `operateur/docs/foundrykey.txt` (ou `operateur/docs/mistralkey.txt` pour compatibilité). Le
-script fait un préflight Cohere, Mistral Large et Mistral Small avant de démarrer, pour éviter une
-démo verte avec des workloads en erreur fournisseur.
+script fait un préflight Cohere, Mistral Large et GPT-4.1 Mini Foundry avant de démarrer, pour éviter
+une démo verte avec des workloads en erreur fournisseur.
 
 Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 [`tetragon/demo.sh`](tetragon/demo.sh).
@@ -120,8 +120,9 @@ Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 | `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
 | `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.4.0` | image de l'opérateur |
 | `ENABLE_MISTRAL_DEMO` | `true` | active la 4e app `marketing/content-writer` sur Mistral EU |
-| `ENABLE_MISTRAL_SMALL_PROVIDER` | `true` | applique le provider optionnel `mistral-small-eu` après préflight réel |
-| `REQUIRE_THIRD_QUALITY_PROVIDER` | `true` | fait échouer la démo si `mistral-small-latest` ne peut pas alimenter le 3e polygone QualityScore |
+| `ENABLE_THIRD_QUALITY_PROVIDER` | `true` | applique le provider optionnel `openai-foundry-eu` après préflight réel |
+| `THIRD_QUALITY_DEPLOYMENT` | `gpt-foundry-eu-mini` | déploiement Foundry DataZoneStandard utilisé pour le 3e polygone QualityScore |
+| `REQUIRE_THIRD_QUALITY_PROVIDER` | `true` | fait échouer la démo si le 3e déploiement Foundry ne peut pas alimenter le radar QualityScore |
 | `ENABLE_TETRAGON` / `ENABLE_SHADOW_ROGUE` | `true` / `true` | installe Tetragon et lance le workload shadow-AI |
 | `REQUIRE_SHADOW_EGRESS` | `true` | fait échouer la démo si `shadow-egress` reste vide |
 | `SHADOW_NS` / `SHADOW_WORKLOAD_NS` | `default` / `finance` | namespace du ConfigMap `shadow-egress` / namespace du workload rogue |

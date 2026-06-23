@@ -106,7 +106,7 @@ par fournisseur detecte.
 Dans la demo Kind reelle, les providers non conformes (`US`/`GLOBAL`) restent
 visibles dans les findings de souverainete mais ne sont pas appeles par les Jobs
 QualityScore. Le radar a trois polygones conformes quand `openai-fr`,
-`mistral-eu` et le provider optionnel `mistral-small-eu` ont chacun produit une
+`mistral-eu` et le provider optionnel `openai-foundry-eu` ont chacun produit une
 serie `dimension="overall"` issue d'une evaluation gateway reelle.
 
 Liens : [AIQualityGate](../crds/aiqualitygate.md),

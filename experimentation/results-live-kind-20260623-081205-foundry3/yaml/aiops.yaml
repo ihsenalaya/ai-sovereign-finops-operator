@@ -1,0 +1,1356 @@
+apiVersion: v1
+items:
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIGateway
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIGateway","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"main-gateway","namespace":"default"},"spec":{"endpoint":"http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064","telemetry":{"metricsEndpoint":"/metrics","mode":"aigw"},"type":"envoy"}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: main-gateway
+    namespace: default
+    resourceVersion: "10665"
+    uid: dedb8000-6e4a-4dad-8cb3-20292378bdbb
+  spec:
+    endpoint: http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064
+    telemetry:
+      metricsEndpoint: /metrics
+      mode: aigw
+    type: envoy
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:43Z"
+      message: AIGateway registered and namespaces resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"cohere-global","namespace":"default"},"spec":{"compliance":{"allowedForSensitiveData":false},"dataResidency":"global","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"2.16","outputTokenPricePerMillion":"8.65"},"region":"francecentral","type":"azure-openai"}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: cohere-global
+    namespace: default
+    resourceVersion: "10667"
+    uid: ae44ab67-783d-4719-97f4-b45ec96ac975
+  spec:
+    compliance:
+      allowedForSensitiveData: false
+    dataResidency: global
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "2.16"
+      outputTokenPricePerMillion: "8.65"
+    region: francecentral
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:43Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"mistral-eu","namespace":"default"},"spec":{"compliance":{"allowedCountries":["FR"],"allowedForSensitiveData":true},"dataResidency":"eu","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"1.84","outputTokenPricePerMillion":"5.52"},"region":"francecentral","type":"mistral"}}
+    creationTimestamp: "2026-06-23T06:14:48Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: mistral-eu
+    namespace: default
+    resourceVersion: "10803"
+    uid: 3c7054d4-ef39-4fb1-8de6-7653600de636
+  spec:
+    compliance:
+      allowedCountries:
+      - FR
+      allowedForSensitiveData: true
+    dataResidency: eu
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "1.84"
+      outputTokenPricePerMillion: "5.52"
+    region: francecentral
+    type: mistral
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:48Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"openai-foundry-eu","namespace":"default"},"spec":{"compliance":{"allowedCountries":["FR"],"allowedForSensitiveData":true},"dataResidency":"eu","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"0.37","outputTokenPricePerMillion":"1.47"},"region":"francecentral","type":"azure-openai"}}
+    creationTimestamp: "2026-06-23T06:14:49Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: openai-foundry-eu
+    namespace: default
+    resourceVersion: "10858"
+    uid: ee445ff7-2429-44fc-93c9-c2ae9b3d6ce9
+  spec:
+    compliance:
+      allowedCountries:
+      - FR
+      allowedForSensitiveData: true
+    dataResidency: eu
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "0.37"
+      outputTokenPricePerMillion: "1.47"
+    region: francecentral
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:49Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"openai-fr","namespace":"default"},"spec":{"compliance":{"allowedCountries":["FR","EU"],"allowedForSensitiveData":true},"dataResidency":"fr","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"0.37","outputTokenPricePerMillion":"1.47"},"region":"francecentral","type":"azure-openai"}}
+    creationTimestamp: "2026-06-23T05:16:43Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: openai-fr
+    namespace: default
+    resourceVersion: "1231"
+    uid: b09df1db-8360-44d7-b0ea-12a18a849b07
+  spec:
+    compliance:
+      allowedCountries:
+      - FR
+      - EU
+      allowedForSensitiveData: true
+    dataResidency: fr
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "0.37"
+      outputTokenPricePerMillion: "1.47"
+    region: francecentral
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T05:16:43Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"openai-us","namespace":"default"},"spec":{"compliance":{"allowedForSensitiveData":false},"dataResidency":"us","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"0.37","outputTokenPricePerMillion":"1.47"},"region":"eastus","type":"azure-openai"}}
+    creationTimestamp: "2026-06-23T06:14:47Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: openai-us
+    namespace: default
+    resourceVersion: "10750"
+    uid: 6b7949f2-6c15-4b30-b71b-b97bc49657b7
+  spec:
+    compliance:
+      allowedForSensitiveData: false
+    dataResidency: us
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "0.37"
+      outputTokenPricePerMillion: "1.47"
+    region: eastus
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:47Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"cohere-command-a","namespace":"default"},"spec":{"costTier":"high","modelName":"cohere-command-a-latest","providerRef":"cohere-global","qualityTier":"high","sensitiveDataAllowed":false,"servesApplication":"risk-assistant","servesNamespace":"finance","servesTeam":"finance","type":"llm"}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: cohere-command-a
+    namespace: default
+    resourceVersion: "10669"
+    uid: 2919bb28-8b85-4eea-872a-50fa40db9274
+  spec:
+    costTier: high
+    modelName: cohere-command-a-latest
+    providerRef: cohere-global
+    qualityTier: high
+    sensitiveDataAllowed: false
+    servesApplication: risk-assistant
+    servesNamespace: finance
+    servesTeam: finance
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:43Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"gpt-foundry-eu-mini","namespace":"default"},"spec":{"costTier":"low","modelName":"gpt-foundry-eu-mini","providerRef":"openai-foundry-eu","qualityTier":"high","sensitiveDataAllowed":true,"servesApplication":"risk-assistant","servesNamespace":"finance","servesTeam":"finance","type":"llm"}}
+    creationTimestamp: "2026-06-23T06:14:49Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: gpt-foundry-eu-mini
+    namespace: default
+    resourceVersion: "11518"
+    uid: cc3a7635-1dc3-41c0-9297-15004d3d1ae2
+  spec:
+    costTier: low
+    modelName: gpt-foundry-eu-mini
+    providerRef: openai-foundry-eu
+    qualityTier: high
+    sensitiveDataAllowed: true
+    servesApplication: risk-assistant
+    servesNamespace: finance
+    servesTeam: finance
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:49Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    lastEvaluatedAt: "2026-06-23T06:16:45Z"
+    lastQualityScore: 85.162
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"gpt-france-mini","namespace":"default"},"spec":{"costTier":"low","modelName":"gpt-france-mini","providerRef":"openai-fr","qualityTier":"high","sensitiveDataAllowed":true,"servesApplication":"chatbot-rh","servesNamespace":"rh","servesTeam":"rh","type":"llm"}}
+    creationTimestamp: "2026-06-23T05:16:43Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: gpt-france-mini
+    namespace: default
+    resourceVersion: "11572"
+    uid: 693f30c5-efbd-4444-9dbf-d178ccca5434
+  spec:
+    costTier: low
+    modelName: gpt-france-mini
+    providerRef: openai-fr
+    qualityTier: high
+    sensitiveDataAllowed: true
+    servesApplication: chatbot-rh
+    servesNamespace: rh
+    servesTeam: rh
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T05:16:43Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    lastEvaluatedAt: "2026-06-23T06:16:56Z"
+    lastQualityScore: 83.636
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"gpt-us-mini","namespace":"default"},"spec":{"costTier":"low","modelName":"gpt-us-mini","providerRef":"openai-us","qualityTier":"high","sensitiveDataAllowed":false,"servesApplication":"risk-assistant","servesNamespace":"finance","servesTeam":"finance","type":"llm"}}
+    creationTimestamp: "2026-06-23T06:14:47Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: gpt-us-mini
+    namespace: default
+    resourceVersion: "10752"
+    uid: 714589bf-dd69-4da9-9f17-4c1b1249a18c
+  spec:
+    costTier: low
+    modelName: gpt-us-mini
+    providerRef: openai-us
+    qualityTier: high
+    sensitiveDataAllowed: false
+    servesApplication: risk-assistant
+    servesNamespace: finance
+    servesTeam: finance
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:47Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"mistral-large","namespace":"default"},"spec":{"costTier":"high","modelName":"mistral-large-latest","providerRef":"mistral-eu","qualityTier":"high","sensitiveDataAllowed":true,"servesApplication":"content-writer","servesNamespace":"marketing","servesTeam":"marketing","type":"llm"}}
+    creationTimestamp: "2026-06-23T06:14:49Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: mistral-large
+    namespace: default
+    resourceVersion: "11582"
+    uid: 125e4c4e-7a61-4cf4-865d-be9be92d7394
+  spec:
+    costTier: high
+    modelName: mistral-large-latest
+    providerRef: mistral-eu
+    qualityTier: high
+    sensitiveDataAllowed: true
+    servesApplication: content-writer
+    servesNamespace: marketing
+    servesTeam: marketing
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:49Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    lastEvaluatedAt: "2026-06-23T06:16:57Z"
+    lastQualityScore: 85.347
+    observedGeneration: 1
+    resolvedProvider: mistral
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782195405"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"finance-risk-assistant-quality","namespace":"default"},"spec":{"candidateModel":"mistral-large-latest","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":80,"timeoutSeconds":60},"evidenceRef":{"name":"finance-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"finance-quality-golden"},"latencyThresholdMs":3000,"minSamples":1,"sourceModel":"gpt-france-mini","target":{"application":"risk-assistant","namespace":"finance","team":"finance"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    finalizers:
+    - aiops.imperium.io/quality-gate-cleanup
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: finance-risk-assistant-quality
+    namespace: default
+    resourceVersion: "11506"
+    uid: bb158d88-61d7-4fb7-a63f-180437269b56
+  spec:
+    canary: {}
+    candidateModel: mistral-large-latest
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 80
+      timeoutSeconds: 60
+    evidenceRef:
+      name: finance-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: finance-quality-golden
+    judge: {}
+    latencyThresholdMs: 3000
+    minSamples: 1
+    period: monthly
+    requiredChecks: {}
+    rollback: {}
+    sourceModel: gpt-france-mini
+    target:
+      application: risk-assistant
+      namespace: finance
+      team: finance
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    candidateObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      observedLatencyMillis: "1984.950"
+      provider: mistral-eu
+      requests: 1
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:01Z"
+      message: 'quality gate passed for finance/risk-assistant: candidate "mistral-large-latest"
+        can be considered safe'
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    dimensions:
+    - name: correctness
+      score: 73.263
+      weight: 0.444
+    - name: reliability
+      score: 100
+      weight: 0.222
+    - name: latency
+      score: 83.835
+      weight: 0.167
+    - name: semantic
+      score: 63.739
+      weight: 0.167
+    - name: judged
+      score: 0
+    - name: overall
+      score: 79.379
+      weight: 1
+    evaluationJobName: quality-eval-finance-risk-assistant-quality-3bc9c9a108
+    evaluationJobPhase: Succeeded
+    evidenceRef:
+      name: finance-quality-evidence
+    observedGeneration: 2
+    phase: Passed
+    qualityScore: 79.379
+    samples: 1
+    scoreBreakdown:
+      correctness: 73.263
+      latency: 83.835
+      reliability: 100
+      semantic: 63.739
+    sourceObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      observedLatencyMillis: "2427.561"
+      provider: openai-fr
+      requests: 1
+    verdict: candidate-safe
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782195405"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"legal-contract-quality","namespace":"default"},"spec":{"candidateModel":"mistral-large-latest","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":90,"timeoutSeconds":60},"evidenceRef":{"name":"legal-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"legal-quality-golden"},"latencyThresholdMs":3500,"minSamples":1,"sourceModel":"gpt-france-mini","target":{"application":"contract-review","namespace":"legal","team":"legal"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    finalizers:
+    - aiops.imperium.io/quality-gate-cleanup
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: legal-contract-quality
+    namespace: default
+    resourceVersion: "11579"
+    uid: 18bcebe9-fe41-4565-acba-cd28c238018d
+  spec:
+    canary: {}
+    candidateModel: mistral-large-latest
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 90
+      timeoutSeconds: 60
+    evidenceRef:
+      name: legal-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: legal-quality-golden
+    judge: {}
+    latencyThresholdMs: 3500
+    minSamples: 1
+    period: monthly
+    requiredChecks: {}
+    rollback: {}
+    sourceModel: gpt-france-mini
+    target:
+      application: contract-review
+      namespace: legal
+      team: legal
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    candidateObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      observedLatencyMillis: "2321.696"
+      provider: mistral-eu
+      requests: 1
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:02Z"
+      message: 'quality gate passed for legal/contract-review: candidate "mistral-large-latest"
+        can be considered safe'
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    dimensions:
+    - name: correctness
+      score: 81.653
+      weight: 0.444
+    - name: reliability
+      score: 100
+      weight: 0.222
+    - name: latency
+      score: 83.666
+      weight: 0.167
+    - name: semantic
+      score: 77.343
+      weight: 0.167
+    - name: judged
+      score: 0
+    - name: overall
+      score: 85.347
+      weight: 1
+    evaluationJobName: quality-eval-legal-contract-quality-c75d3c60b7
+    evaluationJobPhase: Succeeded
+    evidenceRef:
+      name: legal-quality-evidence
+    observedGeneration: 2
+    phase: Passed
+    qualityScore: 85.347
+    samples: 1
+    scoreBreakdown:
+      correctness: 81.653
+      latency: 83.666
+      reliability: 100
+      semantic: 77.343
+    sourceObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      observedLatencyMillis: "3019.751"
+      provider: openai-fr
+      requests: 5
+    verdict: candidate-safe
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782195405"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"marketing-content-quality","namespace":"default"},"spec":{"candidateModel":"gpt-foundry-eu-mini","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":90,"timeoutSeconds":60},"evidenceRef":{"name":"marketing-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"marketing-quality-golden"},"latencyThresholdMs":3500,"minSamples":1,"sourceModel":"gpt-france-mini","target":{"application":"content-writer","namespace":"marketing","team":"marketing"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    finalizers:
+    - aiops.imperium.io/quality-gate-cleanup
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: marketing-content-quality
+    namespace: default
+    resourceVersion: "11508"
+    uid: 95e3f3b2-6e01-4aea-9187-0589b1fb11a8
+  spec:
+    canary: {}
+    candidateModel: gpt-foundry-eu-mini
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 90
+      timeoutSeconds: 60
+    evidenceRef:
+      name: marketing-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: marketing-quality-golden
+    judge: {}
+    latencyThresholdMs: 3500
+    minSamples: 1
+    period: monthly
+    requiredChecks: {}
+    rollback: {}
+    sourceModel: gpt-france-mini
+    target:
+      application: content-writer
+      namespace: marketing
+      team: marketing
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    candidateObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: gpt-foundry-eu-mini
+      observedLatencyMillis: "2220.326"
+      provider: openai-foundry-eu
+      requests: 1
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:52Z"
+      message: 'quality gate failed for marketing/content-writer: 1 failed check(s)'
+      observedGeneration: 2
+      reason: ValidationFailed
+      status: "False"
+      type: Ready
+    dimensions:
+    - name: correctness
+      score: 80.762
+      weight: 0.444
+    - name: reliability
+      score: 100
+      weight: 0.222
+    - name: latency
+      score: 86.562
+      weight: 0.167
+    - name: semantic
+      score: 75.714
+      weight: 0.167
+    - name: judged
+      score: 0
+    - name: overall
+      score: 85.162
+      weight: 1
+    evaluationJobName: quality-eval-marketing-content-quality-e4c79b8b92
+    evaluationJobPhase: Succeeded
+    evidenceRef:
+      name: marketing-quality-evidence
+    failedChecks: 1
+    failureMessages:
+    - candidate quality score 85.162 is below source 89.500 minus tolerance 3.000
+    observedGeneration: 2
+    phase: Failed
+    qualityScore: 85.162
+    samples: 1
+    scoreBreakdown:
+      correctness: 80.762
+      latency: 86.562
+      reliability: 100
+      semantic: 75.714
+    sourceObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      observedLatencyMillis: "2095.479"
+      provider: openai-fr
+      requests: 1
+    verdict: candidate-risk
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782195405"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"rh-chatbot-quality","namespace":"default"},"spec":{"candidateModel":"gpt-france-mini","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":70,"timeoutSeconds":60},"evidenceRef":{"name":"rh-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"rh-quality-golden"},"latencyThresholdMs":3000,"minSamples":1,"sourceModel":"mistral-large-latest","target":{"application":"chatbot-rh","namespace":"rh","team":"rh"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-23T06:14:52Z"
+    finalizers:
+    - aiops.imperium.io/quality-gate-cleanup
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: rh-chatbot-quality
+    namespace: default
+    resourceVersion: "11522"
+    uid: 3fcd4bb3-829f-45a6-b9f4-4cc1433e6a42
+  spec:
+    canary: {}
+    candidateModel: gpt-france-mini
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 70
+      timeoutSeconds: 60
+    evidenceRef:
+      name: rh-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: rh-quality-golden
+    judge: {}
+    latencyThresholdMs: 3000
+    minSamples: 1
+    period: monthly
+    requiredChecks: {}
+    rollback: {}
+    sourceModel: mistral-large-latest
+    target:
+      application: chatbot-rh
+      namespace: rh
+      team: rh
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    candidateObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      observedLatencyMillis: "2216.752"
+      provider: openai-fr
+      requests: 6
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:14:59Z"
+      message: 'quality gate passed for rh/chatbot-rh: candidate "gpt-france-mini"
+        can be considered safe'
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    dimensions:
+    - name: correctness
+      score: 81.718
+      weight: 0.444
+    - name: reliability
+      score: 100
+      weight: 0.222
+    - name: latency
+      score: 76.108
+      weight: 0.167
+    - name: semantic
+      score: 74.457
+      weight: 0.167
+    - name: judged
+      score: 0
+    - name: overall
+      score: 83.636
+      weight: 1
+    evaluationJobName: quality-eval-rh-chatbot-quality-d6df45a7c2
+    evaluationJobPhase: Succeeded
+    evidenceRef:
+      name: rh-quality-evidence
+    observedGeneration: 2
+    phase: Passed
+    qualityScore: 83.636
+    samples: 1
+    scoreBreakdown:
+      correctness: 81.718
+      latency: 76.108
+      reliability: 100
+      semantic: 74.457
+    sourceObservation:
+      errorRatePercent: "0.000"
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      observedLatencyMillis: "1106.110"
+      provider: mistral-eu
+      requests: 1
+    verdict: candidate-safe
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AISovereigntyPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1782195386"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AISovereigntyPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"regulated-france-policy","namespace":"default"},"spec":{"dataResidency":{"allowedZones":["FR","EU"],"forbiddenZones":["US","CN","GLOBAL"]},"enforcementMode":"reportOnly","sensitiveData":{"externalProvidersAllowed":false,"requireAnonymization":true}}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    finalizers:
+    - aiops.imperium.io/enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: regulated-france-policy
+    namespace: default
+    resourceVersion: "11413"
+    uid: 7767a308-c728-4e1f-87e1-f2f0efda5783
+  spec:
+    audit: {}
+    dataResidency:
+      allowedZones:
+      - FR
+      - EU
+      forbiddenZones:
+      - US
+      - CN
+      - GLOBAL
+    enforcementMode: reportOnly
+    sensitiveData:
+      requireAnonymization: true
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:39Z"
+      message: 'Evaluated (reportOnly): 3 finding(s) — 1 critical, 1 warning; enforcement:
+        0 warn, 0 reroute, 0 block'
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    findingsCount: 3
+    observedGeneration: 2
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1782195386"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"finance-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.02","criticalThresholdPercent":90,"enforcementMode":"reportOnly","hardLimitPercent":100,"period":"monthly","target":{"application":"risk-assistant","namespace":"finance","team":"finance"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 3
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: finance-budget
+    namespace: default
+    resourceVersion: "11569"
+    uid: 76a080bd-096b-4539-bfc5-a6fc0f33a205
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: "0.02"
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: risk-assistant
+      namespace: finance
+      team: finance
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:54Z"
+      message: 0.00 / 0.02 EUR consumed (8%) — WithinBudget — no fallback model configured
+      observedGeneration: 3
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 1541u
+    fallbackReason: no fallback model configured
+    observedGeneration: 3
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 1541u
+    usagePercent: 8
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1782195387"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"legal-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"contract-review","namespace":"legal","team":"legal"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: legal-budget
+    namespace: default
+    resourceVersion: "11584"
+    uid: 838b681f-bbbf-48f5-9373-38e10f7a6441
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: contract-review
+      namespace: legal
+      team: legal
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:55Z"
+      message: 0.00 / 0.20 EUR consumed (1%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 1704u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 1704u
+    usagePercent: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1782195387"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"marketing-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"content-writer","namespace":"marketing","team":"marketing"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-23T06:14:49Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: marketing-budget
+    namespace: default
+    resourceVersion: "11441"
+    uid: 221cec60-7a43-4d20-8454-70b8f84ad6dc
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: content-writer
+      namespace: marketing
+      team: marketing
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:55Z"
+      message: 0.00 / 0.20 EUR consumed (1%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 2068u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 2068u
+    usagePercent: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      demo/reconcile: "1782195387"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"rh-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"chatbot-rh","namespace":"rh","team":"rh"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: rh-budget
+    namespace: default
+    resourceVersion: "11436"
+    uid: cbb3ff32-2016-4277-bf9d-72d1a8953550
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: chatbot-rh
+      namespace: rh
+      team: rh
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:54Z"
+      message: 0.00 / 0.20 EUR consumed (1%) — WithinBudget — no fallback model configured
+      observedGeneration: 2
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    currentSpendEUR: 1092u
+    fallbackReason: no fallback model configured
+    observedGeneration: 2
+    phase: WithinBudget
+    projectedMonthlySpendEUR: 1092u
+    usagePercent: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIFinOpsReport
+  metadata:
+    annotations:
+      demo/reconcile: "1782195386"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIFinOpsReport","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"ai-report-all","namespace":"default"},"spec":{"gatewayRef":"main-gateway","target":{"period":"monthly"}}}
+    creationTimestamp: "2026-06-23T06:14:43Z"
+    finalizers:
+    - aiops.imperium.io/report-metrics
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: ai-report-all
+    namespace: default
+    resourceVersion: "11571"
+    uid: c8e90536-ca71-4907-90f5-430f515abb87
+  spec:
+    gatewayRef: main-gateway
+    target:
+      period: monthly
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-23T06:15:54Z"
+      message: Report generated from 10 usage sample(s) via aigw collector
+      observedGeneration: 1
+      reason: ReportGenerated
+      status: "True"
+      type: Ready
+    generatedAt: "2026-06-23T06:16:56Z"
+    latencyTelemetryAvailable: true
+    observedGeneration: 1
+    projectedMonthlyCostEUR: 6405u
+    recommendations:
+    - application: risk-assistant
+      message: 'finance/risk-assistant: 5 request(s) (~0.0015 EUR) sent to non-compliant
+        provider "openai-us" in zone US — route this app to an allowed-zone model.'
+      namespace: finance
+      severity: critical
+      type: sovereignty
+    - application: content-writer
+      estimatedSavingsEUR: 1603u
+      message: 'marketing/content-writer: routing low-stakes "mistral-large-latest"
+        traffic to "mistral-small" would save ~0.0016 EUR over the window (-90%).'
+      namespace: marketing
+      severity: info
+      type: cost-saving
+    - application: contract-review
+      estimatedSavingsEUR: 715u
+      message: 'legal/contract-review: routing low-stakes "gpt-france-mini" traffic
+        to "mistral-small" would save ~0.0007 EUR over the window (-62%).'
+      namespace: legal
+      severity: info
+      type: cost-saving
+    - application: risk-assistant
+      estimatedSavingsEUR: 568u
+      message: 'finance/risk-assistant: routing low-stakes "gpt-us-mini" traffic to
+        "mistral-small" would save ~0.0006 EUR over the window (-62%).'
+      namespace: finance
+      severity: info
+      type: cost-saving
+    - application: chatbot-rh
+      estimatedSavingsEUR: 516u
+      message: 'rh/chatbot-rh: routing low-stakes "gpt-france-mini" traffic to "mistral-small"
+        would save ~0.0005 EUR over the window (-62%).'
+      namespace: rh
+      severity: info
+      type: cost-saving
+    - application: contract-review
+      estimatedSavingsEUR: 497u
+      message: 'legal/contract-review: routing low-stakes "mistral-large-latest" traffic
+        to "mistral-small" would save ~0.0005 EUR over the window (-90%).'
+      namespace: legal
+      severity: info
+      type: cost-saving
+    - application: risk-assistant
+      estimatedSavingsEUR: 447u
+      message: 'finance/risk-assistant: routing low-stakes "mistral-large-latest"
+        traffic to "mistral-small" would save ~0.0004 EUR over the window (-90%).'
+      namespace: finance
+      severity: info
+      type: cost-saving
+    - application: chatbot-rh
+      estimatedSavingsEUR: 232u
+      message: 'rh/chatbot-rh: routing low-stakes "mistral-large-latest" traffic to
+        "mistral-small" would save ~0.0002 EUR over the window (-90%).'
+      namespace: rh
+      severity: info
+      type: cost-saving
+    - application: content-writer
+      estimatedSavingsEUR: 88u
+      message: 'marketing/content-writer: routing low-stakes "gpt-france-mini" traffic
+        to "mistral-small" would save ~0.0001 EUR over the window (-62%).'
+      namespace: marketing
+      severity: info
+      type: cost-saving
+    - application: content-writer
+      estimatedSavingsEUR: 88u
+      message: 'marketing/content-writer: routing low-stakes "gpt-foundry-eu-mini"
+        traffic to "mistral-small" would save ~0.0001 EUR over the window (-62%).'
+      namespace: marketing
+      severity: info
+      type: cost-saving
+    - application: risk-assistant
+      estimatedSavingsEUR: 80u
+      message: 'finance/risk-assistant: routing low-stakes "gpt-france-mini" traffic
+        to "mistral-small" would save ~0.0001 EUR over the window (-61%).'
+      namespace: finance
+      severity: info
+      type: cost-saving
+    routingScores:
+    - application: risk-assistant
+      costEUR: "0.000130"
+      costPerRequestEUR: "0.000130"
+      costScore: "1.000"
+      latencyScore: "0.309"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      namespace: finance
+      observedLatencyMillis: "2427.561"
+      provider: openai-fr
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 1
+      score: "0.862"
+      sovereigntyCompliant: true
+    - application: risk-assistant
+      costEUR: "0.000914"
+      costPerRequestEUR: "0.000183"
+      costScore: "0.874"
+      latencyScore: "0.310"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: gpt-us-mini
+      namespace: finance
+      observedLatencyMillis: "2426.506"
+      provider: openai-us
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 5
+      score: "0.000"
+      sovereigntyCompliant: false
+    - application: risk-assistant
+      costEUR: "0.000497"
+      costPerRequestEUR: "0.000497"
+      costScore: "0.131"
+      latencyScore: "0.541"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      namespace: finance
+      observedLatencyMillis: "1984.950"
+      provider: mistral-eu
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 1
+      score: "0.560"
+      sovereigntyCompliant: true
+    - application: contract-review
+      costEUR: "0.001152"
+      costPerRequestEUR: "0.000230"
+      costScore: "0.762"
+      latencyScore: "0.000"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      namespace: legal
+      observedLatencyMillis: "3019.751"
+      provider: openai-fr
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 5
+      score: "0.705"
+      sovereigntyCompliant: true
+    - application: contract-review
+      costEUR: "0.000552"
+      costPerRequestEUR: "0.000552"
+      costScore: "0.000"
+      latencyScore: "0.365"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      namespace: legal
+      observedLatencyMillis: "2321.696"
+      provider: mistral-eu
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 1
+      score: "0.473"
+      sovereigntyCompliant: true
+    - application: content-writer
+      costEUR: "0.000143"
+      costPerRequestEUR: "0.000143"
+      costScore: "0.968"
+      latencyScore: "0.418"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: gpt-foundry-eu-mini
+      namespace: marketing
+      observedLatencyMillis: "2220.326"
+      provider: openai-foundry-eu
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 1
+      score: "0.871"
+      sovereigntyCompliant: true
+    - application: content-writer
+      costEUR: "0.000143"
+      costPerRequestEUR: "0.000143"
+      costScore: "0.968"
+      latencyScore: "0.483"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      namespace: marketing
+      observedLatencyMillis: "2095.479"
+      provider: openai-fr
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 1
+      score: "0.884"
+      sovereigntyCompliant: true
+    - application: content-writer
+      costEUR: "0.001781"
+      costPerRequestEUR: "0.000356"
+      costScore: "0.464"
+      latencyScore: "0.362"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      namespace: marketing
+      observedLatencyMillis: "2326.703"
+      provider: mistral-eu
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 5
+      score: "0.658"
+      sovereigntyCompliant: true
+    - application: chatbot-rh
+      costEUR: "0.000835"
+      costPerRequestEUR: "0.000139"
+      costScore: "0.978"
+      latencyScore: "0.420"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: gpt-france-mini
+      namespace: rh
+      observedLatencyMillis: "2216.752"
+      provider: openai-fr
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 6
+      score: "0.875"
+      sovereigntyCompliant: true
+    - application: chatbot-rh
+      costEUR: "0.000258"
+      costPerRequestEUR: "0.000258"
+      costScore: "0.697"
+      latencyScore: "1.000"
+      latencySource: observed
+      latencyTelemetryAvailable: true
+      model: mistral-large-latest
+      namespace: rh
+      observedLatencyMillis: "1106.110"
+      provider: mistral-eu
+      qualityScore: "1.000"
+      reliabilityScore: "1.000"
+      requests: 1
+      score: "0.879"
+      sovereigntyCompliant: true
+    sovereigntyFindings:
+    - application: risk-assistant
+      message: Namespace "finance" app "risk-assistant" routed model "gpt-us-mini"
+        to provider "openai-us" in forbidden zone US.
+      model: gpt-us-mini
+      namespace: finance
+      provider: openai-us
+      requests: 5
+      severity: critical
+      zone: US
+    - application: risk-assistant
+      message: Namespace "finance" app "risk-assistant" sent traffic (model "gpt-us-mini")
+        to external managed provider "openai-us" while external providers are disallowed
+        for sensitive data.
+      model: gpt-us-mini
+      namespace: finance
+      provider: openai-us
+      requests: 5
+      severity: warning
+      zone: US
+    - message: Policy requires prompt anonymization; ensure the gateway redacts sensitive
+        fields before egress.
+      severity: info
+    topModels:
+    - costEUR: 3088u
+      name: mistral-large-latest
+    - costEUR: 2260u
+      name: gpt-france-mini
+    - costEUR: 914u
+      name: gpt-us-mini
+    - costEUR: 143u
+      name: gpt-foundry-eu-mini
+    totalCostEUR: 6405u
+    totalInputTokens: 541
+    totalOutputTokens: 2667
+kind: List
+metadata:
+  resourceVersion: ""

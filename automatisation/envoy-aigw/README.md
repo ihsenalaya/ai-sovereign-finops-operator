@@ -11,7 +11,7 @@ alimente `shadow-egress` avec des événements réels.
  rh/legal ─────────► Envoy AI Gateway ──► Azure OpenAI France (FR)
  finance ──────────► Envoy AI Gateway ──► Azure OpenAI US (US)
  marketing ────────► Envoy AI Gateway ──► Azure Foundry Mistral Large (EU)
- quality jobs ─────► Envoy AI Gateway ──► Azure Foundry Mistral Small (EU, optional third radar provider)
+ quality jobs ─────► Envoy AI Gateway ──► Azure Foundry GPT-4.1 Mini (EU, optional third radar provider)
  finance/rogue ────► api.openai.com direct ──► Tetragon ──► shadow-egress
 
  Envoy gen_ai_* metrics ──► operator collector "aigw" ──► cost/sovereignty/budget/latency/quality score
@@ -46,7 +46,7 @@ make real-demo-down
 Prérequis : `kind`, `kubectl`, `helm`, Docker, et une clé Azure AI Foundry
 réellement utilisable dans `operateur/docs/foundrykey.txt` (ou `operateur/docs/mistralkey.txt` pour
 compatibilité). La présence d'une clé seule ne suffit pas : `deploy.sh` fait un
-**préflight Cohere, Mistral Large et Mistral Small** avant de démarrer quand
+**préflight Cohere, Mistral Large et GPT-4.1 Mini Foundry** avant de démarrer quand
 `REQUIRE_THIRD_QUALITY_PROVIDER=true`.
 
 `verify` est le mode recommandé pour une preuve reproductible sans laisser
@@ -68,16 +68,17 @@ collecte les preuves, scale les apps à zéro, puis supprime le cluster kind.
   `marketing/content-writer`. Sert à **vérifier la souveraineté zone-aware** (l'app EU
   ne produit aucune violation de zone, contrairement au provider global).
   Prérequis : clé Foundry dans `operateur/docs/foundrykey.txt`.
-- `05b-mistral-small-eu.yaml` — provider EU optionnel `mistral-small-eu` pour le
+- `05b-openai-foundry-eu.yaml` — provider EU optionnel `openai-foundry-eu` pour le
   troisième polygone du radar QualityScore. `deploy.sh` ne l'applique qu'après
-  un préflight réel sur le déploiement Foundry `mistral-small-latest`.
+  un préflight réel sur le déploiement Foundry `gpt-foundry-eu-mini`
+  (`gpt-4.1-mini`, `DataZoneStandard`).
 - `08-quality-gates.yaml` — golden datasets des 4 apps et `AIQualityGate` sans evidence préremplie ;
   l'opérateur crée les Jobs `quality-eval-*`, appelle la gateway réelle, écrit `evidenceRef`, puis expose
   `ai_finops_quality_score` pour le radar Grafana. Les Jobs n'appellent que les providers conformes à
   `AISovereigntyPolicy` ; les providers US/GLOBAL restent visibles dans les findings de souveraineté mais
-  ne sont pas scorés par QualityScore. Quand `mistral-small-eu` existe réellement,
+  ne sont pas scorés par QualityScore. Quand `openai-foundry-eu` existe réellement,
   `deploy.sh` applique ces mêmes 4 gates en remplaçant le candidat marketing par
-  `mistral-small-latest`, ce qui garde 4 Jobs tout en alimentant 3 providers radar.
+  `gpt-foundry-eu-mini`, ce qui garde 4 Jobs tout en alimentant 3 providers radar.
 - `deploy.sh` — installe et câble le tout (versions épinglées), avec mode `verify`.
 
 ## Comment l'opérateur lit les vrais tokens et la latence réelle
