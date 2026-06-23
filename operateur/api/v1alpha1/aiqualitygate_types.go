@@ -70,6 +70,72 @@ type AIQualityRequiredChecks struct {
 	MaxRetryIncreasePercent int32 `json:"maxRetryIncreasePercent,omitempty"`
 }
 
+// AIQualityScoreWeights configures the composite quality score weights. Nil
+// fields use the product defaults; explicit zero disables a dimension.
+type AIQualityScoreWeights struct {
+	// Correctness is the deterministic golden-dataset weight.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Correctness *float64 `json:"correctness,omitempty"`
+
+	// Reliability is the real telemetry error/timeout/invalid JSON weight.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Reliability *float64 `json:"reliability,omitempty"`
+
+	// Latency is the real telemetry latency weight.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Latency *float64 `json:"latency,omitempty"`
+
+	// Semantic is the local embedding/reference similarity weight.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Semantic *float64 `json:"semantic,omitempty"`
+
+	// Judged is the sovereign LLM judge weight.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Judged *float64 `json:"judged,omitempty"`
+}
+
+// AIQualityJudgeSpec configures the optional sovereign LLM judge.
+type AIQualityJudgeSpec struct {
+	// Enabled includes the judged dimension when a sovereign judge model is available.
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// ModelRef references the AIModel used as judge. The controller must ensure it
+	// is sovereignty-compliant before using it.
+	// +optional
+	ModelRef string `json:"modelRef,omitempty"`
+}
+
+// AIQualityEvaluationSpec configures the real gateway-backed evaluation Job.
+type AIQualityEvaluationSpec struct {
+	// Endpoint is the OpenAI-compatible chat completions endpoint used by the
+	// evaluator Job. It must be the production data-plane path, not the metrics
+	// endpoint. Example:
+	// http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+	// +optional
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// Image overrides the evaluator image. Defaults to the running operator
+	// image so Kind demos evaluate with the same build that reconciles the gate.
+	// +optional
+	Image string `json:"image,omitempty"`
+
+	// MaxTokens limits each golden prompt completion.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MaxTokens int32 `json:"maxTokens,omitempty"`
+
+	// TimeoutSeconds is the per-request gateway timeout.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty"`
+}
+
 // AIQualityCanarySpec describes the intended canary before a complete reroute.
 // The first implementation records the desired canary contract; traffic actuation
 // is handled by routing work planned separately.
@@ -155,6 +221,34 @@ type AIQualityGateSpec struct {
 	// +optional
 	Period string `json:"period,omitempty"`
 
+	// Weights configures the composite AI Quality Score.
+	// +optional
+	Weights AIQualityScoreWeights `json:"weights,omitempty"`
+
+	// LatencyThresholdMs is the threshold used by the latency dimension: at the
+	// threshold the score is 50; half threshold is 100; double threshold is 0.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	LatencyThresholdMs int32 `json:"latencyThresholdMs,omitempty"`
+
+	// MinSamples is the minimum number of golden prompts required to score.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MinSamples int32 `json:"minSamples,omitempty"`
+
+	// TolerancePoints is the allowed candidate regression versus source score.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	TolerancePoints int32 `json:"tolerancePoints,omitempty"`
+
+	// Judge configures the optional sovereign LLM judge.
+	// +optional
+	Judge AIQualityJudgeSpec `json:"judge,omitempty"`
+
+	// Evaluation configures the real gateway-backed evaluator Job.
+	// +optional
+	Evaluation AIQualityEvaluationSpec `json:"evaluation,omitempty"`
+
 	// RequiredChecks configures the deterministic and operational guardrails.
 	// +optional
 	RequiredChecks AIQualityRequiredChecks `json:"requiredChecks,omitempty"`
@@ -182,6 +276,9 @@ const (
 type AIQualityModelObservation struct {
 	// Model is the provider-side model identifier.
 	Model string `json:"model,omitempty"`
+	// Provider is the observed or catalogued provider for the model.
+	// +optional
+	Provider string `json:"provider,omitempty"`
 	// Requests observed for the target app/model.
 	Requests int64 `json:"requests,omitempty"`
 	// Errors observed for the target app/model.
@@ -192,6 +289,56 @@ type AIQualityModelObservation struct {
 	ObservedLatencyMillis string `json:"observedLatencyMillis,omitempty"`
 	// LatencyTelemetryAvailable is true when ObservedLatencyMillis is real telemetry.
 	LatencyTelemetryAvailable bool `json:"latencyTelemetryAvailable,omitempty"`
+}
+
+// AIQualityScoreBreakdown contains normalized 0..100 dimension scores.
+type AIQualityScoreBreakdown struct {
+	// Correctness is the deterministic golden-dataset score.
+	// +optional
+	Correctness float64 `json:"correctness,omitempty"`
+
+	// Reliability is the real telemetry reliability score.
+	// +optional
+	Reliability float64 `json:"reliability,omitempty"`
+
+	// Latency is the real telemetry latency score.
+	// +optional
+	Latency float64 `json:"latency,omitempty"`
+
+	// Semantic is the reference-based semantic score.
+	// +optional
+	Semantic float64 `json:"semantic,omitempty"`
+
+	// Judged is the optional sovereign judge score.
+	// +optional
+	Judged float64 `json:"judged,omitempty"`
+}
+
+// AIQualityWeightsUsed records the normalized weights used for scoring.
+type AIQualityWeightsUsed struct {
+	// +optional
+	Correctness float64 `json:"correctness,omitempty"`
+	// +optional
+	Reliability float64 `json:"reliability,omitempty"`
+	// +optional
+	Latency float64 `json:"latency,omitempty"`
+	// +optional
+	Semantic float64 `json:"semantic,omitempty"`
+	// +optional
+	Judged float64 `json:"judged,omitempty"`
+}
+
+// AIQualityDimensionStatus is one radar-ready score dimension.
+type AIQualityDimensionStatus struct {
+	// Name is one of correctness, reliability, latency, semantic, judged or overall.
+	Name string `json:"name"`
+
+	// Score is normalized in [0,100].
+	Score float64 `json:"score"`
+
+	// Weight is the normalized weight used for this dimension. Overall has weight 1.
+	// +optional
+	Weight float64 `json:"weight,omitempty"`
 }
 
 // AIQualityGateStatus defines the observed state of AIQualityGate.
@@ -216,6 +363,38 @@ type AIQualityGateStatus struct {
 	// FailedChecks is the number of failed deterministic or operational checks.
 	// +optional
 	FailedChecks int32 `json:"failedChecks,omitempty"`
+
+	// QualityScore is the candidate composite score in [0,100].
+	// +optional
+	QualityScore float64 `json:"qualityScore,omitempty"`
+
+	// ScoreBreakdown contains the candidate score components.
+	// +optional
+	ScoreBreakdown AIQualityScoreBreakdown `json:"scoreBreakdown,omitempty"`
+
+	// WeightsUsed records normalized score weights.
+	// +optional
+	WeightsUsed AIQualityWeightsUsed `json:"weightsUsed,omitempty"`
+
+	// Samples is the number of candidate evidence samples used by the quality score.
+	// +optional
+	Samples int32 `json:"samples,omitempty"`
+
+	// Dimensions is a radar-ready view of score components.
+	// +optional
+	Dimensions []AIQualityDimensionStatus `json:"dimensions,omitempty"`
+
+	// EvidenceRef echoes the evidence ConfigMap used or written for audit.
+	// +optional
+	EvidenceRef *ConfigMapDataReference `json:"evidenceRef,omitempty"`
+
+	// EvaluationJobName is the Kubernetes Job producing gateway-backed evidence.
+	// +optional
+	EvaluationJobName string `json:"evaluationJobName,omitempty"`
+
+	// EvaluationJobPhase is Pending, Running, Succeeded or Failed.
+	// +optional
+	EvaluationJobPhase string `json:"evaluationJobPhase,omitempty"`
 
 	// FailureMessages explains failed or missing checks for human review.
 	// +optional
@@ -251,6 +430,7 @@ type AIQualityGateStatus struct {
 //+kubebuilder:printcolumn:name="Candidate",type=string,JSONPath=`.spec.candidateModel`
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 //+kubebuilder:printcolumn:name="Verdict",type=string,JSONPath=`.status.verdict`
+//+kubebuilder:printcolumn:name="Score",type=number,JSONPath=`.status.qualityScore`
 //+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // AIQualityGate validates whether a candidate model is safe enough for one app.

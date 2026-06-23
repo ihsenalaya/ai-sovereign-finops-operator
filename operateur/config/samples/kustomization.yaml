@@ -1,8 +1,10 @@
 ## Append samples of your project ##
 resources:
 - aiops_v1alpha1_aigateway.yaml
+- aiops_v1alpha1_aiprovider_cohere.yaml
 - aiops_v1alpha1_aiprovider_openai_us.yaml
 - aiops_v1alpha1_aiprovider_mistral.yaml
+- aiops_v1alpha1_aimodel_cohere.yaml
 - aiops_v1alpha1_aimodel.yaml
 - aiops_v1alpha1_aimodel_gpt4o.yaml
 - aiops_v1alpha1_aibudgetpolicy.yaml

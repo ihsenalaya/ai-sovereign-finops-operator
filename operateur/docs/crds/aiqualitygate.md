@@ -13,9 +13,18 @@ est **un `AIQualityGate` par application**.
 | `sourceModel` | string | ✔ | Modèle actuel. |
 | `candidateModel` | string | ✔ | Modèle candidat. |
 | `goldenDatasetRef.name/namespace/key` | ConfigMap ref | ✔ | Prompts métier de référence (`prompts.yaml` par défaut). |
-| `evidenceRef.name/namespace/key` | ConfigMap ref | | Résultats déterministes d'un run golden (`results.yaml` par défaut). Requis si des checks de réponse sont activés. |
+| `evidenceRef.name/namespace/key` | ConfigMap ref | | Résultats déterministes d'un run golden (`results.yaml` par défaut), puis preuve auditable du score. Requis si des checks de réponse ou le score composite sont activés. |
 | `gatewayRef` | string | | Gateway à utiliser pour la télémétrie. Par défaut, première `AIGateway` du namespace. |
 | `period` | enum `daily\|weekly\|monthly` | | Fenêtre de télémétrie, défaut `monthly`. |
+| `weights.correctness/reliability/latency/semantic/judged` | object | | Poids du score composite. Défaut `0.40/0.20/0.15/0.15/0.10`, renormalisés si le juge est désactivé. |
+| `latencyThresholdMs` | int32 | | Seuil de latence utilisé par la dimension `Latency` (`seuil => 50`). |
+| `minSamples` | int32 | | Nombre minimal de prompts golden requis. Défaut `1`. |
+| `tolerancePoints` | int32 | | Tolérance de dégradation candidat vs source. Défaut `3`. |
+| `judge.enabled` | bool | | Active la dimension `Judged` si un juge souverain est disponible. |
+| `judge.modelRef` | string | | `AIModel` du juge LLM ; doit être conforme aux policies de souveraineté. |
+| `evaluation.endpoint` | string | | Endpoint OpenAI-compatible `/v1/chat/completions` du data-plane de production appelé par le Job d'évaluation. |
+| `evaluation.image` | string | | Image du Job d'évaluation. Défaut : image du pod opérateur en cours. |
+| `evaluation.maxTokens` / `timeoutSeconds` | int32 | | Bornes par prompt pour les appels réels via gateway. |
 | `requiredChecks.schemaValid` | bool | | Vérifie via evidence que le format attendu est respecté. |
 | `requiredChecks.noUnexpectedRefusal` | bool | | Vérifie via evidence qu'il n'y a pas de refus inattendu. |
 | `requiredChecks.noSensitiveDataLeak` | bool | | Vérifie via evidence qu'il n'y a pas de fuite sensible. |
@@ -28,22 +37,29 @@ est **un `AIQualityGate` par application**.
 
 ## Status
 `observedGeneration`, `phase` (`Pending|Passed|Failed`), `verdict`
-(`insufficient-data|candidate-safe|candidate-risk`), `checkedSamples`, `failedChecks`,
-`failureMessages[]`, `canaryStatus`, `sourceObservation`, `candidateObservation`, `conditions[]`.
+(`insufficient-data|candidate-safe|candidate-risk`), `qualityScore`, `scoreBreakdown`,
+`weightsUsed`, `samples`, `dimensions`, `checkedSamples`, `failedChecks`, `failureMessages[]`,
+`canaryStatus`, `sourceObservation`, `candidateObservation`, `evaluationJobName`,
+`evaluationJobPhase`, `conditions[]`.
 
 ## Comportement du controller
 Le controller :
 
 - lit et valide le golden dataset ;
-- lit l'evidence ConfigMap si des checks de réponse sont activés ;
+- lance un `Job` Kubernetes d'évaluation si `evidenceRef` ne contient pas encore les sorties
+  source/candidat ; ce Job appelle `spec.evaluation.endpoint` via le chemin gateway de production ;
+- écrit les sorties réelles du Job dans l'evidence ConfigMap (`results.yaml`) ;
+- lit l'evidence ConfigMap si des checks de réponse ou le score composite sont activés ;
 - collecte la télémétrie via l'`AIGateway` ;
-- compare source et candidat pour les seuils opérationnels disponibles ;
-- expose `ai_finops_quality_gate_passed` et `ai_finops_quality_gate_failed_checks` ;
+- calcule `qualityScore` via [qualityengine](../features/qualityscore.md) sans inventer de signal ;
+- compare le score candidat au score source avec `tolerancePoints` ;
+- expose `ai_finops_quality_score{namespace,app,provider,model,dimension}`,
+  `ai_finops_quality_gate_passed` et `ai_finops_quality_gate_failed_checks` ;
 - écrit un status lisible par un humain.
 
-Il ne lance pas encore lui-même les prompts golden ni le canary de trafic. Ces deux étapes sont le
-prochain morceau d'actuation ; cette première version fournit le contrat Kubernetes et la décision
-auditable basée sur evidence + télémétrie.
+Sans golden dataset suffisant ou sans télémétrie réelle, le verdict reste `insufficient-data` et la
+condition `Ready` porte `NoTelemetrySource` ou la raison de validation correspondante. Le canary de
+trafic reste déclaratif tant que l'actuation complète n'est pas configurée.
 
 ## Exemple
 [`..._aiqualitygate.yaml`](../../config/samples/aiops_v1alpha1_aiqualitygate.yaml).

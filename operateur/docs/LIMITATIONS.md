@@ -34,6 +34,10 @@
 - **Devise** : pas de conversion multi-devise ; la devise dominante est rapportée telle quelle.
 - **Break-even** : modèle simple (extrapolation linéaire de l'usage observé ; coûts GPU/ops fournis
   par l'utilisateur). Seuil de payback par défaut : 6 mois.
+- **AI Quality Score** : sans golden dataset suffisant, evidence de réponses ou télémétrie gateway
+  réelle, le verdict reste `insufficient-data`. La dimension `Judged` est désactivable et ne doit être
+  utilisée qu'avec un modèle juge souverain conforme ; aucun score n'est synthétisé pour combler un
+  backend embeddings ou juge absent.
 
 ## Plateforme
 - Versions d'outils bumpées pour Go 1.25 (controller-gen 0.18, kustomize 5.4.3, envtest k8s 1.31).

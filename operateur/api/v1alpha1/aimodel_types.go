@@ -83,6 +83,14 @@ type AIModelStatus struct {
 	// +optional
 	ResolvedProvider string `json:"resolvedProvider,omitempty"`
 
+	// LastQualityScore is the latest AIQualityGate candidate score observed for this model.
+	// +optional
+	LastQualityScore float64 `json:"lastQualityScore,omitempty"`
+
+	// LastEvaluatedAt is the time of the latest AIQualityGate score update for this model.
+	// +optional
+	LastEvaluatedAt *metav1.Time `json:"lastEvaluatedAt,omitempty"`
+
 	// Conditions represent the latest available observations of the model state.
 	// +optional
 	// +patchMergeKey=type

@@ -88,7 +88,7 @@ func (cat catalog) routingModelInfo(pe *sovereigntyengine.Policy) map[string]rou
 	for _, name := range catalogdefaults.AllModelNames() {
 		zone := catalogdefaults.ZoneForModel(name)
 		compliant := pe == nil || sovereigntyengine.IsZoneAllowed(*pe, zone)
-		out[name] = routingscore.ModelInfo{SovereigntyCompliant: compliant}
+		out[name] = routingscore.ModelInfo{SovereigntyChecked: true, SovereigntyCompliant: compliant}
 	}
 	for i := range cat.models {
 		m := cat.models[i]
@@ -96,6 +96,7 @@ func (cat catalog) routingModelInfo(pe *sovereigntyengine.Policy) map[string]rou
 		compliant := pe == nil || sovereigntyengine.IsZoneAllowed(*pe, zone)
 		out[m.Spec.ModelName] = routingscore.ModelInfo{
 			QualityTier:          string(m.Spec.QualityTier),
+			SovereigntyChecked:   true,
 			SovereigntyCompliant: compliant,
 		}
 	}

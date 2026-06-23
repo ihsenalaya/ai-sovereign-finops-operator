@@ -17,10 +17,14 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -39,6 +43,7 @@ import (
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/controller"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/qualityeval"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/webhook/bootstrap"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/webhook/podinjector"
 	//+kubebuilder:scaffold:imports
@@ -61,6 +66,14 @@ func init() {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "quality-eval" {
+		if err := runQualityEval(os.Args[2:]); err != nil {
+			log.Printf("quality-eval failed: %v", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -263,4 +276,55 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func runQualityEval(args []string) error {
+	fs := flag.NewFlagSet("quality-eval", flag.ContinueOnError)
+	var opts qualityeval.Options
+	var timeoutSeconds int
+	var terminationLog string
+	fs.StringVar(&opts.Endpoint, "endpoint", "", "OpenAI-compatible gateway chat completions endpoint")
+	fs.StringVar(&opts.PromptsDir, "prompts-dir", "", "directory containing prompts.yaml/prompts.json")
+	fs.StringVar(&opts.PromptsFile, "prompts-file", "", "explicit golden dataset file")
+	fs.StringVar(&opts.Namespace, "namespace", "", "application namespace attribution header")
+	fs.StringVar(&opts.Application, "application", "", "application attribution header")
+	fs.StringVar(&opts.SourceModel, "source-model", "", "source model name")
+	fs.StringVar(&opts.CandidateModel, "candidate-model", "", "candidate model name")
+	fs.IntVar(&opts.MaxTokens, "max-tokens", 96, "max completion tokens per prompt")
+	fs.IntVar(&timeoutSeconds, "timeout-seconds", 60, "HTTP timeout per gateway request")
+	fs.StringVar(&terminationLog, "termination-log", "/dev/termination-log", "path for Kubernetes termination message evidence")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	opts.Timeout = time.Duration(timeoutSeconds) * time.Second
+	raw, err := qualityeval.Run(context.Background(), opts)
+	if err != nil {
+		if terminationLog != "" {
+			_ = writeTerminationError(terminationLog, err)
+		}
+		return err
+	}
+	if terminationLog != "" {
+		if err := writeTerminationMessage(terminationLog, raw); err != nil {
+			return err
+		}
+	}
+	log.Printf("quality-eval completed: wrote %d bytes of evidence", len(raw))
+	return nil
+}
+
+func writeTerminationMessage(path string, raw []byte) error {
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		return fmt.Errorf("write termination log %s: %w", path, err)
+	}
+	return nil
+}
+
+func writeTerminationError(path string, cause error) error {
+	const maxTerminationLogBytes = 4096
+	raw := []byte("ERROR: " + cause.Error())
+	if len(raw) > maxTerminationLogBytes {
+		raw = raw[:maxTerminationLogBytes]
+	}
+	return writeTerminationMessage(path, raw)
 }

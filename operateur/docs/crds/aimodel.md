@@ -16,7 +16,11 @@ Catalogue un modèle IA disponible et le lie à un [AIProvider](aiprovider.md).
 | `sensitiveDataAllowed` | bool | | Donnée sensible autorisée sur ce modèle. |
 
 ## Status
-`observedGeneration`, `resolvedProvider` (type du provider résolu), `conditions[]` (`Ready`).
+`observedGeneration`, `resolvedProvider` (type du provider résolu), `lastQualityScore`,
+`lastEvaluatedAt`, `conditions[]` (`Ready`).
+
+`lastQualityScore` et `lastEvaluatedAt` résument la dernière évaluation `AIQualityGate` qui ciblait
+ce modèle. Le détail auditable reste porté par le `AIQualityGate.status` et son `evidenceRef`.
 
 ## Comportement du controller
 Résout `providerRef` :

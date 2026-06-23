@@ -38,7 +38,6 @@ type reportSeriesSet struct {
 	routingScore     [][]string // {namespace, application, model, latency_telemetry}
 	latencyAvail     [][]string // {namespace, application, model, source}
 	costScore        [][]string // {namespace, application, model}
-	qualityScore     [][]string // {namespace, application, model}
 	reliabilityScore [][]string // {namespace, application, model}
 	sovereigntyScore [][]string // {namespace, application, model}
 }
@@ -63,9 +62,6 @@ func (s *reportSeriesSet) addLatencyScore(ns, app, model, available string) {
 }
 func (s *reportSeriesSet) addCostScore(ns, app, model string) {
 	s.costScore = append(s.costScore, []string{ns, app, model})
-}
-func (s *reportSeriesSet) addQualityScore(ns, app, model string) {
-	s.qualityScore = append(s.qualityScore, []string{ns, app, model})
 }
 func (s *reportSeriesSet) addReliabilityScore(ns, app, model string) {
 	s.reliabilityScore = append(s.reliabilityScore, []string{ns, app, model})
@@ -120,7 +116,6 @@ func (t *reportMetricTracker) retire(uid types.UID, now *reportSeriesSet) {
 		deleteStale(metrics.RoutingScore, prev.routingScore, now.routingScore)
 		deleteStale(metrics.LatencyTelemetryAvailable, prev.latencyAvail, now.latencyAvail)
 		deleteStale(metrics.CostScore, prev.costScore, now.costScore)
-		deleteStale(metrics.QualityScore, prev.qualityScore, now.qualityScore)
 		deleteStale(metrics.ReliabilityScore, prev.reliabilityScore, now.reliabilityScore)
 		deleteStale(metrics.SovereigntyScore, prev.sovereigntyScore, now.sovereigntyScore)
 	}
@@ -145,7 +140,6 @@ func (t *reportMetricTracker) forget(uid types.UID) {
 	deleteStale(metrics.RoutingScore, prev.routingScore, nil)
 	deleteStale(metrics.LatencyTelemetryAvailable, prev.latencyAvail, nil)
 	deleteStale(metrics.CostScore, prev.costScore, nil)
-	deleteStale(metrics.QualityScore, prev.qualityScore, nil)
 	deleteStale(metrics.ReliabilityScore, prev.reliabilityScore, nil)
 	deleteStale(metrics.SovereigntyScore, prev.sovereigntyScore, nil)
 	delete(t.byUID, uid)

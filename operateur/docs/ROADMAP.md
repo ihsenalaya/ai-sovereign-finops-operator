@@ -78,10 +78,16 @@ Statut : ✅ fait · 🛠️ en cours · ⬜ à venir
 - [x] CRD/RBAC/Helm/chart sync + sample mis à jour
 - [x] Validation live sur kind via `automatisation/envoy-aigw/`
 
+## Sprint 12 — AI Quality Score 🛠️
+- [x] Spécification documentaire : score composite `0..100`, auditabilité, métrique et radar.
+- [ ] Moteur pur `qualityengine`, status CRD, métriques et dashboard ECharts.
+- [ ] Orchestration complète d'évaluation Azure AI Foundry sur Kind.
+
 > Ce fichier est mis à jour au fil de l'avancement par l'agent.
 
 ## Post-MVP (engagé / en cours)
 - **Enforcement `block`** au gateway pour un modèle interdit **sans** fallback conforme (retrait/deny de la route).
 - **Télémétrie** : durcir le chemin Envoy/OTel — erreurs, **détection de reset** des compteurs gateway.
+- **Quality score** : historisation longue et backends embeddings locaux configurables.
 - Multi-devise, FX ; persistance historique ; export S3/PDF du dossier d'audit.
 - Webhooks de validation/défaut, conversion de versions d'API.

@@ -22,7 +22,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,6 +39,8 @@ const testNamespace = "default"
 func reqFor(name string) reconcile.Request {
 	return reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: testNamespace}}
 }
+
+func ptrFloat64(v float64) *float64 { return &v }
 
 // seedEmptyTelemetry registers a REAL but empty telemetry source so reconcilers
 // that read measured spend have a source to read (and find zero usage) rather than
@@ -315,24 +319,59 @@ var _ = Describe("aiops reconcilers", func() {
 				Data: map[string]string{"prompts.yaml": `
 - id: risk-summary
   prompt: "Summarize supplier risk."
+  expected:
+    reference: "Supplier risk includes counterparty liquidity and operational exposure."
 - id: var-explain
   prompt: "Explain value at risk."
+  expected:
+    reference: "Value at risk estimates portfolio loss at a confidence level."
 `},
 			}
 			Expect(k8sClient.Create(ctx, dataset)).To(Succeed())
 			DeferCleanup(func() { _ = k8sClient.Delete(ctx, dataset) })
 
 			evidence := &corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{Name: "finance-evidence", Namespace: testNamespace},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "finance-evidence",
+					Namespace: testNamespace,
+					Labels: map[string]string{
+						qualityGateLabel:           "finance-quality",
+						qualityEvidenceSourceLabel: qualityEvidenceSourceJob,
+					},
+				},
 				Data: map[string]string{"results.yaml": `
 - id: risk-summary
+  model: gpt-us-mini
+  reference: "Supplier risk includes counterparty liquidity and operational exposure."
+  actual: "Supplier risk includes counterparty liquidity and operational exposure."
+  semanticScore: 96
+  schemaValid: true
+  unexpectedRefusal: false
+  sensitiveDataLeak: false
+  requiredKeywordsPresent: true
+- id: var-explain
+  model: gpt-us-mini
+  reference: "Value at risk estimates portfolio loss at a confidence level."
+  actual: "Value at risk estimates portfolio loss at a confidence level."
+  semanticScore: 95
+  schemaValid: true
+  unexpectedRefusal: false
+  sensitiveDataLeak: false
+  requiredKeywordsPresent: true
+- id: risk-summary
   model: gpt-france-mini
+  reference: "Supplier risk includes counterparty liquidity and operational exposure."
+  actual: "Supplier risk includes counterparty liquidity and operational exposure."
+  semanticScore: 95
   schemaValid: true
   unexpectedRefusal: false
   sensitiveDataLeak: false
   requiredKeywordsPresent: true
 - id: var-explain
   model: gpt-france-mini
+  reference: "Value at risk estimates portfolio loss at a confidence level."
+  actual: "Value at risk estimates portfolio loss at a confidence level."
+  semanticScore: 94
   schemaValid: true
   unexpectedRefusal: false
   sensitiveDataLeak: false
@@ -351,7 +390,12 @@ var _ = Describe("aiops reconcilers", func() {
 					GoldenDatasetRef: aiopsv1alpha1.ConfigMapDataReference{
 						Name: "finance-golden",
 					},
-					EvidenceRef: &aiopsv1alpha1.ConfigMapDataReference{Name: "finance-evidence"},
+					EvidenceRef:        &aiopsv1alpha1.ConfigMapDataReference{Name: "finance-evidence"},
+					LatencyThresholdMs: 1500,
+					MinSamples:         2,
+					Weights: aiopsv1alpha1.AIQualityScoreWeights{
+						Judged: ptrFloat64(0),
+					},
 					RequiredChecks: aiopsv1alpha1.AIQualityRequiredChecks{
 						SchemaValid:               true,
 						NoUnexpectedRefusal:       true,
@@ -368,6 +412,8 @@ var _ = Describe("aiops reconcilers", func() {
 			r := &AIQualityGateReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
 			_, err := r.Reconcile(ctx, reqFor("finance-quality"))
 			Expect(err).NotTo(HaveOccurred())
+			_, err = r.Reconcile(ctx, reqFor("finance-quality"))
+			Expect(err).NotTo(HaveOccurred())
 
 			got := &aiopsv1alpha1.AIQualityGate{}
 			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "finance-quality", Namespace: testNamespace}, got)).To(Succeed())
@@ -376,7 +422,82 @@ var _ = Describe("aiops reconcilers", func() {
 			Expect(got.Status.CheckedSamples).To(Equal(int32(2)))
 			Expect(got.Status.FailedChecks).To(Equal(int32(0)))
 			Expect(got.Status.CandidateObservation).NotTo(BeNil())
+			Expect(got.Status.QualityScore).To(BeNumerically(">", 0))
+			Expect(got.Status.ScoreBreakdown.Correctness).To(BeNumerically(">", 0))
+			Expect(got.Status.Dimensions).NotTo(BeEmpty())
 			Expect(meta.IsStatusConditionTrue(got.Status.Conditions, aiopsv1alpha1.ConditionReady)).To(BeTrue())
+		})
+
+		It("cleans evaluation jobs and live evidence through the finalizer", func() {
+			gate := &aiopsv1alpha1.AIQualityGate{
+				ObjectMeta: metav1.ObjectMeta{Name: "cleanup-quality", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AIQualityGateSpec{
+					Target:           aiopsv1alpha1.AIQualityGateTarget{Namespace: "finance", Application: "risk-assistant"},
+					SourceModel:      "gpt-us-mini",
+					CandidateModel:   "gpt-france-mini",
+					GoldenDatasetRef: aiopsv1alpha1.ConfigMapDataReference{Name: "cleanup-golden"},
+					EvidenceRef:      &aiopsv1alpha1.ConfigMapDataReference{Name: "cleanup-evidence"},
+				},
+			}
+			Expect(k8sClient.Create(ctx, gate)).To(Succeed())
+
+			r := &AIQualityGateReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err := r.Reconcile(ctx, reqFor("cleanup-quality"))
+			Expect(err).NotTo(HaveOccurred())
+
+			got := &aiopsv1alpha1.AIQualityGate{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "cleanup-quality", Namespace: testNamespace}, got)).To(Succeed())
+			Expect(got.Finalizers).To(ContainElement(qualityGateFinalizer))
+
+			job := &batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "quality-eval-cleanup",
+					Namespace: testNamespace,
+					Labels: map[string]string{
+						qualityGateLabel:      "cleanup-quality",
+						qualityEvaluatorLabel: "true",
+					},
+				},
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							RestartPolicy: corev1.RestartPolicyNever,
+							Containers: []corev1.Container{{
+								Name:  "quality-evaluator",
+								Image: "busybox:1.36",
+							}},
+						},
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, job)).To(Succeed())
+
+			evidence := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "cleanup-evidence",
+					Namespace: testNamespace,
+					Labels: map[string]string{
+						qualityGateLabel:           "cleanup-quality",
+						qualityEvidenceSourceLabel: qualityEvidenceSourceJob,
+					},
+				},
+				Data: map[string]string{"results.yaml": "samples: []"},
+			}
+			Expect(k8sClient.Create(ctx, evidence)).To(Succeed())
+
+			Expect(k8sClient.Delete(ctx, got)).To(Succeed())
+			_, err = r.Reconcile(ctx, reqFor("cleanup-quality"))
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(func() bool {
+				var job batchv1.Job
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: "quality-eval-cleanup", Namespace: testNamespace}, &job)
+				return apierrors.IsNotFound(err) || !job.ObjectMeta.DeletionTimestamp.IsZero()
+			}).Should(BeTrue())
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: "cleanup-evidence", Namespace: testNamespace}, &corev1.ConfigMap{})
+				return apierrors.IsNotFound(err)
+			}).Should(BeTrue())
 		})
 	})
 

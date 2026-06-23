@@ -28,7 +28,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Total cost (EUR) \u2014 observed",
+      "title": "Total cost (EUR) — observed",
       "description": "Real spend so far: measured gateway tokens x real per-model list prices.",
       "datasource": "${datasource}",
       "gridPos": {
@@ -343,7 +343,7 @@
     {
       "type": "table",
       "title": "Enforcement actions (sovereignty)",
-      "description": "Ce que l'op\u00e9rateur D\u00c9CIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (mod\u00e8le interdit -> backend conforme, R\u00c9\u00c9CRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqu\u00e9 de bout en bout : warn/report toujours, et reroute d\u00e9sormais ACTU\u00c9 dans le plan de donn\u00e9es (slice 2). Source: ai_finops_enforcement_actions.",
+      "description": "Ce que l'opérateur DÉCIDE et APPLIQUE pour chaque workload non conforme, selon le mode de la policy. action: report (reportOnly) / warn (alerte) / reroute (modèle interdit -> backend conforme, RÉÉCRIT au niveau de l'Envoy AI Gateway) / block. actuated=true = appliqué de bout en bout : warn/report toujours, et reroute désormais ACTUÉ dans le plan de données (slice 2). Source: ai_finops_enforcement_actions.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 8,
@@ -446,7 +446,7 @@
     },
     {
       "type": "row",
-      "title": "Routing Score & Souverainet\u00e9",
+      "title": "Routing Score & Souveraineté",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -457,8 +457,8 @@
     },
     {
       "type": "table",
-      "title": "Score de routage par application / mod\u00e8le",
-      "description": "Score composite [0\u20131] : 40% co\u00fbt + 30% qualit\u00e9 + 20% latence + 10% fiabilit\u00e9. Score = 0 si le mod\u00e8le viole la politique de souverainet\u00e9 active.",
+      "title": "Score de routage par application / modèle",
+      "description": "Score composite [0–1] : 40% coût + 30% qualité + 20% latence + 10% fiabilité. Score = 0 si le modèle viole la politique de souveraineté active.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 10,
@@ -492,7 +492,7 @@
             "renameByName": {
               "namespace": "Namespace",
               "application": "Application",
-              "model": "Mod\u00e8le",
+              "model": "Modèle",
               "latency_telemetry": "Latence dispo",
               "Value": "Score final [0-1]"
             },
@@ -568,8 +568,8 @@
     },
     {
       "type": "timeseries",
-      "title": "\u00c9volution du score de routage dans le temps",
-      "description": "Suivi temporel du score composite par application/mod\u00e8le. Un score tombant \u00e0 0 indique une violation de souverainet\u00e9 d\u00e9tect\u00e9e.",
+      "title": "Évolution du score de routage dans le temps",
+      "description": "Suivi temporel du score composite par application/modèle. Un score tombant à 0 indique une violation de souveraineté détectée.",
       "datasource": "${datasource}",
       "gridPos": {
         "h": 10,
@@ -591,7 +591,7 @@
         {
           "datasource": null,
           "expr": "ai_finops_routing_score",
-          "legendFormat": "{{namespace}}/{{application}} \u2014 {{model}}",
+          "legendFormat": "{{namespace}}/{{application}} — {{model}}",
           "refId": "A"
         }
       ],
@@ -632,14 +632,14 @@
         "x": 0,
         "y": 68
       },
-      "title": "Radar \u2014 Comparaison multi-dimensionnelle des mod\u00e8les",
+      "title": "Radar — Comparaison multi-dimensionnelle des modèles",
       "type": "row"
     },
     {
-      "type": "ae3e-plotly-panel",
+      "type": "volkovlabs-echarts-panel",
       "id": 50,
-      "title": "Radar \u2014 Score par dimension pour chaque mod\u00e8le",
-      "description": "Chaque polygone = un mod\u00e8le. Les 5 axes = Co\u00fbt \u00b7 Qualit\u00e9 \u00b7 Latence \u00b7 Fiabilit\u00e9 \u00b7 Souverainet\u00e9 (0 = mauvais, 1 = parfait). Un grand polygone = un bon mod\u00e8le.",
+      "title": "Radar — AI Quality Score par fournisseur",
+      "description": "Axes: Correctness, Reliability, Latency, Semantic, Overall. Chaque polygone représente un fournisseur détecté via ai_finops_quality_score.",
       "gridPos": {
         "h": 16,
         "w": 14,
@@ -647,9 +647,10 @@
         "y": 69
       },
       "options": {
-        "script": "\nvar dims = {cost: 0, quality: 1, latency: 2, reliability: 3, sovereignty: 4};\nvar theta = ['Co\u00fbt', 'Qualit\u00e9', 'Latence', 'Fiabilit\u00e9', 'Souverainet\u00e9', 'Co\u00fbt'];\nvar models = {};\n\n(data.series || []).forEach(function(frame) {\n  var refId = (frame.refId || '').toLowerCase();\n  if (!dims.hasOwnProperty(refId)) return;\n  (frame.fields || []).forEach(function(field) {\n    if (field.type !== 'number') return;\n    var labels = field.labels || {};\n    var model = labels.model || labels.Model || 'unknown';\n    if (!models[model]) models[model] = {cost:0, quality:0, latency:0, reliability:0, sovereignty:0};\n    var vals = field.values;\n    var v = (vals && vals.length > 0) ? vals[vals.length - 1] : (vals && vals.get ? vals.get(0) : 0);\n    models[model][refId] = v || 0;\n  });\n});\n\nvar traces = Object.keys(models).map(function(model, idx) {\n  var s = models[model];\n  var r = [s.cost, s.quality, s.latency, s.reliability, s.sovereignty, s.cost];\n  return {\n    type: 'scatterpolar',\n    r: r,\n    theta: theta,\n    fill: 'toself',\n    name: model,\n    opacity: 0.75\n  };\n});\n\nreturn {\n  data: traces,\n  layout: {\n    paper_bgcolor: 'transparent',\n    plot_bgcolor: 'transparent',\n    font: {color: '#d0d0d0', size: 13},\n    polar: {\n      bgcolor: 'rgba(30,30,40,0.5)',\n      radialaxis: {\n        visible: true,\n        range: [0, 1],\n        tickfont: {size: 10},\n        gridcolor: 'rgba(200,200,200,0.2)',\n        linecolor: 'rgba(200,200,200,0.3)'\n      },\n      angularaxis: {\n        gridcolor: 'rgba(200,200,200,0.2)',\n        linecolor: 'rgba(200,200,200,0.3)'\n      }\n    },\n    showlegend: true,\n    legend: {orientation: 'h', y: -0.15},\n    margin: {t: 30, b: 60, l: 40, r: 40}\n  },\n  config: {responsive: true}\n};\n",
-        "onclick": "",
-        "onrender": ""
+        "renderer": "canvas",
+        "editorMode": "code",
+        "code": "const frames = context.panel.data.series || [];\nconst labels = ['Correctness', 'Reliability', 'Latency', 'Semantic', 'Overall'];\nconst order = ['correctness', 'reliability', 'latency', 'semantic', 'overall'];\nconst providers = {};\n\nfunction lastValue(field) {\n  const values = field.values;\n  if (!values) return 0;\n  if (typeof values.get === 'function') return values.length ? values.get(values.length - 1) : 0;\n  return values.length ? values[values.length - 1] : 0;\n}\n\nframes.forEach((frame) => {\n  (frame.fields || []).forEach((field) => {\n    if (field.type !== 'number') return;\n    const l = field.labels || {};\n    const provider = l.provider || 'unknown';\n    const dimension = (l.dimension || '').toLowerCase();\n    if (!order.includes(dimension)) return;\n    if (!providers[provider]) {\n      providers[provider] = { correctness: 0, reliability: 0, latency: 0, semantic: 0, overall: 0 };\n    }\n    providers[provider][dimension] = Number(lastValue(field)) || 0;\n  });\n});\n\nconst names = Object.keys(providers).sort();\nreturn {\n  backgroundColor: 'transparent',\n  tooltip: { trigger: 'item' },\n  legend: { bottom: 0, textStyle: { color: '#d0d0d0' } },\n  radar: {\n    radius: '68%',\n    indicator: labels.map((name) => ({ name, max: 100 })),\n    splitNumber: 4,\n    axisName: { color: '#d0d0d0' },\n    axisLine: { lineStyle: { color: 'rgba(208,208,208,0.35)' } },\n    splitLine: { lineStyle: { color: 'rgba(208,208,208,0.18)' } },\n    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.06)'] } }\n  },\n  series: [{\n    name: 'AI Quality Score',\n    type: 'radar',\n    data: names.map((provider) => ({\n      name: provider,\n      value: order.map((dimension) => providers[provider][dimension] || 0),\n      areaStyle: { opacity: 0.18 }\n    }))\n  }]\n};",
+        "getOption": "const frames = context.panel.data.series || [];\nconst labels = ['Correctness', 'Reliability', 'Latency', 'Semantic', 'Overall'];\nconst order = ['correctness', 'reliability', 'latency', 'semantic', 'overall'];\nconst providers = {};\n\nfunction lastValue(field) {\n  const values = field.values;\n  if (!values) return 0;\n  if (typeof values.get === 'function') return values.length ? values.get(values.length - 1) : 0;\n  return values.length ? values[values.length - 1] : 0;\n}\n\nframes.forEach((frame) => {\n  (frame.fields || []).forEach((field) => {\n    if (field.type !== 'number') return;\n    const l = field.labels || {};\n    const provider = l.provider || 'unknown';\n    const dimension = (l.dimension || '').toLowerCase();\n    if (!order.includes(dimension)) return;\n    if (!providers[provider]) {\n      providers[provider] = { correctness: 0, reliability: 0, latency: 0, semantic: 0, overall: 0 };\n    }\n    providers[provider][dimension] = Number(lastValue(field)) || 0;\n  });\n});\n\nconst names = Object.keys(providers).sort();\nreturn {\n  backgroundColor: 'transparent',\n  tooltip: { trigger: 'item' },\n  legend: { bottom: 0, textStyle: { color: '#d0d0d0' } },\n  radar: {\n    radius: '68%',\n    indicator: labels.map((name) => ({ name, max: 100 })),\n    splitNumber: 4,\n    axisName: { color: '#d0d0d0' },\n    axisLine: { lineStyle: { color: 'rgba(208,208,208,0.35)' } },\n    splitLine: { lineStyle: { color: 'rgba(208,208,208,0.18)' } },\n    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.06)'] } }\n  },\n  series: [{\n    name: 'AI Quality Score',\n    type: 'radar',\n    data: names.map((provider) => ({\n      name: provider,\n      value: order.map((dimension) => providers[provider][dimension] || 0),\n      areaStyle: { opacity: 0.18 }\n    }))\n  }]\n};"
       },
       "fieldConfig": {
         "defaults": {},
@@ -661,56 +662,57 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "avg by(model)(ai_finops_cost_score)",
+          "expr": "avg by(provider, dimension) (ai_finops_quality_score{dimension=~\"correctness|reliability|latency|semantic|overall\"})",
           "instant": true,
-          "legendFormat": "{{model}}",
-          "refId": "cost"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "avg by(model)(ai_finops_quality_score)",
-          "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{provider}} {{dimension}}",
           "refId": "quality"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "avg by(model)(ai_finops_latency_score)",
-          "instant": true,
-          "legendFormat": "{{model}}",
-          "refId": "latency"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "avg by(model)(ai_finops_reliability_score)",
-          "instant": true,
-          "legendFormat": "{{model}}",
-          "refId": "reliability"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "avg by(model)(ai_finops_sovereignty_score)",
-          "instant": true,
-          "legendFormat": "{{model}}",
-          "refId": "sovereignty"
         }
-      ]
+      ],
+      "pluginVersion": "7.2.5"
+    },
+    {
+      "type": "table",
+      "title": "Quality score par fournisseur / modèle",
+      "description": "Score agrégé calculé par AIQualityGate, uniquement pour les séries dimension=\"overall\".",
+      "gridPos": {
+        "h": 16,
+        "w": 10,
+        "x": 14,
+        "y": 69
+      },
+      "pluginVersion": "11.2.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg by(app, provider, model) (ai_finops_quality_score{dimension=\"overall\"})",
+          "instant": true,
+          "legendFormat": "{{app}} {{provider}} {{model}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2
+        },
+        "overrides": []
+      }
     },
     {
       "type": "bargauge",
-      "title": "Shadow-AI \u2014 applications contournant le gateway",
+      "title": "Shadow-AI — applications contournant le gateway",
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -765,6 +767,20 @@
         },
         "overrides": []
       }
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "volkovlabs-echarts-panel",
+      "name": "Business Charts",
+      "version": "7.2.5"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
     }
   ]
 }

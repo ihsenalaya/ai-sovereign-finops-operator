@@ -25,6 +25,7 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 | `ai_finops_latency_score` | gauge | `namespace,application,model,telemetry_available` | AIFinOpsReport (routing score) |
 | `ai_finops_latency_telemetry_available` | gauge | `namespace,application,model,source` | AIFinOpsReport (routing score) |
 | `ai_finops_routing_score` | gauge | `namespace,application,model,latency_telemetry` | AIFinOpsReport (routing score) |
+| `ai_finops_quality_score` | gauge | `namespace,app,provider,model,dimension` | AIQualityGate |
 | `ai_finops_quality_gate_passed` | gauge | `namespace,quality_gate,target_namespace,application,source_model,candidate_model` | AIQualityGate |
 | `ai_finops_quality_gate_failed_checks` | gauge | `namespace,quality_gate,target_namespace,application` | AIQualityGate |
 | `ai_finops_projected_monthly_cost_eur` | gauge | `namespace` | AIFinOpsReport |
@@ -49,6 +50,10 @@ l'endpoint `/metrics` du manager (port `:8080` par défaut). Stack CNCF : Promet
 > uniquement quand une latence réelle a été observée. Si aucune latence réelle n'est disponible, le score
 > existe quand même, `ai_finops_latency_telemetry_available=0`, le label `telemetry_available=false` est
 > visible, et le composant latence reste neutre au lieu de simuler une mesure.
+>
+> `ai_finops_quality_score` porte le score composite `0..100` des `AIQualityGate`. La série
+> `dimension="overall"` alimente les tableaux, et les séries `correctness`, `reliability`, `latency`,
+> `semantic` et `judged` alimentent le radar Grafana par fournisseur.
 
 ## Accès
 ```bash

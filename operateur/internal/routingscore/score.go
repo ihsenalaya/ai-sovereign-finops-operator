@@ -50,6 +50,10 @@ func DefaultWeights() Weights {
 // ModelInfo carries catalog metadata needed for scoring.
 type ModelInfo struct {
 	QualityTier string
+	// SovereigntyChecked is true when SovereigntyCompliant was computed from an
+	// active policy/catalog. When false, the routing engine defaults to compliant
+	// so callers that only provide quality tiers keep receiving runtime scores.
+	SovereigntyChecked bool
 	// SovereigntyCompliant is false when the model's provider sits in a
 	// zone forbidden by the active AISovereigntyPolicy. A non-compliant model
 	// receives a hard score of 0 and is never recommended, regardless of cost.
@@ -159,14 +163,17 @@ func aggregateSamples(samples []collectors.UsageSample, prices costengine.PriceB
 		key := s.Namespace + "\x1f" + s.Application + "\x1f" + s.Model + "\x1f" + s.Provider
 		g := groups[key]
 		if g == nil {
-			info := models[s.Model]
+			info, ok := models[s.Model]
 			g = &aggregate{}
 			g.Namespace = s.Namespace
 			g.Application = s.Application
 			g.Model = s.Model
 			g.Provider = s.Provider
 			g.QualityScore = qualityScore(info.QualityTier)
-			g.SovereigntyCompliant = info.SovereigntyCompliant
+			g.SovereigntyCompliant = true
+			if ok && info.SovereigntyChecked {
+				g.SovereigntyCompliant = info.SovereigntyCompliant
+			}
 			groups[key] = g
 		}
 		g.Requests += s.Requests

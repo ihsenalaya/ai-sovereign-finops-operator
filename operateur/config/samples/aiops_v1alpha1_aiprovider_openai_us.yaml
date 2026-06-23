@@ -9,14 +9,11 @@ spec:
   region: eastus
   dataResidency: us
   managed: true
-  # Real list price for gpt-4o (OpenAI), the model this provider serves in the
-  # demo: published USD 2.50 in / 10.00 out per 1M tokens (June 2026), converted
-  # to EUR at 1 USD = 0.92 EUR.
-  # Source: https://openai.com/api/pricing/
+  # Example price for the demo's gpt-us-mini Azure deployment.
   pricing:
     currency: EUR
-    inputTokenPricePerMillion: "2.30"
-    outputTokenPricePerMillion: "9.20"
+    inputTokenPricePerMillion: "0.37"
+    outputTokenPricePerMillion: "1.47"
   compliance:
     allowedForSensitiveData: false
     allowedCountries:

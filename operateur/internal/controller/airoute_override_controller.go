@@ -35,8 +35,8 @@ import (
 )
 
 const (
-	routeOverrideFinalizer   = "aiops.imperium.io/route-override"
-	routeOverrideAnnotation  = "aiops.imperium.io/manual-reroutes"
+	routeOverrideFinalizer  = "aiops.imperium.io/route-override"
+	routeOverrideAnnotation = "aiops.imperium.io/manual-reroutes"
 )
 
 // AIRouteOverrideReconciler reconciles AIRouteOverride objects.

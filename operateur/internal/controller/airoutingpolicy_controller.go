@@ -23,8 +23,8 @@ import (
 	"strconv"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -97,8 +97,6 @@ func (r *AIRoutingPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	scores := routingscore.Compute(samples, cat.priceBook(), cat.routingModelInfo(pe), routingscore.DefaultWeights())
 
-	// Build a map: application → best scoring model.
-	type appModel struct{ app, model string }
 	// Group scores by application, pick the current and the best alternative.
 	byApp := map[string][]routingscore.Score{}
 	for _, sc := range scores {
@@ -117,7 +115,7 @@ func (r *AIRoutingPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if len(scs) < 2 {
 			continue
 		}
-		best := scs[0]  // candidate (highest score)
+		best := scs[0]             // candidate (highest score)
 		current := scs[len(scs)-1] // current (lowest score = most expensive / worst)
 		if best.Model == current.Model {
 			continue

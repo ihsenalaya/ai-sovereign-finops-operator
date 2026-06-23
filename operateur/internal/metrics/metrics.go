@@ -116,11 +116,11 @@ var (
 		Help: "Higher-is-better cost dimension of the routing score (0=most expensive, 1=cheapest) by namespace/application/model.",
 	}, []string{"namespace", "application", "model"})
 
-	// QualityScore is the quality dimension of the routing score.
+	// QualityScore is the audited AI Quality Score emitted by AIQualityGate.
 	QualityScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_quality_score",
-		Help: "Quality dimension of the routing score derived from catalog quality tier (0=low, 1=high) by namespace/application/model.",
-	}, []string{"namespace", "application", "model"})
+		Help: "Audited AI quality score in [0,100], by namespace, app, provider, model and score dimension.",
+	}, []string{"namespace", "app", "provider", "model", "dimension"})
 
 	// ReliabilityScore is the reliability dimension (1 - error_rate).
 	ReliabilityScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{

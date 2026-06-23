@@ -143,7 +143,7 @@ Transverse :
 | **AISovereigntyPolicy** | `aisov` | Règles de résidence / données sensibles / audit | `dataResidency.{allowed,forbidden}Zones`, `sensitiveData.externalProvidersAllowed`, `audit`, `enforcementMode` | `findingsCount` |
 | **AIBreakEvenAnalysis** | `aibreakeven` | Point mort API managée vs auto-hébergement | `currentModelRef`, `alternativeSelfHosted`, `analysisWindowDays` | `managed/selfHostedMonthlyCostEUR`, `monthlySavingsEUR`, `paybackMonths`, `recommendation` |
 | **AIFinOpsReport** | `aireport` | Rapport consolidé généré | `target`, `period`, `gatewayRef` | `totalCostEUR`, `totalInput/OutputTokens`, `topModels`, `sovereigntyFindings`, `recommendations` |
-| **AIQualityGate** | `aiqgate` | Validation qualité par application avant changement de modèle | `target`, `sourceModel`, `candidateModel`, `goldenDatasetRef`, `evidenceRef`, `requiredChecks`, `canary`, `rollback` | `phase`, `verdict`, `failedChecks`, `source/candidateObservation` |
+| **AIQualityGate** | `aiqgate` | Validation qualité par application avant changement de modèle | `target`, `sourceModel`, `candidateModel`, `goldenDatasetRef`, `evidenceRef`, `evaluation`, `requiredChecks`, `canary`, `rollback` | `phase`, `verdict`, `qualityScore`, `evaluationJobPhase`, `source/candidateObservation` |
 
 Documentation détaillée par CRD : [`docs/crds/`](docs/crds/) · par moteur : [`docs/features/`](docs/features/).
 
@@ -187,6 +187,7 @@ Métriques exposées (`/metrics`, par défaut `:8080`) :
 | `ai_finops_recommendations` | recommandations émises (par type/app/sévérité) |
 | `ai_finops_cost_saving_eur` / `ai_finops_potential_savings_eur` | économie d'un swap / total potentiel |
 | `ai_finops_enforcement_actions` | **décisions d'enforcement** (policy, namespace, app, mode, action, actuated) |
+| `ai_finops_quality_score` | score qualité composite `0..100` par app, provider, modèle et dimension |
 | `ai_finops_quality_gate_passed` / `ai_finops_quality_gate_failed_checks` | verdict et échecs des `AIQualityGate` par application |
 | `ai_finops_breakeven_savings_eur` | économie estimée managé vs auto-hébergé |
 

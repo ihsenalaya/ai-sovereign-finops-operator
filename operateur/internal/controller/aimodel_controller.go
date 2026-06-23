@@ -55,9 +55,8 @@ type AIModelReconciler struct {
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aiproviders,verbs=get;list;watch
 
 // Reconcile validates that the referenced AIProvider exists and records readiness.
-// It also emits catalog-level quality_score and sovereignty_score Prometheus metrics
-// for every registered AIModel so the radar chart shows all available models — even
-// those with no observed traffic yet.
+// It also emits catalog-level sovereignty_score Prometheus metrics for every
+// registered AIModel so the dashboard can show compliance even before traffic.
 func (r *AIModelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	trackerKey := req.Namespace + "/" + req.Name
@@ -68,7 +67,6 @@ func (r *AIModelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			// Clean up catalog metrics for the deleted model.
 			if v, ok := aiModelCatalogTracker.LoadAndDelete(trackerKey); ok {
 				modelName := v.(string)
-				metrics.QualityScore.DeleteLabelValues(req.Namespace, "catalog", modelName)
 				metrics.SovereigntyScore.DeleteLabelValues(req.Namespace, "catalog", modelName)
 			}
 			return ctrl.Result{}, nil
@@ -111,17 +109,10 @@ func (r *AIModelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-// emitCatalogMetrics publishes quality_score and sovereignty_score for the model.
-// These use application="catalog" so the radar chart's avg-by-model query picks
-// them up without conflicting with observed-traffic series.
+// emitCatalogMetrics publishes sovereignty_score for the model.
 func (r *AIModelReconciler) emitCatalogMetrics(ctx context.Context, model *aiopsv1alpha1.AIModel, provider *aiopsv1alpha1.AIProvider) {
 	ns := model.Namespace
 	modelName := model.Spec.ModelName
-
-	// Quality score from the catalog quality tier.
-	metrics.QualityScore.WithLabelValues(ns, "catalog", modelName).Set(
-		catalogQualityScore(string(model.Spec.QualityTier)),
-	)
 
 	// Sovereignty score: check whether the provider zone is allowed by the
 	// active AISovereigntyPolicy. Default compliant when no policy is active.
@@ -134,22 +125,6 @@ func (r *AIModelReconciler) emitCatalogMetrics(ctx context.Context, model *aiops
 		}
 	}
 	metrics.SovereigntyScore.WithLabelValues(ns, "catalog", modelName).Set(sovScore)
-}
-
-// catalogQualityScore converts a QualityTier string to a [0,1] score.
-// Mirrors the same logic in internal/routingscore/score.go so the two sources
-// stay consistent without creating a package dependency.
-func catalogQualityScore(tier string) float64 {
-	switch tier {
-	case "high":
-		return 1.0
-	case "medium":
-		return 0.75
-	case "low":
-		return 0.50
-	default:
-		return 0.60
-	}
 }
 
 // modelsForProvider maps an AIProvider event to reconcile requests for every

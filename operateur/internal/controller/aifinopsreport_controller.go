@@ -434,8 +434,6 @@ func (r *AIFinOpsReportReconciler) applyRoutingScores(report *aiopsv1alpha1.AIFi
 
 		metrics.CostScore.WithLabelValues(sc.Namespace, sc.Application, sc.Model).Set(sc.CostScore)
 		series.addCostScore(sc.Namespace, sc.Application, sc.Model)
-		metrics.QualityScore.WithLabelValues(sc.Namespace, sc.Application, sc.Model).Set(sc.QualityScore)
-		series.addQualityScore(sc.Namespace, sc.Application, sc.Model)
 		metrics.ReliabilityScore.WithLabelValues(sc.Namespace, sc.Application, sc.Model).Set(sc.ReliabilityScore)
 		series.addReliabilityScore(sc.Namespace, sc.Application, sc.Model)
 		sovScore := 0.0

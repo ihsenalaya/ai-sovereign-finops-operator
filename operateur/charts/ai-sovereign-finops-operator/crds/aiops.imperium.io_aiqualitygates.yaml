@@ -35,6 +35,9 @@ spec:
     - jsonPath: .status.verdict
       name: Verdict
       type: string
+    - jsonPath: .status.qualityScore
+      name: Score
+      type: number
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -88,6 +91,33 @@ spec:
                   as a replacement.
                 minLength: 1
                 type: string
+              evaluation:
+                description: Evaluation configures the real gateway-backed evaluator
+                  Job.
+                properties:
+                  endpoint:
+                    description: |-
+                      Endpoint is the OpenAI-compatible chat completions endpoint used by the
+                      evaluator Job. It must be the production data-plane path, not the metrics
+                      endpoint. Example:
+                      http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+                    type: string
+                  image:
+                    description: |-
+                      Image overrides the evaluator image. Defaults to the running operator
+                      image so Kind demos evaluate with the same build that reconciles the gate.
+                    type: string
+                  maxTokens:
+                    description: MaxTokens limits each golden prompt completion.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  timeoutSeconds:
+                    description: TimeoutSeconds is the per-request gateway timeout.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                type: object
               evidenceRef:
                 description: |-
                   EvidenceRef optionally points to deterministic golden-run results produced
@@ -128,6 +158,32 @@ spec:
                 required:
                 - name
                 type: object
+              judge:
+                description: Judge configures the optional sovereign LLM judge.
+                properties:
+                  enabled:
+                    description: Enabled includes the judged dimension when a sovereign
+                      judge model is available.
+                    type: boolean
+                  modelRef:
+                    description: |-
+                      ModelRef references the AIModel used as judge. The controller must ensure it
+                      is sovereignty-compliant before using it.
+                    type: string
+                type: object
+              latencyThresholdMs:
+                description: |-
+                  LatencyThresholdMs is the threshold used by the latency dimension: at the
+                  threshold the score is 50; half threshold is 100; double threshold is 0.
+                format: int32
+                minimum: 1
+                type: integer
+              minSamples:
+                description: MinSamples is the minimum number of golden prompts required
+                  to score.
+                format: int32
+                minimum: 1
+                type: integer
               period:
                 default: monthly
                 description: Period is the telemetry window used for operational checks.
@@ -225,6 +281,38 @@ spec:
                 - application
                 - namespace
                 type: object
+              tolerancePoints:
+                description: TolerancePoints is the allowed candidate regression versus
+                  source score.
+                format: int32
+                minimum: 0
+                type: integer
+              weights:
+                description: Weights configures the composite AI Quality Score.
+                properties:
+                  correctness:
+                    description: Correctness is the deterministic golden-dataset weight.
+                    minimum: 0
+                    type: number
+                  judged:
+                    description: Judged is the sovereign LLM judge weight.
+                    minimum: 0
+                    type: number
+                  latency:
+                    description: Latency is the real telemetry latency weight.
+                    minimum: 0
+                    type: number
+                  reliability:
+                    description: Reliability is the real telemetry error/timeout/invalid
+                      JSON weight.
+                    minimum: 0
+                    type: number
+                  semantic:
+                    description: Semantic is the local embedding/reference similarity
+                      weight.
+                    minimum: 0
+                    type: number
+                type: object
             required:
             - candidateModel
             - goldenDatasetRef
@@ -259,6 +347,10 @@ spec:
                   observedLatencyMillis:
                     description: ObservedLatencyMillis is the measured mean latency
                       when telemetry exists.
+                    type: string
+                  provider:
+                    description: Provider is the observed or catalogued provider for
+                      the model.
                     type: string
                   requests:
                     description: Requests observed for the target app/model.
@@ -331,6 +423,53 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              dimensions:
+                description: Dimensions is a radar-ready view of score components.
+                items:
+                  description: AIQualityDimensionStatus is one radar-ready score dimension.
+                  properties:
+                    name:
+                      description: Name is one of correctness, reliability, latency,
+                        semantic, judged or overall.
+                      type: string
+                    score:
+                      description: Score is normalized in [0,100].
+                      type: number
+                    weight:
+                      description: Weight is the normalized weight used for this dimension.
+                        Overall has weight 1.
+                      type: number
+                  required:
+                  - name
+                  - score
+                  type: object
+                type: array
+              evaluationJobName:
+                description: EvaluationJobName is the Kubernetes Job producing gateway-backed
+                  evidence.
+                type: string
+              evaluationJobPhase:
+                description: EvaluationJobPhase is Pending, Running, Succeeded or
+                  Failed.
+                type: string
+              evidenceRef:
+                description: EvidenceRef echoes the evidence ConfigMap used or written
+                  for audit.
+                properties:
+                  key:
+                    description: Key inside the ConfigMap. Defaults are resource-specific.
+                    type: string
+                  name:
+                    description: Name of the ConfigMap.
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: Namespace of the ConfigMap. Defaults to the owning
+                      resource namespace.
+                    type: string
+                required:
+                - name
+                type: object
               failedChecks:
                 description: FailedChecks is the number of failed deterministic or
                   operational checks.
@@ -353,6 +492,33 @@ spec:
                 - Passed
                 - Failed
                 type: string
+              qualityScore:
+                description: QualityScore is the candidate composite score in [0,100].
+                type: number
+              samples:
+                description: Samples is the number of candidate evidence samples used
+                  by the quality score.
+                format: int32
+                type: integer
+              scoreBreakdown:
+                description: ScoreBreakdown contains the candidate score components.
+                properties:
+                  correctness:
+                    description: Correctness is the deterministic golden-dataset score.
+                    type: number
+                  judged:
+                    description: Judged is the optional sovereign judge score.
+                    type: number
+                  latency:
+                    description: Latency is the real telemetry latency score.
+                    type: number
+                  reliability:
+                    description: Reliability is the real telemetry reliability score.
+                    type: number
+                  semantic:
+                    description: Semantic is the reference-based semantic score.
+                    type: number
+                type: object
               sourceObservation:
                 description: SourceObservation is the observed source model telemetry
                   for the target app.
@@ -376,6 +542,10 @@ spec:
                     description: ObservedLatencyMillis is the measured mean latency
                       when telemetry exists.
                     type: string
+                  provider:
+                    description: Provider is the observed or catalogued provider for
+                      the model.
+                    type: string
                   requests:
                     description: Requests observed for the target app/model.
                     format: int64
@@ -386,6 +556,20 @@ spec:
                   Verdict is a stable machine-readable decision: candidate-safe,
                   candidate-risk or insufficient-data.
                 type: string
+              weightsUsed:
+                description: WeightsUsed records normalized score weights.
+                properties:
+                  correctness:
+                    type: number
+                  judged:
+                    type: number
+                  latency:
+                    type: number
+                  reliability:
+                    type: number
+                  semantic:
+                    type: number
+                type: object
             type: object
         type: object
     served: true
