@@ -15,7 +15,7 @@ REPO="$(cd "${HERE}/../.." && pwd)"
 OPERATOR="${REPO}/operateur"
 NS="greenops-system"
 CTX="${KCTX:-kind-greenops}"
-IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.4.0"
+IMG="ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.3"
 K="kubectl --context ${CTX}"
 
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }

@@ -38,7 +38,7 @@ git_default_revision() {
 export CLUSTER_NAME="${CLUSTER_NAME:-greenops}"
 export KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-kindest/node:v1.31.0}"
 export IMAGE_REPO="${IMAGE_REPO:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator}"
-export IMAGE_TAG="${IMAGE_TAG:-0.4.0}"
+export IMAGE_TAG="${IMAGE_TAG:-0.5.3}"
 
 # In-cluster Gitea (self-contained GitOps source — no external remote required).
 export GITEA_NAMESPACE="${GITEA_NAMESPACE:-gitea}"

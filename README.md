@@ -113,22 +113,16 @@ L'opérateur ne modifie jamais les flux applicatifs directement. Il observe, cal
 
 L'opérateur lit les métriques de l'Envoy AI Gateway. Celui-ci doit déjà être déployé et exposer un service `<nom>-metrics` sur le port `1064`.
 
-### 2. Ajouter le dépôt Helm
+### 2. Installer l'opérateur depuis le chart OCI GHCR
 
 ```bash
-helm repo add ai-sovereign-finops https://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts
-helm repo update
-```
-
-### 3. Installer l'opérateur
-
-```bash
-helm install greenops ai-sovereign-finops/ai-sovereign-finops-operator \
+helm install greenops oci://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts/ai-sovereign-finops-operator \
+  --version 0.5.3 \
   --namespace greenops-system \
   --create-namespace
 ```
 
-### 4. Vérifier le déploiement
+### 3. Vérifier le déploiement
 
 ```bash
 kubectl get pods -n greenops-system
@@ -138,7 +132,7 @@ kubectl get crd | grep aiops.imperium.io
 # 11 CRDs installés
 ```
 
-### 5. Mise à jour (Helm ne met pas à jour les CRDs automatiquement)
+### 4. Mise à jour (Helm ne met pas à jour les CRDs automatiquement)
 
 Lors d'un `helm upgrade`, les CRDs existants ne sont **pas** mis à jour par Helm. Appliquez-les manuellement :
 
@@ -1266,7 +1260,7 @@ Le dashboard **AI FinOps Overview** (`dashboards/ai-finops-overview.json`) requi
 ```dockerfile
 # Dockerfile.grafana
 FROM grafana/grafana:11.2.2
-RUN grafana-cli plugins install volkovlabs-echarts-panel
+RUN grafana-cli plugins install volkovlabs-echarts-panel 6.6.0
 ```
 
 **Panneaux principaux** :

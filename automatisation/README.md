@@ -24,7 +24,7 @@ make up REPO_URL=https://github.com/<vous>/greenops REVISION=main
 
 `make up` enchaîne :
 1. `01-create-cluster.sh` — crée le cluster kind (`kind/kind-config.yaml`).
-2. `02-build-load-image.sh` — build l'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.4.0` et la charge dans kind.
+2. `02-build-load-image.sh` — build l'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.3` et la charge dans kind.
 3. `03-install-argocd.sh` — installe ArgoCD, expose l'UI sur `http://localhost:30080`.
 4. `04-bootstrap-apps.sh` — crée l'`AppProject` + 2 `Application` :
    - `greenops-operator` -> chart Helm `operateur/charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: Never`),
@@ -118,7 +118,7 @@ Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 |----------|--------|------|
 | `CLUSTER_NAME` | `greenops` | nom du cluster kind |
 | `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
-| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.4.0` | image de l'opérateur |
+| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.5.3` | image de l'opérateur |
 | `ENABLE_MISTRAL_DEMO` | `true` | active la 4e app `marketing/content-writer` sur Mistral EU |
 | `ENABLE_THIRD_QUALITY_PROVIDER` | `true` | applique le provider optionnel `openai-foundry-eu` après préflight réel |
 | `THIRD_QUALITY_DEPLOYMENT` | `gpt-foundry-eu-mini` | déploiement Foundry DataZoneStandard utilisé pour le 3e polygone QualityScore |
