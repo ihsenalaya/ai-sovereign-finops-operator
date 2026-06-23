@@ -1,2 +1,2 @@
 FROM grafana/grafana:11.2.2
-RUN grafana-cli plugins install volkovlabs-echarts-panel
+RUN grafana-cli plugins install volkovlabs-echarts-panel 6.6.0

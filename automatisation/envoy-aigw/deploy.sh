@@ -547,7 +547,7 @@ deploy_quality_gates() {
 build_grafana_image() {
   # Build the custom Grafana image with volkovlabs-echarts-panel pre-installed (radar chart).
   # Required because Kind pods have no internet access on startup.
-  local img="grafana-radar:11.2.2"
+  local img="grafana-radar:11.2.2-echarts6.6.0"
   local dockerfile="${AUTO}/demo/Dockerfile.grafana"
   if docker image inspect "${img}" >/dev/null 2>&1; then
     echo "Grafana radar image ${img} already built — skipping."

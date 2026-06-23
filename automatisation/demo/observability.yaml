@@ -98,7 +98,7 @@ spec:
         - name: grafana
           # Custom image with volkovlabs-echarts-panel pre-installed (radar chart).
           # Built and loaded into kind by deploy.sh — see Dockerfile.grafana.
-          image: grafana-radar:11.2.2
+          image: grafana-radar:11.2.2-echarts6.6.0
           imagePullPolicy: Never
           env:
             # Anonymous admin so the demo opens straight to the dashboard.
