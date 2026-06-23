@@ -638,8 +638,8 @@
     {
       "type": "volkovlabs-echarts-panel",
       "id": 50,
-      "title": "Radar — AI Quality Score par fournisseur",
-      "description": "Axes: Correctness, Reliability, Latency, Semantic, Overall. Chaque polygone représente un fournisseur détecté via ai_finops_quality_score.",
+      "title": "Radar — Quality + coût par fournisseur",
+      "description": "Axes 0..100: Correctness, Reliability, Latency, Semantic, Cost efficiency, Overall. Cost = ai_finops_cost_score * 100, donc plus haut veut dire moins cher.",
       "gridPos": {
         "h": 16,
         "w": 14,
@@ -649,8 +649,8 @@
       "options": {
         "renderer": "canvas",
         "editorMode": "code",
-        "code": "const frames = context.panel.data.series || [];\nconst labels = ['Correctness', 'Reliability', 'Latency', 'Semantic', 'Overall'];\nconst order = ['correctness', 'reliability', 'latency', 'semantic', 'overall'];\nconst providers = {};\n\nfunction lastValue(field) {\n  const values = field.values;\n  if (!values) return 0;\n  if (typeof values.get === 'function') return values.length ? values.get(values.length - 1) : 0;\n  return values.length ? values[values.length - 1] : 0;\n}\n\nframes.forEach((frame) => {\n  (frame.fields || []).forEach((field) => {\n    if (field.type !== 'number') return;\n    const l = field.labels || {};\n    const provider = l.provider || 'unknown';\n    const dimension = (l.dimension || '').toLowerCase();\n    if (!order.includes(dimension)) return;\n    if (!providers[provider]) {\n      providers[provider] = { correctness: 0, reliability: 0, latency: 0, semantic: 0, overall: 0 };\n    }\n    providers[provider][dimension] = Number(lastValue(field)) || 0;\n  });\n});\n\nconst names = Object.keys(providers).sort();\nreturn {\n  backgroundColor: 'transparent',\n  tooltip: { trigger: 'item' },\n  legend: { bottom: 0, textStyle: { color: '#d0d0d0' } },\n  radar: {\n    radius: '68%',\n    indicator: labels.map((name) => ({ name, max: 100 })),\n    splitNumber: 4,\n    axisName: { color: '#d0d0d0' },\n    axisLine: { lineStyle: { color: 'rgba(208,208,208,0.35)' } },\n    splitLine: { lineStyle: { color: 'rgba(208,208,208,0.18)' } },\n    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.06)'] } }\n  },\n  series: [{\n    name: 'AI Quality Score',\n    type: 'radar',\n    data: names.map((provider) => ({\n      name: provider,\n      value: order.map((dimension) => providers[provider][dimension] || 0),\n      areaStyle: { opacity: 0.18 }\n    }))\n  }]\n};",
-        "getOption": "const frames = context.panel.data.series || [];\nconst labels = ['Correctness', 'Reliability', 'Latency', 'Semantic', 'Overall'];\nconst order = ['correctness', 'reliability', 'latency', 'semantic', 'overall'];\nconst providers = {};\n\nfunction lastValue(field) {\n  const values = field.values;\n  if (!values) return 0;\n  if (typeof values.get === 'function') return values.length ? values.get(values.length - 1) : 0;\n  return values.length ? values[values.length - 1] : 0;\n}\n\nframes.forEach((frame) => {\n  (frame.fields || []).forEach((field) => {\n    if (field.type !== 'number') return;\n    const l = field.labels || {};\n    const provider = l.provider || 'unknown';\n    const dimension = (l.dimension || '').toLowerCase();\n    if (!order.includes(dimension)) return;\n    if (!providers[provider]) {\n      providers[provider] = { correctness: 0, reliability: 0, latency: 0, semantic: 0, overall: 0 };\n    }\n    providers[provider][dimension] = Number(lastValue(field)) || 0;\n  });\n});\n\nconst names = Object.keys(providers).sort();\nreturn {\n  backgroundColor: 'transparent',\n  tooltip: { trigger: 'item' },\n  legend: { bottom: 0, textStyle: { color: '#d0d0d0' } },\n  radar: {\n    radius: '68%',\n    indicator: labels.map((name) => ({ name, max: 100 })),\n    splitNumber: 4,\n    axisName: { color: '#d0d0d0' },\n    axisLine: { lineStyle: { color: 'rgba(208,208,208,0.35)' } },\n    splitLine: { lineStyle: { color: 'rgba(208,208,208,0.18)' } },\n    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.06)'] } }\n  },\n  series: [{\n    name: 'AI Quality Score',\n    type: 'radar',\n    data: names.map((provider) => ({\n      name: provider,\n      value: order.map((dimension) => providers[provider][dimension] || 0),\n      areaStyle: { opacity: 0.18 }\n    }))\n  }]\n};"
+        "code": "const frames = context.panel.data.series || [];\nconst labels = ['Correctness', 'Reliability', 'Latency', 'Semantic', 'Cost', 'Overall'];\nconst order = ['correctness', 'reliability', 'latency', 'semantic', 'cost', 'overall'];\nconst providers = {};\n\nfunction lastValue(field) {\n  const values = field.values;\n  if (!values) return 0;\n  if (typeof values.get === 'function') return values.length ? values.get(values.length - 1) : 0;\n  return values.length ? values[values.length - 1] : 0;\n}\n\nframes.forEach((frame) => {\n  (frame.fields || []).forEach((field) => {\n    if (field.type !== 'number') return;\n    const l = field.labels || {};\n    const provider = l.provider || 'unknown';\n    const dimension = (l.dimension || '').toLowerCase();\n    if (!order.includes(dimension)) return;\n    if (!providers[provider]) {\n      providers[provider] = { correctness: 0, reliability: 0, latency: 0, semantic: 0, cost: 0, overall: 0 };\n    }\n    providers[provider][dimension] = Number(lastValue(field)) || 0;\n  });\n});\n\nconst names = Object.keys(providers).sort();\nreturn {\n  backgroundColor: 'transparent',\n  tooltip: { trigger: 'item' },\n  legend: { bottom: 0, textStyle: { color: '#d0d0d0' } },\n  radar: {\n    radius: '68%',\n    indicator: labels.map((name) => ({ name, max: 100 })),\n    splitNumber: 4,\n    axisName: { color: '#d0d0d0' },\n    axisLine: { lineStyle: { color: 'rgba(208,208,208,0.35)' } },\n    splitLine: { lineStyle: { color: 'rgba(208,208,208,0.18)' } },\n    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.06)'] } }\n  },\n  series: [{\n    name: 'Quality + Cost Score',\n    type: 'radar',\n    data: names.map((provider) => ({\n      name: provider,\n      value: order.map((dimension) => providers[provider][dimension] || 0),\n      areaStyle: { opacity: 0.18 }\n    }))\n  }]\n};",
+        "getOption": "const frames = context.panel.data.series || [];\nconst labels = ['Correctness', 'Reliability', 'Latency', 'Semantic', 'Cost', 'Overall'];\nconst order = ['correctness', 'reliability', 'latency', 'semantic', 'cost', 'overall'];\nconst providers = {};\n\nfunction lastValue(field) {\n  const values = field.values;\n  if (!values) return 0;\n  if (typeof values.get === 'function') return values.length ? values.get(values.length - 1) : 0;\n  return values.length ? values[values.length - 1] : 0;\n}\n\nframes.forEach((frame) => {\n  (frame.fields || []).forEach((field) => {\n    if (field.type !== 'number') return;\n    const l = field.labels || {};\n    const provider = l.provider || 'unknown';\n    const dimension = (l.dimension || '').toLowerCase();\n    if (!order.includes(dimension)) return;\n    if (!providers[provider]) {\n      providers[provider] = { correctness: 0, reliability: 0, latency: 0, semantic: 0, cost: 0, overall: 0 };\n    }\n    providers[provider][dimension] = Number(lastValue(field)) || 0;\n  });\n});\n\nconst names = Object.keys(providers).sort();\nreturn {\n  backgroundColor: 'transparent',\n  tooltip: { trigger: 'item' },\n  legend: { bottom: 0, textStyle: { color: '#d0d0d0' } },\n  radar: {\n    radius: '68%',\n    indicator: labels.map((name) => ({ name, max: 100 })),\n    splitNumber: 4,\n    axisName: { color: '#d0d0d0' },\n    axisLine: { lineStyle: { color: 'rgba(208,208,208,0.35)' } },\n    splitLine: { lineStyle: { color: 'rgba(208,208,208,0.18)' } },\n    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.06)'] } }\n  },\n  series: [{\n    name: 'Quality + Cost Score',\n    type: 'radar',\n    data: names.map((provider) => ({\n      name: provider,\n      value: order.map((dimension) => providers[provider][dimension] || 0),\n      areaStyle: { opacity: 0.18 }\n    }))\n  }]\n};"
       },
       "fieldConfig": {
         "defaults": {},
@@ -666,9 +666,19 @@
           "instant": true,
           "legendFormat": "{{provider}} {{dimension}}",
           "refId": "quality"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "label_replace(avg by(provider) ((ai_finops_cost_score * 100) * on(namespace, model) group_left(provider) (0 * max by(namespace, model, provider) (ai_finops_quality_score{dimension=\"overall\"}) + 1)), \"dimension\", \"cost\", \"provider\", \".*\")",
+          "instant": true,
+          "legendFormat": "{{provider}} cost",
+          "refId": "cost"
         }
       ],
-      "pluginVersion": "7.2.5"
+      "pluginVersion": "6.6.0"
     },
     {
       "type": "table",
@@ -774,7 +784,7 @@
       "type": "panel",
       "id": "volkovlabs-echarts-panel",
       "name": "Business Charts",
-      "version": "7.2.5"
+      "version": "6.6.0"
     },
     {
       "type": "datasource",

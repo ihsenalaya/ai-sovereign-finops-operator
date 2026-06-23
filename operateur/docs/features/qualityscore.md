@@ -100,8 +100,9 @@ ai_finops_quality_score{namespace,app,provider,model,dimension}
 `dimension` vaut `correctness`, `reliability`, `latency`, `semantic`, `judged`
 ou `overall`. Le dashboard utilise le plugin Business Charts / ECharts
 (`volkovlabs-echarts-panel`) pour afficher un radar dont les axes sont
-`Correctness`, `Reliability`, `Latency`, `Semantic`, `Overall`, avec un polygone
-par fournisseur detecte.
+`Correctness`, `Reliability`, `Latency`, `Semantic`, `Cost`, `Overall`, avec un polygone
+par fournisseur detecte. L'axe `Cost` utilise `ai_finops_cost_score * 100` :
+plus la valeur est haute, plus le provider est economique sur le trafic observe.
 
 Dans la demo Kind reelle, les providers non conformes (`US`/`GLOBAL`) restent
 visibles dans les findings de souverainete mais ne sont pas appeles par les Jobs
