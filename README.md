@@ -117,7 +117,7 @@ L'opérateur lit les métriques de l'Envoy AI Gateway. Celui-ci doit déjà êtr
 
 ```bash
 helm install greenops oci://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts/ai-sovereign-finops-operator \
-  --version 0.5.3 \
+  --version 0.5.4 \
   --namespace greenops-system \
   --create-namespace
 ```
@@ -1255,7 +1255,13 @@ spec:
 
 ## Dashboard Grafana
 
-Le dashboard **AI FinOps Overview** (`dashboards/ai-finops-overview.json`) requiert le plugin [`volkovlabs-echarts-panel`](https://grafana.com/grafana/plugins/volkovlabs-echarts-panel/) pour le panneau radar. Construire une image Grafana avec le plugin pré-installé :
+Le dashboard **AI FinOps Overview** (`dashboards/ai-finops-overview.json`) requiert le plugin [`volkovlabs-echarts-panel`](https://grafana.com/grafana/plugins/volkovlabs-echarts-panel/) pour le panneau radar. L'image demo préconstruite est publiée sur GHCR :
+
+```bash
+ghcr.io/ihsenalaya/ai-sovereign-finops-grafana-radar:11.2.2-echarts6.6.0
+```
+
+Construction équivalente :
 
 ```dockerfile
 # Dockerfile.grafana

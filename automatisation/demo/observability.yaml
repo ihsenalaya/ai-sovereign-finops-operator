@@ -97,9 +97,9 @@ spec:
       containers:
         - name: grafana
           # Custom image with volkovlabs-echarts-panel pre-installed (radar chart).
-          # Built and loaded into kind by deploy.sh — see Dockerfile.grafana.
-          image: grafana-radar:11.2.2-echarts6.6.0
-          imagePullPolicy: Never
+          # Published to GHCR by the release workflow; deploy.sh can preload it into kind.
+          image: ghcr.io/ihsenalaya/ai-sovereign-finops-grafana-radar:11.2.2-echarts6.6.0
+          imagePullPolicy: IfNotPresent
           env:
             # Anonymous admin so the demo opens straight to the dashboard.
             - { name: GF_AUTH_ANONYMOUS_ENABLED, value: "true" }

@@ -11,10 +11,12 @@ permissions:
 
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/ai-sovereign-finops-operator
+  GRAFANA_IMAGE: ghcr.io/${{ github.repository_owner }}/ai-sovereign-finops-grafana-radar
+  GRAFANA_RADAR_TAG: 11.2.2-echarts6.6.0
   CHART_REGISTRY: ghcr.io/${{ github.repository_owner }}/ai-sovereign-finops-operator/charts
 
 jobs:
-  image:
+  images:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +37,16 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ steps.v.outputs.version }}
             ${{ env.IMAGE }}:latest
+      - name: Build and push Grafana radar image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./automatisation/demo
+          file: ./automatisation/demo/Dockerfile.grafana
+          push: true
+          tags: |
+            ${{ env.GRAFANA_IMAGE }}:${{ env.GRAFANA_RADAR_TAG }}
+            ${{ env.GRAFANA_IMAGE }}:${{ steps.v.outputs.version }}
+            ${{ env.GRAFANA_IMAGE }}:latest
 
   chart:
     runs-on: ubuntu-latest

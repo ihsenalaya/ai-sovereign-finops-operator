@@ -40,6 +40,7 @@ RESET_CLUSTER="${RESET_CLUSTER:-false}"
 CHART_APPVER="$(sed -nE 's/^appVersion:[[:space:]]*"?([0-9][0-9.]*)"?.*/\1/p' \
   "${OPERATOR}/charts/ai-sovereign-finops-operator/Chart.yaml" | head -1)"
 OPERATOR_IMG="${OPERATOR_IMG:-ghcr.io/ihsenalaya/ai-sovereign-finops-operator:${CHART_APPVER:-dev}}"
+GRAFANA_RADAR_IMAGE="${GRAFANA_RADAR_IMAGE:-ghcr.io/ihsenalaya/ai-sovereign-finops-grafana-radar:11.2.2-echarts6.6.0}"
 # BUILD_OPERATOR=true (default) builds the image from the current source and loads
 # it into kind — the most reliable path (no GHCR pull, always matches this repo's
 # code). Set BUILD_OPERATOR=false to instead pull/use a prebuilt OPERATOR_IMG.
@@ -546,11 +547,13 @@ deploy_quality_gates() {
 
 build_grafana_image() {
   # Build the custom Grafana image with volkovlabs-echarts-panel pre-installed (radar chart).
-  # Required because Kind pods have no internet access on startup.
-  local img="grafana-radar:11.2.2-echarts6.6.0"
+  # The release workflow publishes it to GHCR; local build remains as a no-internet fallback.
+  local img="${GRAFANA_RADAR_IMAGE}"
   local dockerfile="${AUTO}/demo/Dockerfile.grafana"
   if docker image inspect "${img}" >/dev/null 2>&1; then
-    echo "Grafana radar image ${img} already built — skipping."
+    echo "Grafana radar image ${img} already present — skipping pull/build."
+  elif docker pull "${img}" >/dev/null 2>&1; then
+    echo "Pulled Grafana radar image ${img} from registry."
   else
     step "Building Grafana image with volkovlabs-echarts-panel (radar)"
     DOCKER_BUILDKIT=0 docker build -t "${img}" -f "${dockerfile}" "$(dirname "${dockerfile}")"
