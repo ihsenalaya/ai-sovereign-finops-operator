@@ -21,6 +21,7 @@ package qualityeval
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -56,8 +57,13 @@ type Options struct {
 
 // GoldenPrompt mirrors the AIQualityGate golden dataset format.
 type GoldenPrompt struct {
-	ID       string `json:"id"`
-	Prompt   string `json:"prompt"`
+	ID     string `json:"id"`
+	Prompt string `json:"prompt"`
+	// Images holds optional image inputs for multimodal (vision) golden prompts.
+	// When present, the gateway request is sent as an OpenAI multimodal content
+	// array (text part + image_url parts). When empty, the request stays a plain
+	// text string, so existing text-only datasets are unchanged.
+	Images   []PromptImage `json:"images,omitempty"`
 	Expected struct {
 		RequiredKeywords []string          `json:"requiredKeywords,omitempty"`
 		MaxTokens        int32             `json:"maxTokens,omitempty"`
@@ -65,6 +71,16 @@ type GoldenPrompt struct {
 		Reference        string            `json:"reference,omitempty"`
 		Fields           map[string]string `json:"fields,omitempty"`
 	} `json:"expected,omitempty"`
+}
+
+// PromptImage references one image input for a multimodal golden prompt. Exactly
+// one of URL or File should be set. File is resolved against the prompts
+// directory (the mounted golden-dataset volume) and inlined as a base64 data URI,
+// which keeps the image alongside the dataset without a public URL.
+type PromptImage struct {
+	URL  string `json:"url,omitempty"`
+	File string `json:"file,omitempty"`
+	MIME string `json:"mime,omitempty"`
 }
 
 // EvidenceSample is the serialized response evidence consumed by AIQualityGate.
@@ -209,13 +225,17 @@ func callGatewayOnce(ctx context.Context, client *http.Client, opts Options, pro
 	if prompt.Expected.MaxTokens > 0 {
 		maxTokens = int(prompt.Expected.MaxTokens)
 	}
+	content, err := opts.buildMessageContent(prompt)
+	if err != nil {
+		return "", err
+	}
 	payload := map[string]any{
 		"model":       model,
 		"temperature": 0,
 		"max_tokens":  maxTokens,
-		"messages": []map[string]string{{
+		"messages": []map[string]any{{
 			"role":    "user",
-			"content": prompt.Prompt,
+			"content": content,
 		}},
 	}
 	body, err := json.Marshal(payload)
@@ -245,11 +265,77 @@ func callGatewayOnce(ctx context.Context, client *http.Client, opts Options, pro
 		return "", fmt.Errorf("gateway call for prompt %q model %q returned HTTP %d: %s", prompt.ID, model, resp.StatusCode, strings.TrimSpace(string(raw)))
 	}
 
-	content, err := extractChatContent(raw)
+	responseText, err := extractChatContent(raw)
 	if err != nil {
 		return "", fmt.Errorf("parse gateway response for prompt %q model %q: %w", prompt.ID, model, err)
 	}
-	return truncateForEvidence(content), nil
+	return truncateForEvidence(responseText), nil
+}
+
+// buildMessageContent returns the OpenAI chat message content for a prompt. With
+// no images it is the plain prompt string (text-only, backward compatible). With
+// images it is a multimodal content array: a text part plus one image_url part
+// per image, each resolved to a URL or an inlined base64 data URI.
+func (o Options) buildMessageContent(prompt GoldenPrompt) (any, error) {
+	if len(prompt.Images) == 0 {
+		return prompt.Prompt, nil
+	}
+	parts := make([]map[string]any, 0, len(prompt.Images)+1)
+	parts = append(parts, map[string]any{"type": "text", "text": prompt.Prompt})
+	for i, img := range prompt.Images {
+		url, err := o.resolveImageURL(img)
+		if err != nil {
+			return nil, fmt.Errorf("prompt %q image %d: %w", prompt.ID, i, err)
+		}
+		parts = append(parts, map[string]any{
+			"type":      "image_url",
+			"image_url": map[string]any{"url": url},
+		})
+	}
+	return parts, nil
+}
+
+// resolveImageURL turns a PromptImage into a value usable in an image_url part.
+// A URL is passed through; a File is read from the prompts directory (the mounted
+// golden-dataset volume) and encoded as a base64 data URI. File paths are scoped
+// to the prompts directory: absolute paths and parent traversal are rejected.
+func (o Options) resolveImageURL(img PromptImage) (string, error) {
+	if u := strings.TrimSpace(img.URL); u != "" {
+		return u, nil
+	}
+	file := strings.TrimSpace(img.File)
+	if file == "" {
+		return "", fmt.Errorf("image needs url or file")
+	}
+	if filepath.IsAbs(file) || strings.Contains(file, "..") {
+		return "", fmt.Errorf("invalid image file path %q", file)
+	}
+	if strings.TrimSpace(o.PromptsDir) == "" {
+		return "", fmt.Errorf("image file %q requires prompts-dir", file)
+	}
+	data, err := os.ReadFile(filepath.Join(o.PromptsDir, file))
+	if err != nil {
+		return "", fmt.Errorf("read image file %s: %w", file, err)
+	}
+	mime := strings.TrimSpace(img.MIME)
+	if mime == "" {
+		mime = mimeFromExt(file)
+	}
+	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(data), nil
+}
+
+// mimeFromExt maps common image extensions to a MIME type, defaulting to PNG.
+func mimeFromExt(file string) string {
+	switch strings.ToLower(filepath.Ext(file)) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".webp":
+		return "image/webp"
+	case ".gif":
+		return "image/gif"
+	default:
+		return "image/png"
+	}
 }
 
 func extractChatContent(raw []byte) (string, error) {

@@ -1,0 +1,129 @@
+# Multimodal (vision) quality gate example: image-in -> structured JSON out.
+# Use case: invoice/document extraction. The golden prompts carry images
+# (the evaluation job now sends an OpenAI multimodal content array); the quality
+# is scored on the extracted JSON, so the existing deterministic scorers apply.
+#
+# This sample ships precomputed evidence so the gate produces a real qualityScore
+# on a local cluster (kind) WITHOUT a live vision model. In production, the
+# evaluation job replays the prompts (images included) against the real gateway
+# and writes this evidence itself.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vision-golden-prompts
+  namespace: default
+data:
+  prompts.yaml: |
+    - id: invoice-total
+      prompt: "Extract the invoice total and currency as JSON {\"total\":..,\"currency\":..}."
+      images:
+        - url: "https://example.test/invoices/invoice-001.png"
+        # Or mount an image alongside this dataset and reference it by file:
+        # - file: invoice-001.png
+        #   mime: image/png
+      expected:
+        mustBeJSON: true
+        fields:
+          total: "1240.00"
+          currency: "EUR"
+        reference: "The invoice total is 1240.00 EUR."
+        requiredKeywords: ["1240", "EUR"]
+        maxTokens: 80
+    - id: id-card-fields
+      prompt: "Extract surname and document number as JSON {\"surname\":..,\"docNumber\":..}."
+      images:
+        - url: "https://example.test/id/card-001.png"
+      expected:
+        mustBeJSON: true
+        fields:
+          surname: "Martin"
+          docNumber: "X1234567"
+        reference: "Surname Martin, document number X1234567."
+        requiredKeywords: ["Martin", "X1234567"]
+        maxTokens: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vision-quality-evidence
+  namespace: default
+  labels:
+    aiops.imperium.io/evidence-source: quality-eval-job
+    aiops.imperium.io/quality-gate: doc-extraction-quality-gate
+data:
+  results.yaml: |
+    - id: invoice-total
+      model: gpt-4o-mini-vision
+      reference: "The invoice total is 1240.00 EUR."
+      actual: "{\"total\":\"1240.00\",\"currency\":\"EUR\"}"
+      actualFields: { total: "1240.00", currency: "EUR" }
+      semanticScore: 98
+      schemaValid: true
+      unexpectedRefusal: false
+      sensitiveDataLeak: false
+      requiredKeywordsPresent: true
+    - id: id-card-fields
+      model: gpt-4o-mini-vision
+      reference: "Surname Martin, document number X1234567."
+      actual: "{\"surname\":\"Martin\",\"docNumber\":\"X1234567\"}"
+      actualFields: { surname: "Martin", docNumber: "X1234567" }
+      semanticScore: 97
+      schemaValid: true
+      unexpectedRefusal: false
+      sensitiveDataLeak: false
+      requiredKeywordsPresent: true
+    - id: invoice-total
+      model: pixtral-large-latest
+      reference: "The invoice total is 1240.00 EUR."
+      actual: "{\"total\":\"1240.00\",\"currency\":\"EUR\"}"
+      actualFields: { total: "1240.00", currency: "EUR" }
+      semanticScore: 96
+      schemaValid: true
+      unexpectedRefusal: false
+      sensitiveDataLeak: false
+      requiredKeywordsPresent: true
+    - id: id-card-fields
+      model: pixtral-large-latest
+      reference: "Surname Martin, document number X1234567."
+      actual: "{\"surname\":\"Martin\",\"docNumber\":\"X1234567\"}"
+      actualFields: { surname: "Martin", docNumber: "X1234567" }
+      semanticScore: 95
+      schemaValid: true
+      unexpectedRefusal: false
+      sensitiveDataLeak: false
+      requiredKeywordsPresent: true
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: doc-extraction-quality-gate
+  namespace: default
+spec:
+  target:
+    namespace: docs
+    application: invoice-extractor
+  sourceModel: gpt-4o-mini-vision
+  candidateModel: pixtral-large-latest
+  goldenDatasetRef: { name: vision-golden-prompts, namespace: default }
+  evidenceRef: { name: vision-quality-evidence, namespace: default }
+  evaluation:
+    endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+    maxTokens: 80
+    timeoutSeconds: 60
+  latencyThresholdMs: 4000
+  minSamples: 2
+  tolerancePoints: 3
+  # Image-out telemetry (reliability/latency) and the judge are out of scope for
+  # this offline sample, so they carry zero weight: the score is computed from the
+  # extracted-JSON correctness and the injected semantic similarity only.
+  weights:
+    correctness: 0.6
+    semantic: 0.4
+    reliability: 0
+    latency: 0
+    judged: 0
+  requiredChecks:
+    noUnexpectedRefusal: true
+    noSensitiveDataLeak: true
+    requiredKeywords: [EUR, Martin]

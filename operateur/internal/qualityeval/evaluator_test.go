@@ -18,6 +18,7 @@ package qualityeval
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -77,6 +78,102 @@ func TestRunCallsGatewayForSourceAndCandidate(t *testing.T) {
 	}
 	if doc.Samples[0].SemanticScore == nil || *doc.Samples[0].SemanticScore <= 0 {
 		t.Fatalf("semantic score was not populated: %#v", doc.Samples[0])
+	}
+}
+
+func TestRunSendsMultimodalContentForImagePrompts(t *testing.T) {
+	dir := t.TempDir()
+	// A 1x1 PNG written to the mounted golden-dataset volume.
+	pngBytes := []byte("\x89PNG\r\n\x1a\nfake-image-bytes")
+	if err := os.WriteFile(filepath.Join(dir, "invoice.png"), pngBytes, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "prompts.yaml"), []byte(`
+- id: ocr-total
+  prompt: "Extract the invoice total."
+  images:
+    - file: invoice.png
+    - url: https://example.test/remote.jpg
+  expected:
+    requiredKeywords: ["total"]
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	type imagePart struct {
+		Type     string `json:"type"`
+		Text     string `json:"text"`
+		ImageURL struct {
+			URL string `json:"url"`
+		} `json:"image_url"`
+	}
+	var lastContent []imagePart
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []struct {
+				Content []imagePart `json:"content"`
+			} `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if len(body.Messages) == 1 {
+			lastContent = body.Messages[0].Content
+		}
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"Total is 1240 EUR."}}]}`))
+	}))
+	defer srv.Close()
+
+	_, err := Run(context.Background(), Options{
+		Endpoint:       srv.URL,
+		PromptsDir:     dir,
+		SourceModel:    "vision-a",
+		CandidateModel: "vision-b",
+		Timeout:        time.Second,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(lastContent) != 3 {
+		t.Fatalf("content parts = %d, want 3 (text + 2 images): %#v", len(lastContent), lastContent)
+	}
+	if lastContent[0].Type != "text" || lastContent[0].Text != "Extract the invoice total." {
+		t.Fatalf("first part is not the text prompt: %#v", lastContent[0])
+	}
+	wantDataURI := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
+	if lastContent[1].Type != "image_url" || lastContent[1].ImageURL.URL != wantDataURI {
+		t.Fatalf("file image not inlined as data URI: %#v", lastContent[1])
+	}
+	if lastContent[2].ImageURL.URL != "https://example.test/remote.jpg" {
+		t.Fatalf("url image not passed through: %#v", lastContent[2])
+	}
+}
+
+func TestRunRejectsImageFileOutsidePromptsDir(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "prompts.yaml"), []byte(`
+- id: bad
+  prompt: "Read it."
+  images:
+    - file: ../etc/passwd
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"x"}}]}`))
+	}))
+	defer srv.Close()
+
+	_, err := Run(context.Background(), Options{
+		Endpoint:       srv.URL,
+		PromptsDir:     dir,
+		SourceModel:    "a",
+		CandidateModel: "b",
+		Timeout:        time.Second,
+	})
+	if err == nil {
+		t.Fatal("expected error for image path traversal, got nil")
 	}
 }
 
