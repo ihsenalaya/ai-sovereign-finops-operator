@@ -681,9 +681,9 @@
       "pluginVersion": "6.6.0"
     },
     {
-      "type": "table",
-      "title": "Quality score par fournisseur / modèle",
-      "description": "Score agrégé calculé par AIQualityGate, uniquement pour les séries dimension=\"overall\".",
+      "type": "bargauge",
+      "title": "Qualité globale — fournisseurs",
+      "description": "Score AIQualityGate moyen par fournisseur et modèle. Une barre par provider/model, agrégée sur dimension=\"overall\".",
       "gridPos": {
         "h": 16,
         "w": 10,
@@ -697,25 +697,56 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "avg by(app, provider, model) (ai_finops_quality_score{dimension=\"overall\"})",
+          "expr": "avg by(provider, model) (ai_finops_quality_score{dimension=\"overall\"})",
           "instant": true,
-          "legendFormat": "{{app}} {{provider}} {{model}}",
+          "legendFormat": "{{provider}} / {{model}}",
           "refId": "A"
         }
       ],
       "options": {
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Value"
-          }
-        ]
+        "displayMode": "gradient",
+        "maxVizHeight": 48,
+        "minVizHeight": 24,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "decimals": 2
+          "min": 0,
+          "max": 100,
+          "unit": "percent",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
+            ]
+          }
         },
         "overrides": []
       }
