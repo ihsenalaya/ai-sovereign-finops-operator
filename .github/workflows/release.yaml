@@ -29,7 +29,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./operateur
           push: true
           tags: |
             ${{ env.IMAGE }}:${{ steps.v.outputs.version }}

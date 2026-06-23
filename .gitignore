@@ -6,7 +6,9 @@
 *.so
 *.dylib
 bin/*
+operateur/bin/
 Dockerfile.cross
+operateur/Dockerfile.cross
 
 # Test binary, built with `go test -c`
 *.test
@@ -23,9 +25,12 @@ go.work
 # editor and IDE paraphernalia
 .idea
 .vscode
+.claude/
 *.swp
 *.swo
 *~
+*.bck.yml
+prompt.txt
 
 # Experiment harness is a deliverable and IS committed (datasets, code, results, figures).
 # Only ignore large/regenerable caches if desired (kept for reproducibility by default).
@@ -35,8 +40,13 @@ go.work
 *.key
 *secret*
 docs/openaikey.txt
+docs/openai*-key.txt
 docs/mistralkey.txt
 docs/foundrykey.txt
+operateur/docs/openaikey.txt
+operateur/docs/openai*-key.txt
+operateur/docs/mistralkey.txt
+operateur/docs/foundrykey.txt
 *apikey*
 *openaikey*
 *mistralkey*

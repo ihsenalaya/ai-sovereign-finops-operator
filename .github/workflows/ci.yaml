@@ -13,17 +13,27 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25"
+          cache-dependency-path: |
+            operateur/go.sum
+            experimentation/go.mod
           cache: true
       - name: Verify generated manifests are up to date
+        working-directory: operateur
         run: |
           make manifests generate
           git diff --exit-code || (echo "Run 'make manifests generate' and commit the result" && exit 1)
       - name: Vet
+        working-directory: operateur
         run: go vet ./...
       - name: Unit + envtest
+        working-directory: operateur
         run: make test
       - name: Build
+        working-directory: operateur
         run: make build
+      - name: Experimentation tests
+        working-directory: experimentation
+        run: go test ./...
 
   helm-lint:
     runs-on: ubuntu-latest
@@ -31,11 +41,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
       - name: Lint chart
-        run: helm lint charts/ai-sovereign-finops-operator
+        run: helm lint operateur/charts/ai-sovereign-finops-operator
 
   docker-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build image
-        run: docker build -t ai-sovereign-finops-operator:ci .
+        run: docker build -t ai-sovereign-finops-operator:ci operateur
