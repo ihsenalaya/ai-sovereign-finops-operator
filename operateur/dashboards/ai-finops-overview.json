@@ -682,8 +682,8 @@
     },
     {
       "type": "bargauge",
-      "title": "Qualité globale — fournisseurs",
-      "description": "Score AIQualityGate moyen par fournisseur et modèle. Une barre par provider/model, agrégée sur dimension=\"overall\".",
+      "title": "Qualité vs coût — fournisseurs",
+      "description": "Deux barres par fournisseur: qualité globale AIQualityGate et efficacité coût. Les scores sont normalisés sur 0..100; plus haut est meilleur.",
       "gridPos": {
         "h": 16,
         "w": 10,
@@ -699,8 +699,18 @@
           },
           "expr": "avg by(provider, model) (ai_finops_quality_score{dimension=\"overall\"})",
           "instant": true,
-          "legendFormat": "{{provider}} / {{model}}",
-          "refId": "A"
+          "legendFormat": "{{provider}} qualité",
+          "refId": "quality"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "label_replace(avg by(provider) ((ai_finops_cost_score * 100) * on(namespace, model) group_left(provider) (0 * max by(namespace, model, provider) (ai_finops_quality_score{dimension=\"overall\"}) + 1)), \"model\", \"cost-efficiency\", \"provider\", \".*\")",
+          "instant": true,
+          "legendFormat": "{{provider}} coût",
+          "refId": "cost"
         }
       ],
       "options": {
