@@ -1,0 +1,11 @@
+NAMESPACE   NAME                                                               STATUS     COMPLETIONS   DURATION   AGE    CONTAINERS          IMAGES                                                  SELECTOR
+default     job.batch/quality-eval-finance-risk-assistant-quality-3ab0bae23b   Complete   1/1           8s         118s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=7421b36f-930a-40ce-a350-4b603fd880ec
+default     job.batch/quality-eval-legal-contract-quality-9e98125221           Complete   1/1           9s         118s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=09cd4f43-3167-4530-ae4e-d8256e5e5129
+default     job.batch/quality-eval-marketing-content-quality-549dedd88f        Complete   1/1           9s         118s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=7fc4d68b-275a-4f6e-8d26-e74068242497
+default     job.batch/quality-eval-rh-chatbot-quality-61ad01862b               Complete   1/1           6s         118s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=e67f1d72-3a56-4642-8cf1-cfcd634a44bd
+
+NAMESPACE   NAME                                                               READY   STATUS      RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+default     pod/quality-eval-finance-risk-assistant-quality-3ab0bae23b-25l8j   0/1     Completed   0          118s   10.244.0.29   greenops-control-plane   <none>           <none>
+default     pod/quality-eval-legal-contract-quality-9e98125221-7xhhp           0/1     Completed   0          118s   10.244.0.31   greenops-control-plane   <none>           <none>
+default     pod/quality-eval-marketing-content-quality-549dedd88f-9966t        0/1     Completed   0          118s   10.244.0.32   greenops-control-plane   <none>           <none>
+default     pod/quality-eval-rh-chatbot-quality-61ad01862b-8d8rq               0/1     Completed   0          118s   10.244.0.30   greenops-control-plane   <none>           <none>

@@ -1,0 +1,9 @@
+NAMESPACE                 NAME                                            TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                                            AGE
+default                   kubernetes                                      ClusterIP      10.96.0.1       <none>        443/TCP                                            8m57s
+envoy-ai-gateway-system   ai-gateway-controller                           ClusterIP      10.96.13.62     <none>        9443/TCP,1063/TCP,8080/TCP,18002/TCP               5m53s
+envoy-gateway-system      envoy-default-greenops-aigw-dac3126f            LoadBalancer   10.96.156.115   <pending>     80:32068/TCP                                       5m38s
+envoy-gateway-system      envoy-gateway                                   ClusterIP      10.96.121.154   <none>        18000/TCP,18001/TCP,18002/TCP,19001/TCP,9443/TCP   6m14s
+envoy-gateway-system      greenops-aigw-metrics                           ClusterIP      10.96.16.149    <none>        1064/TCP                                           5m16s
+greenops-system           greenops-ai-sovereign-finops-operator-metrics   ClusterIP      10.96.237.253   <none>        8080/TCP                                           6m58s
+greenops-system           greenops-ai-sovereign-finops-operator-webhook   ClusterIP      10.96.26.98     <none>        443/TCP                                            6m58s
+kube-system               kube-dns                                        ClusterIP      10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP                             8m56s

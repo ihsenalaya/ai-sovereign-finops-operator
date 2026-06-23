@@ -1,0 +1,877 @@
+apiVersion: v1
+items:
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIGateway
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIGateway","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"main-gateway","namespace":"default"},"spec":{"endpoint":"http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064","telemetry":{"metricsEndpoint":"/metrics","mode":"aigw"},"type":"envoy"}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: main-gateway
+    namespace: default
+    resourceVersion: "1183"
+    uid: 776a031a-f0e8-481a-b138-89a972c90bed
+  spec:
+    endpoint: http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064
+    telemetry:
+      metricsEndpoint: /metrics
+      mode: aigw
+    type: envoy
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:50Z"
+      message: AIGateway registered and namespaces resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"cohere-global","namespace":"default"},"spec":{"compliance":{"allowedForSensitiveData":false},"dataResidency":"global","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"2.16","outputTokenPricePerMillion":"8.65"},"region":"francecentral","type":"azure-openai"}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: cohere-global
+    namespace: default
+    resourceVersion: "1186"
+    uid: 6b770c1e-40d2-4f64-93e7-82e7270cf1f1
+  spec:
+    compliance:
+      allowedForSensitiveData: false
+    dataResidency: global
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "2.16"
+      outputTokenPricePerMillion: "8.65"
+    region: francecentral
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:50Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"mistral-eu","namespace":"default"},"spec":{"compliance":{"allowedCountries":["FR"],"allowedForSensitiveData":true},"dataResidency":"eu","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"1.84","outputTokenPricePerMillion":"5.52"},"region":"francecentral","type":"mistral"}}
+    creationTimestamp: "2026-06-22T22:34:55Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: mistral-eu
+    namespace: default
+    resourceVersion: "1340"
+    uid: 311380b6-241a-4844-ba20-99abb9ec6acd
+  spec:
+    compliance:
+      allowedCountries:
+      - FR
+      allowedForSensitiveData: true
+    dataResidency: eu
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "1.84"
+      outputTokenPricePerMillion: "5.52"
+    region: francecentral
+    type: mistral
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:55Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"openai-fr","namespace":"default"},"spec":{"compliance":{"allowedCountries":["FR","EU"],"allowedForSensitiveData":true},"dataResidency":"fr","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"0.37","outputTokenPricePerMillion":"1.47"},"region":"francecentral","type":"azure-openai"}}
+    creationTimestamp: "2026-06-22T22:34:51Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: openai-fr
+    namespace: default
+    resourceVersion: "1220"
+    uid: b3b8bec8-4eaa-4735-b604-33aaed3a9b67
+  spec:
+    compliance:
+      allowedCountries:
+      - FR
+      - EU
+      allowedForSensitiveData: true
+    dataResidency: fr
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "0.37"
+      outputTokenPricePerMillion: "1.47"
+    region: francecentral
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:51Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIProvider
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIProvider","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"openai-us","namespace":"default"},"spec":{"compliance":{"allowedForSensitiveData":false},"dataResidency":"us","managed":true,"pricing":{"currency":"EUR","inputTokenPricePerMillion":"0.37","outputTokenPricePerMillion":"1.47"},"region":"eastus","type":"azure-openai"}}
+    creationTimestamp: "2026-06-22T22:34:54Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: openai-us
+    namespace: default
+    resourceVersion: "1289"
+    uid: 7ce5e474-1f73-4ed9-8a2e-2040f08d2324
+  spec:
+    compliance:
+      allowedForSensitiveData: false
+    dataResidency: us
+    managed: true
+    pricing:
+      currency: EUR
+      inputTokenPricePerMillion: "0.37"
+      outputTokenPricePerMillion: "1.47"
+    region: eastus
+    type: azure-openai
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:54Z"
+      message: AIProvider registered with pricing and compliance
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"cohere-command-a","namespace":"default"},"spec":{"costTier":"high","modelName":"cohere-command-a-latest","providerRef":"cohere-global","qualityTier":"high","sensitiveDataAllowed":false,"servesApplication":"risk-assistant","servesNamespace":"finance","servesTeam":"finance","type":"llm"}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: cohere-command-a
+    namespace: default
+    resourceVersion: "1189"
+    uid: afdfa0ab-0b72-4833-ad69-006f54306885
+  spec:
+    costTier: high
+    modelName: cohere-command-a-latest
+    providerRef: cohere-global
+    qualityTier: high
+    sensitiveDataAllowed: false
+    servesApplication: risk-assistant
+    servesNamespace: finance
+    servesTeam: finance
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:50Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"gpt-france-mini","namespace":"default"},"spec":{"costTier":"low","modelName":"gpt-france-mini","providerRef":"openai-fr","qualityTier":"high","sensitiveDataAllowed":true,"servesApplication":"chatbot-rh","servesNamespace":"rh","servesTeam":"rh","type":"llm"}}
+    creationTimestamp: "2026-06-22T22:34:51Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: gpt-france-mini
+    namespace: default
+    resourceVersion: "1224"
+    uid: 49845790-e8bb-4379-b841-7728a4d25d0f
+  spec:
+    costTier: low
+    modelName: gpt-france-mini
+    providerRef: openai-fr
+    qualityTier: high
+    sensitiveDataAllowed: true
+    servesApplication: chatbot-rh
+    servesNamespace: rh
+    servesTeam: rh
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:51Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"gpt-us-mini","namespace":"default"},"spec":{"costTier":"low","modelName":"gpt-us-mini","providerRef":"openai-us","qualityTier":"high","sensitiveDataAllowed":false,"servesApplication":"risk-assistant","servesNamespace":"finance","servesTeam":"finance","type":"llm"}}
+    creationTimestamp: "2026-06-22T22:34:54Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: gpt-us-mini
+    namespace: default
+    resourceVersion: "1293"
+    uid: 9dede496-948e-4caf-a9e6-21100f88a750
+  spec:
+    costTier: low
+    modelName: gpt-us-mini
+    providerRef: openai-us
+    qualityTier: high
+    sensitiveDataAllowed: false
+    servesApplication: risk-assistant
+    servesNamespace: finance
+    servesTeam: finance
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:54Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: azure-openai
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIModel
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIModel","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"mistral-large","namespace":"default"},"spec":{"costTier":"high","modelName":"mistral-large-latest","providerRef":"mistral-eu","qualityTier":"high","sensitiveDataAllowed":true,"servesApplication":"content-writer","servesNamespace":"marketing","servesTeam":"marketing","type":"llm"}}
+    creationTimestamp: "2026-06-22T22:34:55Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: mistral-large
+    namespace: default
+    resourceVersion: "1344"
+    uid: d3b6149e-add2-4004-a439-f7736d09449a
+  spec:
+    costTier: high
+    modelName: mistral-large-latest
+    providerRef: mistral-eu
+    qualityTier: high
+    sensitiveDataAllowed: true
+    servesApplication: content-writer
+    servesNamespace: marketing
+    servesTeam: marketing
+    type: llm
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:34:55Z"
+      message: AIModel catalogued and provider resolved
+      observedGeneration: 1
+      reason: Reconciled
+      status: "True"
+      type: Ready
+    observedGeneration: 1
+    resolvedProvider: mistral
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782167704"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"finance-risk-assistant-quality","namespace":"default"},"spec":{"candidateModel":"mistral-large-latest","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":80,"timeoutSeconds":60},"evidenceRef":{"name":"finance-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"finance-quality-golden"},"latencyThresholdMs":3000,"minSamples":1,"sourceModel":"gpt-france-mini","target":{"application":"risk-assistant","namespace":"finance","team":"finance"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-22T22:35:04Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: finance-risk-assistant-quality
+    namespace: default
+    resourceVersion: "1558"
+    uid: 28b7f442-a092-4032-8b73-dcd5cde2cdba
+  spec:
+    candidateModel: mistral-large-latest
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 80
+      timeoutSeconds: 60
+    evidenceRef:
+      name: finance-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: finance-quality-golden
+    latencyThresholdMs: 3000
+    minSamples: 1
+    period: monthly
+    sourceModel: gpt-france-mini
+    target:
+      application: risk-assistant
+      namespace: finance
+      team: finance
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:04Z"
+      message: 'quality gate pending for finance/risk-assistant: 13 missing/insufficient
+        signal(s)'
+      observedGeneration: 1
+      reason: ReferenceNotFound
+      status: "False"
+      type: Ready
+    evaluationJobName: quality-eval-finance-risk-assistant-quality-2302e1b186
+    evaluationJobPhase: Failed
+    evidenceRef:
+      name: finance-quality-evidence
+    failureMessages:
+    - 'quality evidence not ready: read ConfigMap default/finance-quality-evidence:
+      ConfigMap "finance-quality-evidence" not found'
+    - quality evaluation job "quality-eval-finance-risk-assistant-quality-2302e1b186"
+      failed; see Job/Pod status for the real gateway error
+    - 'telemetry collection failed (aigw): metric gen_ai_client_token_usage not found
+      at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+      (no gateway traffic yet?)'
+    - source golden evidence below minSamples
+    - candidate golden evidence below minSamples
+    - 'source: correctness evidence missing'
+    - 'source: real reliability telemetry missing'
+    - 'source: real latency telemetry missing'
+    - 'source: semantic score missing'
+    - 'candidate: correctness evidence missing'
+    - 'candidate: real reliability telemetry missing'
+    - 'candidate: real latency telemetry missing'
+    - 'candidate: semantic score missing'
+    observedGeneration: 1
+    phase: Pending
+    scoreBreakdown: {}
+    verdict: insufficient-data
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782167704"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"legal-contract-quality","namespace":"default"},"spec":{"candidateModel":"mistral-large-latest","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":90,"timeoutSeconds":60},"evidenceRef":{"name":"legal-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"legal-quality-golden"},"latencyThresholdMs":3500,"minSamples":1,"sourceModel":"gpt-france-mini","target":{"application":"contract-review","namespace":"legal","team":"legal"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-22T22:35:04Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: legal-contract-quality
+    namespace: default
+    resourceVersion: "1550"
+    uid: c1aee260-d59d-454d-9dfa-a73b091e7bed
+  spec:
+    candidateModel: mistral-large-latest
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 90
+      timeoutSeconds: 60
+    evidenceRef:
+      name: legal-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: legal-quality-golden
+    latencyThresholdMs: 3500
+    minSamples: 1
+    period: monthly
+    sourceModel: gpt-france-mini
+    target:
+      application: contract-review
+      namespace: legal
+      team: legal
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:04Z"
+      message: 'quality gate pending for legal/contract-review: 13 missing/insufficient
+        signal(s)'
+      observedGeneration: 1
+      reason: ReferenceNotFound
+      status: "False"
+      type: Ready
+    evaluationJobName: quality-eval-legal-contract-quality-1120797a7e
+    evaluationJobPhase: Failed
+    evidenceRef:
+      name: legal-quality-evidence
+    failureMessages:
+    - 'quality evidence not ready: read ConfigMap default/legal-quality-evidence:
+      ConfigMap "legal-quality-evidence" not found'
+    - quality evaluation job "quality-eval-legal-contract-quality-1120797a7e" failed;
+      see Job/Pod status for the real gateway error
+    - 'telemetry collection failed (aigw): metric gen_ai_client_token_usage not found
+      at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+      (no gateway traffic yet?)'
+    - source golden evidence below minSamples
+    - candidate golden evidence below minSamples
+    - 'source: correctness evidence missing'
+    - 'source: real reliability telemetry missing'
+    - 'source: real latency telemetry missing'
+    - 'source: semantic score missing'
+    - 'candidate: correctness evidence missing'
+    - 'candidate: real reliability telemetry missing'
+    - 'candidate: real latency telemetry missing'
+    - 'candidate: semantic score missing'
+    observedGeneration: 1
+    phase: Pending
+    scoreBreakdown: {}
+    verdict: insufficient-data
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782167704"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"marketing-content-quality","namespace":"default"},"spec":{"candidateModel":"mistral-large-latest","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":90,"timeoutSeconds":60},"evidenceRef":{"name":"marketing-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"marketing-quality-golden"},"latencyThresholdMs":3500,"minSamples":1,"sourceModel":"gpt-france-mini","target":{"application":"content-writer","namespace":"marketing","team":"marketing"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-22T22:35:04Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: marketing-content-quality
+    namespace: default
+    resourceVersion: "1554"
+    uid: 91ae92b1-d082-4cd2-9eb1-3e27ad74a382
+  spec:
+    candidateModel: mistral-large-latest
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 90
+      timeoutSeconds: 60
+    evidenceRef:
+      name: marketing-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: marketing-quality-golden
+    latencyThresholdMs: 3500
+    minSamples: 1
+    period: monthly
+    sourceModel: gpt-france-mini
+    target:
+      application: content-writer
+      namespace: marketing
+      team: marketing
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:04Z"
+      message: 'quality gate pending for marketing/content-writer: 13 missing/insufficient
+        signal(s)'
+      observedGeneration: 1
+      reason: ReferenceNotFound
+      status: "False"
+      type: Ready
+    evaluationJobName: quality-eval-marketing-content-quality-600753fc0e
+    evaluationJobPhase: Failed
+    evidenceRef:
+      name: marketing-quality-evidence
+    failureMessages:
+    - 'quality evidence not ready: read ConfigMap default/marketing-quality-evidence:
+      ConfigMap "marketing-quality-evidence" not found'
+    - quality evaluation job "quality-eval-marketing-content-quality-600753fc0e" failed;
+      see Job/Pod status for the real gateway error
+    - 'telemetry collection failed (aigw): metric gen_ai_client_token_usage not found
+      at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+      (no gateway traffic yet?)'
+    - source golden evidence below minSamples
+    - candidate golden evidence below minSamples
+    - 'source: correctness evidence missing'
+    - 'source: real reliability telemetry missing'
+    - 'source: real latency telemetry missing'
+    - 'source: semantic score missing'
+    - 'candidate: correctness evidence missing'
+    - 'candidate: real reliability telemetry missing'
+    - 'candidate: real latency telemetry missing'
+    - 'candidate: semantic score missing'
+    observedGeneration: 1
+    phase: Pending
+    scoreBreakdown: {}
+    verdict: insufficient-data
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIQualityGate
+  metadata:
+    annotations:
+      demo/reconcile: "1782167704"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIQualityGate","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"rh-chatbot-quality","namespace":"default"},"spec":{"candidateModel":"gpt-france-mini","evaluation":{"endpoint":"http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions","maxTokens":70,"timeoutSeconds":60},"evidenceRef":{"name":"rh-quality-evidence"},"gatewayRef":"main-gateway","goldenDatasetRef":{"name":"rh-quality-golden"},"latencyThresholdMs":3000,"minSamples":1,"sourceModel":"mistral-large-latest","target":{"application":"chatbot-rh","namespace":"rh","team":"rh"},"tolerancePoints":3,"weights":{"judged":0}}}
+    creationTimestamp: "2026-06-22T22:35:04Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: rh-chatbot-quality
+    namespace: default
+    resourceVersion: "1543"
+    uid: 8399e86d-d258-41c2-8198-8078239ef076
+  spec:
+    candidateModel: gpt-france-mini
+    evaluation:
+      endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
+      maxTokens: 70
+      timeoutSeconds: 60
+    evidenceRef:
+      name: rh-quality-evidence
+    gatewayRef: main-gateway
+    goldenDatasetRef:
+      name: rh-quality-golden
+    latencyThresholdMs: 3000
+    minSamples: 1
+    period: monthly
+    sourceModel: mistral-large-latest
+    target:
+      application: chatbot-rh
+      namespace: rh
+      team: rh
+    tolerancePoints: 3
+    weights:
+      judged: 0
+  status:
+    canaryStatus: Disabled
+    checkedSamples: 1
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:04Z"
+      message: 'quality gate pending for rh/chatbot-rh: 13 missing/insufficient signal(s)'
+      observedGeneration: 1
+      reason: ReferenceNotFound
+      status: "False"
+      type: Ready
+    evaluationJobName: quality-eval-rh-chatbot-quality-7147801f44
+    evaluationJobPhase: Failed
+    evidenceRef:
+      name: rh-quality-evidence
+    failureMessages:
+    - 'quality evidence not ready: read ConfigMap default/rh-quality-evidence: ConfigMap
+      "rh-quality-evidence" not found'
+    - quality evaluation job "quality-eval-rh-chatbot-quality-7147801f44" failed;
+      see Job/Pod status for the real gateway error
+    - 'telemetry collection failed (aigw): metric gen_ai_client_token_usage not found
+      at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+      (no gateway traffic yet?)'
+    - source golden evidence below minSamples
+    - candidate golden evidence below minSamples
+    - 'source: correctness evidence missing'
+    - 'source: real reliability telemetry missing'
+    - 'source: real latency telemetry missing'
+    - 'source: semantic score missing'
+    - 'candidate: correctness evidence missing'
+    - 'candidate: real reliability telemetry missing'
+    - 'candidate: real latency telemetry missing'
+    - 'candidate: semantic score missing'
+    observedGeneration: 1
+    phase: Pending
+    scoreBreakdown: {}
+    verdict: insufficient-data
+    weightsUsed:
+      correctness: 0.444
+      latency: 0.167
+      reliability: 0.222
+      semantic: 0.167
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AISovereigntyPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AISovereigntyPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"regulated-france-policy","namespace":"default"},"spec":{"dataResidency":{"allowedZones":["FR","EU"],"forbiddenZones":["US","CN","GLOBAL"]},"enforcementMode":"reportOnly","sensitiveData":{"externalProvidersAllowed":false,"requireAnonymization":true}}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    finalizers:
+    - aiops.imperium.io/enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: regulated-france-policy
+    namespace: default
+    resourceVersion: "1399"
+    uid: 7368c854-b8ff-4f19-9a81-b097011b0a52
+  spec:
+    audit: {}
+    dataResidency:
+      allowedZones:
+      - FR
+      - EU
+      forbiddenZones:
+      - US
+      - CN
+      - GLOBAL
+    enforcementMode: reportOnly
+    sensitiveData:
+      requireAnonymization: true
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:00Z"
+      message: metric gen_ai_client_token_usage not found at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+        (no gateway traffic yet?)
+      observedGeneration: 2
+      reason: ReconcileError
+      status: "False"
+      type: Ready
+    observedGeneration: 2
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"finance-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.02","criticalThresholdPercent":90,"enforcementMode":"reportOnly","hardLimitPercent":100,"period":"monthly","target":{"application":"risk-assistant","namespace":"finance","team":"finance"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 3
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: finance-budget
+    namespace: default
+    resourceVersion: "1406"
+    uid: 33904e7f-b896-402b-aabc-6070d3012416
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: "0.02"
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: risk-assistant
+      namespace: finance
+      team: finance
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:00Z"
+      message: metric gen_ai_client_token_usage not found at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+        (no gateway traffic yet?)
+      observedGeneration: 3
+      reason: ReconcileError
+      status: "False"
+      type: Ready
+    observedGeneration: 3
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"legal-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"contract-review","namespace":"legal","team":"legal"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: legal-budget
+    namespace: default
+    resourceVersion: "1403"
+    uid: 9c0cd952-7c11-4e3f-ac2b-0d3be31f328a
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: contract-review
+      namespace: legal
+      team: legal
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:00Z"
+      message: metric gen_ai_client_token_usage not found at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+        (no gateway traffic yet?)
+      observedGeneration: 2
+      reason: ReconcileError
+      status: "False"
+      type: Ready
+    observedGeneration: 2
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"marketing-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"content-writer","namespace":"marketing","team":"marketing"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-22T22:34:55Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: marketing-budget
+    namespace: default
+    resourceVersion: "1405"
+    uid: fbc151f7-08cd-49ab-ae45-3fd0f542f5cd
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: content-writer
+      namespace: marketing
+      team: marketing
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:00Z"
+      message: metric gen_ai_client_token_usage not found at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+        (no gateway traffic yet?)
+      observedGeneration: 2
+      reason: ReconcileError
+      status: "False"
+      type: Ready
+    observedGeneration: 2
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIBudgetPolicy
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIBudgetPolicy","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"rh-budget","namespace":"default"},"spec":{"actions":{"onCritical":["alert"],"onHardLimit":["blockOrRequireApproval"],"onWarning":["alert"]},"budgetEUR":"0.20","criticalThresholdPercent":90,"hardLimitPercent":100,"period":"monthly","target":{"application":"chatbot-rh","namespace":"rh","team":"rh"},"warningThresholdPercent":70}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    finalizers:
+    - aiops.imperium.io/budget-enforcement-metrics
+    generation: 2
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: rh-budget
+    namespace: default
+    resourceVersion: "1401"
+    uid: 807e259f-f3ac-4e58-9524-58c9eba6ecaa
+  spec:
+    actions:
+      onCritical:
+      - alert
+      onHardLimit:
+      - blockOrRequireApproval
+      onWarning:
+      - alert
+    budgetEUR: 200m
+    criticalThresholdPercent: 90
+    enforcementMode: reportOnly
+    fallbackOnPhase: Exceeded
+    hardLimitPercent: 100
+    period: monthly
+    target:
+      application: chatbot-rh
+      namespace: rh
+      team: rh
+    warningThresholdPercent: 70
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:00Z"
+      message: metric gen_ai_client_token_usage not found at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+        (no gateway traffic yet?)
+      observedGeneration: 2
+      reason: ReconcileError
+      status: "False"
+      type: Ready
+    observedGeneration: 2
+- apiVersion: aiops.imperium.io/v1alpha1
+  kind: AIFinOpsReport
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"aiops.imperium.io/v1alpha1","kind":"AIFinOpsReport","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"ai-sovereign-finops-operator"},"name":"ai-report-all","namespace":"default"},"spec":{"gatewayRef":"main-gateway","target":{"period":"monthly"}}}
+    creationTimestamp: "2026-06-22T22:34:50Z"
+    finalizers:
+    - aiops.imperium.io/report-metrics
+    generation: 1
+    labels:
+      app.kubernetes.io/name: ai-sovereign-finops-operator
+    name: ai-report-all
+    namespace: default
+    resourceVersion: "1398"
+    uid: b514a6a2-1176-4109-bc70-1e8e4fbe5f01
+  spec:
+    gatewayRef: main-gateway
+    target:
+      period: monthly
+  status:
+    conditions:
+    - lastTransitionTime: "2026-06-22T22:35:00Z"
+      message: 'telemetry collection failed (aigw): metric gen_ai_client_token_usage
+        not found at http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064/metrics
+        (no gateway traffic yet?)'
+      observedGeneration: 1
+      reason: ReconcileError
+      status: "False"
+      type: Ready
+    latencyTelemetryAvailable: false
+    observedGeneration: 1
+kind: List
+metadata:
+  resourceVersion: ""

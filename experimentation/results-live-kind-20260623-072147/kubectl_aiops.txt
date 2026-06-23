@@ -1,0 +1,32 @@
+NAMESPACE   NAME                                       TYPE    ENDPOINT                                                                   READY   AGE
+default     aigateway.aiops.imperium.io/main-gateway   envoy   http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064   True    2m4s
+
+NAMESPACE   NAME                                         TYPE           RESIDENCY   MANAGED   AGE
+default     aiprovider.aiops.imperium.io/cohere-global   azure-openai   global      true      2m4s
+default     aiprovider.aiops.imperium.io/mistral-eu      mistral        eu          true      119s
+default     aiprovider.aiops.imperium.io/openai-fr       azure-openai   fr          true      7m50s
+default     aiprovider.aiops.imperium.io/openai-us       azure-openai   us          true      2m1s
+
+NAMESPACE   NAME                                         PROVIDER        MODEL                     COSTTIER   AGE
+default     aimodel.aiops.imperium.io/cohere-command-a   cohere-global   cohere-command-a-latest   high       2m4s
+default     aimodel.aiops.imperium.io/gpt-france-mini    openai-fr       gpt-france-mini           low        7m50s
+default     aimodel.aiops.imperium.io/gpt-us-mini        openai-us       gpt-us-mini               low        2m1s
+default     aimodel.aiops.imperium.io/mistral-large      mistral-eu      mistral-large-latest      high       119s
+
+NAMESPACE   NAME                                                             TARGETNS    APPLICATION       SOURCE                 CANDIDATE              PHASE    VERDICT          SCORE    AGE
+default     aiqualitygate.aiops.imperium.io/finance-risk-assistant-quality   finance     risk-assistant    gpt-france-mini        mistral-large-latest   Passed   candidate-safe   82.167   117s
+default     aiqualitygate.aiops.imperium.io/legal-contract-quality           legal       contract-review   gpt-france-mini        mistral-large-latest   Passed   candidate-safe   88.044   117s
+default     aiqualitygate.aiops.imperium.io/marketing-content-quality        marketing   content-writer    gpt-france-mini        mistral-large-latest   Passed   candidate-safe   87.657   117s
+default     aiqualitygate.aiops.imperium.io/rh-chatbot-quality               rh          chatbot-rh        mistral-large-latest   gpt-france-mini        Passed   candidate-safe   87.517   117s
+
+NAMESPACE   NAME                                                            MODE         FINDINGS   AGE
+default     aisovereigntypolicy.aiops.imperium.io/regulated-france-policy   reportOnly   3          2m4s
+
+NAMESPACE   NAME                                                BUDGET(EUR)   USAGE%   PHASE          AGE
+default     aibudgetpolicy.aiops.imperium.io/finance-budget     0.02          10       WithinBudget   7m51s
+default     aibudgetpolicy.aiops.imperium.io/legal-budget       0.20          1        WithinBudget   7m51s
+default     aibudgetpolicy.aiops.imperium.io/marketing-budget   0.20          2        WithinBudget   7m45s
+default     aibudgetpolicy.aiops.imperium.io/rh-budget          0.20          1        WithinBudget   2m4s
+
+NAMESPACE   NAME                                             NAMESPACE-TARGET   PERIOD    TOTALCOST(EUR)   GENERATED
+default     aifinopsreport.aiops.imperium.io/ai-report-all                      monthly   9246u            31s

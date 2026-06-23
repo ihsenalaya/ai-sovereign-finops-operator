@@ -1,0 +1,244 @@
+2026-06-22T22:34:22Z	INFO	setup	configuring kubernetes cache	{"watch-namespaces": [], "sync-timeout": "2m0s"}
+2026/06/22 22:34:22 starting pprof server on port 6060
+2026-06-22T22:34:22Z	INFO	ratelimit-xds-runner	starting rate limit xDS config server	{"address": "0.0.0.0:18002"}
+2026-06-22T22:34:22Z	INFO	controller	InferencePool CRD not found, skipping InferencePool controller. If you need it, please install the Gateway API Inference Extension CRDs.
+2026-06-22T22:34:22Z	INFO	controller-runtime.webhook	Registering webhook	{"path": "/mutate"}
+2026-06-22T22:34:22Z	INFO	controller-runtime.metrics	Starting metrics server
+2026-06-22T22:34:22Z	INFO	controller-runtime.metrics	Serving metrics server	{"bindAddress": ":8080", "secure": false}
+2026-06-22T22:34:22Z	INFO	controller-runtime.webhook	Starting webhook server
+2026-06-22T22:34:22Z	INFO	controller-runtime.certwatcher	Updated current TLS certificate	{"cert": "/certs/tls.crt", "key": "/certs/tls.key"}
+2026-06-22T22:34:22Z	INFO	controller-runtime.webhook	Serving webhook server	{"host": "", "port": 9443}
+2026-06-22T22:34:22Z	INFO	controller-runtime.certwatcher	Starting certificate poll+watcher	{"cert": "/certs/tls.crt", "key": "/certs/tls.key", "interval": "10s"}
+I0622 22:34:22.447442       1 leaderelection.go:258] "Attempting to acquire leader lease..." lock="envoy-ai-gateway-system/envoy-ai-gateway-controller"
+I0622 22:34:22.456482       1 leaderelection.go:272] "Successfully acquired lease" lock="envoy-ai-gateway-system/envoy-ai-gateway-controller"
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "gateway", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "Gateway", "source": "channel source: 0x2d9ce32955e0"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "aiservicebackend", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIServiceBackend", "source": "channel source: 0x2d9ce3295c00"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "aiservicebackend", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIServiceBackend", "source": "kind source: *v1beta1.AIServiceBackend"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "gateway", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "Gateway", "source": "kind source: *v1.Gateway"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "gatewayconfig", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "GatewayConfig", "source": "kind source: *v1beta1.GatewayConfig"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "mcproute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "MCPRoute", "source": "channel source: 0x2d9ce2fcc700"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "mcproute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "MCPRoute", "source": "kind source: *v1beta1.MCPRoute"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "source": "kind source: *v1.HTTPRoute"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "source": "kind source: *v1alpha1.HTTPRouteFilter"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "mcproute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "MCPRoute", "source": "kind source: *v1.HTTPRoute"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "secret", "controllerGroup": "", "controllerKind": "Secret", "source": "kind source: *v1.Secret"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "source": "channel source: 0x2d9ce3295960"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "quotapolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "QuotaPolicy", "source": "kind source: *v1beta1.AIServiceBackend"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "mcproute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "MCPRoute", "source": "kind source: *v1alpha1.Backend"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "quotapolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "QuotaPolicy", "source": "kind source: *v1alpha1.QuotaPolicy"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "referencegrant", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "ReferenceGrant", "source": "kind source: *v1beta1.ReferenceGrant"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "backendsecuritypolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "BackendSecurityPolicy", "source": "channel source: 0x2d9ce2fcc070"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "backendsecuritypolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "BackendSecurityPolicy", "source": "kind source: *v1beta1.BackendSecurityPolicy"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "backendsecuritypolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "BackendSecurityPolicy", "source": "kind source: *v1.Secret"}
+2026-06-22T22:34:22Z	INFO	Starting EventSource	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "source": "kind source: *v1beta1.AIGatewayRoute"}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "gateway", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "Gateway"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "gateway", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "Gateway", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "referencegrant", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "ReferenceGrant"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "referencegrant", "controllerGroup": "gateway.networking.k8s.io", "controllerKind": "ReferenceGrant", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "aiservicebackend", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIServiceBackend"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "aiservicebackend", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIServiceBackend", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "mcproute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "MCPRoute"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "mcproute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "MCPRoute", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "gatewayconfig", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "GatewayConfig"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "gatewayconfig", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "GatewayConfig", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "quotapolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "QuotaPolicy"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "quotapolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "QuotaPolicy", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute"}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "secret", "controllerGroup": "", "controllerKind": "Secret"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "secret", "controllerGroup": "", "controllerKind": "Secret", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	Starting Controller	{"controller": "backendsecuritypolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "BackendSecurityPolicy"}
+2026-06-22T22:34:22Z	INFO	Starting workers	{"controller": "backendsecuritypolicy", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "BackendSecurityPolicy", "worker count": 1}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "envoy-gateway"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "greenops-system", "name": "sh.helm.release.v1.greenops.v1"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "envoy-oidc-hmac"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "envoy-rate-limit"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "sh.helm.release.v1.eg.v1"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-ai-gateway-system", "name": "self-signed-cert-for-mutating-webhook"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-ai-gateway-system", "name": "sh.helm.release.v1.aieg-crd.v1"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-ai-gateway-system", "name": "sh.helm.release.v1.aieg.v1"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "envoy"}
+2026-06-22T22:34:22Z	INFO	controller.secret	Reconciling Secret	{"namespace": "kube-system", "name": "bootstrap-token-abcdef"}
+2026-06-22T22:34:28Z	INFO	controller.secret	Reconciling Secret	{"namespace": "default", "name": "greenops-foundry-apikey"}
+2026-06-22T22:34:28Z	INFO	controller.gateway	No pods, deployments or daemonsets found for the Gateway.	{"namespace": "default", "name": "greenops-aigw", "requeueAfter": "5s"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-host-rewrite-greenops-cohere", "namespace": "default"}
+2026-06-22T22:34:28Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-cohere", "referenced_backend": "greenops-cohere", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-route-not-found-response-greenops-cohere", "namespace": "default"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	creating HTTPRoute	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.backend-security-policy	Reconciling backend security policy	{"namespace": "default", "name": "greenops-foundry-apikey"}
+2026-06-22T22:34:28Z	INFO	controller.backend-security-policy	Syncing AIServiceBackend	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-cohere", "referenced_backend": "greenops-cohere", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-cohere"}
+2026-06-22T22:34:28Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:28Z	INFO	controller.gateway	No pods, deployments or daemonsets found for the Gateway.	{"namespace": "default", "name": "greenops-aigw", "requeueAfter": "5s"}
+2026-06-22T22:34:28Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:28Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:28Z	INFO	controller.gateway	rollout in progress - requeueing	{"requeueAfter": "5s"}
+2026-06-22T22:34:28Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:28Z	INFO	controller.gateway-mutator	mutating gateway pod	{"pod_name": "", "pod_namespace": "envoy-gateway-system", "gateway_name": "greenops-aigw", "gateway_namespace": "default"}
+2026-06-22T22:34:28Z	INFO	controller.gateway-mutator	found routes for gateway	{"aigatewayroute_count": 1, "mcpgatewayroute_count": 0}
+2026-06-22T22:34:28Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:28Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:28Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:33Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:33Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:50Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:50Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:50Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:50Z	INFO	controller.secret	Reconciling Secret	{"namespace": "default", "name": "greenops-openai-fr-apikey"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-host-rewrite-greenops-openai-fr", "namespace": "default"}
+2026-06-22T22:34:51Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-fr", "referenced_backend": "greenops-openai-fr", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-route-not-found-response-greenops-openai-fr", "namespace": "default"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	creating HTTPRoute	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.backend-security-policy	Reconciling backend security policy	{"namespace": "default", "name": "greenops-openai-fr-apikey"}
+2026-06-22T22:34:51Z	INFO	controller.backend-security-policy	Syncing AIServiceBackend	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-fr", "referenced_backend": "greenops-openai-fr", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-openai-fr"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:51Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:51Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:51Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:51Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:51Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:51Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:53Z	INFO	controller.secret	Reconciling Secret	{"namespace": "default", "name": "greenops-openai-us-apikey"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-host-rewrite-greenops-openai-us", "namespace": "default"}
+2026-06-22T22:34:54Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us", "referenced_backend": "greenops-openai-us", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:54Z	INFO	controller.backend-security-policy	Reconciling backend security policy	{"namespace": "default", "name": "greenops-openai-us-apikey"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-route-not-found-response-greenops-openai-us", "namespace": "default"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	creating HTTPRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.backend-security-policy	Syncing AIServiceBackend	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us", "referenced_backend": "greenops-openai-us", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:54Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:54Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:54Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:54Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:54Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:54Z	ERROR	controller.ai-gateway-route	failed to sync AIGatewayRoute	{"error": "failed to update HTTPRoute: Operation cannot be fulfilled on httproutes.gateway.networking.k8s.io \"greenops-openai-us\": the object has been modified; please apply your changes to the latest version and try again"}
+github.com/envoyproxy/ai-gateway/internal/controller.(*AIGatewayRouteController).Reconcile
+	/home/runner/work/ai-gateway/ai-gateway/internal/controller/ai_gateway_route.go:99
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Reconcile
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:221
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:478
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:437
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func1.1
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:312
+2026-06-22T22:34:54Z	ERROR	Reconciler error	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "AIGatewayRoute": {"name":"greenops-openai-us","namespace":"default"}, "namespace": "default", "name": "greenops-openai-us", "reconcileID": "c136cc52-7631-434e-98c4-e09241075b2b", "error": "failed to update HTTPRoute: Operation cannot be fulfilled on httproutes.gateway.networking.k8s.io \"greenops-openai-us\": the object has been modified; please apply your changes to the latest version and try again"}
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:494
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:437
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func1.1
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:312
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-openai-us"}
+2026-06-22T22:34:54Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:54Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:54Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:54Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:54Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:54Z	INFO	controller.secret	Reconciling Secret	{"namespace": "default", "name": "greenops-mistral-apikey"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-host-rewrite-greenops-mistral", "namespace": "default"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	Created HTTPRouteFilter	{"name": "ai-eg-route-not-found-response-greenops-mistral", "namespace": "default"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	creating HTTPRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral", "referenced_backend": "greenops-mistral", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:55Z	INFO	controller.backend-security-policy	Reconciling backend security policy	{"namespace": "default", "name": "greenops-mistral-apikey"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:55Z	INFO	controller.backend-security-policy	Syncing AIServiceBackend	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-service-backend	Reconciling AIServiceBackend	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-service-backend	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral", "referenced_backend": "greenops-mistral", "referenced_backend_namespace": "default"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	ERROR	controller.ai-gateway-route	failed to sync AIGatewayRoute	{"error": "failed to update HTTPRoute: Operation cannot be fulfilled on httproutes.gateway.networking.k8s.io \"greenops-mistral\": the object has been modified; please apply your changes to the latest version and try again"}
+github.com/envoyproxy/ai-gateway/internal/controller.(*AIGatewayRouteController).Reconcile
+	/home/runner/work/ai-gateway/ai-gateway/internal/controller/ai_gateway_route.go:99
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Reconcile
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:221
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:478
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:437
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func1.1
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:312
+2026-06-22T22:34:55Z	ERROR	Reconciler error	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "AIGatewayRoute": {"name":"greenops-mistral","namespace":"default"}, "namespace": "default", "name": "greenops-mistral", "reconcileID": "04afdff2-8863-4aa1-94e1-f26e622f9042", "error": "failed to update HTTPRoute: Operation cannot be fulfilled on httproutes.gateway.networking.k8s.io \"greenops-mistral\": the object has been modified; please apply your changes to the latest version and try again"}
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:494
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:437
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func1.1
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:312
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	non-ai-gateway cluster name	{"cluster_name": "default/greenops-aigw"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	inserting AI Gateway extproc filter into listener	{"listener": "default/greenops-aigw/http"}
+2026-06-22T22:34:55Z	INFO	envoy-gateway-extension-server	Added extproc-uds cluster to the list of clusters
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	ERROR	controller.ai-gateway-route	failed to sync AIGatewayRoute	{"error": "failed to update HTTPRoute: Operation cannot be fulfilled on httproutes.gateway.networking.k8s.io \"greenops-mistral\": the object has been modified; please apply your changes to the latest version and try again"}
+github.com/envoyproxy/ai-gateway/internal/controller.(*AIGatewayRouteController).Reconcile
+	/home/runner/work/ai-gateway/ai-gateway/internal/controller/ai_gateway_route.go:99
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Reconcile
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:221
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:478
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:437
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func1.1
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:312
+2026-06-22T22:34:55Z	ERROR	Reconciler error	{"controller": "aigatewayroute", "controllerGroup": "aigateway.envoyproxy.io", "controllerKind": "AIGatewayRoute", "AIGatewayRoute": {"name":"greenops-mistral","namespace":"default"}, "namespace": "default", "name": "greenops-mistral", "reconcileID": "a8c87241-89c6-4fc6-8850-43d45ed48135", "error": "failed to update HTTPRoute: Operation cannot be fulfilled on httproutes.gateway.networking.k8s.io \"greenops-mistral\": the object has been modified; please apply your changes to the latest version and try again"}
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:494
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:437
+sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func1.1
+	/home/runner/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.24.1/pkg/internal/controller/controller.go:312
+2026-06-22T22:34:55Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:55Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	Reconciling AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	syncing AIGatewayRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	updating HTTPRoute	{"namespace": "default", "name": "greenops-mistral"}
+2026-06-22T22:34:55Z	INFO	controller.ai-gateway-route	syncing Gateway	{"namespace": "default", "name": "greenops-aigw"}
+2026-06-22T22:34:55Z	INFO	controller.gateway	annotating pod	{"namespace": "envoy-gateway-system", "name": "envoy-default-greenops-aigw-dac3126f-54f887cbf5-dzm4d"}
+2026-06-22T22:34:55Z	INFO	controller.secret	Reconciling Secret	{"namespace": "envoy-gateway-system", "name": "greenops-aigw-default"}

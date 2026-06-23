@@ -1,0 +1,32 @@
+NAMESPACE   NAME                                       TYPE    ENDPOINT                                                                   READY   AGE
+default     aigateway.aiops.imperium.io/main-gateway   envoy   http://greenops-aigw-metrics.envoy-gateway-system.svc.cluster.local:1064   True    5m17s
+
+NAMESPACE   NAME                                         TYPE           RESIDENCY   MANAGED   AGE
+default     aiprovider.aiops.imperium.io/cohere-global   azure-openai   global      true      5m17s
+default     aiprovider.aiops.imperium.io/mistral-eu      mistral        eu          true      5m12s
+default     aiprovider.aiops.imperium.io/openai-fr       azure-openai   fr          true      5m16s
+default     aiprovider.aiops.imperium.io/openai-us       azure-openai   us          true      5m13s
+
+NAMESPACE   NAME                                         PROVIDER        MODEL                     COSTTIER   AGE
+default     aimodel.aiops.imperium.io/cohere-command-a   cohere-global   cohere-command-a-latest   high       5m17s
+default     aimodel.aiops.imperium.io/gpt-france-mini    openai-fr       gpt-france-mini           low        5m16s
+default     aimodel.aiops.imperium.io/gpt-us-mini        openai-us       gpt-us-mini               low        5m13s
+default     aimodel.aiops.imperium.io/mistral-large      mistral-eu      mistral-large-latest      high       5m12s
+
+NAMESPACE   NAME                                                             TARGETNS    APPLICATION       SOURCE                 CANDIDATE              PHASE     VERDICT             SCORE   AGE
+default     aiqualitygate.aiops.imperium.io/finance-risk-assistant-quality   finance     risk-assistant    gpt-france-mini        mistral-large-latest   Pending   insufficient-data           5m3s
+default     aiqualitygate.aiops.imperium.io/legal-contract-quality           legal       contract-review   gpt-france-mini        mistral-large-latest   Pending   insufficient-data           5m3s
+default     aiqualitygate.aiops.imperium.io/marketing-content-quality        marketing   content-writer    gpt-france-mini        mistral-large-latest   Pending   insufficient-data           5m3s
+default     aiqualitygate.aiops.imperium.io/rh-chatbot-quality               rh          chatbot-rh        mistral-large-latest   gpt-france-mini        Pending   insufficient-data           5m3s
+
+NAMESPACE   NAME                                                            MODE         FINDINGS   AGE
+default     aisovereigntypolicy.aiops.imperium.io/regulated-france-policy   reportOnly              5m17s
+
+NAMESPACE   NAME                                                BUDGET(EUR)   USAGE%   PHASE   AGE
+default     aibudgetpolicy.aiops.imperium.io/finance-budget     0.02                           5m17s
+default     aibudgetpolicy.aiops.imperium.io/legal-budget       200m                           5m17s
+default     aibudgetpolicy.aiops.imperium.io/marketing-budget   200m                           5m12s
+default     aibudgetpolicy.aiops.imperium.io/rh-budget          200m                           5m17s
+
+NAMESPACE   NAME                                             NAMESPACE-TARGET   PERIOD    TOTALCOST(EUR)   GENERATED
+default     aifinopsreport.aiops.imperium.io/ai-report-all                      monthly

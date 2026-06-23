@@ -1,0 +1,1140 @@
+# HELP ai_finops_budget_usage_percent Percent of budget consumed for an AIBudgetPolicy.
+# TYPE ai_finops_budget_usage_percent gauge
+ai_finops_budget_usage_percent{namespace="default",policy="finance-budget"} 10
+ai_finops_budget_usage_percent{namespace="default",policy="legal-budget"} 1
+ai_finops_budget_usage_percent{namespace="default",policy="marketing-budget"} 2
+ai_finops_budget_usage_percent{namespace="default",policy="rh-budget"} 1
+# HELP ai_finops_cost_by_zone_eur Spend in EUR per sovereignty zone (provider data-residency) over the reporting window.
+# TYPE ai_finops_cost_by_zone_eur gauge
+ai_finops_cost_by_zone_eur{zone="EU"} 0.00547952
+ai_finops_cost_by_zone_eur{zone="FR"} 0.00293187
+ai_finops_cost_by_zone_eur{zone="US"} 0.00083478
+# HELP ai_finops_cost_eur Spend in EUR actually observed for a namespace over the reporting window.
+# TYPE ai_finops_cost_eur gauge
+ai_finops_cost_eur{namespace="finance"} 0.0020880000000000004
+ai_finops_cost_eur{namespace="legal"} 0.0025571000000000005
+ai_finops_cost_eur{namespace="marketing"} 0.00315352
+ai_finops_cost_eur{namespace="rh"} 0.0014475500000000001
+# HELP ai_finops_cost_saving_eur Estimated EUR saving of a cost-saving recommendation, by namespace/application and current/recommended model.
+# TYPE ai_finops_cost_saving_eur gauge
+ai_finops_cost_saving_eur{application="chatbot-rh",current_model="gpt-france-mini",namespace="rh",recommended_model="mistral-small"} 0.0005755739999999999
+ai_finops_cost_saving_eur{application="chatbot-rh",current_model="mistral-large-latest",namespace="rh",recommended_model="mistral-small"} 0.00046368000000000006
+ai_finops_cost_saving_eur{application="content-writer",current_model="gpt-france-mini",namespace="marketing",recommended_model="mistral-small"} 0.0001764
+ai_finops_cost_saving_eur{application="content-writer",current_model="mistral-large-latest",namespace="marketing",recommended_model="mistral-small"} 0.002580048
+ai_finops_cost_saving_eur{application="contract-review",current_model="gpt-france-mini",namespace="legal",recommended_model="mistral-small"} 0.000900732
+ai_finops_cost_saving_eur{application="contract-review",current_model="mistral-large-latest",namespace="legal",recommended_model="mistral-small"} 0.0009936
+ai_finops_cost_saving_eur{application="risk-assistant",current_model="gpt-france-mini",namespace="finance",recommended_model="mistral-small"} 0.000159156
+ai_finops_cost_saving_eur{application="risk-assistant",current_model="gpt-us-mini",namespace="finance",recommended_model="mistral-small"} 0.000517932
+ai_finops_cost_saving_eur{application="risk-assistant",current_model="mistral-large-latest",namespace="finance",recommended_model="mistral-small"} 0.00089424
+# HELP ai_finops_cost_score Higher-is-better cost dimension of the routing score (0=most expensive, 1=cheapest) by namespace/application/model.
+# TYPE ai_finops_cost_score gauge
+ai_finops_cost_score{application="chatbot-rh",model="gpt-france-mini",namespace="rh"} 0.9919873584337451
+ai_finops_cost_score{application="chatbot-rh",model="mistral-large-latest",namespace="rh"} 0.6973163741443427
+ai_finops_cost_score{application="content-writer",model="gpt-france-mini",namespace="marketing"} 0.9678107013429972
+ai_finops_cost_score{application="content-writer",model="mistral-large-latest",namespace="marketing"} 0.337451316773423
+ai_finops_cost_score{application="contract-review",model="gpt-france-mini",namespace="legal"} 0.8157803020305685
+ai_finops_cost_score{application="contract-review",model="mistral-large-latest",namespace="legal"} 0
+ai_finops_cost_score{application="risk-assistant",model="gpt-france-mini",namespace="finance"} 1
+ai_finops_cost_score{application="risk-assistant",model="gpt-us-mini",namespace="finance"} 0.9120159170041925
+ai_finops_cost_score{application="risk-assistant",model="mistral-large-latest",namespace="finance"} 0.1307468201520643
+# HELP ai_finops_enforcement_actions Enforcement decisions by policy, namespace, application, mode, action and actuated.
+# TYPE ai_finops_enforcement_actions gauge
+ai_finops_enforcement_actions{action="report",actuated="true",application="risk-assistant",mode="reportOnly",namespace="finance",policy="regulated-france-policy"} 1
+# HELP ai_finops_input_tokens Input tokens attributed to a namespace over the reporting window.
+# TYPE ai_finops_input_tokens gauge
+ai_finops_input_tokens{namespace="finance"} 201
+ai_finops_input_tokens{namespace="legal"} 209
+ai_finops_input_tokens{namespace="marketing"} 178
+ai_finops_input_tokens{namespace="rh"} 206
+# HELP ai_finops_latency_score Higher-is-better runtime latency score by namespace/application/model; neutral when measured latency is unavailable.
+# TYPE ai_finops_latency_score gauge
+ai_finops_latency_score{application="chatbot-rh",model="gpt-france-mini",namespace="rh",telemetry_available="true"} 0.2844822342617236
+ai_finops_latency_score{application="chatbot-rh",model="mistral-large-latest",namespace="rh",telemetry_available="true"} 1
+ai_finops_latency_score{application="content-writer",model="gpt-france-mini",namespace="marketing",telemetry_available="true"} 0.293210159091545
+ai_finops_latency_score{application="content-writer",model="mistral-large-latest",namespace="marketing",telemetry_available="true"} 0.41364438726397934
+ai_finops_latency_score{application="contract-review",model="gpt-france-mini",namespace="legal",telemetry_available="true"} 0.04620377406978471
+ai_finops_latency_score{application="contract-review",model="mistral-large-latest",namespace="legal",telemetry_available="true"} 0.47431048476176174
+ai_finops_latency_score{application="risk-assistant",model="gpt-france-mini",namespace="finance",telemetry_available="true"} 0.5904387575241097
+ai_finops_latency_score{application="risk-assistant",model="gpt-us-mini",namespace="finance",telemetry_available="true"} 0
+ai_finops_latency_score{application="risk-assistant",model="mistral-large-latest",namespace="finance",telemetry_available="true"} 0.5739500871979358
+# HELP ai_finops_latency_telemetry_available Whether real latency telemetry was available for a namespace/application/model routing score (1=true, 0=false).
+# TYPE ai_finops_latency_telemetry_available gauge
+ai_finops_latency_telemetry_available{application="chatbot-rh",model="gpt-france-mini",namespace="rh",source="observed"} 1
+ai_finops_latency_telemetry_available{application="chatbot-rh",model="mistral-large-latest",namespace="rh",source="observed"} 1
+ai_finops_latency_telemetry_available{application="content-writer",model="gpt-france-mini",namespace="marketing",source="observed"} 1
+ai_finops_latency_telemetry_available{application="content-writer",model="mistral-large-latest",namespace="marketing",source="observed"} 1
+ai_finops_latency_telemetry_available{application="contract-review",model="gpt-france-mini",namespace="legal",source="observed"} 1
+ai_finops_latency_telemetry_available{application="contract-review",model="mistral-large-latest",namespace="legal",source="observed"} 1
+ai_finops_latency_telemetry_available{application="risk-assistant",model="gpt-france-mini",namespace="finance",source="observed"} 1
+ai_finops_latency_telemetry_available{application="risk-assistant",model="gpt-us-mini",namespace="finance",source="observed"} 1
+ai_finops_latency_telemetry_available{application="risk-assistant",model="mistral-large-latest",namespace="finance",source="observed"} 1
+# HELP ai_finops_measured_latency_millis Observed mean LLM gateway latency in milliseconds, by namespace/application/model, over the reporting window.
+# TYPE ai_finops_measured_latency_millis gauge
+ai_finops_measured_latency_millis{application="chatbot-rh",model="gpt-france-mini",namespace="rh",source="observed"} 1589.8858685714283
+ai_finops_measured_latency_millis{application="chatbot-rh",model="mistral-large-latest",namespace="rh",source="observed"} 747.8460645
+ai_finops_measured_latency_millis{application="content-writer",model="gpt-france-mini",namespace="marketing",source="observed"} 1579.6146210000002
+ai_finops_measured_latency_millis{application="content-writer",model="mistral-large-latest",namespace="marketing",source="observed"} 1437.884507857143
+ai_finops_measured_latency_millis{application="contract-review",model="gpt-france-mini",namespace="legal",source="observed"} 1870.2981204285713
+ai_finops_measured_latency_millis{application="contract-review",model="mistral-large-latest",namespace="legal",source="observed"} 1366.491076
+ai_finops_measured_latency_millis{application="risk-assistant",model="gpt-france-mini",namespace="finance",source="observed"} 1229.8283225
+ai_finops_measured_latency_millis{application="risk-assistant",model="gpt-us-mini",namespace="finance",source="observed"} 1924.6719162000002
+ai_finops_measured_latency_millis{application="risk-assistant",model="mistral-large-latest",namespace="finance",source="observed"} 1249.232616
+# HELP ai_finops_output_tokens Output tokens attributed to a namespace over the reporting window.
+# TYPE ai_finops_output_tokens gauge
+ai_finops_output_tokens{namespace="finance"} 869
+ai_finops_output_tokens{namespace="legal"} 1131
+ai_finops_output_tokens{namespace="marketing"} 660
+ai_finops_output_tokens{namespace="rh"} 671
+# HELP ai_finops_potential_savings_by_app_eur Estimated cost-saving in EUR per namespace/application over the observation window.
+# TYPE ai_finops_potential_savings_by_app_eur gauge
+ai_finops_potential_savings_by_app_eur{application="chatbot-rh",namespace="rh"} 0.0010392539999999999
+ai_finops_potential_savings_by_app_eur{application="content-writer",namespace="marketing"} 0.0027564480000000003
+ai_finops_potential_savings_by_app_eur{application="contract-review",namespace="legal"} 0.001894332
+ai_finops_potential_savings_by_app_eur{application="risk-assistant",namespace="finance"} 0.001571328
+# HELP ai_finops_potential_savings_eur Total estimated saving from cost-saving recommendations over the observation window.
+# TYPE ai_finops_potential_savings_eur gauge
+ai_finops_potential_savings_eur 0.007261362000000001
+# HELP ai_finops_projected_monthly_cost_eur Run-rate forecast of full-month spend in EUR per namespace (observed x 30.4/window-days).
+# TYPE ai_finops_projected_monthly_cost_eur gauge
+ai_finops_projected_monthly_cost_eur{namespace="finance"} 0.0020880000000000004
+ai_finops_projected_monthly_cost_eur{namespace="legal"} 0.0025571000000000005
+ai_finops_projected_monthly_cost_eur{namespace="marketing"} 0.00315352
+ai_finops_projected_monthly_cost_eur{namespace="rh"} 0.0014475500000000001
+# HELP ai_finops_quality_gate_failed_checks Number of failed checks for an AIQualityGate.
+# TYPE ai_finops_quality_gate_failed_checks gauge
+ai_finops_quality_gate_failed_checks{application="chatbot-rh",namespace="default",quality_gate="rh-chatbot-quality",target_namespace="rh"} 0
+ai_finops_quality_gate_failed_checks{application="content-writer",namespace="default",quality_gate="marketing-content-quality",target_namespace="marketing"} 0
+ai_finops_quality_gate_failed_checks{application="contract-review",namespace="default",quality_gate="legal-contract-quality",target_namespace="legal"} 0
+ai_finops_quality_gate_failed_checks{application="risk-assistant",namespace="default",quality_gate="finance-risk-assistant-quality",target_namespace="finance"} 0
+# HELP ai_finops_quality_gate_passed Whether an AIQualityGate passed for a target application and source/candidate model pair (1=true, 0=false).
+# TYPE ai_finops_quality_gate_passed gauge
+ai_finops_quality_gate_passed{application="chatbot-rh",candidate_model="gpt-france-mini",namespace="default",quality_gate="rh-chatbot-quality",source_model="mistral-large-latest",target_namespace="rh"} 1
+ai_finops_quality_gate_passed{application="content-writer",candidate_model="mistral-large-latest",namespace="default",quality_gate="marketing-content-quality",source_model="gpt-france-mini",target_namespace="marketing"} 1
+ai_finops_quality_gate_passed{application="contract-review",candidate_model="mistral-large-latest",namespace="default",quality_gate="legal-contract-quality",source_model="gpt-france-mini",target_namespace="legal"} 1
+ai_finops_quality_gate_passed{application="risk-assistant",candidate_model="mistral-large-latest",namespace="default",quality_gate="finance-risk-assistant-quality",source_model="gpt-france-mini",target_namespace="finance"} 1
+# HELP ai_finops_quality_score Audited AI quality score in [0,100], by namespace, app, provider, model and score dimension.
+# TYPE ai_finops_quality_score gauge
+ai_finops_quality_score{app="chatbot-rh",dimension="correctness",model="gpt-france-mini",namespace="rh",provider="openai-fr"} 82.371
+ai_finops_quality_score{app="chatbot-rh",dimension="judged",model="gpt-france-mini",namespace="rh",provider="openai-fr"} 0
+ai_finops_quality_score{app="chatbot-rh",dimension="latency",model="gpt-france-mini",namespace="rh",provider="openai-fr"} 97.004
+ai_finops_quality_score{app="chatbot-rh",dimension="overall",model="gpt-france-mini",namespace="rh",provider="openai-fr"} 87.517
+ai_finops_quality_score{app="chatbot-rh",dimension="reliability",model="gpt-france-mini",namespace="rh",provider="openai-fr"} 100
+ai_finops_quality_score{app="chatbot-rh",dimension="semantic",model="gpt-france-mini",namespace="rh",provider="openai-fr"} 75.109
+ai_finops_quality_score{app="content-writer",dimension="correctness",model="mistral-large-latest",namespace="marketing",provider="mistral-eu"} 81.17
+ai_finops_quality_score{app="content-writer",dimension="judged",model="mistral-large-latest",namespace="marketing",provider="mistral-eu"} 0
+ai_finops_quality_score{app="content-writer",dimension="latency",model="mistral-large-latest",namespace="marketing",provider="mistral-eu"} 100
+ai_finops_quality_score{app="content-writer",dimension="overall",model="mistral-large-latest",namespace="marketing",provider="mistral-eu"} 87.657
+ai_finops_quality_score{app="content-writer",dimension="reliability",model="mistral-large-latest",namespace="marketing",provider="mistral-eu"} 100
+ai_finops_quality_score{app="content-writer",dimension="semantic",model="mistral-large-latest",namespace="marketing",provider="mistral-eu"} 76.153
+ai_finops_quality_score{app="contract-review",dimension="correctness",model="mistral-large-latest",namespace="legal",provider="mistral-eu"} 81.615
+ai_finops_quality_score{app="contract-review",dimension="judged",model="mistral-large-latest",namespace="legal",provider="mistral-eu"} 0
+ai_finops_quality_score{app="contract-review",dimension="latency",model="mistral-large-latest",namespace="legal",provider="mistral-eu"} 100
+ai_finops_quality_score{app="contract-review",dimension="overall",model="mistral-large-latest",namespace="legal",provider="mistral-eu"} 88.044
+ai_finops_quality_score{app="contract-review",dimension="reliability",model="mistral-large-latest",namespace="legal",provider="mistral-eu"} 100
+ai_finops_quality_score{app="contract-review",dimension="semantic",model="mistral-large-latest",namespace="legal",provider="mistral-eu"} 77.293
+ai_finops_quality_score{app="risk-assistant",dimension="correctness",model="mistral-large-latest",namespace="finance",provider="mistral-eu"} 73.409
+ai_finops_quality_score{app="risk-assistant",dimension="judged",model="mistral-large-latest",namespace="finance",provider="mistral-eu"} 0
+ai_finops_quality_score{app="risk-assistant",dimension="latency",model="mistral-large-latest",namespace="finance",provider="mistral-eu"} 100
+ai_finops_quality_score{app="risk-assistant",dimension="overall",model="mistral-large-latest",namespace="finance",provider="mistral-eu"} 82.167
+ai_finops_quality_score{app="risk-assistant",dimension="reliability",model="mistral-large-latest",namespace="finance",provider="mistral-eu"} 100
+ai_finops_quality_score{app="risk-assistant",dimension="semantic",model="mistral-large-latest",namespace="finance",provider="mistral-eu"} 63.909
+# HELP ai_finops_recommendations Recommendations emitted by the operator, by type, namespace, application and severity.
+# TYPE ai_finops_recommendations gauge
+ai_finops_recommendations{application="chatbot-rh",namespace="rh",severity="info",type="cost-saving"} 1
+ai_finops_recommendations{application="content-writer",namespace="marketing",severity="info",type="cost-saving"} 1
+ai_finops_recommendations{application="contract-review",namespace="legal",severity="info",type="cost-saving"} 1
+ai_finops_recommendations{application="risk-assistant",namespace="finance",severity="critical",type="sovereignty"} 1
+ai_finops_recommendations{application="risk-assistant",namespace="finance",severity="info",type="cost-saving"} 1
+# HELP ai_finops_reliability_score Reliability dimension of the routing score (1 - error_rate) by namespace/application/model.
+# TYPE ai_finops_reliability_score gauge
+ai_finops_reliability_score{application="chatbot-rh",model="gpt-france-mini",namespace="rh"} 1
+ai_finops_reliability_score{application="chatbot-rh",model="mistral-large-latest",namespace="rh"} 1
+ai_finops_reliability_score{application="content-writer",model="gpt-france-mini",namespace="marketing"} 1
+ai_finops_reliability_score{application="content-writer",model="mistral-large-latest",namespace="marketing"} 1
+ai_finops_reliability_score{application="contract-review",model="gpt-france-mini",namespace="legal"} 1
+ai_finops_reliability_score{application="contract-review",model="mistral-large-latest",namespace="legal"} 1
+ai_finops_reliability_score{application="risk-assistant",model="gpt-france-mini",namespace="finance"} 1
+ai_finops_reliability_score{application="risk-assistant",model="gpt-us-mini",namespace="finance"} 1
+ai_finops_reliability_score{application="risk-assistant",model="mistral-large-latest",namespace="finance"} 1
+# HELP ai_finops_requests LLM requests attributed to a namespace over the reporting window.
+# TYPE ai_finops_requests gauge
+ai_finops_requests{namespace="finance"} 9
+ai_finops_requests{namespace="legal"} 9
+ai_finops_requests{namespace="marketing"} 9
+ai_finops_requests{namespace="rh"} 9
+# HELP ai_finops_routing_score Higher-is-better runtime governance score by namespace/application/model over the reporting window.
+# TYPE ai_finops_routing_score gauge
+ai_finops_routing_score{application="chatbot-rh",latency_telemetry="true",model="gpt-france-mini",namespace="rh"} 0.8536913902258428
+ai_finops_routing_score{application="chatbot-rh",latency_telemetry="true",model="mistral-large-latest",namespace="rh"} 0.8789265496577371
+ai_finops_routing_score{application="content-writer",latency_telemetry="true",model="gpt-france-mini",namespace="marketing"} 0.8457663123555078
+ai_finops_routing_score{application="content-writer",latency_telemetry="true",model="mistral-large-latest",namespace="marketing"} 0.617709404162165
+ai_finops_routing_score{application="contract-review",latency_telemetry="true",model="gpt-france-mini",namespace="legal"} 0.7355528756261843
+ai_finops_routing_score{application="contract-review",latency_telemetry="true",model="mistral-large-latest",namespace="legal"} 0.4948620969523524
+ai_finops_routing_score{application="risk-assistant",latency_telemetry="true",model="gpt-france-mini",namespace="finance"} 0.9180877515048219
+ai_finops_routing_score{application="risk-assistant",latency_telemetry="true",model="gpt-us-mini",namespace="finance"} 0
+ai_finops_routing_score{application="risk-assistant",latency_telemetry="true",model="mistral-large-latest",namespace="finance"} 0.5670887455004129
+# HELP ai_finops_shadow_ai_egress Shadow-AI egress (connections) to known LLM endpoints bypassing the gateway, by namespace, application, zone, provider and severity.
+# TYPE ai_finops_shadow_ai_egress gauge
+ai_finops_shadow_ai_egress{application="rogue-script",namespace="finance",provider="openai",severity="critical",zone="US"} 10
+# HELP ai_finops_sovereignty_findings Sovereignty findings detected for an AISovereigntyPolicy, by namespace, application and severity.
+# TYPE ai_finops_sovereignty_findings gauge
+ai_finops_sovereignty_findings{application="",namespace="",policy="regulated-france-policy",severity="info"} 1
+ai_finops_sovereignty_findings{application="chatbot-rh",namespace="rh",policy="regulated-france-policy",severity="warning"} 1
+ai_finops_sovereignty_findings{application="content-writer",namespace="marketing",policy="regulated-france-policy",severity="warning"} 1
+ai_finops_sovereignty_findings{application="contract-review",namespace="legal",policy="regulated-france-policy",severity="warning"} 1
+ai_finops_sovereignty_findings{application="risk-assistant",namespace="finance",policy="regulated-france-policy",severity="critical"} 1
+ai_finops_sovereignty_findings{application="risk-assistant",namespace="finance",policy="regulated-france-policy",severity="warning"} 1
+# HELP ai_finops_sovereignty_requests Requests affected by sovereignty findings, by namespace, application and severity.
+# TYPE ai_finops_sovereignty_requests gauge
+ai_finops_sovereignty_requests{application="",namespace="",policy="regulated-france-policy",severity="info"} 0
+ai_finops_sovereignty_requests{application="risk-assistant",namespace="finance",policy="regulated-france-policy",severity="critical"} 5
+ai_finops_sovereignty_requests{application="risk-assistant",namespace="finance",policy="regulated-france-policy",severity="warning"} 5
+# HELP ai_finops_sovereignty_score Sovereignty compliance for a model (1=compliant, 0=non-compliant/blocked) by namespace/application/model.
+# TYPE ai_finops_sovereignty_score gauge
+ai_finops_sovereignty_score{application="catalog",model="cohere-command-a-latest",namespace="default"} 0
+ai_finops_sovereignty_score{application="catalog",model="gpt-france-mini",namespace="default"} 1
+ai_finops_sovereignty_score{application="catalog",model="gpt-us-mini",namespace="default"} 0
+ai_finops_sovereignty_score{application="catalog",model="mistral-large-latest",namespace="default"} 1
+ai_finops_sovereignty_score{application="chatbot-rh",model="gpt-france-mini",namespace="rh"} 1
+ai_finops_sovereignty_score{application="chatbot-rh",model="mistral-large-latest",namespace="rh"} 1
+ai_finops_sovereignty_score{application="content-writer",model="gpt-france-mini",namespace="marketing"} 1
+ai_finops_sovereignty_score{application="content-writer",model="mistral-large-latest",namespace="marketing"} 1
+ai_finops_sovereignty_score{application="contract-review",model="gpt-france-mini",namespace="legal"} 1
+ai_finops_sovereignty_score{application="contract-review",model="mistral-large-latest",namespace="legal"} 1
+ai_finops_sovereignty_score{application="risk-assistant",model="gpt-france-mini",namespace="finance"} 1
+ai_finops_sovereignty_score{application="risk-assistant",model="gpt-us-mini",namespace="finance"} 0
+ai_finops_sovereignty_score{application="risk-assistant",model="mistral-large-latest",namespace="finance"} 1
+# HELP certwatcher_read_certificate_errors_total Total number of certificate read errors
+# TYPE certwatcher_read_certificate_errors_total counter
+certwatcher_read_certificate_errors_total 0
+# HELP certwatcher_read_certificate_total Total number of certificate reads
+# TYPE certwatcher_read_certificate_total counter
+certwatcher_read_certificate_total 1
+# HELP controller_runtime_active_workers Number of currently used workers per controller
+# TYPE controller_runtime_active_workers gauge
+controller_runtime_active_workers{controller="aibreakevenanalysis"} 0
+controller_runtime_active_workers{controller="aibudgetpolicy"} 0
+controller_runtime_active_workers{controller="aichangerequest"} 0
+controller_runtime_active_workers{controller="aifinopsreport"} 0
+controller_runtime_active_workers{controller="aigateway"} 0
+controller_runtime_active_workers{controller="aimodel"} 0
+controller_runtime_active_workers{controller="aiprovider"} 0
+controller_runtime_active_workers{controller="aiqualitygate"} 0
+controller_runtime_active_workers{controller="airouteoverride"} 0
+controller_runtime_active_workers{controller="airoutingpolicy"} 0
+controller_runtime_active_workers{controller="aisovereigntypolicy"} 0
+# HELP controller_runtime_max_concurrent_reconciles Maximum number of concurrent reconciles per controller
+# TYPE controller_runtime_max_concurrent_reconciles gauge
+controller_runtime_max_concurrent_reconciles{controller="aibreakevenanalysis"} 1
+controller_runtime_max_concurrent_reconciles{controller="aibudgetpolicy"} 1
+controller_runtime_max_concurrent_reconciles{controller="aichangerequest"} 1
+controller_runtime_max_concurrent_reconciles{controller="aifinopsreport"} 1
+controller_runtime_max_concurrent_reconciles{controller="aigateway"} 1
+controller_runtime_max_concurrent_reconciles{controller="aimodel"} 1
+controller_runtime_max_concurrent_reconciles{controller="aiprovider"} 1
+controller_runtime_max_concurrent_reconciles{controller="aiqualitygate"} 1
+controller_runtime_max_concurrent_reconciles{controller="airouteoverride"} 1
+controller_runtime_max_concurrent_reconciles{controller="airoutingpolicy"} 1
+controller_runtime_max_concurrent_reconciles{controller="aisovereigntypolicy"} 1
+# HELP controller_runtime_reconcile_errors_total Total number of reconciliation errors per controller
+# TYPE controller_runtime_reconcile_errors_total counter
+controller_runtime_reconcile_errors_total{controller="aibreakevenanalysis"} 0
+controller_runtime_reconcile_errors_total{controller="aibudgetpolicy"} 0
+controller_runtime_reconcile_errors_total{controller="aichangerequest"} 0
+controller_runtime_reconcile_errors_total{controller="aifinopsreport"} 0
+controller_runtime_reconcile_errors_total{controller="aigateway"} 0
+controller_runtime_reconcile_errors_total{controller="aimodel"} 0
+controller_runtime_reconcile_errors_total{controller="aiprovider"} 0
+controller_runtime_reconcile_errors_total{controller="aiqualitygate"} 2
+controller_runtime_reconcile_errors_total{controller="airouteoverride"} 0
+controller_runtime_reconcile_errors_total{controller="airoutingpolicy"} 0
+controller_runtime_reconcile_errors_total{controller="aisovereigntypolicy"} 1
+# HELP controller_runtime_reconcile_time_seconds Length of time per reconciliation per controller
+# TYPE controller_runtime_reconcile_time_seconds histogram
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.005"} 1
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.01"} 2
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.025"} 13
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.05"} 36
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.1"} 55
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.15"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.2"} 66
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.25"} 68
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.3"} 69
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.35"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.4"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.45"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.5"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.6"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.7"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.8"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="0.9"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="1"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="1.25"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="1.5"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="1.75"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="2"} 70
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="2.5"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="3"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="3.5"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="4"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="4.5"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="5"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="6"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="7"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="8"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="9"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="10"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="15"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="20"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="25"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="30"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="40"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="50"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="60"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aibudgetpolicy",le="+Inf"} 71
+controller_runtime_reconcile_time_seconds_sum{controller="aibudgetpolicy"} 7.266582154
+controller_runtime_reconcile_time_seconds_count{controller="aibudgetpolicy"} 71
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.005"} 0
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.01"} 0
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.025"} 1
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.05"} 4
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.1"} 19
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.15"} 23
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.2"} 26
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.25"} 27
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.3"} 27
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.35"} 27
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.4"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.45"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.5"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.6"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.7"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.8"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="0.9"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="1"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="1.25"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="1.5"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="1.75"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="2"} 28
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="2.5"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="3"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="3.5"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="4"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="4.5"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="5"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="6"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="7"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="8"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="9"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="10"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="15"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="20"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="25"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="30"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="40"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="50"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="60"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aifinopsreport",le="+Inf"} 29
+controller_runtime_reconcile_time_seconds_sum{controller="aifinopsreport"} 5.051453788000001
+controller_runtime_reconcile_time_seconds_count{controller="aifinopsreport"} 29
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.005"} 1
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.01"} 3
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.025"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.05"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.1"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.15"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.2"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.25"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.3"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.35"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.4"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.45"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.5"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.6"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.7"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.8"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="0.9"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="1"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="1.25"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="1.5"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="1.75"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="2"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="2.5"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="3"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="3.5"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="4"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="4.5"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="5"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="6"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="7"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="8"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="9"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="10"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="15"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="20"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="25"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="30"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="40"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="50"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="60"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aigateway",le="+Inf"} 5
+controller_runtime_reconcile_time_seconds_sum{controller="aigateway"} 0.042812859999999994
+controller_runtime_reconcile_time_seconds_count{controller="aigateway"} 5
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.005"} 3
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.01"} 38
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.025"} 58
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.05"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.1"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.15"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.2"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.25"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.3"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.35"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.4"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.45"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.5"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.6"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.7"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.8"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="0.9"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="1"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="1.25"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="1.5"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="1.75"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="2"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="2.5"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="3"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="3.5"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="4"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="4.5"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="5"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="6"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="7"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="8"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="9"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="10"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="15"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="20"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="25"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="30"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="40"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="50"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="60"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aimodel",le="+Inf"} 63
+controller_runtime_reconcile_time_seconds_sum{controller="aimodel"} 0.760398019
+controller_runtime_reconcile_time_seconds_count{controller="aimodel"} 63
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.005"} 3
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.01"} 8
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.025"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.05"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.1"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.15"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.2"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.25"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.3"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.35"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.4"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.45"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.5"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.6"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.7"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.8"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="0.9"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="1"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="1.25"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="1.5"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="1.75"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="2"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="2.5"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="3"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="3.5"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="4"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="4.5"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="5"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="6"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="7"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="8"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="9"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="10"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="15"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="20"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="25"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="30"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="40"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="50"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="60"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiprovider",le="+Inf"} 17
+controller_runtime_reconcile_time_seconds_sum{controller="aiprovider"} 0.15580812099999994
+controller_runtime_reconcile_time_seconds_count{controller="aiprovider"} 17
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.005"} 8
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.01"} 9
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.025"} 32
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.05"} 64
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.1"} 125
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.15"} 135
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.2"} 136
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.25"} 138
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.3"} 139
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.35"} 139
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.4"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.45"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.5"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.6"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.7"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.8"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="0.9"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="1"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="1.25"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="1.5"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="1.75"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="2"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="2.5"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="3"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="3.5"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="4"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="4.5"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="5"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="6"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="7"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="8"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="9"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="10"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="15"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="20"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="25"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="30"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="40"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="50"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="60"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aiqualitygate",le="+Inf"} 141
+controller_runtime_reconcile_time_seconds_sum{controller="aiqualitygate"} 9.104873131000003
+controller_runtime_reconcile_time_seconds_count{controller="aiqualitygate"} 141
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.005"} 1
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.01"} 1
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.025"} 4
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.05"} 8
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.1"} 15
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.15"} 18
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.2"} 19
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.25"} 20
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.3"} 20
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.35"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.4"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.45"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.5"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.6"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.7"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.8"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="0.9"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="1"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="1.25"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="1.5"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="1.75"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="2"} 21
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="2.5"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="3"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="3.5"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="4"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="4.5"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="5"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="6"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="7"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="8"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="9"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="10"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="15"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="20"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="25"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="30"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="40"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="50"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="60"} 22
+controller_runtime_reconcile_time_seconds_bucket{controller="aisovereigntypolicy",le="+Inf"} 22
+controller_runtime_reconcile_time_seconds_sum{controller="aisovereigntypolicy"} 4.2499347180000004
+controller_runtime_reconcile_time_seconds_count{controller="aisovereigntypolicy"} 22
+# HELP controller_runtime_reconcile_total Total number of reconciliations per controller
+# TYPE controller_runtime_reconcile_total counter
+controller_runtime_reconcile_total{controller="aibreakevenanalysis",result="error"} 0
+controller_runtime_reconcile_total{controller="aibreakevenanalysis",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aibreakevenanalysis",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="aibreakevenanalysis",result="success"} 0
+controller_runtime_reconcile_total{controller="aibudgetpolicy",result="error"} 0
+controller_runtime_reconcile_total{controller="aibudgetpolicy",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aibudgetpolicy",result="requeue_after"} 69
+controller_runtime_reconcile_total{controller="aibudgetpolicy",result="success"} 2
+controller_runtime_reconcile_total{controller="aichangerequest",result="error"} 0
+controller_runtime_reconcile_total{controller="aichangerequest",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aichangerequest",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="aichangerequest",result="success"} 0
+controller_runtime_reconcile_total{controller="aifinopsreport",result="error"} 0
+controller_runtime_reconcile_total{controller="aifinopsreport",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aifinopsreport",result="requeue_after"} 29
+controller_runtime_reconcile_total{controller="aifinopsreport",result="success"} 0
+controller_runtime_reconcile_total{controller="aigateway",result="error"} 0
+controller_runtime_reconcile_total{controller="aigateway",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aigateway",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="aigateway",result="success"} 5
+controller_runtime_reconcile_total{controller="aimodel",result="error"} 0
+controller_runtime_reconcile_total{controller="aimodel",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aimodel",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="aimodel",result="success"} 63
+controller_runtime_reconcile_total{controller="aiprovider",result="error"} 0
+controller_runtime_reconcile_total{controller="aiprovider",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aiprovider",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="aiprovider",result="success"} 17
+controller_runtime_reconcile_total{controller="aiqualitygate",result="error"} 2
+controller_runtime_reconcile_total{controller="aiqualitygate",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aiqualitygate",result="requeue_after"} 119
+controller_runtime_reconcile_total{controller="aiqualitygate",result="success"} 20
+controller_runtime_reconcile_total{controller="airouteoverride",result="error"} 0
+controller_runtime_reconcile_total{controller="airouteoverride",result="requeue"} 0
+controller_runtime_reconcile_total{controller="airouteoverride",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="airouteoverride",result="success"} 0
+controller_runtime_reconcile_total{controller="airoutingpolicy",result="error"} 0
+controller_runtime_reconcile_total{controller="airoutingpolicy",result="requeue"} 0
+controller_runtime_reconcile_total{controller="airoutingpolicy",result="requeue_after"} 0
+controller_runtime_reconcile_total{controller="airoutingpolicy",result="success"} 0
+controller_runtime_reconcile_total{controller="aisovereigntypolicy",result="error"} 1
+controller_runtime_reconcile_total{controller="aisovereigntypolicy",result="requeue"} 0
+controller_runtime_reconcile_total{controller="aisovereigntypolicy",result="requeue_after"} 19
+controller_runtime_reconcile_total{controller="aisovereigntypolicy",result="success"} 2
+# HELP controller_runtime_webhook_latency_seconds Histogram of the latency of processing admission requests
+# TYPE controller_runtime_webhook_latency_seconds histogram
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.005"} 10
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.01"} 27
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.025"} 32
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.05"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.1"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.25"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="0.5"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="1"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="2.5"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="5"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="10"} 33
+controller_runtime_webhook_latency_seconds_bucket{webhook="/mutate-v1-pod",le="+Inf"} 33
+controller_runtime_webhook_latency_seconds_sum{webhook="/mutate-v1-pod"} 0.269666448
+controller_runtime_webhook_latency_seconds_count{webhook="/mutate-v1-pod"} 33
+# HELP controller_runtime_webhook_requests_in_flight Current number of admission requests being served.
+# TYPE controller_runtime_webhook_requests_in_flight gauge
+controller_runtime_webhook_requests_in_flight{webhook="/mutate-v1-pod"} 0
+# HELP controller_runtime_webhook_requests_total Total number of admission requests by HTTP status code.
+# TYPE controller_runtime_webhook_requests_total counter
+controller_runtime_webhook_requests_total{code="200",webhook="/mutate-v1-pod"} 33
+controller_runtime_webhook_requests_total{code="500",webhook="/mutate-v1-pod"} 0
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 6.8218e-05
+go_gc_duration_seconds{quantile="0.25"} 0.000145938
+go_gc_duration_seconds{quantile="0.5"} 0.000223532
+go_gc_duration_seconds{quantile="0.75"} 0.000334701
+go_gc_duration_seconds{quantile="1"} 0.02138923
+go_gc_duration_seconds_sum 0.0740363
+go_gc_duration_seconds_count 185
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 226
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.25.9"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated and still in use.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 9.135728e+06
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 9.1750152e+08
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.565236e+06
+# HELP go_memstats_frees_total Total number of frees.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 1.6444318e+07
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 3.882768e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and still in use.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 9.135728e+06
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 7.970816e+06
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use.
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 1.4573568e+07
+# HELP go_memstats_heap_objects Number of allocated objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 79916
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 6.176768e+06
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 2.2544384e+07
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.782192280402176e+09
+# HELP go_memstats_lookups_total Total number of pointer lookups.
+# TYPE go_memstats_lookups_total counter
+go_memstats_lookups_total 0
+# HELP go_memstats_mallocs_total Total number of mallocs.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 1.6524234e+07
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 19328
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 31408
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 343680
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 456960
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 1.4600666e+07
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 2.802708e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes in use by the stack allocator.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 2.62144e+06
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 2.62144e+06
+# HELP go_memstats_sys_bytes Number of bytes obtained from system.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 3.3904904e+07
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 22
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 12.02
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1.048576e+06
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 15
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 5.14048e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.78219170492e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 1.299247104e+09
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes 1.8446744073709552e+19
+# HELP rest_client_requests_total Number of HTTP requests, partitioned by status code, method, and host.
+# TYPE rest_client_requests_total counter
+rest_client_requests_total{code="200",host="10.96.0.1:443",method="DELETE"} 4
+rest_client_requests_total{code="200",host="10.96.0.1:443",method="GET"} 224
+rest_client_requests_total{code="200",host="10.96.0.1:443",method="PATCH"} 132
+rest_client_requests_total{code="200",host="10.96.0.1:443",method="PUT"} 461
+rest_client_requests_total{code="201",host="10.96.0.1:443",method="POST"} 49
+rest_client_requests_total{code="404",host="10.96.0.1:443",method="GET"} 1
+rest_client_requests_total{code="404",host="10.96.0.1:443",method="PUT"} 1
+rest_client_requests_total{code="409",host="10.96.0.1:443",method="PUT"} 3
+# HELP workqueue_adds_total Total number of adds handled by workqueue
+# TYPE workqueue_adds_total counter
+workqueue_adds_total{name="aibreakevenanalysis"} 0
+workqueue_adds_total{name="aibudgetpolicy"} 71
+workqueue_adds_total{name="aichangerequest"} 0
+workqueue_adds_total{name="aifinopsreport"} 29
+workqueue_adds_total{name="aigateway"} 5
+workqueue_adds_total{name="aimodel"} 63
+workqueue_adds_total{name="aiprovider"} 17
+workqueue_adds_total{name="aiqualitygate"} 141
+workqueue_adds_total{name="airouteoverride"} 0
+workqueue_adds_total{name="airoutingpolicy"} 0
+workqueue_adds_total{name="aisovereigntypolicy"} 22
+# HELP workqueue_depth Current depth of workqueue
+# TYPE workqueue_depth gauge
+workqueue_depth{name="aibreakevenanalysis"} 0
+workqueue_depth{name="aibudgetpolicy"} 0
+workqueue_depth{name="aichangerequest"} 0
+workqueue_depth{name="aifinopsreport"} 0
+workqueue_depth{name="aigateway"} 0
+workqueue_depth{name="aimodel"} 0
+workqueue_depth{name="aiprovider"} 0
+workqueue_depth{name="aiqualitygate"} 0
+workqueue_depth{name="airouteoverride"} 0
+workqueue_depth{name="airoutingpolicy"} 0
+workqueue_depth{name="aisovereigntypolicy"} 0
+# HELP workqueue_longest_running_processor_seconds How many seconds has the longest running processor for workqueue been running.
+# TYPE workqueue_longest_running_processor_seconds gauge
+workqueue_longest_running_processor_seconds{name="aibreakevenanalysis"} 0
+workqueue_longest_running_processor_seconds{name="aibudgetpolicy"} 0
+workqueue_longest_running_processor_seconds{name="aichangerequest"} 0
+workqueue_longest_running_processor_seconds{name="aifinopsreport"} 0
+workqueue_longest_running_processor_seconds{name="aigateway"} 0
+workqueue_longest_running_processor_seconds{name="aimodel"} 0
+workqueue_longest_running_processor_seconds{name="aiprovider"} 0
+workqueue_longest_running_processor_seconds{name="aiqualitygate"} 0
+workqueue_longest_running_processor_seconds{name="airouteoverride"} 0
+workqueue_longest_running_processor_seconds{name="airoutingpolicy"} 0
+workqueue_longest_running_processor_seconds{name="aisovereigntypolicy"} 0
+# HELP workqueue_queue_duration_seconds How long in seconds an item stays in workqueue before being requested
+# TYPE workqueue_queue_duration_seconds histogram
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="9.999999999999999e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="9.999999999999999e-05"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="0.001"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="0.01"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="0.1"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="1"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="10"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="100"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="1000"} 0
+workqueue_queue_duration_seconds_bucket{name="aibreakevenanalysis",le="+Inf"} 0
+workqueue_queue_duration_seconds_sum{name="aibreakevenanalysis"} 0
+workqueue_queue_duration_seconds_count{name="aibreakevenanalysis"} 0
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="9.999999999999999e-06"} 7
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="9.999999999999999e-05"} 47
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="0.001"} 53
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="0.01"} 54
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="0.1"} 61
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="1"} 68
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="10"} 71
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="100"} 71
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="1000"} 71
+workqueue_queue_duration_seconds_bucket{name="aibudgetpolicy",le="+Inf"} 71
+workqueue_queue_duration_seconds_sum{name="aibudgetpolicy"} 8.988666500999997
+workqueue_queue_duration_seconds_count{name="aibudgetpolicy"} 71
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="9.999999999999999e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="9.999999999999999e-05"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="0.001"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="0.01"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="0.1"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="1"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="10"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="100"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="1000"} 0
+workqueue_queue_duration_seconds_bucket{name="aichangerequest",le="+Inf"} 0
+workqueue_queue_duration_seconds_sum{name="aichangerequest"} 0
+workqueue_queue_duration_seconds_count{name="aichangerequest"} 0
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="9.999999999999999e-06"} 7
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="9.999999999999999e-05"} 21
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="0.001"} 27
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="0.01"} 27
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="0.1"} 28
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="1"} 28
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="10"} 29
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="100"} 29
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="1000"} 29
+workqueue_queue_duration_seconds_bucket{name="aifinopsreport",le="+Inf"} 29
+workqueue_queue_duration_seconds_sum{name="aifinopsreport"} 2.2490121579999998
+workqueue_queue_duration_seconds_count{name="aifinopsreport"} 29
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="9.999999999999999e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="9.999999999999999e-05"} 4
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="0.001"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="0.01"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="0.1"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="1"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="10"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="100"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="1000"} 5
+workqueue_queue_duration_seconds_bucket{name="aigateway",le="+Inf"} 5
+workqueue_queue_duration_seconds_sum{name="aigateway"} 0.0006643770000000001
+workqueue_queue_duration_seconds_count{name="aigateway"} 5
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="9.999999999999999e-06"} 28
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="9.999999999999999e-05"} 59
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="0.001"} 62
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="0.01"} 63
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="0.1"} 63
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="1"} 63
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="10"} 63
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="100"} 63
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="1000"} 63
+workqueue_queue_duration_seconds_bucket{name="aimodel",le="+Inf"} 63
+workqueue_queue_duration_seconds_sum{name="aimodel"} 0.012048630999999997
+workqueue_queue_duration_seconds_count{name="aimodel"} 63
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="9.999999999999999e-06"} 11
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="9.999999999999999e-05"} 16
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="0.001"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="0.01"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="0.1"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="1"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="10"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="100"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="1000"} 17
+workqueue_queue_duration_seconds_bucket{name="aiprovider",le="+Inf"} 17
+workqueue_queue_duration_seconds_sum{name="aiprovider"} 0.0005979400000000001
+workqueue_queue_duration_seconds_count{name="aiprovider"} 17
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="9.999999999999999e-06"} 11
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="9.999999999999999e-05"} 42
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="0.001"} 48
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="0.01"} 54
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="0.1"} 104
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="1"} 141
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="10"} 141
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="100"} 141
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="1000"} 141
+workqueue_queue_duration_seconds_bucket{name="aiqualitygate",le="+Inf"} 141
+workqueue_queue_duration_seconds_sum{name="aiqualitygate"} 10.520670525000003
+workqueue_queue_duration_seconds_count{name="aiqualitygate"} 141
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="9.999999999999999e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="9.999999999999999e-05"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="0.001"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="0.01"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="0.1"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="1"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="10"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="100"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="1000"} 0
+workqueue_queue_duration_seconds_bucket{name="airouteoverride",le="+Inf"} 0
+workqueue_queue_duration_seconds_sum{name="airouteoverride"} 0
+workqueue_queue_duration_seconds_count{name="airouteoverride"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="9.999999999999999e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="9.999999999999999e-05"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="0.001"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="0.01"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="0.1"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="1"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="10"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="100"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="1000"} 0
+workqueue_queue_duration_seconds_bucket{name="airoutingpolicy",le="+Inf"} 0
+workqueue_queue_duration_seconds_sum{name="airoutingpolicy"} 0
+workqueue_queue_duration_seconds_count{name="airoutingpolicy"} 0
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="1e-08"} 0
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="1e-07"} 0
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="1e-06"} 0
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="9.999999999999999e-06"} 4
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="9.999999999999999e-05"} 15
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="0.001"} 17
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="0.01"} 17
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="0.1"} 20
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="1"} 21
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="10"} 22
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="100"} 22
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="1000"} 22
+workqueue_queue_duration_seconds_bucket{name="aisovereigntypolicy",le="+Inf"} 22
+workqueue_queue_duration_seconds_sum{name="aisovereigntypolicy"} 2.5377742929999996
+workqueue_queue_duration_seconds_count{name="aisovereigntypolicy"} 22
+# HELP workqueue_retries_total Total number of retries handled by workqueue
+# TYPE workqueue_retries_total counter
+workqueue_retries_total{name="aibreakevenanalysis"} 0
+workqueue_retries_total{name="aibudgetpolicy"} 69
+workqueue_retries_total{name="aichangerequest"} 0
+workqueue_retries_total{name="aifinopsreport"} 29
+workqueue_retries_total{name="aigateway"} 0
+workqueue_retries_total{name="aimodel"} 0
+workqueue_retries_total{name="aiprovider"} 0
+workqueue_retries_total{name="aiqualitygate"} 121
+workqueue_retries_total{name="airouteoverride"} 0
+workqueue_retries_total{name="airoutingpolicy"} 0
+workqueue_retries_total{name="aisovereigntypolicy"} 20
+# HELP workqueue_unfinished_work_seconds How many seconds of work has been done that is in progress and hasn't been observed by work_duration. Large values indicate stuck threads. One can deduce the number of stuck threads by observing the rate at which this increases.
+# TYPE workqueue_unfinished_work_seconds gauge
+workqueue_unfinished_work_seconds{name="aibreakevenanalysis"} 0
+workqueue_unfinished_work_seconds{name="aibudgetpolicy"} 0
+workqueue_unfinished_work_seconds{name="aichangerequest"} 0
+workqueue_unfinished_work_seconds{name="aifinopsreport"} 0
+workqueue_unfinished_work_seconds{name="aigateway"} 0
+workqueue_unfinished_work_seconds{name="aimodel"} 0
+workqueue_unfinished_work_seconds{name="aiprovider"} 0
+workqueue_unfinished_work_seconds{name="aiqualitygate"} 0
+workqueue_unfinished_work_seconds{name="airouteoverride"} 0
+workqueue_unfinished_work_seconds{name="airoutingpolicy"} 0
+workqueue_unfinished_work_seconds{name="aisovereigntypolicy"} 0
+# HELP workqueue_work_duration_seconds How long in seconds processing an item from workqueue takes.
+# TYPE workqueue_work_duration_seconds histogram
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="0.001"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="0.01"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="0.1"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="1"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="10"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="100"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="1000"} 0
+workqueue_work_duration_seconds_bucket{name="aibreakevenanalysis",le="+Inf"} 0
+workqueue_work_duration_seconds_sum{name="aibreakevenanalysis"} 0
+workqueue_work_duration_seconds_count{name="aibreakevenanalysis"} 0
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="9.999999999999999e-05"} 1
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="0.001"} 1
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="0.01"} 2
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="0.1"} 55
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="1"} 70
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="10"} 71
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="100"} 71
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="1000"} 71
+workqueue_work_duration_seconds_bucket{name="aibudgetpolicy",le="+Inf"} 71
+workqueue_work_duration_seconds_sum{name="aibudgetpolicy"} 7.26838032
+workqueue_work_duration_seconds_count{name="aibudgetpolicy"} 71
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="0.001"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="0.01"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="0.1"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="1"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="10"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="100"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="1000"} 0
+workqueue_work_duration_seconds_bucket{name="aichangerequest",le="+Inf"} 0
+workqueue_work_duration_seconds_sum{name="aichangerequest"} 0
+workqueue_work_duration_seconds_count{name="aichangerequest"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="0.001"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="0.01"} 0
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="0.1"} 19
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="1"} 28
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="10"} 29
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="100"} 29
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="1000"} 29
+workqueue_work_duration_seconds_bucket{name="aifinopsreport",le="+Inf"} 29
+workqueue_work_duration_seconds_sum{name="aifinopsreport"} 5.052289164
+workqueue_work_duration_seconds_count{name="aifinopsreport"} 29
+workqueue_work_duration_seconds_bucket{name="aigateway",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aigateway",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aigateway",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aigateway",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aigateway",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="aigateway",le="0.001"} 1
+workqueue_work_duration_seconds_bucket{name="aigateway",le="0.01"} 3
+workqueue_work_duration_seconds_bucket{name="aigateway",le="0.1"} 5
+workqueue_work_duration_seconds_bucket{name="aigateway",le="1"} 5
+workqueue_work_duration_seconds_bucket{name="aigateway",le="10"} 5
+workqueue_work_duration_seconds_bucket{name="aigateway",le="100"} 5
+workqueue_work_duration_seconds_bucket{name="aigateway",le="1000"} 5
+workqueue_work_duration_seconds_bucket{name="aigateway",le="+Inf"} 5
+workqueue_work_duration_seconds_sum{name="aigateway"} 0.042957774000000004
+workqueue_work_duration_seconds_count{name="aigateway"} 5
+workqueue_work_duration_seconds_bucket{name="aimodel",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aimodel",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aimodel",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aimodel",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aimodel",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="aimodel",le="0.001"} 3
+workqueue_work_duration_seconds_bucket{name="aimodel",le="0.01"} 38
+workqueue_work_duration_seconds_bucket{name="aimodel",le="0.1"} 63
+workqueue_work_duration_seconds_bucket{name="aimodel",le="1"} 63
+workqueue_work_duration_seconds_bucket{name="aimodel",le="10"} 63
+workqueue_work_duration_seconds_bucket{name="aimodel",le="100"} 63
+workqueue_work_duration_seconds_bucket{name="aimodel",le="1000"} 63
+workqueue_work_duration_seconds_bucket{name="aimodel",le="+Inf"} 63
+workqueue_work_duration_seconds_sum{name="aimodel"} 0.762062664
+workqueue_work_duration_seconds_count{name="aimodel"} 63
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="0.001"} 3
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="0.01"} 8
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="0.1"} 17
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="1"} 17
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="10"} 17
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="100"} 17
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="1000"} 17
+workqueue_work_duration_seconds_bucket{name="aiprovider",le="+Inf"} 17
+workqueue_work_duration_seconds_sum{name="aiprovider"} 0.156222202
+workqueue_work_duration_seconds_count{name="aiprovider"} 17
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="9.999999999999999e-05"} 1
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="0.001"} 8
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="0.01"} 9
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="0.1"} 125
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="1"} 141
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="10"} 141
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="100"} 141
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="1000"} 141
+workqueue_work_duration_seconds_bucket{name="aiqualitygate",le="+Inf"} 141
+workqueue_work_duration_seconds_sum{name="aiqualitygate"} 9.108410425999999
+workqueue_work_duration_seconds_count{name="aiqualitygate"} 141
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="0.001"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="0.01"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="0.1"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="1"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="10"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="100"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="1000"} 0
+workqueue_work_duration_seconds_bucket{name="airouteoverride",le="+Inf"} 0
+workqueue_work_duration_seconds_sum{name="airouteoverride"} 0
+workqueue_work_duration_seconds_count{name="airouteoverride"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="9.999999999999999e-05"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="0.001"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="0.01"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="0.1"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="1"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="10"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="100"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="1000"} 0
+workqueue_work_duration_seconds_bucket{name="airoutingpolicy",le="+Inf"} 0
+workqueue_work_duration_seconds_sum{name="airoutingpolicy"} 0
+workqueue_work_duration_seconds_count{name="airoutingpolicy"} 0
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="1e-08"} 0
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="1e-07"} 0
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="1e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="9.999999999999999e-06"} 0
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="9.999999999999999e-05"} 1
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="0.001"} 1
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="0.01"} 1
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="0.1"} 15
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="1"} 21
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="10"} 22
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="100"} 22
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="1000"} 22
+workqueue_work_duration_seconds_bucket{name="aisovereigntypolicy",le="+Inf"} 22
+workqueue_work_duration_seconds_sum{name="aisovereigntypolicy"} 4.250584732999999
+workqueue_work_duration_seconds_count{name="aisovereigntypolicy"} 22

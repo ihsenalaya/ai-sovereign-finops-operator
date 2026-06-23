@@ -1,0 +1,11 @@
+NAMESPACE   NAME                                                               STATUS   COMPLETIONS   DURATION   AGE    CONTAINERS          IMAGES                                                  SELECTOR
+default     job.batch/quality-eval-finance-risk-assistant-quality-2302e1b186   Failed   0/1           5m4s       5m4s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=51b0794a-1979-456a-9eed-d07bc1699d33
+default     job.batch/quality-eval-legal-contract-quality-1120797a7e           Failed   0/1           5m4s       5m4s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=bfad8b05-feaa-4168-8273-4221f2d49d8e
+default     job.batch/quality-eval-marketing-content-quality-600753fc0e        Failed   0/1           5m4s       5m4s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=63506e31-73cb-417b-9769-752ae818397a
+default     job.batch/quality-eval-rh-chatbot-quality-7147801f44               Failed   0/1           5m4s       5m4s   quality-evaluator   ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.2   batch.kubernetes.io/controller-uid=1c74192d-be7f-45aa-8c25-131f2e972951
+
+NAMESPACE   NAME                                                               READY   STATUS   RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+default     pod/quality-eval-finance-risk-assistant-quality-2302e1b186-gtlvn   0/1     Error    0          5m4s   10.244.0.14   greenops-control-plane   <none>           <none>
+default     pod/quality-eval-legal-contract-quality-1120797a7e-7jttl           0/1     Error    0          5m4s   10.244.0.16   greenops-control-plane   <none>           <none>
+default     pod/quality-eval-marketing-content-quality-600753fc0e-phrqh        0/1     Error    0          5m4s   10.244.0.17   greenops-control-plane   <none>           <none>
+default     pod/quality-eval-rh-chatbot-quality-7147801f44-fmftb               0/1     Error    0          5m4s   10.244.0.15   greenops-control-plane   <none>           <none>

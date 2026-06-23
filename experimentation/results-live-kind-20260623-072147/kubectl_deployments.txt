@@ -1,0 +1,15 @@
+NAMESPACE                 NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+envoy-ai-gateway-system   ai-gateway-controller                   1/1     1            1           8m33s
+envoy-gateway-system      envoy-default-greenops-aigw-dac3126f    1/1     1            1           8m12s
+envoy-gateway-system      envoy-gateway                           1/1     1            1           8m55s
+finance                   risk-assistant                          1/1     1            1           7m45s
+finance                   shadow-ai-rogue                         1/1     1            1           6m1s
+greenops-system           demo-grafana                            1/1     1            1           6m46s
+greenops-system           demo-prometheus                         1/1     1            1           6m46s
+greenops-system           greenops-ai-sovereign-finops-operator   1/1     1            1           9m41s
+kube-system               coredns                                 2/2     2            2           11m
+kube-system               tetragon-operator                       1/1     1            1           6m22s
+legal                     contract-review                         1/1     1            1           7m48s
+local-path-storage        local-path-provisioner                  1/1     1            1           11m
+marketing                 content-writer                          1/1     1            1           7m43s
+rh                        chatbot-rh                              1/1     1            1           7m48s
