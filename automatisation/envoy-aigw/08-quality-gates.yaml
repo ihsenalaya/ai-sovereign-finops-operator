@@ -3,6 +3,12 @@
 # evidenceRef are intentionally absent at apply time: AIQualityGate creates a
 # Kubernetes Job that calls the production Envoy AI Gateway path and writes real
 # source/candidate outputs back to evidenceRef before scoring.
+#
+# The finance gate below also enables Continuous Synthetic Quality Probes
+# (operator >= 0.6.0): the reconciler re-runs a round-robin subset on a fixed
+# interval via ephemeral Jobs (no CronJob) and publishes a rolling synthetic
+# verdict under status.continuousProbes. See
+# presentation/continuous-quality-probes/ for an end-to-end walkthrough.
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -41,6 +47,28 @@ spec:
     timeoutSeconds: 60
   weights:
     judged: 0
+  # Continuous Synthetic Quality Probes (operator >= 0.6.0): periodically replay a
+  # round-robin subset of the golden dataset through Envoy (ephemeral Jobs, no
+  # CronJob). Verdict/scores are published under status.continuousProbes. These are
+  # synthetic tests against known references, not scoring of real user traffic.
+  continuousProbes:
+    enabled: true
+    interval: "1h"
+    sampleSize: 5
+    strategy: "round-robin"
+    slidingWindow: "24h"
+    maxConcurrency: 1
+    retainRuns: 20
+    # Production decision policy (operator >= 0.6.1): probes drive the EFFECTIVE
+    # status.verdict. A risky probe blocks the candidate; probes never approve
+    # alone. Anti-flapping (2/2) avoids flipping on a single bad run. Traceable via
+    # status.decision.sources.{baselineGate,continuousProbes}.
+    decisionPolicy:
+      effect: "BlockOnRisk"
+      insufficientDataPolicy: "Block"
+      staleAfter: "2h"
+      minConsecutiveRisk: 2
+      minConsecutiveSafe: 2
 ---
 apiVersion: v1
 kind: ConfigMap

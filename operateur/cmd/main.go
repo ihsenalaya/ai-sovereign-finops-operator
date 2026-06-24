@@ -24,6 +24,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -283,6 +284,8 @@ func runQualityEval(args []string) error {
 	var opts qualityeval.Options
 	var timeoutSeconds int
 	var terminationLog string
+	var promptIDs string
+	fs.StringVar(&promptIDs, "prompt-ids", "", "comma-separated golden prompt IDs to replay (empty = all; used by continuous probes)")
 	fs.StringVar(&opts.Endpoint, "endpoint", "", "OpenAI-compatible gateway chat completions endpoint")
 	fs.StringVar(&opts.PromptsDir, "prompts-dir", "", "directory containing prompts.yaml/prompts.json")
 	fs.StringVar(&opts.PromptsFile, "prompts-file", "", "explicit golden dataset file")
@@ -297,6 +300,11 @@ func runQualityEval(args []string) error {
 		return err
 	}
 	opts.Timeout = time.Duration(timeoutSeconds) * time.Second
+	for _, id := range strings.Split(promptIDs, ",") {
+		if s := strings.TrimSpace(id); s != "" {
+			opts.PromptIDs = append(opts.PromptIDs, s)
+		}
+	}
 	raw, err := qualityeval.Run(context.Background(), opts)
 	if err != nil {
 		if terminationLog != "" {

@@ -173,6 +173,215 @@ type AIQualityRollbackSpec struct {
 	OnLatencyIncreasePercent int32 `json:"onLatencyIncreasePercent,omitempty"`
 }
 
+// AIQualityContinuousProbesSpec configures periodic synthetic quality probes.
+// When enabled, the reconciler replays a subset of the golden dataset against the
+// source and candidate models through the real gateway on a fixed interval, using
+// ephemeral Jobs scheduled via RequeueAfter (no Kubernetes CronJob). These are
+// SYNTHETIC tests against known references, not scoring of real user traffic.
+type AIQualityContinuousProbesSpec struct {
+	// Enabled turns continuous synthetic probes on. When absent or false, the gate
+	// keeps its existing one-shot evaluation behaviour unchanged.
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Interval is the time between two synthetic runs, for example "1h". Default "1h".
+	// +optional
+	Interval string `json:"interval,omitempty"`
+
+	// SampleSize is the number of golden prompts replayed per run. Default: all prompts.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	SampleSize int32 `json:"sampleSize,omitempty"`
+
+	// Strategy selects which prompts to replay each run. Default "round-robin".
+	// +optional
+	// +kubebuilder:validation:Enum=round-robin;random
+	Strategy string `json:"strategy,omitempty"`
+
+	// SlidingWindow aggregates recent probe evidence, for example "24h". Default "24h".
+	// +optional
+	SlidingWindow string `json:"slidingWindow,omitempty"`
+
+	// MaxConcurrency caps parallel probe Jobs per gate. Only 1 is supported for now.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=1
+	MaxConcurrency int32 `json:"maxConcurrency,omitempty"`
+
+	// RetainRuns is the maximum number of per-run evidence ConfigMaps to keep.
+	// Older runs are rotated out. Default 20.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	RetainRuns int32 `json:"retainRuns,omitempty"`
+
+	// DecisionPolicy controls whether and how the continuous probe verdict affects
+	// the main gate verdict. When omitted, the effect defaults to Observe (advisory
+	// only), preserving backward compatibility.
+	// +optional
+	DecisionPolicy *AIQualityDecisionPolicy `json:"decisionPolicy,omitempty"`
+}
+
+// AIQualityDecisionPolicy controls how continuous probes influence the effective
+// (main) gate verdict, with freshness and anti-flapping safeguards.
+type AIQualityDecisionPolicy struct {
+	// Effect selects how the continuous probe verdict affects the main verdict.
+	// Observe (default): advisory only. BlockOnRisk: probe risk forces the main
+	// verdict to candidate-risk (probes can block but never approve alone).
+	// ContributeToGate: probe evidence is pooled into the main scoring.
+	// Enforce: like BlockOnRisk and also flags the gate as blocking reroute.
+	// +optional
+	// +kubebuilder:validation:Enum=Observe;BlockOnRisk;ContributeToGate;Enforce
+	// +kubebuilder:default=Observe
+	Effect string `json:"effect,omitempty"`
+
+	// InsufficientDataPolicy decides what happens when probe evidence is missing or
+	// stale. Block: it blocks the gate (insufficient-data). Ignore: it does not
+	// affect the main verdict. Default Block.
+	// +optional
+	// +kubebuilder:validation:Enum=Block;Ignore
+	// +kubebuilder:default=Block
+	InsufficientDataPolicy string `json:"insufficientDataPolicy,omitempty"`
+
+	// StaleAfter marks probe evidence stale once the last successful run is older
+	// than this duration, for example "2h". Default "2h". Should be > interval.
+	// +optional
+	StaleAfter string `json:"staleAfter,omitempty"`
+
+	// MinConsecutiveRisk requires N consecutive risky probe runs before the
+	// effective verdict flips to candidate-risk (anti-flapping). Default 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MinConsecutiveRisk int32 `json:"minConsecutiveRisk,omitempty"`
+
+	// MinConsecutiveSafe requires N consecutive safe probe runs before a prior
+	// continuous-probe risk is cleared (anti-flapping). Default 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MinConsecutiveSafe int32 `json:"minConsecutiveSafe,omitempty"`
+}
+
+// AIQualityDecisionSource records one verdict input to the effective decision.
+type AIQualityDecisionSource struct {
+	// Verdict is candidate-safe, candidate-risk or insufficient-data.
+	// +optional
+	Verdict string `json:"verdict,omitempty"`
+	// Effect is the decision effect applied for this source (continuous probes only).
+	// +optional
+	Effect string `json:"effect,omitempty"`
+	// LastRunAt is the last successful probe run (continuous probes only).
+	// +optional
+	LastRunAt *metav1.Time `json:"lastRunAt,omitempty"`
+	// EvidenceFresh is true when probe evidence is within staleAfter (continuous probes only).
+	// +optional
+	EvidenceFresh bool `json:"evidenceFresh,omitempty"`
+}
+
+// AIQualityDecisionSources lists the verdict inputs that produced the effective verdict.
+type AIQualityDecisionSources struct {
+	// BaselineGate is the existing one-shot/telemetry verdict.
+	// +optional
+	BaselineGate AIQualityDecisionSource `json:"baselineGate,omitempty"`
+	// ContinuousProbes is the synthetic probe verdict and its applied effect.
+	// +optional
+	ContinuousProbes AIQualityDecisionSource `json:"continuousProbes,omitempty"`
+}
+
+// AIQualityDecisionStatus is the traceable result of the decision engine.
+type AIQualityDecisionStatus struct {
+	// EffectiveVerdict is the final, applied gate verdict (mirrors status.verdict).
+	// +optional
+	EffectiveVerdict string `json:"effectiveVerdict,omitempty"`
+	// Reason is a stable machine-readable cause, e.g. ContinuousProbeRisk,
+	// ContinuousProbeInsufficientData, BaselineGate, Observe, ContributeToGate.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+	// Sources records which verdicts contributed to the decision.
+	// +optional
+	Sources AIQualityDecisionSources `json:"sources,omitempty"`
+}
+
+// AIQualityContinuousProbesStatus reports the synthetic probe scheduler state.
+type AIQualityContinuousProbesStatus struct {
+	// Enabled mirrors spec.continuousProbes.enabled.
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// ObservedGeneration is the gate generation the probe scheduler last acted on.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// LastRunAt is when the last probe run finished.
+	// +optional
+	LastRunAt *metav1.Time `json:"lastRunAt,omitempty"`
+
+	// LastScheduledAt is when the last probe Job was created.
+	// +optional
+	LastScheduledAt *metav1.Time `json:"lastScheduledAt,omitempty"`
+
+	// LastRunStatus is Succeeded or Failed.
+	// +optional
+	LastRunStatus string `json:"lastRunStatus,omitempty"`
+
+	// LastRunName is the Job that produced the last run.
+	// +optional
+	LastRunName string `json:"lastRunName,omitempty"`
+
+	// NextRunAt is when the next probe run is due.
+	// +optional
+	NextRunAt *metav1.Time `json:"nextRunAt,omitempty"`
+
+	// RunInProgress is true while a probe Job is active.
+	// +optional
+	RunInProgress bool `json:"runInProgress,omitempty"`
+
+	// RunsObserved is the number of per-run evidence sets in the sliding window.
+	// +optional
+	RunsObserved int32 `json:"runsObserved,omitempty"`
+
+	// Window echoes the aggregation window used.
+	// +optional
+	Window string `json:"window,omitempty"`
+
+	// SourceScore is the aggregated source composite score over the window.
+	// +optional
+	SourceScore float64 `json:"sourceScore,omitempty"`
+
+	// CandidateScore is the aggregated candidate composite score over the window.
+	// +optional
+	CandidateScore float64 `json:"candidateScore,omitempty"`
+
+	// Verdict is the synthetic-probe verdict: candidate-safe, candidate-risk or insufficient-data.
+	// +optional
+	Verdict string `json:"verdict,omitempty"`
+
+	// FailedChecks lists missing or failed signals from the last aggregation.
+	// +optional
+	FailedChecks []string `json:"failedChecks,omitempty"`
+
+	// LastPromptIndex is the round-robin cursor into the golden dataset.
+	// +optional
+	LastPromptIndex int32 `json:"lastPromptIndex,omitempty"`
+
+	// EvidenceFresh is true when the last successful run is within staleAfter.
+	// +optional
+	EvidenceFresh bool `json:"evidenceFresh,omitempty"`
+
+	// ConsecutiveRiskCount counts consecutive completed runs whose window verdict
+	// is candidate-risk (anti-flapping).
+	// +optional
+	ConsecutiveRiskCount int32 `json:"consecutiveRiskCount,omitempty"`
+
+	// ConsecutiveSafeCount counts consecutive completed runs whose window verdict
+	// is candidate-safe (anti-flapping).
+	// +optional
+	ConsecutiveSafeCount int32 `json:"consecutiveSafeCount,omitempty"`
+
+	// Blocking is the hysteresis state: true once minConsecutiveRisk is reached and
+	// not yet cleared by minConsecutiveSafe. It is what BlockOnRisk/Enforce act on.
+	// +optional
+	Blocking bool `json:"blocking,omitempty"`
+}
+
 // AIQualityGateTarget identifies exactly one application protected by a quality gate.
 type AIQualityGateTarget struct {
 	// Namespace is the application namespace.
@@ -260,6 +469,10 @@ type AIQualityGateSpec struct {
 	// Rollback configures rollback thresholds.
 	// +optional
 	Rollback AIQualityRollbackSpec `json:"rollback,omitempty"`
+
+	// ContinuousProbes optionally enables periodic synthetic quality probes.
+	// +optional
+	ContinuousProbes *AIQualityContinuousProbesSpec `json:"continuousProbes,omitempty"`
 }
 
 // AIQualityGatePhase is the high-level status of a quality gate.
@@ -419,6 +632,16 @@ type AIQualityGateStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
+	// ContinuousProbes reports the synthetic probe scheduler state when enabled.
+	// +optional
+	ContinuousProbes *AIQualityContinuousProbesStatus `json:"continuousProbes,omitempty"`
+
+	// Decision is the traceable result of the decision engine that combines the
+	// baseline gate verdict with the continuous-probe verdict into the effective
+	// status.verdict.
+	// +optional
+	Decision *AIQualityDecisionStatus `json:"decision,omitempty"`
 }
 
 //+kubebuilder:object:root=true

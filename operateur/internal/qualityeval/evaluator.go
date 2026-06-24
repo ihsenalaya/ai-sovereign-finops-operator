@@ -53,6 +53,10 @@ type Options struct {
 	MaxTokens      int
 	Timeout        time.Duration
 	HTTPClient     *http.Client
+	// PromptIDs optionally restricts the run to this subset of golden prompt IDs
+	// (used by continuous synthetic probes for round-robin sampling). Empty means
+	// replay the whole dataset, preserving the existing one-shot behaviour.
+	PromptIDs []string
 }
 
 // GoldenPrompt mirrors the AIQualityGate golden dataset format.
@@ -130,6 +134,12 @@ func Run(ctx context.Context, opts Options) ([]byte, error) {
 	if len(prompts) == 0 {
 		return nil, fmt.Errorf("golden dataset contains no prompts")
 	}
+	if len(opts.PromptIDs) > 0 {
+		prompts = filterPromptsByID(prompts, opts.PromptIDs)
+		if len(prompts) == 0 {
+			return nil, fmt.Errorf("none of the requested prompt IDs %v are present in the golden dataset", opts.PromptIDs)
+		}
+	}
 
 	models := []string{opts.SourceModel}
 	if opts.CandidateModel != opts.SourceModel {
@@ -155,6 +165,22 @@ func Run(ctx context.Context, opts Options) ([]byte, error) {
 		return nil, fmt.Errorf("serialize quality evidence: %w", err)
 	}
 	return raw, nil
+}
+
+// filterPromptsByID keeps only prompts whose ID is in the requested set, preserving
+// dataset order. Unknown IDs are ignored.
+func filterPromptsByID(prompts []GoldenPrompt, ids []string) []GoldenPrompt {
+	want := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		want[strings.TrimSpace(id)] = true
+	}
+	out := make([]GoldenPrompt, 0, len(ids))
+	for _, p := range prompts {
+		if want[strings.TrimSpace(p.ID)] {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // LoadPrompts reads a golden dataset from a mounted ConfigMap directory or file.

@@ -157,6 +157,64 @@ var (
 		Help: "Number of failed checks for an AIQualityGate.",
 	}, []string{"namespace", "quality_gate", "target_namespace", "application"})
 
+	// QualityProbeRunsTotal counts synthetic quality probe runs (continuous probes).
+	// These are SYNTHETIC golden-dataset replays, not scoring of real user traffic.
+	QualityProbeRunsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ai_finops_quality_probe_runs_total",
+		Help: "Total synthetic quality probe runs (golden-dataset replays, not real user traffic).",
+	}, []string{"namespace", "quality_gate", "source_model", "candidate_model"})
+
+	// QualityProbeFailuresTotal counts failed synthetic probe runs.
+	QualityProbeFailuresTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ai_finops_quality_probe_failures_total",
+		Help: "Total failed synthetic quality probe runs.",
+	}, []string{"namespace", "quality_gate", "source_model", "candidate_model"})
+
+	// QualityProbeLastSuccessTimestamp is the unix time of the last successful probe run.
+	QualityProbeLastSuccessTimestamp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_probe_last_success_timestamp",
+		Help: "Unix timestamp of the last successful synthetic quality probe run.",
+	}, []string{"namespace", "quality_gate"})
+
+	// QualityProbeScore is the aggregated synthetic-probe score per model role and dimension.
+	QualityProbeScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_probe_score",
+		Help: "Aggregated synthetic-probe score in [0,100] over the sliding window, by role (source/candidate) and dimension.",
+	}, []string{"namespace", "quality_gate", "model", "role", "dimension"})
+
+	// QualityProbeVerdict encodes the synthetic-probe verdict (1=candidate-safe,
+	// 0=candidate-risk, -1=insufficient-data).
+	QualityProbeVerdict = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_probe_verdict",
+		Help: "Synthetic-probe verdict (1=candidate-safe, 0=candidate-risk, -1=insufficient-data).",
+	}, []string{"namespace", "quality_gate"})
+
+	// QualityProbeDurationSeconds is the duration of the last synthetic probe run.
+	QualityProbeDurationSeconds = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_probe_duration_seconds",
+		Help: "Duration in seconds of the last synthetic quality probe run.",
+	}, []string{"namespace", "quality_gate"})
+
+	// QualityProbeEvidenceFresh is 1 when continuous probe evidence is within staleAfter, else 0.
+	QualityProbeEvidenceFresh = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_probe_evidence_fresh",
+		Help: "Whether continuous probe evidence is fresh (1) or stale/missing (0).",
+	}, []string{"namespace", "quality_gate"})
+
+	// QualityGateEffectiveVerdict encodes the effective (post-decision) gate verdict
+	// (1=candidate-safe, 0=candidate-risk, -1=insufficient-data). The reason/effect
+	// that produced it are exposed as labels for traceability.
+	QualityGateEffectiveVerdict = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_gate_effective_verdict",
+		Help: "Effective AIQualityGate verdict after the decision engine (1=safe, 0=risk, -1=insufficient-data).",
+	}, []string{"namespace", "quality_gate", "source_model", "candidate_model", "effect", "reason"})
+
+	// QualityGateBlockedByContinuousProbe is 1 when continuous probes block the candidate.
+	QualityGateBlockedByContinuousProbe = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_finops_quality_gate_blocked_by_continuous_probe",
+		Help: "Whether continuous probes are blocking the candidate (1=blocked, 0=not blocked).",
+	}, []string{"namespace", "quality_gate", "source_model", "candidate_model"})
+
 	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
 	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_projected_monthly_cost_eur",
@@ -241,6 +299,15 @@ var all = []prometheus.Collector{
 	LatencyTelemetryAvailable,
 	QualityGatePassed,
 	QualityGateFailedChecks,
+	QualityProbeRunsTotal,
+	QualityProbeFailuresTotal,
+	QualityProbeLastSuccessTimestamp,
+	QualityProbeScore,
+	QualityProbeVerdict,
+	QualityProbeDurationSeconds,
+	QualityProbeEvidenceFresh,
+	QualityGateEffectiveVerdict,
+	QualityGateBlockedByContinuousProbe,
 	ProjectedMonthlyCostEUR,
 	BudgetUsagePercent,
 	SovereigntyFindings,

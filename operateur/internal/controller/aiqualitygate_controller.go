@@ -251,10 +251,20 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	var comparison qualityengine.Comparison
 	scoreEvaluated := false
-	if len(prompts) > 0 && gate.Spec.EvidenceRef != nil {
+	contribute := isContributeToGate(&gate)
+	if len(prompts) > 0 && (gate.Spec.EvidenceRef != nil || contribute) {
+		sourceSamples := buildQualitySamples(prompts, evidence, gate.Spec.SourceModel)
+		candidateSamples := buildQualitySamples(prompts, evidence, gate.Spec.CandidateModel)
+		if contribute {
+			// ContributeToGate: pool the sliding-window probe evidence with the
+			// one-shot evidence into a single scoring (one sample per evidence entry).
+			pooled := append(append([]qualityEvidenceSample{}, evidence...), r.pooledProbeEvidence(ctx, &gate)...)
+			sourceSamples = probeSamplesForModel(prompts, pooled, gate.Spec.SourceModel)
+			candidateSamples = probeSamplesForModel(prompts, pooled, gate.Spec.CandidateModel)
+		}
 		comparison = qualityengine.Evaluate(qualityengine.EvaluateInput{
-			SourceSamples:      buildQualitySamples(prompts, evidence, gate.Spec.SourceModel),
-			CandidateSamples:   buildQualitySamples(prompts, evidence, gate.Spec.CandidateModel),
+			SourceSamples:      sourceSamples,
+			CandidateSamples:   candidateSamples,
 			SourceTelemetry:    sourceObs.toQualityTelemetry(evidence, gate.Spec.SourceModel),
 			CandidateTelemetry: candidateObs.toQualityTelemetry(evidence, gate.Spec.CandidateModel),
 			Weights:            qualityEngineWeights(gate.Spec.Weights),
@@ -301,6 +311,18 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		gate.Status.Verdict = "candidate-safe"
 	}
 
+	// Baseline verdict (existing one-shot/telemetry logic) before the decision engine.
+	baselineVerdict := gate.Status.Verdict
+
+	// Continuous synthetic quality probes (additive; no-op unless enabled).
+	probeRequeue, err := r.reconcileContinuousProbes(ctx, &gate, prompts, sourceObs, candidateObs)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Decision engine: combine baseline + probe verdicts into the effective verdict.
+	r.applyQualityDecision(&gate, baselineVerdict)
+
 	message := qualityGateMessage(&gate)
 	condStatus := conditionStatusForGate(gate.Status.Phase)
 	meta.SetStatusCondition(&gate.Status.Conditions, readyCondition(gate.Generation, condStatus, reason, message))
@@ -332,7 +354,11 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.Recorder.Eventf(&gate, eventType, "QualityGateEvaluated", "%s", message)
 	}
 
-	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil
+	requeue := 60 * time.Second
+	if probeRequeue > 0 && probeRequeue < requeue {
+		requeue = probeRequeue
+	}
+	return ctrl.Result{RequeueAfter: requeue}, nil
 }
 
 func (r *AIQualityGateReconciler) collectSamples(ctx context.Context, gate *aiopsv1alpha1.AIQualityGate) ([]collectors.UsageSample, string, error) {

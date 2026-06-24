@@ -86,7 +86,7 @@ def title_bar(s, kicker, title, num):
     pr.runs[0].font.size = Pt(16); pr.runs[0].font.bold = True
     pr.runs[0].font.color.rgb = DARK
 
-def footer(s, t="AI Sovereign FinOps Operator  ·  v0.5.2  ·  Apache 2.0"):
+def footer(s, t="AI Sovereign FinOps Operator  ·  v0.6.0  ·  Apache 2.0"):
     txt(s, Inches(0.55), SH-Inches(0.38), Inches(12), Inches(0.3),
         [[(t, 9, False, GREY)]])
 
@@ -425,29 +425,32 @@ L'AIRouteOverride est pour les situations d'urgence : un reroute immédiat et te
 
 Ces deux CRDs permettent de faire du A/B testing entre modèles sans toucher au code des applications.""")
 
-feature_slide(11, "FONCTIONNALITÉ 8", "AIQualityGate — bloquer les modèles sous seuil",
-    prob_head="Modèle moins cher = dégradation silencieuse de qualité",
+feature_slide(11, "FONCTIONNALITÉ 8", "AIQualityGate — score qualité réel évalué sur golden dataset",
+    prob_head="Modèle moins cher = dégradation silencieuse — jamais mesurée",
     prob_bullets=[],
     sol_bullets=[
-        "AIQualityGate : qualityTier minimum requis",
-        "Tiers : low · medium · high · premium",
-        "Violation si modèle sélectionné < seuil",
-        "Intégré au routing score (dimension quality)",
+        "Job d'éval réel : prompts golden → gateway → modèle candidat",
+        "Score composite 0–100 — 5 dimensions pondérées",
+        "Correctness 0.40 · Reliability 0.20 · Latency 0.15 · Semantic 0.15 · Judged 0.10",
+        "Verdict : candidate-safe / candidate-risk / insufficient-data",
+        "Continuous Probes : rejeu périodique (round-robin) — Jobs éphémères, sans CronJob",
     ],
     impact_bullets=[
-        "Garantie contractuelle de qualité par app",
-        "Prévention des substitutions silencieuses",
-        "Visible dans le radar : colonne quality_score",
-        "Alerte avant plainte utilisateur final",
+        "Qualité mesurée sur réponses réelles, pas un tier déclaré",
+        "Surveillance continue : correctness/semantic/judged ne dérivent pas",
+        "No silent fake : sans données → insufficient-data",
+        "Souveraineté d'abord : jamais d'éval hors zone conforme",
     ],
-    metric="ai_finops_quality_score{namespace, application, model}",
-    speech="""Huitième problème : quand on optimise les coûts, on est tenté de basculer vers un modèle moins cher. Mais si la qualité chute, c'est l'utilisateur final qui le découvre en premier.
+    metric="ai_finops_quality_score{…}  ·  ai_finops_quality_probe_score / _verdict  ·  candidate-safe | candidate-risk",
+    speech="""Huitième problème : quand on optimise les coûts, on bascule vers un modèle moins cher. Mais si la qualité chute, c'est l'utilisateur final qui le découvre en premier. Et jusqu'ici, la qualité n'était qu'un tier déclaré à la main — pas une mesure.
 
-L'AIQualityGate permet de déclarer un seuil minimal de qualité par application. Si le modèle sélectionné est en dessous de ce tier, l'opérateur génère une violation et l'indique dans le .status.
+L'AIQualityGate calcule désormais un vrai score de qualité, de 0 à 100. L'opérateur lance un Job Kubernetes d'évaluation qui envoie un golden dataset de prompts métier au modèle candidat — via le gateway de production, sur les vrais déploiements Azure AI Foundry — et récupère les réponses réelles.
 
-Ce score de qualité est intégré comme l'une des 5 dimensions du routing score — avec un poids de 30%. Un modèle bon marché mais de mauvaise qualité sera pénalisé dans le score global.
+Le score est composite, pondéré sur 5 dimensions : la correctness — exactitude vs référence — pèse 40%, la fiabilité 20%, la latence 15%, la similarité sémantique 15%, et un juge LLM souverain optionnel 10%. Le verdict compare le candidat au modèle source : candidate-safe s'il ne dégrade pas, candidate-risk sinon, insufficient-data s'il manque des données.
 
-Le panel Grafana montre la colonne quality_score dans le radar, et vous voyez immédiatement quel modèle est sous-performant.""")
+Principe inviolable : sans télémétrie réelle ou golden dataset suffisant, l'opérateur remonte insufficient-data — il n'invente jamais un score. Et le radar Grafana compare les 3 fournisseurs réels — OpenAI France, OpenAI Foundry EU, Mistral EU — dimension par dimension.
+
+Nouveauté 0.6.0 : les Continuous Synthetic Quality Probes. Comme la justesse exige une réponse de référence connue, on ne peut pas la noter sur le vrai trafic utilisateur. L'opérateur rejoue donc périodiquement un sous-ensemble du golden dataset — en round-robin — via des Jobs éphémères planifiés sans CronJob, et publie un verdict glissant sous status.continuousProbes. Reliability et latence, elles, restent mesurées en continu sur le trafic réel.""")
 
 feature_slide(12, "FONCTIONNALITÉ 9", "Break-even & recommandations automatiques",
     prob_head="Économies potentielles invisibles — pas d'outil de comparaison",
@@ -502,7 +505,7 @@ for r, (col, prov, apps, zone, model) in enumerate(rows):
 rrect(s, Inches(0.55), Inches(5.55), Inches(12.2), Inches(1.12), DARK)
 txt(s, Inches(0.78), Inches(5.65), Inches(11.8), Inches(0.95),
     [[("Grafana → http://localhost:3000", 14, True, GREEN)],
-     [("Radar 5D  ·  Budget phases  ·  Sovereignty findings  ·  Shadow AI bargauge", 12, False, MUTE)]],
+     [("Radar routing 5D  ·  Radar qualité 3 fournisseurs  ·  Budget phases  ·  Sovereignty findings  ·  Shadow AI", 12, False, MUTE)]],
     ls=1.2)
 footer(s)
 set_notes(s, """Voici ce que vous voyez en direct dans Grafana.
@@ -534,7 +537,7 @@ crds = [
     (ORANGE, "ROUTAGE",        [("AIRoutingPolicy",     "règles · poids · TTL"),
                                  ("AIRouteOverride",     "reroute immédiat · auto-révocation"),
                                  ("AIChangeRequest",     "Pending→Approved→Actuated")]),
-    (RED,    "QUALITÉ & SÉC",  [("AIQualityGate",       "qualityTier minimum requis"),
+    (RED,    "QUALITÉ & SÉC",  [("AIQualityGate",       "score qualité réel 5D · golden eval"),
                                  ("AISovereigntyPolicy", "zones autorisées/interdites · mode")]),
 ]
 cw = Inches(2.95); gap = Inches(0.1)
@@ -570,12 +573,12 @@ Tout est GitOps-ready — vous déclarez l'état désiré, l'opérateur réconci
 # SLIDE 15 — 23 MÉTRIQUES
 # ═══════════════════════════════════════════════════════════════════════════
 s = new_slide()
-title_bar(s, "OBSERVABILITÉ", "23 métriques ai_finops_* — Prometheus · Grafana radar 5D", 15)
+title_bar(s, "OBSERVABILITÉ", "29 métriques ai_finops_* — Prometheus · Grafana radar 5D", 15)
 cols_m = [
     (GREEN,  "Coût & tokens",      ["ai_finops_cost_eur","ai_finops_input_tokens","ai_finops_output_tokens","ai_finops_cost_by_zone_eur","ai_finops_projected_monthly_cost_eur"]),
     (BLUE,   "Budget & économies", ["ai_finops_budget_usage_percent","ai_finops_potential_savings_eur","ai_finops_potential_savings_by_app_eur","ai_finops_cost_saving_eur","ai_finops_recommendations"]),
     (RED,    "Souveraineté",       ["ai_finops_sovereignty_findings","ai_finops_sovereignty_requests","ai_finops_shadow_ai_egress","ai_finops_enforcement_actions","ai_finops_requests"]),
-    (ORANGE, "Routing Score (5D)", ["ai_finops_routing_score","ai_finops_cost_score","ai_finops_quality_score","ai_finops_latency_score","ai_finops_reliability_score","ai_finops_sovereignty_score","ai_finops_measured_latency_millis","ai_finops_latency_telemetry_available"]),
+    (ORANGE, "Qualité & probes",   ["ai_finops_quality_score","ai_finops_quality_gate_passed","ai_finops_quality_probe_score","ai_finops_quality_probe_verdict","ai_finops_quality_probe_runs_total","ai_finops_quality_probe_failures_total","ai_finops_quality_probe_duration_seconds"]),
 ]
 cw = Inches(2.95)
 for i, (col, cat, mets) in enumerate(cols_m):
@@ -650,7 +653,7 @@ rows_s = [
     ("👻", "Shadow AI invisible",       "Tetragon eBPF tcp:443",         "Détection < 30s"),
     ("✅", "Changements sans validation","AIChangeRequest Pending→OK",   "Audit trail complet"),
     ("🔀", "Routage manuel risqué",    "AIRoutingPolicy + Override",    "Rollback en 10 secondes"),
-    ("⭐", "Qualité silencieuse",       "AIQualityGate tier minimum",    "Alerte avant l'utilisateur"),
+    ("⭐", "Qualité non mesurée",        "AIQualityGate score réel 5D",   "Éval golden + radar 3 fournisseurs"),
     ("💡", "Savings invisibles",        "AIBreakEvenAnalysis tokens réels","ROI chiffré par équipe"),
 ]
 for i, (ico, prob, sol, imp) in enumerate(rows_s):
@@ -679,7 +682,7 @@ Le choix de modèle intuitif → Routing Score 5D visible dans le radar Grafana.
 Le Shadow AI invisible → Tetragon eBPF, détection en moins de 30 secondes.
 Les changements sans validation → AIChangeRequest avec circuit d'approbation.
 Le routage manuel → AIRoutingPolicy et AIRouteOverride, rollback en 10 secondes.
-La qualité silencieuse → AIQualityGate avec tier minimum configurable.
+La qualité non mesurée → AIQualityGate avec score réel 5D évalué sur golden dataset, radar 3 fournisseurs.
 Les économies invisibles → AIBreakEvenAnalysis sur tokens réels.
 
 Tout ça en 11 CRDs, 23 métriques, Apache 2.0.""")
@@ -691,7 +694,7 @@ s = new_slide()
 title_bar(s, "HONNÊTETÉ", "Limites actuelles — assumées", 18)
 limits = [
     (ORANGE, "Latence ≠ TTFT",            "Score basé sur durée gateway (P50). Time-to-first-token non séparé."),
-    (ORANGE, "Quality score = tier statique","Déclaré dans l'AIModel, pas évaluation LLM-as-a-judge temps réel."),
+    (ORANGE, "Juge LLM souverain optionnel","Dimension Judged à 0 par défaut tant qu'un juge en zone conforme n'est pas câblé."),
     (ORANGE, "Enforcement sur Envoy seul", "Kong, NGINX, Istio non supportés dans cette version."),
     (ORANGE, "Tetragon = privilèges noyau","Requiert CAP_BPF. Désactivable sans impact sur le plan gateway."),
 ]
@@ -707,7 +710,7 @@ set_notes(s, """On termine avec honnêteté sur les limites actuelles.
 
 Le score de latence est calculé sur la durée totale mesurée par le gateway — le time-to-first-token, qui est souvent la métrique la plus importante pour l'expérience utilisateur, n'est pas encore isolé.
 
-Le quality score est statique — il reflète le tier déclaré dans l'AIModel, pas une évaluation automatique de la qualité des réponses. C'est une limite connue qu'on assume.
+Le quality score est désormais une évaluation réelle sur golden dataset — mais la dimension du juge LLM reste optionnelle, à zéro par défaut, tant qu'on n'a pas câblé un modèle juge en zone souveraine. Les quatre autres dimensions, elles, sont pleinement mesurées.
 
 L'enforcement ne fonctionne qu'avec Envoy AI Gateway dans cette version. Kong, NGINX et Istio ne sont pas encore supportés.
 

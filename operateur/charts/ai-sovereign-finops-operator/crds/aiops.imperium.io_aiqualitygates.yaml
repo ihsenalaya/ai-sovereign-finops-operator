@@ -91,6 +91,101 @@ spec:
                   as a replacement.
                 minLength: 1
                 type: string
+              continuousProbes:
+                description: ContinuousProbes optionally enables periodic synthetic
+                  quality probes.
+                properties:
+                  decisionPolicy:
+                    description: |-
+                      DecisionPolicy controls whether and how the continuous probe verdict affects
+                      the main gate verdict. When omitted, the effect defaults to Observe (advisory
+                      only), preserving backward compatibility.
+                    properties:
+                      effect:
+                        default: Observe
+                        description: |-
+                          Effect selects how the continuous probe verdict affects the main verdict.
+                          Observe (default): advisory only. BlockOnRisk: probe risk forces the main
+                          verdict to candidate-risk (probes can block but never approve alone).
+                          ContributeToGate: probe evidence is pooled into the main scoring.
+                          Enforce: like BlockOnRisk and also flags the gate as blocking reroute.
+                        enum:
+                        - Observe
+                        - BlockOnRisk
+                        - ContributeToGate
+                        - Enforce
+                        type: string
+                      insufficientDataPolicy:
+                        default: Block
+                        description: |-
+                          InsufficientDataPolicy decides what happens when probe evidence is missing or
+                          stale. Block: it blocks the gate (insufficient-data). Ignore: it does not
+                          affect the main verdict. Default Block.
+                        enum:
+                        - Block
+                        - Ignore
+                        type: string
+                      minConsecutiveRisk:
+                        description: |-
+                          MinConsecutiveRisk requires N consecutive risky probe runs before the
+                          effective verdict flips to candidate-risk (anti-flapping). Default 1.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      minConsecutiveSafe:
+                        description: |-
+                          MinConsecutiveSafe requires N consecutive safe probe runs before a prior
+                          continuous-probe risk is cleared (anti-flapping). Default 1.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      staleAfter:
+                        description: |-
+                          StaleAfter marks probe evidence stale once the last successful run is older
+                          than this duration, for example "2h". Default "2h". Should be > interval.
+                        type: string
+                    type: object
+                  enabled:
+                    description: |-
+                      Enabled turns continuous synthetic probes on. When absent or false, the gate
+                      keeps its existing one-shot evaluation behaviour unchanged.
+                    type: boolean
+                  interval:
+                    description: Interval is the time between two synthetic runs,
+                      for example "1h". Default "1h".
+                    type: string
+                  maxConcurrency:
+                    description: MaxConcurrency caps parallel probe Jobs per gate.
+                      Only 1 is supported for now.
+                    format: int32
+                    maximum: 1
+                    minimum: 1
+                    type: integer
+                  retainRuns:
+                    description: |-
+                      RetainRuns is the maximum number of per-run evidence ConfigMaps to keep.
+                      Older runs are rotated out. Default 20.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  sampleSize:
+                    description: 'SampleSize is the number of golden prompts replayed
+                      per run. Default: all prompts.'
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  slidingWindow:
+                    description: SlidingWindow aggregates recent probe evidence, for
+                      example "24h". Default "24h".
+                    type: string
+                  strategy:
+                    description: Strategy selects which prompts to replay each run.
+                      Default "round-robin".
+                    enum:
+                    - round-robin
+                    - random
+                    type: string
+                type: object
               evaluation:
                 description: Evaluation configures the real gateway-backed evaluator
                   Job.
@@ -423,6 +518,157 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              continuousProbes:
+                description: ContinuousProbes reports the synthetic probe scheduler
+                  state when enabled.
+                properties:
+                  blocking:
+                    description: |-
+                      Blocking is the hysteresis state: true once minConsecutiveRisk is reached and
+                      not yet cleared by minConsecutiveSafe. It is what BlockOnRisk/Enforce act on.
+                    type: boolean
+                  candidateScore:
+                    description: CandidateScore is the aggregated candidate composite
+                      score over the window.
+                    type: number
+                  consecutiveRiskCount:
+                    description: |-
+                      ConsecutiveRiskCount counts consecutive completed runs whose window verdict
+                      is candidate-risk (anti-flapping).
+                    format: int32
+                    type: integer
+                  consecutiveSafeCount:
+                    description: |-
+                      ConsecutiveSafeCount counts consecutive completed runs whose window verdict
+                      is candidate-safe (anti-flapping).
+                    format: int32
+                    type: integer
+                  enabled:
+                    description: Enabled mirrors spec.continuousProbes.enabled.
+                    type: boolean
+                  evidenceFresh:
+                    description: EvidenceFresh is true when the last successful run
+                      is within staleAfter.
+                    type: boolean
+                  failedChecks:
+                    description: FailedChecks lists missing or failed signals from
+                      the last aggregation.
+                    items:
+                      type: string
+                    type: array
+                  lastPromptIndex:
+                    description: LastPromptIndex is the round-robin cursor into the
+                      golden dataset.
+                    format: int32
+                    type: integer
+                  lastRunAt:
+                    description: LastRunAt is when the last probe run finished.
+                    format: date-time
+                    type: string
+                  lastRunName:
+                    description: LastRunName is the Job that produced the last run.
+                    type: string
+                  lastRunStatus:
+                    description: LastRunStatus is Succeeded or Failed.
+                    type: string
+                  lastScheduledAt:
+                    description: LastScheduledAt is when the last probe Job was created.
+                    format: date-time
+                    type: string
+                  nextRunAt:
+                    description: NextRunAt is when the next probe run is due.
+                    format: date-time
+                    type: string
+                  observedGeneration:
+                    description: ObservedGeneration is the gate generation the probe
+                      scheduler last acted on.
+                    format: int64
+                    type: integer
+                  runInProgress:
+                    description: RunInProgress is true while a probe Job is active.
+                    type: boolean
+                  runsObserved:
+                    description: RunsObserved is the number of per-run evidence sets
+                      in the sliding window.
+                    format: int32
+                    type: integer
+                  sourceScore:
+                    description: SourceScore is the aggregated source composite score
+                      over the window.
+                    type: number
+                  verdict:
+                    description: 'Verdict is the synthetic-probe verdict: candidate-safe,
+                      candidate-risk or insufficient-data.'
+                    type: string
+                  window:
+                    description: Window echoes the aggregation window used.
+                    type: string
+                type: object
+              decision:
+                description: |-
+                  Decision is the traceable result of the decision engine that combines the
+                  baseline gate verdict with the continuous-probe verdict into the effective
+                  status.verdict.
+                properties:
+                  effectiveVerdict:
+                    description: EffectiveVerdict is the final, applied gate verdict
+                      (mirrors status.verdict).
+                    type: string
+                  reason:
+                    description: |-
+                      Reason is a stable machine-readable cause, e.g. ContinuousProbeRisk,
+                      ContinuousProbeInsufficientData, BaselineGate, Observe, ContributeToGate.
+                    type: string
+                  sources:
+                    description: Sources records which verdicts contributed to the
+                      decision.
+                    properties:
+                      baselineGate:
+                        description: BaselineGate is the existing one-shot/telemetry
+                          verdict.
+                        properties:
+                          effect:
+                            description: Effect is the decision effect applied for
+                              this source (continuous probes only).
+                            type: string
+                          evidenceFresh:
+                            description: EvidenceFresh is true when probe evidence
+                              is within staleAfter (continuous probes only).
+                            type: boolean
+                          lastRunAt:
+                            description: LastRunAt is the last successful probe run
+                              (continuous probes only).
+                            format: date-time
+                            type: string
+                          verdict:
+                            description: Verdict is candidate-safe, candidate-risk
+                              or insufficient-data.
+                            type: string
+                        type: object
+                      continuousProbes:
+                        description: ContinuousProbes is the synthetic probe verdict
+                          and its applied effect.
+                        properties:
+                          effect:
+                            description: Effect is the decision effect applied for
+                              this source (continuous probes only).
+                            type: string
+                          evidenceFresh:
+                            description: EvidenceFresh is true when probe evidence
+                              is within staleAfter (continuous probes only).
+                            type: boolean
+                          lastRunAt:
+                            description: LastRunAt is the last successful probe run
+                              (continuous probes only).
+                            format: date-time
+                            type: string
+                          verdict:
+                            description: Verdict is candidate-safe, candidate-risk
+                              or insufficient-data.
+                            type: string
+                        type: object
+                    type: object
+                type: object
               dimensions:
                 description: Dimensions is a radar-ready view of score components.
                 items:
