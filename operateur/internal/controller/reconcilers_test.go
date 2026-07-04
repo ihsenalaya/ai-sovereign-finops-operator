@@ -265,6 +265,132 @@ var _ = Describe("aiops reconcilers", func() {
 		})
 	})
 
+	Context("AIPlacementDecision", func() {
+		It("allows placement with verified non-revoked evidence", func() {
+			policy := &aiopsv1alpha1.ConfidentialInferencePolicy{
+				ObjectMeta: metav1.ObjectMeta{Name: "conf-place", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.ConfidentialInferencePolicySpec{
+					Target:                aiopsv1alpha1.WorkloadTarget{},
+					RequiredTEE:           []string{"TDX"},
+					MaxEvidenceAgeSeconds: 300,
+					AllowedRuntimeClasses: []string{"simulated-kata-qemu-tdx"},
+					EnforcementMode:       aiopsv1alpha1.EnforcementModeEnforce,
+				},
+			}
+			Expect(k8sClient.Create(ctx, policy)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, policy) })
+
+			evidence := &aiopsv1alpha1.AttestationEvidence{
+				ObjectMeta: metav1.ObjectMeta{Name: "ae-place", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AttestationEvidenceSpec{
+					SubjectRef:   aiopsv1alpha1.ObjectReference{Name: "risk-assistant"},
+					EvidenceType: "runtime",
+					TEE:          "TDX",
+					Runtime:      aiopsv1alpha1.RuntimeExpectation{RuntimeClassName: "simulated-kata-qemu-tdx", Simulated: true},
+					Freshness:    aiopsv1alpha1.EvidenceFreshness{MaxAgeSeconds: 30, Simulated: true},
+					Simulated:    true,
+				},
+			}
+			Expect(k8sClient.Create(ctx, evidence)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, evidence) })
+
+			evr := &AttestationEvidenceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err := evr.Reconcile(ctx, reqFor("ae-place"))
+			Expect(err).NotTo(HaveOccurred())
+
+			placementDecision := &aiopsv1alpha1.AIPlacementDecision{
+				ObjectMeta: metav1.ObjectMeta{Name: "place-x", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AIPlacementDecisionSpec{
+					TargetRef:      aiopsv1alpha1.ObjectReference{Name: "risk-assistant"},
+					PolicyRef:      aiopsv1alpha1.ObjectReference{Name: "conf-place"},
+					EvidenceRef:    &aiopsv1alpha1.ObjectReference{Name: "ae-place"},
+					PlacementToken: aiopsv1alpha1.PlacementTokenSpec{Required: true, TTLSeconds: 300},
+					SchedulerName:  "ai-attestation-scheduler",
+				},
+			}
+			Expect(k8sClient.Create(ctx, placementDecision)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, placementDecision) })
+
+			r := &AIPlacementDecisionReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err = r.Reconcile(ctx, reqFor("place-x"))
+			Expect(err).NotTo(HaveOccurred())
+
+			got := &aiopsv1alpha1.AIPlacementDecision{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "place-x", Namespace: testNamespace}, got)).To(Succeed())
+			Expect(got.Status.Decision).To(Equal("allow"))
+			Expect(got.Status.PlacementTokenDigest).NotTo(BeEmpty())
+		})
+	})
+
+	Context("AIKeyReleasePolicy", func() {
+		It("allows key release with verified evidence and valid placement", func() {
+			policy := &aiopsv1alpha1.ConfidentialInferencePolicy{
+				ObjectMeta: metav1.ObjectMeta{Name: "conf-kr", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.ConfidentialInferencePolicySpec{
+					Target:                aiopsv1alpha1.WorkloadTarget{},
+					RequiredTEE:           []string{"TDX"},
+					MaxEvidenceAgeSeconds: 300,
+					AllowedRuntimeClasses: []string{"simulated-kata-qemu-tdx"},
+					EnforcementMode:       aiopsv1alpha1.EnforcementModeEnforce,
+				},
+			}
+			Expect(k8sClient.Create(ctx, policy)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, policy) })
+
+			evidence := &aiopsv1alpha1.AttestationEvidence{
+				ObjectMeta: metav1.ObjectMeta{Name: "ae-kr", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AttestationEvidenceSpec{
+					SubjectRef:   aiopsv1alpha1.ObjectReference{Name: "risk-assistant"},
+					EvidenceType: "runtime",
+					TEE:          "TDX",
+					Runtime:      aiopsv1alpha1.RuntimeExpectation{RuntimeClassName: "simulated-kata-qemu-tdx", Simulated: true},
+					Freshness:    aiopsv1alpha1.EvidenceFreshness{MaxAgeSeconds: 30, Simulated: true},
+					Simulated:    true,
+				},
+			}
+			Expect(k8sClient.Create(ctx, evidence)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, evidence) })
+			evr := &AttestationEvidenceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err := evr.Reconcile(ctx, reqFor("ae-kr"))
+			Expect(err).NotTo(HaveOccurred())
+
+			placementDecision := &aiopsv1alpha1.AIPlacementDecision{
+				ObjectMeta: metav1.ObjectMeta{Name: "place-kr", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AIPlacementDecisionSpec{
+					TargetRef:      aiopsv1alpha1.ObjectReference{Name: "risk-assistant"},
+					PolicyRef:      aiopsv1alpha1.ObjectReference{Name: "conf-kr"},
+					EvidenceRef:    &aiopsv1alpha1.ObjectReference{Name: "ae-kr"},
+					PlacementToken: aiopsv1alpha1.PlacementTokenSpec{Required: true, TTLSeconds: 300},
+				},
+			}
+			Expect(k8sClient.Create(ctx, placementDecision)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, placementDecision) })
+			pdr := &AIPlacementDecisionReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err = pdr.Reconcile(ctx, reqFor("place-kr"))
+			Expect(err).NotTo(HaveOccurred())
+
+			keyPolicy := &aiopsv1alpha1.AIKeyReleasePolicy{
+				ObjectMeta: metav1.ObjectMeta{Name: "kr-x", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AIKeyReleasePolicySpec{
+					EvidenceRef:             &aiopsv1alpha1.ObjectReference{Name: "ae-kr"},
+					RequireAttestedEvidence: true,
+					KeyRelease:              aiopsv1alpha1.PolicyKeyReleaseSpec{Required: true, TTLSeconds: 300},
+					EnforcementMode:         aiopsv1alpha1.EnforcementModeEnforce,
+				},
+			}
+			Expect(k8sClient.Create(ctx, keyPolicy)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, keyPolicy) })
+
+			r := &AIKeyReleasePolicyReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			_, err = r.Reconcile(ctx, reqFor("kr-x"))
+			Expect(err).NotTo(HaveOccurred())
+
+			got := &aiopsv1alpha1.AIKeyReleasePolicy{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "kr-x", Namespace: testNamespace}, got)).To(Succeed())
+			Expect(got.Status.LastDecision).To(Equal("allow"))
+		})
+	})
+
 	Context("AIFinOpsReport", func() {
 		It("stamps GeneratedAt and becomes Ready", func() {
 			seedEmptyTelemetry(ctx, "report-x")

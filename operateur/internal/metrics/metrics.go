@@ -157,6 +157,18 @@ var (
 		Help: "Number of failed checks for an AIQualityGate.",
 	}, []string{"namespace", "quality_gate", "target_namespace", "application"})
 
+	// QualityGateScore is the audited composite gate score in [0,1] by gate.
+	QualityGateScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_quality_gate_score",
+		Help: "Audited composite AIQualityGate score in [0,1] by gate.",
+	}, []string{"namespace", "quality_gate", "target_namespace", "application"})
+
+	// SimulatedRuntimeClassInUse indicates a pod/policy is using a simulated runtime class.
+	SimulatedRuntimeClassInUse = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "ai_simulated_runtimeclass_in_use",
+		Help: "Whether a confidential pod policy is currently using a simulated runtime class mapping.",
+	}, []string{"namespace", "policy", "runtimeclass"})
+
 	// ProjectedMonthlyCostEUR is the run-rate forecast of monthly spend per namespace.
 	ProjectedMonthlyCostEUR = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ai_finops_projected_monthly_cost_eur",
@@ -241,6 +253,8 @@ var all = []prometheus.Collector{
 	LatencyTelemetryAvailable,
 	QualityGatePassed,
 	QualityGateFailedChecks,
+	QualityGateScore,
+	SimulatedRuntimeClassInUse,
 	ProjectedMonthlyCostEUR,
 	BudgetUsagePercent,
 	SovereigntyFindings,

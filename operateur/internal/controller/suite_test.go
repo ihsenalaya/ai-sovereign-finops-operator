@@ -18,6 +18,7 @@ package controller
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -53,8 +54,15 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
+	_, thisFile, _, ok := runtime.Caller(0)
+	Expect(ok).To(BeTrue())
+	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", ".."))
+	binaryAssetsDir := filepath.Join(repoRoot, "bin", "k8s",
+		fmt.Sprintf("1.31.0-%s-%s", runtime.GOOS, runtime.GOARCH))
+	_, statErr := os.Stat(binaryAssetsDir)
+	Expect(statErr).NotTo(HaveOccurred())
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join(repoRoot, "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
 
 		// The BinaryAssetsDirectory is only required if you want to run the tests directly
@@ -62,8 +70,7 @@ var _ = BeforeSuite(func() {
 		// default path defined in controller-runtime which is /usr/local/kubebuilder/.
 		// Note that you must have the required binaries setup under the bin directory to perform
 		// the tests directly. When we run make test it will be setup and used automatically.
-		BinaryAssetsDirectory: filepath.Join("..", "..", "bin", "k8s",
-			fmt.Sprintf("1.31.0-%s-%s", runtime.GOOS, runtime.GOARCH)),
+		BinaryAssetsDirectory: binaryAssetsDir,
 	}
 
 	var err error
@@ -85,6 +92,9 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	if testEnv == nil {
+		return
+	}
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

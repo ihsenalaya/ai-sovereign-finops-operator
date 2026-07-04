@@ -36,6 +36,7 @@ rules:
   - admissionregistration.k8s.io
   resources:
   - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
   verbs:
   - create
   - get
@@ -60,14 +61,19 @@ rules:
   - aibreakevenanalyses
   - aibudgetpolicies
   - aichangerequests
+  - aievidencerecords
   - aifinopsreports
   - aigateways
+  - aikeyreleasepolicies
   - aimodels
+  - aiplacementdecisions
   - aiproviders
   - aiqualitygates
+  - airevocationpolicies
   - airouteoverrides
   - airoutingpolicies
   - aisovereigntypolicies
+  - attestationevidences
   verbs:
   - create
   - delete
@@ -82,14 +88,19 @@ rules:
   - aibreakevenanalyses/finalizers
   - aibudgetpolicies/finalizers
   - aichangerequests/finalizers
+  - aievidencerecords/finalizers
   - aifinopsreports/finalizers
   - aigateways/finalizers
+  - aikeyreleasepolicies/finalizers
   - aimodels/finalizers
+  - aiplacementdecisions/finalizers
   - aiproviders/finalizers
   - aiqualitygates/finalizers
+  - airevocationpolicies/finalizers
   - airouteoverrides/finalizers
   - airoutingpolicies/finalizers
   - aisovereigntypolicies/finalizers
+  - attestationevidences/finalizers
   verbs:
   - update
 - apiGroups:
@@ -98,18 +109,31 @@ rules:
   - aibreakevenanalyses/status
   - aibudgetpolicies/status
   - aichangerequests/status
+  - aievidencerecords/status
   - aifinopsreports/status
   - aigateways/status
+  - aikeyreleasepolicies/status
   - aimodels/status
+  - aiplacementdecisions/status
   - aiproviders/status
   - aiqualitygates/status
+  - airevocationpolicies/status
   - airouteoverrides/status
   - airoutingpolicies/status
   - aisovereigntypolicies/status
+  - attestationevidences/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - aiops.imperium.io
+  resources:
+  - confidentialinferencepolicies
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - batch
   resources:
@@ -119,4 +143,15 @@ rules:
   - delete
   - get
   - list
+  - watch
+- apiGroups:
+  - node.k8s.io
+  resources:
+  - runtimeclasses
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
   - watch

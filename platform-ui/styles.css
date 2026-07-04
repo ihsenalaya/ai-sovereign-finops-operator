@@ -1,0 +1,25 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #0b1020;
+  color: #e6edf3;
+  margin: 0;
+}
+
+header, main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.card {
+  background: #121a2f;
+  border: 1px solid #23304f;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

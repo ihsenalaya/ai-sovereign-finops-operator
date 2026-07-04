@@ -71,4 +71,58 @@ resources:
   kind: AIFinOpsReport
   path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: imperium.io
+  group: aiops
+  kind: ConfidentialInferencePolicy
+  path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: imperium.io
+  group: aiops
+  kind: AttestationEvidence
+  path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: imperium.io
+  group: aiops
+  kind: AIPlacementDecision
+  path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: imperium.io
+  group: aiops
+  kind: AIKeyReleasePolicy
+  path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: imperium.io
+  group: aiops
+  kind: AIEvidenceRecord
+  path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: imperium.io
+  group: aiops
+  kind: AIRevocationPolicy
+  path: github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

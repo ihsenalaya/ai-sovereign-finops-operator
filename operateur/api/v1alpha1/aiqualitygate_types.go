@@ -99,6 +99,69 @@ type AIQualityScoreWeights struct {
 	Judged *float64 `json:"judged,omitempty"`
 }
 
+// AIQualityStatisticalCompositeWeights configures the higher-level audited
+// composite score in [0,1] used for the safe/risk decision.
+type AIQualityStatisticalCompositeWeights struct {
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Quality *float64 `json:"quality,omitempty"`
+
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	ErrorRate *float64 `json:"errorRate,omitempty"`
+
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	LatencyP95 *float64 `json:"latencyP95,omitempty"`
+
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Cost *float64 `json:"cost,omitempty"`
+}
+
+// AIQualityStatisticalSpec configures the auditable statistical gate.
+type AIQualityStatisticalSpec struct {
+	// NonInferiorityDelta is the tolerated candidate regression margin.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=1
+	NonInferiorityDelta float64 `json:"nonInferiorityDelta,omitempty"`
+
+	// ConfidenceLevel is the one-sided confidence level, for example 0.95.
+	// +optional
+	// +kubebuilder:validation:Minimum=0.5
+	// +kubebuilder:validation:Maximum=0.999
+	ConfidenceLevel float64 `json:"confidenceLevel,omitempty"`
+
+	// Power is the target statistical power.
+	// +optional
+	// +kubebuilder:validation:Minimum=0.5
+	// +kubebuilder:validation:Maximum=0.999
+	Power float64 `json:"power,omitempty"`
+
+	// BaselineSuccessRate is the expected source pass rate used for sample sizing.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=1
+	BaselineSuccessRate float64 `json:"baselineSuccessRate,omitempty"`
+
+	// HysteresisEnterScore is the composite score required to enter candidate-safe.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=1
+	HysteresisEnterScore float64 `json:"hysteresisEnterScore,omitempty"`
+
+	// HysteresisExitScore is the composite score below which a safe gate becomes risky.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=1
+	HysteresisExitScore float64 `json:"hysteresisExitScore,omitempty"`
+
+	// CompositeWeights configures the [0,1] audited composite score.
+	// +optional
+	CompositeWeights AIQualityStatisticalCompositeWeights `json:"compositeWeights,omitempty"`
+}
+
 // AIQualityJudgeSpec configures the optional sovereign LLM judge.
 type AIQualityJudgeSpec struct {
 	// Enabled includes the judged dimension when a sovereign judge model is available.
@@ -260,6 +323,10 @@ type AIQualityGateSpec struct {
 	// Rollback configures rollback thresholds.
 	// +optional
 	Rollback AIQualityRollbackSpec `json:"rollback,omitempty"`
+
+	// Statistical configures non-inferiority, sample-size and hysteresis.
+	// +optional
+	Statistical AIQualityStatisticalSpec `json:"statistical,omitempty"`
 }
 
 // AIQualityGatePhase is the high-level status of a quality gate.
@@ -367,6 +434,34 @@ type AIQualityGateStatus struct {
 	// QualityScore is the candidate composite score in [0,100].
 	// +optional
 	QualityScore float64 `json:"qualityScore,omitempty"`
+
+	// CompositeScore is the higher-level audited decision score in [0,1].
+	// +optional
+	CompositeScore float64 `json:"compositeScore,omitempty"`
+
+	// DatasetVersion is the declared golden dataset version, when annotated.
+	// +optional
+	DatasetVersion string `json:"datasetVersion,omitempty"`
+
+	// DatasetHash is the SHA-256 of the golden dataset content.
+	// +optional
+	DatasetHash string `json:"datasetHash,omitempty"`
+
+	// RequiredSamples is the per-arm sample size required by the statistical test.
+	// +optional
+	RequiredSamples int32 `json:"requiredSamples,omitempty"`
+
+	// ObservedSourceSamples is the number of source samples included in the statistical test.
+	// +optional
+	ObservedSourceSamples int32 `json:"observedSourceSamples,omitempty"`
+
+	// ObservedCandidateSamples is the number of candidate samples included in the statistical test.
+	// +optional
+	ObservedCandidateSamples int32 `json:"observedCandidateSamples,omitempty"`
+
+	// NonInferiorityLowerBound is the lower confidence bound on candidate-source difference.
+	// +optional
+	NonInferiorityLowerBound float64 `json:"nonInferiorityLowerBound,omitempty"`
 
 	// ScoreBreakdown contains the candidate score components.
 	// +optional

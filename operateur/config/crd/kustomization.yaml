@@ -10,6 +10,12 @@ resources:
 - bases/aiops.imperium.io_aibreakevenanalyses.yaml
 - bases/aiops.imperium.io_aifinopsreports.yaml
 - bases/aiops.imperium.io_aiqualitygates.yaml
+- bases/aiops.imperium.io_confidentialinferencepolicies.yaml
+- bases/aiops.imperium.io_attestationevidences.yaml
+- bases/aiops.imperium.io_aiplacementdecisions.yaml
+- bases/aiops.imperium.io_aikeyreleasepolicies.yaml
+- bases/aiops.imperium.io_aievidencerecords.yaml
+- bases/aiops.imperium.io_airevocationpolicies.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

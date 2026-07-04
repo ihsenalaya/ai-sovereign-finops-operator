@@ -64,6 +64,9 @@ func Ensure(ctx context.Context, opts Options) error {
 	if err := os.WriteFile(filepath.Join(opts.CertDir, "tls.key"), keyPEM, 0o600); err != nil {
 		return fmt.Errorf("write webhook key: %w", err)
 	}
+	if err := os.WriteFile(filepath.Join(opts.CertDir, "ca.crt"), caPEM, 0o600); err != nil {
+		return fmt.Errorf("write webhook ca cert: %w", err)
+	}
 
 	cfg := &admissionregv1.MutatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{Name: opts.Name},
@@ -106,6 +109,74 @@ func Ensure(ctx context.Context, opts Options) error {
 	})
 	if err != nil {
 		return fmt.Errorf("upsert mutating webhook configuration: %w", err)
+	}
+	return nil
+}
+
+// EnsureValidation self-registers the validating webhook used for confidential pod checks.
+func EnsureValidation(ctx context.Context, opts Options) error {
+	if opts.Client == nil {
+		return fmt.Errorf("webhook bootstrap requires a client")
+	}
+	if opts.Name == "" {
+		return fmt.Errorf("webhook bootstrap name is required")
+	}
+	if opts.ServiceName == "" || opts.ServiceNamespace == "" {
+		return fmt.Errorf("webhook bootstrap service name/namespace are required")
+	}
+	if opts.Path == "" {
+		opts.Path = "/validate-v1-pod"
+	}
+	if opts.CertDir == "" {
+		opts.CertDir = filepath.Join(os.TempDir(), "k8s-webhook-server", "serving-certs")
+	}
+	if opts.FailurePolicy == "" {
+		opts.FailurePolicy = admissionregv1.Fail
+	}
+
+	caPEM, err := os.ReadFile(filepath.Join(opts.CertDir, "ca.crt"))
+	if err != nil {
+		return fmt.Errorf("read webhook ca cert: %w", err)
+	}
+	cfg := &admissionregv1.ValidatingWebhookConfiguration{
+		ObjectMeta: metav1.ObjectMeta{Name: opts.Name},
+	}
+	_, err = controllerutil.CreateOrUpdate(ctx, opts.Client, cfg, func() error {
+		path := opts.Path
+		port := int32(443)
+		failure := opts.FailurePolicy
+		sideEffects := admissionregv1.SideEffectClassNone
+		timeout := int32(5)
+		matchPolicy := admissionregv1.Equivalent
+		cfg.Webhooks = []admissionregv1.ValidatingWebhook{{
+			Name:                    "confidential-pod-validation.aiops.imperium.io",
+			AdmissionReviewVersions: []string{"v1"},
+			SideEffects:             &sideEffects,
+			FailurePolicy:           &failure,
+			TimeoutSeconds:          &timeout,
+			MatchPolicy:             &matchPolicy,
+			ClientConfig: admissionregv1.WebhookClientConfig{
+				CABundle: caPEM,
+				Service: &admissionregv1.ServiceReference{
+					Name:      opts.ServiceName,
+					Namespace: opts.ServiceNamespace,
+					Path:      &path,
+					Port:      &port,
+				},
+			},
+			Rules: []admissionregv1.RuleWithOperations{{
+				Operations: []admissionregv1.OperationType{admissionregv1.Create, admissionregv1.Update},
+				Rule: admissionregv1.Rule{
+					APIGroups:   []string{""},
+					APIVersions: []string{"v1"},
+					Resources:   []string{"pods"},
+				},
+			}},
+		}}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("upsert validating webhook configuration: %w", err)
 	}
 	return nil
 }

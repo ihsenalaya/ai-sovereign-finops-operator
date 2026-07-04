@@ -56,7 +56,8 @@ var (
 
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
-//+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=create;get;list;patch;update;watch
+//+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations;validatingwebhookconfigurations,verbs=create;get;list;patch;update;watch
+//+kubebuilder:rbac:groups=node.k8s.io,resources=runtimeclasses,verbs=create;get;list;patch;update;watch
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -240,6 +241,46 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AIChangeRequest")
 		os.Exit(1)
 	}
+	if err = (&controller.AttestationEvidenceReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("attestationevidence-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AttestationEvidence")
+		os.Exit(1)
+	}
+	if err = (&controller.AIRevocationPolicyReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("airevocationpolicy-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIRevocationPolicy")
+		os.Exit(1)
+	}
+	if err = (&controller.AIEvidenceRecordReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("aievidencerecord-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIEvidenceRecord")
+		os.Exit(1)
+	}
+	if err = (&controller.AIPlacementDecisionReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("aiplacementdecision-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIPlacementDecision")
+		os.Exit(1)
+	}
+	if err = (&controller.AIKeyReleasePolicyReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("aikeyreleasepolicy-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIKeyReleasePolicy")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	mgr.GetWebhookServer().Register("/mutate-v1-pod", &admission.Webhook{
@@ -248,6 +289,9 @@ func main() {
 			PodName:      os.Getenv("POD_NAME"),
 			PodNamespace: os.Getenv("POD_NAMESPACE"),
 		}),
+	})
+	mgr.GetWebhookServer().Register("/validate-v1-pod", &admission.Webhook{
+		Handler: podinjector.NewValidation(mgr.GetAPIReader(), mgr.GetScheme()),
 	})
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -259,6 +303,10 @@ func main() {
 		os.Exit(1)
 	}
 	ctx := ctrl.SetupSignalHandler()
+	if err := bootstrap.EnsureSimulatedRuntimeClasses(ctx, bootstrapClient); err != nil {
+		setupLog.Error(err, "unable to bootstrap simulated runtime classes")
+		os.Exit(1)
+	}
 	if err := bootstrap.Ensure(ctx, bootstrap.Options{
 		Client:           bootstrapClient,
 		Name:             "aiops-sidecar-injector",
@@ -268,6 +316,17 @@ func main() {
 		CertDir:          webhookCertDir,
 	}); err != nil {
 		setupLog.Error(err, "unable to bootstrap mutating webhook")
+		os.Exit(1)
+	}
+	if err := bootstrap.EnsureValidation(ctx, bootstrap.Options{
+		Client:           bootstrapClient,
+		Name:             "aiops-confidential-pod-validator",
+		ServiceName:      os.Getenv("WEBHOOK_SERVICE_NAME"),
+		ServiceNamespace: os.Getenv("POD_NAMESPACE"),
+		Path:             "/validate-v1-pod",
+		CertDir:          webhookCertDir,
+	}); err != nil {
+		setupLog.Error(err, "unable to bootstrap validating webhook")
 		os.Exit(1)
 	}
 

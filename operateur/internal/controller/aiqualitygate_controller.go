@@ -47,6 +47,8 @@ import (
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/qualityengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
+	platformcrypto "github.com/imperium/ai-sovereign-finops-operator/pkg/crypto"
+	"github.com/imperium/ai-sovereign-finops-operator/pkg/qualitystats"
 )
 
 // AIQualityGateReconciler reconciles an AIQualityGate object.
@@ -100,6 +102,8 @@ type modelObservation struct {
 	provider                 string
 	requests                 int64
 	errors                   int64
+	inputTokens              int64
+	outputTokens             int64
 	latencyWeightedMillis    float64
 	latencyWeight            float64
 	latencyTelemetryObserved bool
@@ -156,15 +160,23 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	previousEvaluationJobName := gate.Status.EvaluationJobName
 	previousEvaluationJobPhase := gate.Status.EvaluationJobPhase
+	previousVerdict := gate.Status.Verdict
 	gate.Status.ObservedGeneration = gate.Generation
 	gate.Status.Phase = aiopsv1alpha1.AIQualityGatePending
 	gate.Status.Verdict = "insufficient-data"
 	gate.Status.CheckedSamples = 0
 	gate.Status.FailedChecks = 0
 	gate.Status.QualityScore = 0
+	gate.Status.CompositeScore = 0
 	gate.Status.ScoreBreakdown = aiopsv1alpha1.AIQualityScoreBreakdown{}
 	gate.Status.WeightsUsed = aiopsv1alpha1.AIQualityWeightsUsed{}
 	gate.Status.Samples = 0
+	gate.Status.RequiredSamples = 0
+	gate.Status.ObservedSourceSamples = 0
+	gate.Status.ObservedCandidateSamples = 0
+	gate.Status.NonInferiorityLowerBound = 0
+	gate.Status.DatasetVersion = ""
+	gate.Status.DatasetHash = ""
 	gate.Status.Dimensions = nil
 	gate.Status.EvidenceRef = nil
 	gate.Status.EvaluationJobName = previousEvaluationJobName
@@ -188,6 +200,7 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		pending = append(pending, err.Error())
 	} else {
 		gate.Status.CheckedSamples = int32(len(prompts))
+		gate.Status.DatasetVersion, gate.Status.DatasetHash = r.goldenDatasetMetadata(ctx, gate.Namespace, gate.Spec.GoldenDatasetRef)
 		failures = append(failures, validateGoldenDataset(prompts)...)
 	}
 
@@ -252,9 +265,11 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	var comparison qualityengine.Comparison
 	scoreEvaluated := false
 	if len(prompts) > 0 && gate.Spec.EvidenceRef != nil {
+		sourceSamples := buildQualitySamples(prompts, evidence, gate.Spec.SourceModel)
+		candidateSamples := buildQualitySamples(prompts, evidence, gate.Spec.CandidateModel)
 		comparison = qualityengine.Evaluate(qualityengine.EvaluateInput{
-			SourceSamples:      buildQualitySamples(prompts, evidence, gate.Spec.SourceModel),
-			CandidateSamples:   buildQualitySamples(prompts, evidence, gate.Spec.CandidateModel),
+			SourceSamples:      sourceSamples,
+			CandidateSamples:   candidateSamples,
 			SourceTelemetry:    sourceObs.toQualityTelemetry(evidence, gate.Spec.SourceModel),
 			CandidateTelemetry: candidateObs.toQualityTelemetry(evidence, gate.Spec.CandidateModel),
 			Weights:            qualityEngineWeights(gate.Spec.Weights),
@@ -270,6 +285,27 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			gate.Status.ScoreBreakdown = qualityBreakdownToAPI(comparison.Candidate.Breakdown)
 			gate.Status.Samples = int32(comparison.Candidate.Samples)
 			gate.Status.Dimensions = qualityDimensions(comparison.Candidate.Breakdown, comparison.Candidate.Overall, comparison.WeightsUsed)
+		}
+		if statisticalModeEnabled(gate.Spec.Statistical) {
+			stats := qualitystats.EvaluateNonInferiority(statisticalConfig(gate.Spec.Statistical), evidencePassSample(sourceSamples), evidencePassSample(candidateSamples))
+			gate.Status.RequiredSamples = int32(stats.RequiredSamplesPerArm)
+			gate.Status.ObservedSourceSamples = int32(stats.ObservedSourceSamples)
+			gate.Status.ObservedCandidateSamples = int32(stats.ObservedCandidateSlots)
+			gate.Status.NonInferiorityLowerBound = roundQuality(stats.LowerConfidenceBound)
+			if stats.Verdict == qualitystats.VerdictInsufficientData {
+				pending = append(pending, fmt.Sprintf("statistical gate requires %d samples per arm; observed source=%d candidate=%d", stats.RequiredSamplesPerArm, stats.ObservedSourceSamples, stats.ObservedCandidateSlots))
+			}
+			composite := qualitystats.EvaluateComposite(statisticalWeights(gate.Spec.Statistical), qualitystats.CompositeInput{
+				Quality:    comparison.Candidate.Overall / 100.0,
+				ErrorRate:  qualitystats.ErrorRateScore(int(sourceObs.errors), int(sourceObs.requests), int(candidateObs.errors), int(candidateObs.requests)),
+				LatencyP95: qualitystats.PercentileScore(sourceObs.averageLatencyMillis(), candidateObs.averageLatencyMillis(), 1.25),
+				Cost:       r.qualityGateCostScore(ctx, gate.Namespace, sourceObs, candidateObs),
+			})
+			gate.Status.CompositeScore = roundQuality(composite.Score)
+			hysteresisVerdict := qualitystats.ApplyHysteresis(previousVerdict, composite.Score, hysteresisConfig(gate.Spec.Statistical))
+			if stats.Verdict == qualitystats.VerdictCandidateRisk || hysteresisVerdict == qualitystats.VerdictCandidateRisk {
+				failures = append(failures, fmt.Sprintf("statistical gate rejected candidate: lower_bound=%.3f composite=%.3f", stats.LowerConfidenceBound, composite.Score))
+			}
 		}
 		switch comparison.Verdict {
 		case qualityengine.VerdictCandidateRisk:
@@ -307,6 +343,7 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	metrics.QualityGatePassed.WithLabelValues(gate.Namespace, gate.Name, gate.Spec.Target.Namespace, gate.Spec.Target.Application, gate.Spec.SourceModel, gate.Spec.CandidateModel).Set(qualityGatePassedValue(gate.Status.Phase))
 	metrics.QualityGateFailedChecks.WithLabelValues(gate.Namespace, gate.Name, gate.Spec.Target.Namespace, gate.Spec.Target.Application).Set(float64(gate.Status.FailedChecks))
+	metrics.QualityGateScore.WithLabelValues(gate.Namespace, gate.Name, gate.Spec.Target.Namespace, gate.Spec.Target.Application).Set(gate.Status.CompositeScore)
 	if scoreEvaluated && comparison.Verdict != qualityengine.VerdictInsufficientData {
 		provider := candidateObs.provider
 		if provider == "" {
@@ -1013,6 +1050,64 @@ func qualityEngineWeights(spec aiopsv1alpha1.AIQualityScoreWeights) qualityengin
 	return w
 }
 
+func statisticalConfig(spec aiopsv1alpha1.AIQualityStatisticalSpec) qualitystats.NonInferiorityConfig {
+	cfg := qualitystats.DefaultNonInferiorityConfig()
+	if spec.NonInferiorityDelta > 0 {
+		cfg.Delta = spec.NonInferiorityDelta
+	}
+	if spec.ConfidenceLevel > 0 {
+		cfg.ConfidenceLevel = spec.ConfidenceLevel
+	}
+	if spec.Power > 0 {
+		cfg.Power = spec.Power
+	}
+	if spec.BaselineSuccessRate > 0 {
+		cfg.BaselineSuccessRate = spec.BaselineSuccessRate
+	}
+	return cfg
+}
+
+func statisticalWeights(spec aiopsv1alpha1.AIQualityStatisticalSpec) qualitystats.CompositeWeights {
+	w := qualitystats.DefaultCompositeWeights()
+	if spec.CompositeWeights.Quality != nil {
+		w.Quality = *spec.CompositeWeights.Quality
+	}
+	if spec.CompositeWeights.ErrorRate != nil {
+		w.ErrorRate = *spec.CompositeWeights.ErrorRate
+	}
+	if spec.CompositeWeights.LatencyP95 != nil {
+		w.LatencyP95 = *spec.CompositeWeights.LatencyP95
+	}
+	if spec.CompositeWeights.Cost != nil {
+		w.Cost = *spec.CompositeWeights.Cost
+	}
+	return w
+}
+
+func hysteresisConfig(spec aiopsv1alpha1.AIQualityStatisticalSpec) qualitystats.HysteresisConfig {
+	cfg := qualitystats.DefaultHysteresisConfig()
+	if spec.HysteresisEnterScore > 0 {
+		cfg.EnterSafe = spec.HysteresisEnterScore
+	}
+	if spec.HysteresisExitScore > 0 {
+		cfg.ExitSafe = spec.HysteresisExitScore
+	}
+	return cfg
+}
+
+func statisticalModeEnabled(spec aiopsv1alpha1.AIQualityStatisticalSpec) bool {
+	return spec.NonInferiorityDelta > 0 ||
+		spec.ConfidenceLevel > 0 ||
+		spec.Power > 0 ||
+		spec.BaselineSuccessRate > 0 ||
+		spec.HysteresisEnterScore > 0 ||
+		spec.HysteresisExitScore > 0 ||
+		spec.CompositeWeights.Quality != nil ||
+		spec.CompositeWeights.ErrorRate != nil ||
+		spec.CompositeWeights.LatencyP95 != nil ||
+		spec.CompositeWeights.Cost != nil
+}
+
 func defaultedMinSamples(v int32) int32 {
 	if v <= 0 {
 		return 1
@@ -1065,6 +1160,16 @@ func emitQualityScoreMetrics(gate *aiopsv1alpha1.AIQualityGate, provider, model 
 	for _, d := range gate.Status.Dimensions {
 		metrics.QualityScore.WithLabelValues(gate.Spec.Target.Namespace, gate.Spec.Target.Application, provider, model, d.Name).Set(d.Score)
 	}
+}
+
+func evidencePassSample(samples []qualityengine.EvidenceSample) qualitystats.BernoulliSample {
+	out := qualitystats.BernoulliSample{Total: len(samples)}
+	for _, sample := range samples {
+		if qualityengine.ReferenceCorrectnessScore(sample.Expected, sample.Actual) >= 80 {
+			out.Successes++
+		}
+	}
+	return out
 }
 
 func (r *AIQualityGateReconciler) writeScoreEvidence(ctx context.Context, gate *aiopsv1alpha1.AIQualityGate, comparison qualityengine.Comparison) error {
@@ -1172,6 +1277,8 @@ func observeModel(samples []collectors.UsageSample, target aiopsv1alpha1.AIQuali
 		}
 		obs.requests += s.Requests
 		obs.errors += s.Errors
+		obs.inputTokens += s.InputTokens
+		obs.outputTokens += s.OutputTokens
 		if s.LatencyMillis > 0 && s.Requests > 0 {
 			obs.latencyTelemetryObserved = true
 			obs.latencyWeightedMillis += s.LatencyMillis * float64(s.Requests)
@@ -1179,6 +1286,49 @@ func observeModel(samples []collectors.UsageSample, target aiopsv1alpha1.AIQuali
 		}
 	}
 	return obs, obs.requests > 0
+}
+
+func (o modelObservation) averageLatencyMillis() float64 {
+	if !o.latencyTelemetryObserved || o.latencyWeight <= 0 {
+		return 0
+	}
+	return o.latencyWeightedMillis / o.latencyWeight
+}
+
+func (r *AIQualityGateReconciler) qualityGateCostScore(ctx context.Context, namespace string, sourceObs, candidateObs modelObservation) float64 {
+	cat, err := loadCatalog(ctx, r.Client, namespace)
+	if err != nil {
+		return 0
+	}
+	priceBook := cat.priceBook()
+	sourcePrice, sourceOK := priceBook[sourceObs.model]
+	candidatePrice, candidateOK := priceBook[candidateObs.model]
+	if !sourceOK || !candidateOK {
+		return 0
+	}
+	sourceCost := float64(sourceObs.inputTokens)/1e6*sourcePrice.InputPerMillion + float64(sourceObs.outputTokens)/1e6*sourcePrice.OutputPerMillion
+	candidateCost := float64(candidateObs.inputTokens)/1e6*candidatePrice.InputPerMillion + float64(candidateObs.outputTokens)/1e6*candidatePrice.OutputPerMillion
+	return qualitystats.CostScore(sourceCost, candidateCost)
+}
+
+func (r *AIQualityGateReconciler) goldenDatasetMetadata(ctx context.Context, defaultNamespace string, ref aiopsv1alpha1.ConfigMapDataReference) (string, string) {
+	namespace := ref.Namespace
+	if namespace == "" {
+		namespace = defaultNamespace
+	}
+	var cm corev1.ConfigMap
+	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: ref.Name}, &cm); err != nil {
+		return "", ""
+	}
+	raw, err := configMapData(cm, ref.Key, []string{"prompts.yaml", "prompts.yml", "prompts.json"})
+	if err != nil {
+		return "", ""
+	}
+	version := cm.Annotations["aiops.imperium.io/dataset-version"]
+	if version == "" {
+		version = cm.Labels["aiops.imperium.io/dataset-version"]
+	}
+	return version, platformcrypto.SHA256Hex([]byte(raw))
 }
 
 func budgetTargetForQualityGate(target aiopsv1alpha1.AIQualityGateTarget) aiopsv1alpha1.BudgetTarget {

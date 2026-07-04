@@ -112,38 +112,68 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 	if namespace == "" {
 		namespace = pod.Namespace
 	}
-	enabled, err := h.shouldInject(ctx, namespace, &pod)
+
+	confidentialMutation, err := mutateForConfidentialPolicy(ctx, h.client, namespace, &pod)
 	if err != nil {
 		return admission.Errored(500, err)
 	}
-	if !enabled {
-		return admission.Allowed("pod sidecar injection not enabled")
-	}
-	if hasContainer(&pod, SidecarContainerName) {
-		return admission.Allowed("greenops sidecar already present")
-	}
-	if h.imageResolver == nil {
-		return admission.Errored(500, fmt.Errorf("no sidecar image resolver configured"))
-	}
-	image, err := h.imageResolver.Resolve(ctx)
+
+	enabled, err := h.shouldInject(ctx, namespace, &pod)
 	if err != nil {
 		return admission.Errored(500, err)
 	}
 
 	mutated := pod.DeepCopy()
-	app := resolveApplication(mutated)
-	targetHosts := parseCSV(mutated.Annotations[TargetHostsKey])
-	mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts))
-	for i := range mutated.Spec.Containers {
-		if mutated.Spec.Containers[i].Name == SidecarContainerName {
-			continue
+	changed := false
+
+	if confidentialMutation != nil {
+		annotateConfidentialPod(mutated, confidentialMutation)
+		if confidentialMutation.appliedRuntime != "" && (mutated.Spec.RuntimeClassName == nil || strings.TrimSpace(*mutated.Spec.RuntimeClassName) == "") {
+			runtimeClass := confidentialMutation.appliedRuntime
+			mutated.Spec.RuntimeClassName = &runtimeClass
+			changed = true
 		}
-		injectProxyEnv(&mutated.Spec.Containers[i].Env)
+		if mutated.Spec.SchedulerName == "" {
+			mutated.Spec.SchedulerName = DefaultSchedulerName
+			changed = true
+		}
+		if !evidencePresent(mutated) {
+			before := len(mutated.Spec.SchedulingGates)
+			ensureSchedulingGate(mutated)
+			changed = changed || len(mutated.Spec.SchedulingGates) != before
+		}
+		applySimulatedRuntimeMetric(namespace, confidentialMutation.policy.Name, confidentialMutation.appliedRuntime, confidentialMutation.simulated)
 	}
-	if mutated.Annotations == nil {
-		mutated.Annotations = map[string]string{}
+
+	if enabled {
+		if !hasContainer(mutated, SidecarContainerName) {
+			if h.imageResolver == nil {
+				return admission.Errored(500, fmt.Errorf("no sidecar image resolver configured"))
+			}
+			image, err := h.imageResolver.Resolve(ctx)
+			if err != nil {
+				return admission.Errored(500, err)
+			}
+			app := resolveApplication(mutated)
+			targetHosts := parseCSV(mutated.Annotations[TargetHostsKey])
+			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts))
+			for i := range mutated.Spec.Containers {
+				if mutated.Spec.Containers[i].Name == SidecarContainerName {
+					continue
+				}
+				injectProxyEnv(&mutated.Spec.Containers[i].Env)
+			}
+			changed = true
+		}
+		if mutated.Annotations == nil {
+			mutated.Annotations = map[string]string{}
+		}
+		mutated.Annotations[InjectedProxyKey] = "true"
 	}
-	mutated.Annotations[InjectedProxyKey] = "true"
+
+	if !changed {
+		return admission.Allowed("no pod mutation required")
+	}
 
 	marshaled, err := json.Marshal(mutated)
 	if err != nil {

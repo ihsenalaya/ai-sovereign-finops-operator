@@ -1,0 +1,28 @@
+global:
+  mode: production
+
+governanceOperator:
+  enabled: true
+
+platformApi:
+  enabled: true
+
+keyReleaseGateway:
+  enabled: true
+
+platformUi:
+  enabled: true
+
+attestationScheduler:
+  enabled: true
+
+security:
+  rejectSimulatedRuntimeClasses: true
+  requirePrivateIngress: true
+  requireManagedIdentity: true
+  requireKeyVaultBackedSecrets: true
+
+gpu:
+  confidential:
+    enabled: false
+    note: "Enable only once real AKS confidential GPU / DRA integration is validated."

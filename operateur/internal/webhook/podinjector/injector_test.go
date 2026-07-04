@@ -8,11 +8,14 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	nodev1 "k8s.io/api/node/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 )
 
 func TestInjectsSidecarForAnnotatedPod(t *testing.T) {
@@ -126,6 +129,123 @@ func TestManagerPodImageResolver(t *testing.T) {
 	}
 }
 
+func TestInjectsConfidentialRuntimeClassAndSchedulerInSimulatedMode(t *testing.T) {
+	t.Setenv(PlatformModeEnv, PlatformModeSimulatedKind)
+	scheme := newScheme(t)
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "finance",
+			Labels: map[string]string{"ai.sovereign.io/sensitivity": "high"},
+		},
+	}
+	policy := &aiopsv1alpha1.ConfidentialInferencePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "finance-conf", Namespace: "finance"},
+		Spec: aiopsv1alpha1.ConfidentialInferencePolicySpec{
+			Target: aiopsv1alpha1.WorkloadTarget{
+				NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"ai.sovereign.io/sensitivity": "high"}},
+				WorkloadSelector:  &metav1.LabelSelector{MatchLabels: map[string]string{"app": "risk-assistant"}},
+			},
+			RequiredTEE:                   []string{"TDX"},
+			RequireConfidentialContainers: true,
+			AllowedRuntimeClasses:         []string{"kata-qemu-tdx"},
+			MaxEvidenceAgeSeconds:         300,
+			EnforcementMode:               aiopsv1alpha1.EnforcementModeEnforce,
+		},
+	}
+	h := New(fakeClient(t, scheme, ns, policy), scheme, StaticImageResolver("controller:test"))
+
+	original := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "risk-assistant",
+			Namespace: "finance",
+			Labels:    map[string]string{"app": "risk-assistant"},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "app", Image: "ghcr.io/example/app@sha256:abc"}},
+		},
+	}
+
+	mutated := runMutation(t, h, original)
+	if mutated.Spec.RuntimeClassName == nil || *mutated.Spec.RuntimeClassName != "simulated-kata-qemu-tdx" {
+		t.Fatalf("runtimeClassName = %v", mutated.Spec.RuntimeClassName)
+	}
+	if mutated.Spec.SchedulerName != DefaultSchedulerName {
+		t.Fatalf("schedulerName = %q", mutated.Spec.SchedulerName)
+	}
+	if len(mutated.Spec.SchedulingGates) != 1 || mutated.Spec.SchedulingGates[0].Name != AttestationEvidenceGate {
+		t.Fatalf("unexpected scheduling gates: %+v", mutated.Spec.SchedulingGates)
+	}
+	if mutated.Annotations[ExpectedRuntimeAnnotation] != "kata-qemu-tdx" {
+		t.Fatalf("expected runtime annotation = %q", mutated.Annotations[ExpectedRuntimeAnnotation])
+	}
+	if mutated.Annotations[SimulatedExecutionAnnotation] != "true" {
+		t.Fatalf("simulated annotation = %q", mutated.Annotations[SimulatedExecutionAnnotation])
+	}
+}
+
+func TestValidationRejectsSimulatedRuntimeClassInProduction(t *testing.T) {
+	t.Setenv(PlatformModeEnv, PlatformModeProduction)
+	scheme := newScheme(t)
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "finance",
+			Labels: map[string]string{"ai.sovereign.io/sensitivity": "high"},
+		},
+	}
+	policy := &aiopsv1alpha1.ConfidentialInferencePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "finance-conf", Namespace: "finance"},
+		Spec: aiopsv1alpha1.ConfidentialInferencePolicySpec{
+			Target: aiopsv1alpha1.WorkloadTarget{
+				NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"ai.sovereign.io/sensitivity": "high"}},
+				WorkloadSelector:  &metav1.LabelSelector{MatchLabels: map[string]string{"app": "risk-assistant"}},
+			},
+			RequiredTEE:                   []string{"TDX"},
+			RequireConfidentialContainers: true,
+			AllowedRuntimeClasses:         []string{"kata-qemu-tdx"},
+			MaxEvidenceAgeSeconds:         300,
+			RequireImageDigest:            true,
+			RequireModelDigest:            true,
+			EnforcementMode:               aiopsv1alpha1.EnforcementModeEnforce,
+		},
+	}
+	rc := &nodev1.RuntimeClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "simulated-kata-qemu-tdx",
+			Labels: map[string]string{SimulatedRuntimeClassLabel: "true"},
+		},
+		Handler: "runc",
+	}
+	h := NewValidation(fakeClient(t, scheme, ns, policy, rc), scheme)
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "risk-assistant",
+			Namespace:   "finance",
+			Labels:      map[string]string{"app": "risk-assistant"},
+			Annotations: map[string]string{ModelDigestAnnotation: "sha256:model"},
+		},
+		Spec: corev1.PodSpec{
+			RuntimeClassName: ptr("simulated-kata-qemu-tdx"),
+			Containers:       []corev1.Container{{Name: "app", Image: "ghcr.io/example/app@sha256:abc"}},
+		},
+	}
+	raw, err := json.Marshal(pod)
+	if err != nil {
+		t.Fatalf("marshal pod: %v", err)
+	}
+	resp := h.Handle(context.Background(), admission.Request{
+		AdmissionRequest: admissionv1.AdmissionRequest{
+			Operation: admissionv1.Create,
+			Namespace: pod.Namespace,
+			Resource:  metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
+			Kind:      metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"},
+			Object:    runtime.RawExtension{Raw: raw},
+		},
+	})
+	if resp.Allowed {
+		t.Fatal("expected validation denial in production mode")
+	}
+}
+
 func runMutation(t *testing.T, h *Handler, pod *corev1.Pod) *corev1.Pod {
 	t.Helper()
 	raw, err := json.Marshal(pod)
@@ -177,6 +297,12 @@ func newScheme(t *testing.T) *runtime.Scheme {
 	if err := corev1.AddToScheme(scheme); err != nil {
 		t.Fatalf("add corev1 to scheme: %v", err)
 	}
+	if err := nodev1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add nodev1 to scheme: %v", err)
+	}
+	if err := aiopsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add aiopsv1alpha1 to scheme: %v", err)
+	}
 	return scheme
 }
 
@@ -199,3 +325,5 @@ func envValue(envs []corev1.EnvVar, name string) string {
 	}
 	return ""
 }
+
+func ptr[T any](v T) *T { return &v }
