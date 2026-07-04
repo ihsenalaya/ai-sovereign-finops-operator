@@ -24,10 +24,11 @@ make up REPO_URL=https://github.com/<vous>/greenops REVISION=main
 
 `make up` enchaîne :
 1. `01-create-cluster.sh` — crée le cluster kind (`kind/kind-config.yaml`).
-2. `02-build-load-image.sh` — build l'image `ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.4` et la charge dans kind.
+2. `02-build-load-image.sh` — build les **6 images** de la plateforme et les charge dans kind (séquentiel pour éviter l'OOM WSL2) :
+   `controller`, `attestation-scheduler`, `key-release-gateway`, `platform-api`, `platform-ui`, `thesis-bench`
 3. `03-install-argocd.sh` — installe ArgoCD, expose l'UI sur `http://localhost:30080`.
 4. `04-bootstrap-apps.sh` — crée l'`AppProject` + 2 `Application` :
-   - `greenops-operator` -> chart Helm `operateur/charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: Never`),
+   - `greenops-operator` -> chart Helm `operateur/charts/ai-sovereign-finops-operator` (image locale, `pullPolicy: IfNotPresent`),
    - `greenops-samples` -> `operateur/config/samples` (catalogue + policies, sync-wave 1).
 
 Si vous voulez malgré tout un dépôt Git in-cluster auto-contenu :
@@ -112,13 +113,27 @@ une démo verte avec des workloads en erreur fournisseur.
 Ce chemin s’appuie sur [`envoy-aigw/deploy.sh`](envoy-aigw/deploy.sh) et
 [`tetragon/demo.sh`](tetragon/demo.sh).
 
+### D. Plateforme confidentielle seule (sans ArgoCD, sans Envoy)
+
+Pour tester uniquement la couche de gouvernance confidentielle (attestation + key-release + UI) :
+
+```bash
+./scripts/01-create-cluster.sh
+./scripts/02-build-load-image.sh
+./scripts/07-install-confidential-platform.sh
+```
+
+Accès :
+- Platform UI : `kubectl port-forward svc/platform-ui 8090:80 -n ai-platform`
+- Platform API : `kubectl port-forward svc/platform-api 8083:8083 -n ai-platform`
+
 ## Variables (override possible)
 
 | Variable | Défaut | Rôle |
 |----------|--------|------|
 | `CLUSTER_NAME` | `greenops` | nom du cluster kind |
 | `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
-| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.5.4` | image de l'opérateur |
+| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.5.4` | préfixe de registry et tag des images (6 images : controller, attestation-scheduler, key-release-gateway, platform-api, platform-ui, thesis-bench) |
 | `GRAFANA_RADAR_IMAGE` | `ghcr.io/ihsenalaya/ai-sovereign-finops-grafana-radar:11.2.2-echarts6.6.0` | image Grafana avec le plugin radar préinstallé |
 | `ENABLE_MISTRAL_DEMO` | `true` | active la 4e app `marketing/content-writer` sur Mistral EU |
 | `ENABLE_THIRD_QUALITY_PROVIDER` | `true` | applique le provider optionnel `openai-foundry-eu` après préflight réel |
@@ -146,6 +161,13 @@ make down        # supprime le cluster kind
 
 ## Note RAM
 
-ArgoCD + l'opérateur tiennent sur un kind mono-nœud, mais sur une machine ~7 GiB (WSL2)
-gardez les autres clusters éteints. En cas de pression mémoire, préférez `make local`
-(sans ArgoCD). Voir `operateur/docs/DEMO_KIND.md`.
+La plateforme complète (6 composants + ArgoCD) tient sur un kind mono-nœud avec ~8 GiB RAM. Sur WSL2 avec ~7 GiB :
+- Gardez les autres clusters éteints pendant le build
+- `02-build-load-image.sh` build les images **séquentiellement** pour éviter l'OOM
+- En cas de `cannot allocate memory` : `docker system prune -f` (libère ~7 GiB de cache)
+- Préférez `make local` (sans ArgoCD) ou `07-install-confidential-platform.sh` (plateforme seule)
+
+Si Docker Desktop retourne des erreurs 500/502 après un redémarrage WSL2 :
+1. Redémarrer Docker Desktop depuis Windows (⊞ W → Docker Desktop → Restart)
+2. Attendre que le daemon soit prêt (`docker info` sans erreur)
+3. Relancer le cluster : `kind create cluster --config kind/kind-config.yaml --name greenops`

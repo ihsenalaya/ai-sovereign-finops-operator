@@ -14,3 +14,15 @@ nodes:
       - containerPort: 30083
         hostPort: 30083
         protocol: TCP
+      # Platform UI (NodePort 30090 → container 8080)
+      - containerPort: 30090
+        hostPort: 30090
+        protocol: TCP
+      # Platform API (NodePort 30091 → container 8083)
+      - containerPort: 30091
+        hostPort: 30091
+        protocol: TCP
+      # Key-Release Gateway (NodePort 30092 → container 8082)
+      - containerPort: 30092
+        hostPort: 30092
+        protocol: TCP

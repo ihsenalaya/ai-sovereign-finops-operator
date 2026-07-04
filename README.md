@@ -1,6 +1,6 @@
 # AI Sovereign FinOps Operator
 
-Un opérateur Kubernetes qui observe le trafic vers les LLM, calcule les coûts réels, vérifie la conformité de souveraineté des données, et recommande ou applique automatiquement le meilleur fournisseur pour chaque application.
+Un opérateur Kubernetes qui observe le trafic vers les LLM, calcule les coûts réels, vérifie la conformité de souveraineté des données, et recommande ou applique automatiquement le meilleur fournisseur pour chaque application. Intègre également une plateforme de **gouvernance confidentielle** avec attestation TEE, planificateur attesté, et gateway de libération de clés.
 
 ---
 
@@ -8,41 +8,28 @@ Un opérateur Kubernetes qui observe le trafic vers les LLM, calcule les coûts 
 
 1. [Vue d'ensemble](#vue-densemble)
 2. [Architecture](#architecture)
-3. [Exigences de l'environnement](#exigences-de-lenvironnement)
-4. [Installation](#installation)
-5. [CRDs — référence complète](#crds--référence-complète)
-   - [AIProvider](#aiprovider)
-   - [AIModel](#aimodel)
-   - [AIGateway](#aigateway)
-   - [AIFinOpsReport](#aifinopsreport)
-   - [AIBudgetPolicy](#aibudgetpolicy)
-   - [AISovereigntyPolicy](#aisovereigntypolicy)
-   - [AIQualityGate](#aiqualitygate)
-   - [AIBreakEvenAnalysis](#aibreakevenanalysis)
-   - [AIRoutingPolicy](#airoutingpolicy)
-   - [AIRouteOverride](#airouteoverride)
-   - [AIChangeRequest](#aichangerequest)
-6. [Guides opérationnels](#guides-opérationnels)
-   - [Ajouter un nouveau fournisseur](#ajouter-un-nouveau-fournisseur)
-   - [Routage par fraction — canary 80/20](#routage-par-fraction--canary-8020)
-   - [Reroute manuel immédiat](#reroute-manuel-immédiat)
-   - [Workflow d'approbation humaine](#workflow-dapprobation-humaine)
-   - [Budget avec reroute automatique](#budget-avec-reroute-automatique)
-   - [Enforcement de souveraineté](#enforcement-de-souveraineté)
-7. [Shadow AI — détection eBPF avec Tetragon](#shadow-ai--détection-ebpf-avec-tetragon)
-8. [Calcul des scores](#calcul-des-scores)
-9. [Métriques Prometheus](#métriques-prometheus)
-10. [Dashboard Grafana](#dashboard-grafana)
-11. [Troubleshooting](#troubleshooting)
-6. [Calcul des scores](#calcul-des-scores)
-7. [Métriques Prometheus](#métriques-prometheus)
-8. [Dashboard Grafana](#dashboard-grafana)
+   - [Composants de gouvernance FinOps](#composants-de-gouvernance-finops)
+   - [Composants de gouvernance confidentielle](#composants-de-gouvernance-confidentielle)
+3. [Quickstart — kind (local)](#quickstart--kind-local)
+4. [Exigences de l'environnement](#exigences-de-lenvironnement)
+5. [Installation](#installation)
+6. [CRDs — référence complète](#crds--référence-complète)
+   - [FinOps CRDs](#finops-crds)
+   - [Confidential CRDs](#confidential-crds)
+7. [Guides opérationnels](#guides-opérationnels)
+8. [Shadow AI — détection eBPF avec Tetragon](#shadow-ai--détection-ebpf-avec-tetragon)
+9. [Calcul des scores](#calcul-des-scores)
+10. [Métriques Prometheus](#métriques-prometheus)
+11. [Dashboard Grafana](#dashboard-grafana)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Vue d'ensemble
 
 Les entreprises utilisent des LLM via plusieurs fournisseurs (Azure OpenAI, Mistral, Anthropic...) sans visibilité consolidée sur les coûts, la latence ou la conformité réglementaire (RGPD, AI Act). L'**AI Sovereign FinOps Operator** résout ce problème en :
+
+> **Version 0.5.4** — inclut le module de gouvernance confidentielle (attestation TEE, planificateur, key-release gateway, platform-api/ui, thesis-bench).
 
 - **Observant** le trafic réel via l'Envoy AI Gateway (métriques OpenTelemetry `gen_ai_*`)
 - **Attribuant** chaque dépense à un namespace, une application et une équipe
@@ -55,6 +42,8 @@ Toutes les décisions sont auditables dans Kubernetes (status des CRs, Events) e
 ---
 
 ## Architecture
+
+### Composants de gouvernance FinOps
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -71,25 +60,113 @@ Toutes les décisions sont auditables dans Kubernetes (status des CRs, Events) e
 │           │ gen_ai_client_token_usage (OTel)                             │
 │           ▼                                                              │
 │  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │  AI Sovereign FinOps Operator                                        │ │
+│  │  Governance Operator (ai-sovereign-finops-operator)                  │ │
 │  │                                                                      │ │
 │  │  Collector aigw ──▶ CostEngine ──▶ RoutingScoreEngine               │ │
-│  │                                         │                            │ │
-│  │  AIProvider / AIModel (catalogue) ──────┘                            │ │
+│  │  AIProvider / AIModel ────────────────▶ catalogue                   │ │
 │  │  AISovereigntyPolicy ──────────────▶ SovereigntyEngine               │ │
 │  │  AIBudgetPolicy ───────────────────▶ BudgetEngine                    │ │
 │  │  AIQualityGate ────────────────────▶ QualityEngine                   │ │
-│  │                                         │                            │ │
-│  │  Status des CRDs ◀──── AIFinOpsReport ◀─┘                           │ │
-│  │  Métriques Prometheus ◀─────────────────┘                            │ │
+│  │  AIFinOpsReport ◀──── reconciliation loops ──────────────────────── │ │
+│  │  Métriques Prometheus :8080 ◀───────────────────────────────────── │ │
 │  └─────────────────────────────────────────────────────────────────────┘ │
 │           │                                                              │
 │           ▼                                                              │
-│  Grafana (dashboard radar, coûts, souveraineté, budgets)                │
+│  Grafana (dashboard radar, coûts, souveraineté, budgets, attestation)   │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Composants de gouvernance confidentielle
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  ┌────────────────────────┐     ┌──────────────────────────────────┐    │
+│  │  Attestation Scheduler  │     │  Key-Release Gateway              │    │
+│  │  :8087 (health)         │     │  :8082 (API)                      │    │
+│  │  :8088 (metrics)        │     │                                   │    │
+│  │                         │     │  - vérifie AIPlacementDecision    │    │
+│  │  - filtre nœuds TEE     │     │  - vérifie AIRevocationPolicy     │    │
+│  │  - crée AIPlacementDecision│   │  - libère la clé (Allow/Deny)    │    │
+│  │  - signe token Ed25519  │     │  - audit trail                    │    │
+│  └──────────┬─────────────┘     └────────────┬─────────────────────┘    │
+│             │ AIPlacementDecision              │ AIKeyReleasePolicy       │
+│             ▼                                  ▼                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐ │
+│  │  Kubernetes API — CRDs aiops.imperium.io                            │ │
+│  │  AttestationEvidence │ AIPlacementDecision │ AIKeyReleasePolicy     │ │
+│  │  AIRevocationPolicy  │ ConfidentialInferencePolicy                  │ │
+│  │  AIEvidenceRecord                                                   │ │
+│  └─────────────────────────────────────────────────────────────────────┘ │
+│                                                                          │
+│  ┌─────────────────────────┐   ┌───────────────────────────────────┐    │
+│  │  Platform API            │   │  Platform UI                       │    │
+│  │  :8083 (REST)            │   │  :8080 (HTTP — nginx-unprivileged) │    │
+│  │  - lecture read-only CRDs│   │  - dashboard de gouvernance        │    │
+│  │  - healthz / readyz      │   │  - proxie vers Platform API        │    │
+│  └─────────────────────────┘   └───────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+| Composant | Image | Port principal | Rôle |
+|-----------|-------|----------------|------|
+| governance-operator | `governance-operator:TAG` | 8080 (metrics), 9443 (webhook) | FinOps + gouvernance confidentielle (opérateur principal) |
+| attestation-scheduler | `attestation-scheduler:TAG` | 8087 (health), 8088 (metrics) | Planificateur attesté — sélection des nœuds TEE |
+| key-release-gateway | `key-release-gateway:TAG` | 8082 (API) | Gateway de libération de clés conditionnel |
+| platform-api | `platform-api:TAG` | 8083 (REST) | API REST lecture-seule des CRDs |
+| platform-ui | `platform-ui:TAG` | 8080 (HTTP) | Dashboard de gouvernance (React + nginx-unprivileged) |
+| thesis-bench | `thesis-bench:TAG` | — | Bench de validation (job post-install, kind uniquement) |
+
 L'opérateur ne modifie jamais les flux applicatifs directement. Il observe, calcule, et — lorsque configuré en mode `enforce` — modifie les ressources `AIGatewayRoute` d'Envoy pour rerouter automatiquement le trafic.
+
+---
+
+## Quickstart — kind (local)
+
+Prérequis : Docker Desktop actif avec intégration WSL2, `kind`, `kubectl`, `helm` installés.
+
+```bash
+# 1. Cloner et aller à la racine du repo
+git clone https://github.com/ihsenalaya/ai-sovereign-finops-operator
+cd ai-sovereign-finops-operator
+
+# 2. Créer le cluster kind
+kind create cluster --config automatisation/kind/kind-config.yaml --name greenops
+
+# 3. Construire et charger les 6 images (séquentiel pour éviter l'OOM)
+IMAGE_REPO=ghcr.io/ihsenalaya/ai-sovereign-finops-operator \
+IMAGE_TAG=0.5.4 \
+CLUSTER_NAME=greenops \
+  ./automatisation/scripts/02-build-load-image.sh
+
+# 4. Déployer la plateforme
+./automatisation/scripts/07-install-confidential-platform.sh
+
+# 5. Vérifier les pods
+kubectl get pods -n ai-platform
+
+# 6. Accéder au dashboard
+kubectl port-forward svc/platform-ui 8090:80 -n ai-platform
+# → http://localhost:8090
+```
+
+**Ports en local** :
+
+| Service | Port local | Commande port-forward |
+|---------|-----------|----------------------|
+| Platform UI | 8090 | `kubectl port-forward svc/platform-ui 8090:80 -n ai-platform` |
+| Platform API | 8083 | `kubectl port-forward svc/platform-api 8083:8083 -n ai-platform` |
+| Key-Release Gateway | 8082 | `kubectl port-forward svc/key-release-gateway 8082:8082 -n ai-platform` |
+| Operator metrics | 8080 | `kubectl port-forward svc/governance-operator 8080:8080 -n ai-platform` |
+
+**Variables d'environnement kind** :
+
+| Variable | Valeur kind | Description |
+|----------|------------|-------------|
+| `AIOPS_PLATFORM_MODE` | `kind` | Active le mode simulé (pas de GPU TEE réel) |
+| `AIOPS_SIMULATED_EVIDENCE` | `true` | Accepte les `AttestationEvidence` avec `simulated=true` |
+| `AIOPS_AUDIT_ANCHOR_MODE` | `file` | Ancre audit sur fichier local (pas de blob storage) |
 
 ---
 
@@ -99,11 +176,13 @@ L'opérateur ne modifie jamais les flux applicatifs directement. Il observe, cal
 |-----------|-----------------|------|
 | Kubernetes | 1.28 | Cluster cible |
 | Helm | 3.12 | Déploiement de l'opérateur |
-| Envoy AI Gateway | 0.6.x | Source de télémétrie (`gen_ai_*`) |
+| Envoy AI Gateway | 0.6.x | Source de télémétrie (`gen_ai_*`) — FinOps uniquement |
 | Prometheus | 2.x | Collecte des métriques de l'opérateur |
 | Grafana | 11.x | Visualisation (plugin `volkovlabs-echarts-panel` requis pour le radar qualité) |
+| kind | 0.23+ | Tests locaux uniquement |
+| Docker Desktop | 4.x | Build et tests locaux (WSL2 integration required) |
 
-**Droits RBAC requis** : l'opérateur a besoin de lire/écrire les CRDs `aiops.imperium.io/*`, lire les `AIGatewayRoute` d'Envoy, et lire les `ConfigMap`/`Secret` dans son namespace.
+**Droits RBAC requis** : l'opérateur a besoin de lire/écrire les CRDs `aiops.imperium.io/*`, lire les `AIGatewayRoute` d'Envoy, et lire les `ConfigMap`/`Secret` dans son namespace. L'attestation scheduler requiert en plus la création de `pods/binding` et l'accès aux nœuds.
 
 ---
 
@@ -143,6 +222,93 @@ kubectl apply -f https://raw.githubusercontent.com/.../config/crd/bases/
 ---
 
 ## CRDs — référence complète
+
+La plateforme expose 17 CRDs dans le groupe `aiops.imperium.io/v1alpha1`.
+
+### FinOps CRDs
+
+| CRD | Abréviation kubectl | Rôle |
+|-----|-------------------|------|
+| AIProvider | `aiprovider` | Déclare un fournisseur IA (tarifs, zone de résidence) |
+| AIModel | `aimodel` | Catalogue un modèle disponible via un fournisseur |
+| AIGateway | `aigw` | Pointe l'opérateur vers un Envoy AI Gateway |
+| AIFinOpsReport | `aireport` | Rapport FinOps complet pour un namespace |
+| AIBudgetPolicy | `aibudget` | Plafond de dépense avec reroute automatique |
+| AISovereigntyPolicy | `aisov` | Règles de souveraineté des données |
+| AIQualityGate | `aiqgate` | Validation de modèle candidat |
+| AIBreakEvenAnalysis | `aibreak` | Comparaison managé vs auto-hébergé |
+| AIRoutingPolicy | `airpol` | Optimisation continue du routage |
+| AIRouteOverride | `airoverride` | Reroute manuel immédiat |
+| AIChangeRequest | `aicrq` | Approbation humaine d'un changement de routage |
+
+### Confidential CRDs
+
+| CRD | Rôle |
+|-----|------|
+| AttestationEvidence | Preuve d'attestation TEE d'un nœud (remplie par l'attestation-scheduler ou simulée en kind) |
+| AIEvidenceRecord | Archive immuable d'une décision d'attestation (audit trail) |
+| AIKeyReleasePolicy | Politique déclarant sous quelles conditions une clé peut être libérée |
+| AIPlacementDecision | Décision de planification signée par l'attestation-scheduler (token Ed25519) |
+| AIRevocationPolicy | Politique de révocation d'un nœud ou d'un pod |
+| ConfidentialInferencePolicy | Politique de déploiement confidentiel pour un workload IA |
+
+#### AttestationEvidence
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AttestationEvidence
+metadata:
+  name: node-worker-1-evidence
+  namespace: ai-platform
+spec:
+  nodeName: kind-worker           # nœud attesté
+  teeType: tdx                    # tdx | sgx | sev | simulated
+  simulated: true                 # true en kind — visible dans les logs et AIPlacementDecision
+  measurementHash: "sha256:abc123" # hash de la mesure TEE
+  certificateChain: "..."          # chaîne de certificats d'attestation (vide en mode simulé)
+  expiresAt: "2026-07-05T00:00:00Z"
+```
+
+#### AIKeyReleasePolicy
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIKeyReleasePolicy
+metadata:
+  name: model-weights-policy
+  namespace: ai-platform
+spec:
+  keyRef: model-weights-secret    # Secret Kubernetes contenant la clé à libérer
+  requireAttestationEvidence: true
+  allowedTeeTypes: [tdx, sgx]     # types TEE acceptés
+  allowSimulated: true            # autoriser en kind (simulated=true)
+  policyTTLSeconds: 300           # durée de validité d'une décision d'autorisation
+  requirePlacementToken: true     # exiger un token Ed25519 valide de l'attestation-scheduler
+```
+
+#### AIPlacementDecision
+
+Créée automatiquement par l'attestation-scheduler après sélection d'un nœud :
+
+```bash
+kubectl get aiplacementdecisions -n ai-platform
+# NAME                     NODE           ALLOWED   AGE
+# pod-my-inference-xyz     kind-worker    true      2m
+```
+
+#### AIRevocationPolicy
+
+```yaml
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIRevocationPolicy
+metadata:
+  name: revoke-compromised
+  namespace: ai-platform
+spec:
+  targetNode: kind-worker         # révoquer un nœud spécifique
+  reason: "evidence expired"
+  action: evict                   # evict | block | alert
+```
 
 ### AIProvider
 
@@ -716,6 +882,19 @@ L'opérateur expose les métriques suivantes sur le port `8080` (chemin `/metric
 | `ai_finops_sovereignty_requests` | namespace, application, zone | Requêtes par zone |
 | `ai_finops_shadow_ai_egress` | namespace | Trafic IA non-gouverné (eBPF) |
 
+### Gouvernance confidentielle (v0.5.4+)
+
+| Métrique | Labels | Description |
+|----------|--------|-------------|
+| `aiops_attestation_evidence_total` | namespace, node, tee_type, simulated | Evidences d'attestation enregistrées |
+| `aiops_attestation_evidence_expired_total` | namespace, node | Evidences expirées |
+| `aiops_placement_decisions_total` | namespace, allowed | Décisions de placement (allowed=true/false) |
+| `aiops_key_release_requests_total` | namespace, policy, result | Demandes de libération de clés (allow/deny) |
+| `aiops_key_release_deny_reason_total` | namespace, policy, reason | Raisons de refus (no_evidence, revoked, expired, …) |
+| `aiops_revocation_events_total` | namespace, node, action | Événements de révocation (evict/block/alert) |
+| `aiops_audit_chain_length` | namespace | Longueur de la chaîne d'audit d'attestation |
+| `aiops_audit_anchor_checkpoint_age_seconds` | namespace | Âge du dernier checkpoint d'ancrage |
+
 ---
 
 ## Guides opérationnels
@@ -1282,6 +1461,13 @@ RUN grafana-cli plugins install volkovlabs-echarts-panel 6.6.0
 | Break-even analysis | Comparaison managé vs auto-hébergé |
 | Latence observée | Latence moyenne par modèle |
 | Shadow-AI egress | Trafic IA non-gouverné détecté par eBPF |
+| **Attestation Evidence (active)** | Nombre d'evidences d'attestation actives (simulated vs real TEE) |
+| **Placement Decisions over time** | Décisions de planification attestée (allowed/denied) |
+| **Key Release — Allow Rate (%)** | Taux d'autorisation de libération de clés (gauge) |
+| **Evidence — Simulated vs Real TEE** | Répartition donut simulé/réel |
+| **Key Release — Deny Reasons** | Raisons de refus de libération (no_evidence, revoked, expired…) |
+| **Revocation Events** | Table des événements de révocation par nœud |
+| **Audit Chain Checkpoint Age** | Âge du dernier point de contrôle d'ancrage de la chaîne d'audit |
 
 ---
 
@@ -1372,4 +1558,55 @@ kubectl apply -f operateur/config/crd/bases/
 # ou, pour un CRD spécifique :
 kubectl apply -f operateur/config/crd/bases/aiops.imperium.io_aichangerequests.yaml
 ```
-| Latence observée | Latence moyenne par modèle |
+
+### attestation-scheduler en CrashLoopBackOff
+
+Cause la plus fréquente : les checks de santé `/healthz` et `/readyz` retournent 404.
+
+```bash
+kubectl logs -n ai-platform deploy/attestation-scheduler --previous
+# vérifier que "attestation-scheduler running" apparaît dans les logs
+```
+
+Si les healthchecks retournent 404, le manager controller-runtime n'a pas enregistré les checks. S'assurer que le code contient :
+
+```go
+mgr.AddHealthzCheck("healthz", healthz.Ping)
+mgr.AddReadyzCheck("readyz", healthz.Ping)
+```
+
+### platform-ui en CrashLoopBackOff (permission denied)
+
+nginx:alpine essaie de faire `chown` sur ses répertoires de cache, mais `CAP_CHOWN` est supprimée. Utiliser `nginxinc/nginx-unprivileged:1.27-alpine` (port 8080, pas 80).
+
+```bash
+kubectl logs -n ai-platform deploy/platform-ui
+# "chown: operation not permitted" → mauvaise image nginx
+```
+
+### key-release-gateway refuse toutes les demandes
+
+Vérifier que les `AIKeyReleasePolicy` et `AIPlacementDecision` existent :
+
+```bash
+kubectl get aikeyreleasepolicies -n ai-platform
+kubectl get aiplacementdecisions -n ai-platform
+
+# Logs du gateway
+kubectl logs -n ai-platform deploy/key-release-gateway | grep "deny"
+```
+
+En mode kind, s'assurer que `allowSimulated: true` est défini dans la `AIKeyReleasePolicy`.
+
+### Le cluster kind est inaccessible après redémarrage Docker Desktop
+
+```bash
+# Vérifier que Docker Desktop est démarré et WSL2 integration activée
+docker info 2>&1 | head -3
+
+# Redémarrer le cluster si nécessaire
+kind delete cluster --name greenops
+kind create cluster --config automatisation/kind/kind-config.yaml --name greenops
+./automatisation/scripts/02-build-load-image.sh
+./automatisation/scripts/07-install-confidential-platform.sh
+```
