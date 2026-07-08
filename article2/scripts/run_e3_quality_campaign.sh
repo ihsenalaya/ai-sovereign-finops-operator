@@ -23,6 +23,24 @@ capture() {
   "$@" >"$target"
 }
 
+ensure_ghcr_pull_secret() {
+  local namespace="$1"
+  local token
+  token="$(grep -E 'oauth_token:' "${HOME}/.config/gh/hosts.yml" 2>/dev/null | head -1 | awk '{print $2}')"
+  if [[ -z "$token" ]]; then
+    log "No GHCR token available; skipping imagePullSecret setup for $namespace"
+    return 0
+  fi
+  kubectl --kubeconfig "$KUBECONFIG_PATH" create namespace "$namespace" --dry-run=client -o yaml | $K apply -f - >/dev/null
+  kubectl --kubeconfig "$KUBECONFIG_PATH" -n "$namespace" create secret docker-registry ghcr-pull \
+    --docker-server=ghcr.io \
+    --docker-username=ihsenalaya \
+    --docker-password="$token" \
+    --docker-email=ci@article2.local \
+    --dry-run=client -o yaml | $K apply -f - >/dev/null
+  $K -n "$namespace" patch serviceaccount default --type=merge -p '{"imagePullSecrets":[{"name":"ghcr-pull"}]}' >/dev/null
+}
+
 wait_rollout() {
   local namespace="$1"
   local deploy="$2"
@@ -223,6 +241,11 @@ log "Deleting previous auxiliary gates if present"
 delete_if_exists aiqualitygate finance-quality-missing-evidence
 delete_if_exists aiqualitygate finance-quality-missing-telemetry
 delete_if_exists configmap finance-quality-missing-telemetry-evidence
+
+log "Ensuring GHCR pull secrets for injected sidecars"
+for ns in finance legal marketing rh; do
+  ensure_ghcr_pull_secret "$ns"
+done
 
 log "Generating fresh source/candidate telemetry"
 set_workload_model finance risk-assistant gpt-france-mini 24 2
