@@ -3,7 +3,7 @@
 
 Computes Cohen's quadratic-weighted kappa, Krippendorff's alpha (ordinal),
 Spearman correlation and exact/within-1 agreement between two judges' 1-5 scores.
-Validates the LLM-as-judge as a quality proxy (addresses judge dependence).
+Reports judge dependence so the paper does not overclaim quality preservation.
 
 Usage: python3 scripts/judge_agreement.py [--file results/judge_agreement.csv] [--results results]
 """
@@ -62,8 +62,8 @@ def main():
         f"- Spearman rho: **{rho:.3f}** (p={p:.2g})",
         f"- exact agreement: {exact:.1f}%  ·  within-1: {within1:.1f}%",
         "",
-        "Interpretation: kappa/alpha > 0.6 = substantial agreement; this supports using the",
-        "LLM judge as a quality proxy. Lower values would weaken quality claims (reported honestly).",
+        "Interpretation: kappa and alpha around 0.4 indicate weak-to-moderate agreement.",
+        "The LLM judge is therefore a bounded proxy for open-ended quality, not strong evidence of correctness.",
     ]
     out = f"{args.results}/judge_agreement_summary.md"
     open(out, "w").write("\n".join(lines) + "\n")

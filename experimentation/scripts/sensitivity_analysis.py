@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate local-only sensitivity tables for the paper.
+"""Generate bounded sensitivity tables for the paper.
 
 The script does not call any LLM provider and does not modify measured values.
 It reads committed workloads/results and writes deterministic CSVs:
@@ -8,7 +8,8 @@ It reads committed workloads/results and writes deterministic CSVs:
   catalog priors and scoring equation as B6.
 - budget_threshold_sensitivity.csv: SIMULATED budget outcomes from the existing
   RQ5 spending rows.
-- breakeven_sensitivity.csv: MODELED break-even scenarios around the RQ6 model.
+The paper no longer generates GPU/self-hosted economics tables because that
+comparison was not measured in this artifact.
 """
 import argparse
 import csv
@@ -63,24 +64,15 @@ MODELS = {
         "quality": 0.84,
         "latency": 550.0,
     },
-    "selfhosted-eu-llama": {
-        "provider": "onprem-fr",
-        "zone": "FR",
-        "managed": False,
-        "in": 0.05,
-        "out": 0.05,
-        "quality": 0.74,
-        "latency": 700.0,
-    },
 }
 
 
 WEIGHT_SCENARIOS = [
-    ("base", 1.0, 1.5, 0.3, 0.5, 1.0),
+    ("balanced_default", 1.0, 1.5, 0.3, 0.5, 1.0),
     ("cost_heavy", 2.0, 1.0, 0.3, 0.5, 1.5),
     ("quality_heavy", 0.7, 2.5, 0.3, 0.5, 0.5),
     ("latency_heavy", 1.0, 1.5, 1.2, 0.5, 1.0),
-    ("budget_heavy", 1.0, 1.2, 0.3, 0.5, 2.5),
+    ("policy_only_least_cost", 100.0, 0.0, 0.0, 0.0, 0.0),
 ]
 
 
@@ -92,11 +84,14 @@ def cost(model, input_tokens, output_tokens):
     return input_tokens / 1_000_000 * model["in"] + output_tokens / 1_000_000 * model["out"]
 
 
-def choose(workload, prompt, weights, budget_used, budget_total):
+def choose(workload, prompt, weights, budget_used, budget_total, ignore_quality_gate=False):
     alpha, beta, gamma, delta, epsilon = weights
     allowed = [MODELS[m] | {"id": m} for m in workload["allowedModels"] if m in MODELS]
     exhausted = budget_total > 0 and budget_used >= budget_total
-    pool = [m for m in allowed if m["quality"] >= workload["minQuality"] or exhausted]
+    if ignore_quality_gate:
+        pool = allowed
+    else:
+        pool = [m for m in allowed if m["quality"] >= workload["minQuality"] or exhausted]
     if not pool:
         pool = allowed
     premium = MODELS[workload["premiumModel"]]
@@ -150,7 +145,12 @@ def scoring_weight_sensitivity(repo, results):
             budget_used = 0.0
             for prompt in workload["prompts"]:
                 model, input_tokens, output_tokens = choose(
-                    workload, prompt, (alpha, beta, gamma, delta, epsilon), budget_used, budget_total
+                    workload,
+                    prompt,
+                    (alpha, beta, gamma, delta, epsilon),
+                    budget_used,
+                    budget_total,
+                    ignore_quality_gate=(name == "policy_only_least_cost"),
                 )
                 c = cost(model, input_tokens, output_tokens)
                 budget_used += c
@@ -159,7 +159,7 @@ def scoring_weight_sensitivity(repo, results):
                 served += 1
                 if model["id"] == workload["premiumModel"]:
                     premium_picks += 1
-                if model["id"] in ("gpt-4.1-nano", "selfhosted-eu-llama"):
+                if model["id"] == "gpt-4.1-nano":
                     cheapest_picks += 1
         rows.append(
             [
@@ -262,62 +262,6 @@ def budget_threshold_sensitivity(results):
     )
 
 
-def breakeven_sensitivity(results):
-    blended_per_m = 0.7 * MODELS["gpt-4o"]["in"] + 0.3 * MODELS["gpt-4o"]["out"]
-    scenarios = [
-        ("low_ops_high_util", 1200, 500, 2000, 0.80, 1.00),
-        ("base", 1800, 700, 5000, 1.00, 1.00),
-        ("high_ops_low_util", 3500, 1500, 10000, 0.40, 1.00),
-        ("api_price_minus_30pct", 1800, 700, 5000, 1.00, 0.70),
-        ("api_price_plus_30pct", 1800, 700, 5000, 1.00, 1.30),
-    ]
-    rows = []
-    for name, gpu, ops, migration, utilization, api_mult in scenarios:
-        effective_self = (gpu + ops) / max(utilization, 0.01)
-        effective_price = blended_per_m * api_mult
-        break_even = effective_self / (30 * effective_price) * 1_000_000
-        managed_at_25m = 25_000_000 * 30 / 1_000_000 * effective_price
-        savings = managed_at_25m - effective_self
-        payback = "n/a" if savings <= 0 else f"{migration / savings:.2f}"
-        rec = "keep-managed" if savings <= 0 else ("self-host" if float(payback) <= 6 else "investigate")
-        rows.append(
-            [
-                name,
-                f"{gpu:.2f}",
-                f"{ops:.2f}",
-                f"{migration:.2f}",
-                f"{utilization:.2f}",
-                f"{api_mult:.2f}",
-                f"{effective_self:.2f}",
-                f"{break_even:.2f}",
-                f"{managed_at_25m:.2f}",
-                f"{savings:.2f}",
-                payback,
-                rec,
-                "MODELED",
-            ]
-        )
-    write_csv(
-        results / "breakeven_sensitivity.csv",
-        [
-            "scenario",
-            "gpu_monthly_eur",
-            "ops_monthly_eur",
-            "migration_eur",
-            "utilization",
-            "managed_api_price_multiplier",
-            "effective_selfhost_monthly_eur",
-            "break_even_tokens_per_day",
-            "managed_monthly_at_25m_tokens_day_eur",
-            "monthly_savings_at_25m_tokens_day_eur",
-            "payback_months_at_25m_tokens_day",
-            "recommendation_at_25m_tokens_day",
-            "evidence_label",
-        ],
-        rows,
-    )
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=".", help="repository root")
@@ -327,7 +271,6 @@ def main():
     results = (repo / args.results).resolve()
     scoring_weight_sensitivity(repo, results)
     budget_threshold_sensitivity(results)
-    breakeven_sensitivity(results)
 
 
 if __name__ == "__main__":

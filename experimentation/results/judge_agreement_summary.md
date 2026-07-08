@@ -6,5 +6,5 @@
 - Spearman rho: **0.613** (p=1e-13)
 - exact agreement: 82.5%  ·  within-1: 94.2%
 
-Interpretation: kappa/alpha > 0.6 = substantial agreement; this supports using the
-LLM judge as a quality proxy. Lower values would weaken quality claims (reported honestly).
+Interpretation: kappa and alpha around 0.4 indicate weak-to-moderate agreement.
+The LLM judge is therefore a bounded proxy for open-ended quality, not strong evidence of correctness.

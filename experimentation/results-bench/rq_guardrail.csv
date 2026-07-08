@@ -1,0 +1,4 @@
+policy,accuracy_pct,total_cost_eur,latency_p95_ms,evidence_label,interpretation
+premium-static,65.40,0.116388,764.00,CACHED,Measured premium baseline on GSM8K/MMLU.
+cost-aware,47.20,0.007286,891.00,CACHED,Measured cost-aware policy on GSM8K/MMLU.
+objective-premium-guardrail,65.40,0.116388,764.00,CACHED-RECOMPOSED,Objective tasks pinned to premium; recomposed from the measured premium row over the same items.

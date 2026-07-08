@@ -13,7 +13,7 @@ func testModels() map[string]catalog.Model {
 func baseCtx() RequestContext {
 	return RequestContext{
 		Team: "rag", Namespace: "rag", Sensitive: false,
-		AllowedModels:  []string{"gpt-4o", "gpt-4o-mini", "gpt-4.1-nano", "selfhosted-eu-llama"},
+		AllowedModels:  []string{"gpt-4o", "gpt-4o-mini", "gpt-4.1-nano"},
 		PremiumModel:   "gpt-4o",
 		MinQuality:     0.75,
 		BudgetTotalEUR: 100, BudgetUsedEUR: 0,
@@ -31,9 +31,8 @@ func TestPremiumStaticAlwaysPremium(t *testing.T) {
 
 func TestLeastCostPicksCheapest(t *testing.T) {
 	d := LeastCost{}.Choose(baseCtx(), testModels())
-	// self-hosted has the lowest per-token price in the catalog.
-	if d.ModelID != "selfhosted-eu-llama" {
-		t.Fatalf("got %s, want selfhosted-eu-llama", d.ModelID)
+	if d.ModelID != "gpt-4.1-nano" {
+		t.Fatalf("got %s, want gpt-4.1-nano", d.ModelID)
 	}
 }
 
@@ -41,24 +40,21 @@ func TestSovereigntyFranceOnlyRejectsUS(t *testing.T) {
 	ctx := baseCtx()
 	ctx.Scenario = SovScenario{Name: "france-only", AllowedZones: []string{"FR"}, ExternalProvidersAllowed: true}
 	ok, rejected := candidates(ctx, testModels())
-	if len(ok) != 1 || ok[0].ID != "selfhosted-eu-llama" {
-		t.Fatalf("france-only candidates = %v, want [selfhosted-eu-llama]", ids(ok))
+	if len(ok) != 0 {
+		t.Fatalf("france-only candidates = %v, want none without a declared FR model", ids(ok))
 	}
 	if len(rejected) != 3 {
 		t.Fatalf("rejected = %v, want 3 US models", rejected)
 	}
 }
 
-func TestNoExternalSensitiveForcesSelfHosted(t *testing.T) {
+func TestNoExternalSensitiveBlocksWithoutCompliantModel(t *testing.T) {
 	ctx := baseCtx()
 	ctx.Sensitive = true
 	ctx.Scenario = SovScenario{Name: "no-external-sensitive", ExternalProvidersAllowed: false}
 	d := Ours{W: DefaultWeights()}.Choose(ctx, testModels())
-	if d.ModelID != "selfhosted-eu-llama" {
-		t.Fatalf("got %s, want selfhosted-eu-llama (only non-external option)", d.ModelID)
-	}
-	if d.Blocked {
-		t.Fatal("should not block; a compliant model exists")
+	if !d.Blocked {
+		t.Fatalf("got model %s, want block when no compliant model exists", d.ModelID)
 	}
 }
 

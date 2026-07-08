@@ -70,6 +70,16 @@ def savefig(fig, path):
     print("wrote", path)
 
 
+def markdown_table(df):
+    """Small dependency-free replacement for pandas.to_markdown."""
+    cols = list(df.columns)
+    lines = ["| " + " | ".join(cols) + " |", "| " + " | ".join(["---"] * len(cols)) + " |"]
+    for _, row in df.iterrows():
+        vals = [str(row[c]) for c in cols]
+        lines.append("| " + " | ".join(vals) + " |")
+    return "\n".join(lines)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default="results")
@@ -83,9 +93,15 @@ def main():
     rq3 = pd.read_csv(f"{R}/rq3_latency.csv")
     rq4 = pd.read_csv(f"{R}/rq4_sovereignty.csv")
     rq5 = pd.read_csv(f"{R}/rq5_budget.csv")
-    rq6 = pd.read_csv(f"{R}/rq6_breakeven.csv")
     calls = pd.read_csv(f"{R}/calls.csv")
     abl = pd.read_csv(f"{R}/rq8_ablation.csv") if os.path.exists(f"{R}/rq8_ablation.csv") else None
+    main_strategies = ["B1-premium-static", "B4-static-policy", "B5-budget-hard-block", "B6-ours"]
+    main_policy_scenarios = ["global", "eu-only", "no-external-sensitive"]
+    rq1 = rq1[rq1.strategy.isin(main_strategies)].copy()
+    rq2 = rq2[rq2.strategy.isin(main_strategies)].copy()
+    rq3 = rq3[rq3.strategy.isin(main_strategies)].copy()
+    rq4 = rq4[rq4.scenario.isin(main_policy_scenarios)].copy()
+    calls = calls[calls.strategy.isin(main_strategies)].copy()
 
     summary = ["# Experiment summary\n"]
 
@@ -94,11 +110,12 @@ def main():
     labels = [compact_label(s) for s in rq1.strategy]
     ax.bar(labels, rq1.total_cost_eur, color=BLUE)
     for i, (s, c) in enumerate(zip(rq1.savings_vs_premium_pct, rq1.total_cost_eur)):
-        ax.text(i, c, f"-{s:.0f}%", ha="center", va="bottom", fontsize=8)
+        label = "baseline" if abs(s) < 0.5 else f"-{s:.0f}%"
+        ax.text(i, c, label, ha="center", va="bottom", fontsize=8)
     ax.set_ylabel("Total cost (EUR)")
     ax.tick_params(axis="x", rotation=25)
     savefig(fig, f"{F}/fig2_cost_by_strategy.png")
-    summary.append("## RQ1 Cost\n" + rq1.to_markdown(index=False) + "\n")
+    summary.append("## RQ1 Cost\n" + markdown_table(rq1) + "\n")
 
     # ---- Figure 3: quality vs cost ----
     m = rq1.merge(rq2, on="strategy")
@@ -110,7 +127,7 @@ def main():
     ax.set_xlabel("Total cost (EUR)")
     ax.set_ylabel("Mean quality")
     savefig(fig, f"{F}/fig3_quality_vs_cost.png")
-    summary.append("## RQ2 Quality\n" + rq2.to_markdown(index=False) + "\n")
+    summary.append("## RQ2 Quality\n" + markdown_table(rq2) + "\n")
 
     # ---- Figure 4: latency p95 with bootstrap CI ----
     served = calls[(calls.blocked == False) & (calls.latency_ms > 0)]
@@ -133,7 +150,7 @@ def main():
     ax.tick_params(axis="x", rotation=25)
     ax.legend(frameon=False)
     savefig(fig, f"{F}/fig4_latency.png")
-    summary.append("## RQ3 Latency\n" + rq3.to_markdown(index=False) + "\n")
+    summary.append("## RQ3 Latency\n" + markdown_table(rq3) + "\n")
 
     # ---- Figure 5: sovereignty impact ----
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.9, 2.4))
@@ -148,7 +165,7 @@ def main():
     for axx in (a1, a2):
         axx.legend(frameon=False)
     savefig(fig, f"{F}/fig5_sovereignty.png")
-    summary.append("## RQ4 Sovereignty\n" + rq4.to_markdown(index=False) + "\n")
+    summary.append("## RQ4 Declared-policy scenarios\n" + markdown_table(rq4) + "\n")
 
     # ---- Figure 6: budget hard block vs graceful ----
     fig, ax = plt.subplots(figsize=(3.45, 2.35))
@@ -159,28 +176,9 @@ def main():
     ax.set_ylabel("%")
     ax.legend(frameon=False)
     savefig(fig, f"{F}/fig6_budget.png")
-    summary.append("## RQ5 Budget\n" + rq5.to_markdown(index=False) + "\n")
+    summary.append("## RQ5 Budget\n" + markdown_table(rq5) + "\n")
 
-    # ---- Figure 7: break-even curve ----
-    fig, ax = plt.subplots(figsize=(3.45, 2.35))
-    x = rq6.tokens_per_day / 1e6
-    ax.plot(x, rq6.managed_monthly_eur, marker="o", markersize=3.5, linewidth=1.4,
-            color=BLUE, label="Managed API")
-    ax.plot(x, rq6.selfhosted_monthly_eur, marker="s", markersize=3.2, linewidth=1.4,
-            color=ORANGE, label="Self-hosted model")
-    modeled_break_even = float(rq6.selfhosted_monthly_eur.iloc[0] / rq6.managed_monthly_eur.iloc[0])
-    ax.axvline(modeled_break_even, color="0.35", linestyle="--", linewidth=0.9)
-    ax.annotate("break-even\n~18M/day", xy=(modeled_break_even, rq6.selfhosted_monthly_eur.iloc[0]),
-                xytext=(10, 10), textcoords="offset points", fontsize=6.5,
-                arrowprops={"arrowstyle": "-", "lw": 0.6, "color": "0.35"})
-    ax.set_xscale("log")
-    ax.set_xlabel("Tokens/day (M, log)")
-    ax.set_ylabel("Monthly cost (EUR)")
-    ax.legend(frameon=False, loc="upper left")
-    savefig(fig, f"{F}/fig7_breakeven.png")
-    summary.append("## RQ6 Break-even (modeled)\n" + rq6.head(20).to_markdown(index=False) + "\n")
-
-    # ---- Figure 8: ablation ----
+    # ---- Figure 7: ablation ----
     if abl is not None:
         fig, ax = plt.subplots(figsize=(3.45, 2.35))
         x = np.arange(len(abl)); w = 0.4
@@ -196,7 +194,7 @@ def main():
         ax.legend(lines + lines2, labels1 + labels2, frameon=False, loc="upper center",
                   ncol=2, bbox_to_anchor=(0.52, 1.05))
         savefig(fig, f"{F}/fig8_ablation.png")
-        summary.append("## Ablation\n" + abl.to_markdown(index=False) + "\n")
+        summary.append("## Ablation\n" + markdown_table(abl) + "\n")
 
     # ---- Headline numbers ----
     ours = rq1[rq1.strategy == "B6-ours"].iloc[0]

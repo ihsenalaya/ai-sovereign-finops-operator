@@ -1,0 +1,52 @@
+Resubmission test log
+Date: 2026-07-08
+
+1. Push release commit
+   Command: git push origin main
+   Status: PASS
+   Result: pushed commit 0bda91c to origin/main.
+   Note: GitHub warned that operateur/attestation-scheduler was larger than 50 MB.
+   Follow-up: removed that generated binary from Git tracking in the resubmission commit.
+
+2. Python script syntax
+   Command: python3 -m py_compile scripts/*.py
+   Working directory: experimentation
+   Status: PASS
+
+3. Experimentation Go tests
+   Command: go test ./...
+   Working directory: experimentation
+   Status: PASS
+
+4. Figure and CSV regeneration
+   Command set: see figure_regeneration_log.txt
+   Status: PASS
+
+5. Manuscript forbidden-phrase check
+   Command:
+   rg -n "reviewer-facing|Reviewer-facing|defensible Q1|To reach a defensible|future version|reserved for a future version|planned study|Human FinOps Expert|pre-registered human|local source|local-only|from the local source|my PC|local machine|/home/|C:\\|/Users/|Desktop|Downloads|make-C|python3scripts|Manuscript Number|JNCA-D-26-02169|zero sovereignty violations|hard sovereignty|legal attestation|break-even|payback|GPU\\+ops|vLLM benchmark|managed vs\\. self-hosted|self-host recommendation|tokens/day crossover|preserves quality|without significant quality degradation|enterprise-scale|production validation" paper/latex/main.tex
+   Working directory: experimentation
+   Status: PASS
+   Result: no forbidden phrases found.
+   Additional check: GPU count in main.tex = 1, only in the allowed future-work sentence.
+
+6. LaTeX/PDF build
+   Command:
+   pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+   Working directory: experimentation/paper/latex
+   Status: PASS
+   Output: main.pdf, copied to paper.pdf and paper-latex.pdf.
+   Notes: compilation reports layout overfull/underfull boxes but no unresolved citations or undefined references after final pass.
+
+Unresolved failures:
+
+- None for the revised artifact checks.
+
+Residual caveats documented in the paper:
+
+- Bounded two-provider testbed.
+- Synthetic governance-motivated workloads.
+- No production traces.
+- Judge agreement is weak-to-moderate.
+- Declared metadata is not legal certification.
+- Integration run is not a production security evaluation.

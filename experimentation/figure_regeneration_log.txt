@@ -1,0 +1,65 @@
+Figure regeneration log
+Date: 2026-07-08
+
+Commands:
+
+1. python3 scripts/analyze_results.py --results results --figures figures
+   Status: PASS
+   Outputs:
+   - figures/fig2_cost_by_strategy.png
+   - figures/fig3_quality_vs_cost.png
+   - figures/fig4_latency.png
+   - figures/fig5_sovereignty.png
+   - figures/fig6_budget.png
+   - figures/fig8_ablation.png
+   - results/summary.md
+
+2. python3 scripts/sensitivity_analysis.py --repo .. --results experimentation/results
+   Status: PASS
+   Outputs:
+   - results/scoring_weight_sensitivity.csv
+   - results/budget_threshold_sensitivity.csv
+
+3. python3 scripts/bootstrap_items.py --calls results/calls.csv --out results/bootstrap_items.csv --fig figures/fig_bootstrap_items.png
+   Status: PASS
+   Outputs:
+   - results/bootstrap_items.csv
+   - figures/fig_bootstrap_items.png
+
+4. python3 scripts/objective_guardrail.py --benchmark results-bench/rq_benchmark.csv --out results-bench/rq_guardrail.csv
+   Status: PASS
+   Outputs:
+   - results-bench/rq_guardrail.csv
+
+5. python3 scripts/analyze_stats.py --calls results-stats/calls_stats.csv --out figures --results results-stats
+   Status: PASS
+   Outputs:
+   - figures/fig_stats_cost.png
+   - figures/fig_stats_quality.png
+   - figures/fig_stats_latency.png
+   - results-stats/stats_summary.md
+
+6. python3 scripts/judge_agreement.py --file results/judge_agreement.csv --results results
+   Status: PASS
+   Output:
+   - results/judge_agreement_summary.md
+
+7. python3 scripts/judge_vs_truth.py --file results/judgevstruth.csv --results results --figures figures
+   Status: PASS
+   Outputs:
+   - results/judge_vs_truth_summary.md
+   - figures/fig_judge_vs_truth.png
+
+Removed outputs:
+
+- figures/fig7_breakeven.png
+- paper/latex/figures/fig7_breakeven.png
+- results/rq6_breakeven.csv
+- results/breakeven_sensitivity.csv
+
+Notes:
+
+- The regenerated main figures intentionally exclude historical strategies or
+  scenarios that depended on a modeled self-hosted stub.
+- Figure captions in the manuscript identify CACHED, MEASURED, or SIMULATED
+  evidence where figures report results.

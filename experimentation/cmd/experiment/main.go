@@ -1,5 +1,5 @@
-// Command experiment runs the AI Sovereign FinOps routing experiments (RQ1-RQ6)
-// with real OpenAI calls plus the operator's pure engines. Every test is
+// Command experiment runs the AI Sovereign FinOps routing experiments
+// with real managed-provider calls plus the operator's pure engines. Every test is
 // journaled (status, duration, details); results are written as CSV. No test is
 // skipped: any API error aborts the run so results are never silently missing.
 package main
@@ -36,6 +36,7 @@ func main() {
 	mistralKeyP := flag.String("mistral-key", "", "Mistral API key file (or set MISTRAL_API_KEY)")
 	mistralAuth := flag.String("mistral-auth", "bearer", "mistral auth: bearer (La Plateforme) | api-key (Azure Foundry)")
 	mistralAPIVer := flag.String("mistral-api-version", "", "Azure Foundry api-version (for api-key auth)")
+	includeModeledSelfHosted := flag.Bool("include-modeled-selfhosted", false, "legacy only: include modeled self-hosted stub; never used for the revised paper")
 	flag.Parse()
 
 	j, err := journal.New(*resultsDir)
@@ -77,10 +78,14 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(*timeoutMin)*time.Minute)
 	defer cancel()
 
-	// Build the model catalog + per-provider clients. OpenAI always; Mistral (EU,
-	// 2nd provider) added only when its endpoint+key are configured.
-	models := append(catalog.OpenAIModels(), catalog.SelfHostedModeled()...)
+	// Build the model catalog + per-provider clients. The revised paper uses only
+	// real managed providers. The modeled self-hosted stub is opt-in legacy support
+	// and is excluded from main-paper results.
+	models := catalog.OpenAIModels()
 	clients := map[string]llm.Client{"openai-us": client}
+	if *includeModeledSelfHosted {
+		models = append(models, catalog.SelfHostedModeled()...)
+	}
 
 	if *mistralBase != "" {
 		mkey := strings.TrimSpace(os.Getenv("MISTRAL_API_KEY"))
@@ -148,7 +153,6 @@ func main() {
 		{"RQ1-3 main matrix (cost/quality/latency)", eng.RunMainMatrix},
 		{"RQ4 sovereignty", eng.RunSovereignty},
 		{"RQ5 budget degradation", eng.RunBudget},
-		{"RQ6 break-even (modeled)", eng.RunBreakEven},
 		{"RQ8 ablation", eng.RunAblation},
 	}
 	for _, s := range steps {

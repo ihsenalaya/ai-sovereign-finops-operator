@@ -1,10 +1,9 @@
 // Package catalog defines the model/provider catalog used by the experiments and
 // bridges it to the operator's pure engines (costengine, sovereigntyengine).
 //
-// Real models are served by a live LLM client (OpenAI). The self-hosted entry is
-// MODELED (no GPU in the experiment host): its cost is computed from declared
-// parameters and its responses come from a deterministic local stub. Outputs are
-// tagged accordingly so real and modeled data are never conflated.
+// Real models are served by live managed-provider clients. The legacy
+// SelfHostedModeled entry remains available for future-method development, but
+// it is excluded from the revised paper's main evidence.
 package catalog
 
 import (
@@ -63,8 +62,8 @@ func MistralModels() []Model {
 	}
 }
 
-// SelfHostedModeled is the modeled EU self-hosted fallback (no GPU; cost modeled,
-// response stubbed). Used for the RQ6 break-even prediction only.
+// SelfHostedModeled is a legacy analytical fallback with computed cost and a
+// deterministic stub response. It must not be presented as measured evidence.
 func SelfHostedModeled() []Model {
 	return []Model{
 		{ID: "selfhosted-eu-llama", APIModel: "selfhosted-eu-llama", Provider: "onprem-fr", Zone: "FR", Managed: false, Real: false,
@@ -72,9 +71,9 @@ func SelfHostedModeled() []Model {
 	}
 }
 
-// Default is OpenAI + modeled self-hosted (single-provider baseline catalog).
+// Default returns only real OpenAI managed models for clean paper experiments.
 func Default() []Model {
-	return append(OpenAIModels(), SelfHostedModeled()...)
+	return OpenAIModels()
 }
 
 // ByID indexes models by ID.

@@ -1,0 +1,5 @@
+strategy,items,cost_mean,cost_95ci_low,cost_95ci_high,quality_mean,quality_95ci_low,quality_95ci_high,latency_mean_ms,latency_95ci_low_ms,latency_95ci_high_ms,evidence_label
+B1-premium-static,40,0.038895,0.028132,0.050004,0.900155,0.825000,0.962500,1125.54,925.87,1338.23,CACHED
+B4-static-policy,40,0.021025,0.011656,0.031509,0.868684,0.793750,0.931250,940.68,793.65,1101.45,CACHED
+B5-budget-hard-block,40,0.038860,0.027707,0.050280,0.900321,0.825000,0.962500,1124.67,924.72,1336.89,CACHED
+B6-ours,40,0.011401,0.005698,0.018201,0.912423,0.837500,0.968750,1512.23,1200.28,1850.13,CACHED
