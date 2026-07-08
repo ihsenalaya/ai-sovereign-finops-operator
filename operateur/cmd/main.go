@@ -24,6 +24,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -241,13 +242,17 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AIChangeRequest")
 		os.Exit(1)
 	}
-	if err = (&controller.AttestationEvidenceReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("attestationevidence-controller"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AttestationEvidence")
-		os.Exit(1)
+	if envBool("AIOPS_ENABLE_LEGACY_EVIDENCE_RECONCILER", false) {
+		if err = (&controller.AttestationEvidenceReconciler{
+			Client:   mgr.GetClient(),
+			Scheme:   mgr.GetScheme(),
+			Recorder: mgr.GetEventRecorderFor("attestationevidence-controller"),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AttestationEvidence")
+			os.Exit(1)
+		}
+	} else {
+		setupLog.Info("legacy AttestationEvidence reconciler disabled; central-verifier owns evidence status")
 	}
 	if err = (&controller.AIRevocationPolicyReconciler{
 		Client:   mgr.GetClient(),
@@ -256,6 +261,21 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AIRevocationPolicy")
 		os.Exit(1)
+	}
+	if envBool("AIOPS_ENABLE_EMBEDDED_VERIFIER", false) {
+		// Compatibility mode only. The Helm deployment uses the dedicated
+		// central-verifier binary so RBAC can prove single-writer ownership.
+		if err = (&controller.RawAttestationReportReconciler{
+			Client:           mgr.GetClient(),
+			Scheme:           mgr.GetScheme(),
+			VerifierIdentity: "embedded-central-verifier",
+			VerifierPodUID:   os.Getenv("POD_UID"),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "RawAttestationReport")
+			os.Exit(1)
+		}
+	} else {
+		setupLog.Info("embedded RawAttestationReport verifier disabled; dedicated central-verifier owns evidence writes")
 	}
 	if err = (&controller.AIEvidenceRecordReconciler{
 		Client:   mgr.GetClient(),
@@ -386,4 +406,15 @@ func writeTerminationError(path string, cause error) error {
 		raw = raw[:maxTerminationLogBytes]
 	}
 	return writeTerminationMessage(path, raw)
+}
+
+func envBool(key string, fallback bool) bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(key))) {
+	case "1", "true", "yes", "y", "on":
+		return true
+	case "0", "false", "no", "n", "off":
+		return false
+	default:
+		return fallback
+	}
 }

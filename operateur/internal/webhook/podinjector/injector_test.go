@@ -3,6 +3,7 @@ package podinjector
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
@@ -183,8 +184,76 @@ func TestInjectsConfidentialRuntimeClassAndSchedulerInSimulatedMode(t *testing.T
 	}
 }
 
+func TestConfidentialAnnotationsPatchWhenSchedulingAlreadySet(t *testing.T) {
+	t.Setenv(PlatformModeEnv, "aks-private")
+	scheme := newScheme(t)
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "finance",
+			Labels: map[string]string{"ai.sovereign.io/sensitivity": "high"},
+		},
+	}
+	policy := &aiopsv1alpha1.ConfidentialInferencePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "finance-conf", Namespace: "finance"},
+		Spec: aiopsv1alpha1.ConfidentialInferencePolicySpec{
+			Target: aiopsv1alpha1.WorkloadTarget{
+				NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"ai.sovereign.io/sensitivity": "high"}},
+				WorkloadSelector:  &metav1.LabelSelector{MatchLabels: map[string]string{"app": "risk-assistant"}},
+			},
+			RequiredTEE:                   []string{"SEV-SNP"},
+			RequireConfidentialContainers: false,
+			AllowedRuntimeClasses:         []string{"runc"},
+			MaxEvidenceAgeSeconds:         300,
+			RequireModelDigest:            true,
+			EnforcementMode:               aiopsv1alpha1.EnforcementModeEnforce,
+		},
+	}
+	h := New(fakeClient(t, scheme, ns, policy), scheme, StaticImageResolver("controller:test"))
+	runtimeClass := "runc"
+	original := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "risk-assistant",
+			Namespace: "finance",
+			Labels:    map[string]string{"app": "risk-assistant"},
+			Annotations: map[string]string{
+				ModelDigestAnnotation:         "sha256:model",
+				AttestationEvidenceAnnotation: "evidence-node-a",
+			},
+		},
+		Spec: corev1.PodSpec{
+			SchedulerName:    DefaultSchedulerName,
+			RuntimeClassName: &runtimeClass,
+			Containers:       []corev1.Container{{Name: "app", Image: "registry.k8s.io/pause:3.9"}},
+		},
+	}
+
+	mutated := runMutation(t, h, original)
+	if mutated.Annotations[PolicyHashAnnotation] == "" {
+		t.Fatalf("%s annotation missing", PolicyHashAnnotation)
+	}
+	if mutated.Annotations[ExpectedRuntimeAnnotation] != "runc" {
+		t.Fatalf("expected runtime annotation = %q", mutated.Annotations[ExpectedRuntimeAnnotation])
+	}
+	if mutated.Annotations[ExpectedEvidenceAgeAnnotation] != "300" {
+		t.Fatalf("expected evidence age annotation = %q", mutated.Annotations[ExpectedEvidenceAgeAnnotation])
+	}
+	if len(mutated.Spec.SchedulingGates) != 0 {
+		t.Fatalf("evidence-bearing pod should not receive scheduling gates: %+v", mutated.Spec.SchedulingGates)
+	}
+}
+
 func TestValidationRejectsSimulatedRuntimeClassInProduction(t *testing.T) {
 	t.Setenv(PlatformModeEnv, PlatformModeProduction)
+	assertValidationRejectsSimulatedRuntimeClass(t)
+}
+
+func TestValidationTreatsAKSPrivateAsProduction(t *testing.T) {
+	t.Setenv(PlatformModeEnv, "aks-private")
+	assertValidationRejectsSimulatedRuntimeClass(t)
+}
+
+func assertValidationRejectsSimulatedRuntimeClass(t *testing.T) {
+	t.Helper()
 	scheme := newScheme(t)
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -243,6 +312,69 @@ func TestValidationRejectsSimulatedRuntimeClassInProduction(t *testing.T) {
 	})
 	if resp.Allowed {
 		t.Fatal("expected validation denial in production mode")
+	}
+}
+
+func TestValidationRejectsConfidentialGPUUntilEvidenceExists(t *testing.T) {
+	t.Setenv(PlatformModeEnv, PlatformModeProduction)
+	scheme := newScheme(t)
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "finance",
+			Labels: map[string]string{"ai.sovereign.io/sensitivity": "high"},
+		},
+	}
+	policy := &aiopsv1alpha1.ConfidentialInferencePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "gpu-conf", Namespace: "finance"},
+		Spec: aiopsv1alpha1.ConfidentialInferencePolicySpec{
+			Target: aiopsv1alpha1.WorkloadTarget{
+				NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"ai.sovereign.io/sensitivity": "high"}},
+				WorkloadSelector:  &metav1.LabelSelector{MatchLabels: map[string]string{"app": "gpu-risk"}},
+			},
+			RequiredTEE:                   []string{"SEV-SNP"},
+			RequireConfidentialContainers: true,
+			AllowedRuntimeClasses:         []string{"kata-qemu-snp"},
+			RequireConfidentialGPU:        true,
+			GPU: &aiopsv1alpha1.ConfidentialGPURequirements{
+				Vendor:      "nvidia",
+				DeviceClass: "confidential",
+			},
+			MaxEvidenceAgeSeconds: 300,
+			RequireModelDigest:    true,
+			EnforcementMode:       aiopsv1alpha1.EnforcementModeEnforce,
+		},
+	}
+	h := NewValidation(fakeClient(t, scheme, ns, policy), scheme)
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "gpu-risk",
+			Namespace:   "finance",
+			Labels:      map[string]string{"app": "gpu-risk"},
+			Annotations: map[string]string{ModelDigestAnnotation: "sha256:model"},
+		},
+		Spec: corev1.PodSpec{
+			RuntimeClassName: ptr("kata-qemu-snp"),
+			Containers:       []corev1.Container{{Name: "app", Image: "ghcr.io/example/app@sha256:abc"}},
+		},
+	}
+	raw, err := json.Marshal(pod)
+	if err != nil {
+		t.Fatalf("marshal pod: %v", err)
+	}
+	resp := h.Handle(context.Background(), admission.Request{
+		AdmissionRequest: admissionv1.AdmissionRequest{
+			Operation: admissionv1.Create,
+			Namespace: pod.Namespace,
+			Resource:  metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
+			Kind:      metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"},
+			Object:    runtime.RawExtension{Raw: raw},
+		},
+	})
+	if resp.Allowed {
+		t.Fatal("expected confidential GPU workload to fail closed")
+	}
+	if resp.Result == nil || !strings.Contains(resp.Result.Message, "confidential GPU attestation is not implemented") {
+		t.Fatalf("unexpected denial message: %+v", resp.Result)
 	}
 }
 

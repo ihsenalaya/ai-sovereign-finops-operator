@@ -1,0 +1,47 @@
+FROM golang:1.21 AS builder
+ARG TARGETOS
+ARG TARGETARCH
+WORKDIR /workspace
+COPY go.mod go.sum ./
+RUN go mod download
+COPY cmd/ cmd/
+COPY api/ api/
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} \
+    go build -a -o node-attestation-agent ./cmd/node-attestation-agent
+
+FROM ubuntu:24.04 AS attestation-helper-builder
+ARG AZGUESTATTESTATION_VERSION=1.1.2
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl g++ libc6-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fL -o /tmp/azguestattestation.deb \
+    "https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_${AZGUESTATTESTATION_VERSION}_amd64.deb" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/azguestattestation.deb \
+    && rm -rf /var/lib/apt/lists/* /tmp/azguestattestation.deb
+WORKDIR /workspace
+COPY cmd/guest-attestation-helper/guest_attestation_helper.cpp ./guest_attestation_helper.cpp
+RUN g++ -std=c++17 -O2 -Wall -Wextra \
+    -I/usr/include/azguestattestation1 \
+    guest_attestation_helper.cpp \
+    -lazguestattestation \
+    -o /guest-attestation-helper
+
+FROM ubuntu:24.04
+ARG AZGUESTATTESTATION_VERSION=1.1.2
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fL -o /tmp/azguestattestation.deb \
+    "https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_${AZGUESTATTESTATION_VERSION}_amd64.deb" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/azguestattestation.deb \
+    && rm -rf /var/lib/apt/lists/* /tmp/azguestattestation.deb
+RUN groupadd -g 65532 nonroot && useradd -u 65532 -g 65532 -M -s /usr/sbin/nologin nonroot
+WORKDIR /
+COPY --from=builder /workspace/node-attestation-agent .
+COPY --from=attestation-helper-builder /guest-attestation-helper .
+USER 65532:65532
+ENTRYPOINT ["/node-attestation-agent"]

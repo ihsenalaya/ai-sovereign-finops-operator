@@ -17,11 +17,71 @@ metadata:
     {{- include "platform.labels" . | nindent 4 }}
 rules:
 - apiGroups: ["aiops.imperium.io"]
-  resources: ["*"]
-  verbs: ["*"]
+  resources:
+  - aibreakevenanalyses
+  - aibudgetpolicies
+  - aichangerequests
+  - aievidencerecords
+  - aifinopsreports
+  - aigateways
+  - aikeyreleasepolicies
+  - aimodels
+  - aiplacementdecisions
+  - aiproviders
+  - aiqualitygates
+  - airevocationpolicies
+  - airouteoverrides
+  - airoutingpolicies
+  - aisovereigntypolicies
+  - confidentialinferencepolicies
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["aiops.imperium.io"]
+  resources:
+  - aibreakevenanalyses/status
+  - aibudgetpolicies/status
+  - aichangerequests/status
+  - aievidencerecords/status
+  - aifinopsreports/status
+  - aigateways/status
+  - aikeyreleasepolicies/status
+  - aimodels/status
+  - aiplacementdecisions/status
+  - aiproviders/status
+  - aiqualitygates/status
+  - airevocationpolicies/status
+  - airouteoverrides/status
+  - airoutingpolicies/status
+  - aisovereigntypolicies/status
+  - confidentialinferencepolicies/status
+  verbs: ["get", "update", "patch"]
+- apiGroups: ["aiops.imperium.io"]
+  resources:
+  - aibreakevenanalyses/finalizers
+  - aibudgetpolicies/finalizers
+  - aichangerequests/finalizers
+  - aievidencerecords/finalizers
+  - aifinopsreports/finalizers
+  - aigateways/finalizers
+  - aikeyreleasepolicies/finalizers
+  - aimodels/finalizers
+  - aiplacementdecisions/finalizers
+  - aiproviders/finalizers
+  - aiqualitygates/finalizers
+  - airevocationpolicies/finalizers
+  - airouteoverrides/finalizers
+  - airoutingpolicies/finalizers
+  - aisovereigntypolicies/finalizers
+  - confidentialinferencepolicies/finalizers
+  verbs: ["update"]
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["attestationevidences", "rawattestationreports"]
+  verbs: ["get", "list", "watch"]
 - apiGroups: [""]
-  resources: ["pods", "nodes", "events", "namespaces", "configmaps"]
+  resources: ["pods", "nodes", "events", "namespaces", "configmaps", "services", "secrets"]
   verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["node.k8s.io"]
   resources: ["runtimeclasses"]
   verbs: ["get", "list", "watch", "create", "update", "patch"]
@@ -90,6 +150,7 @@ spec:
         component: governance-operator
     spec:
       serviceAccountName: governance-operator
+      {{- include "platform.imagePullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532

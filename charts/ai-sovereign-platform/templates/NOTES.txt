@@ -1,0 +1,8 @@
+AI Sovereign Platform umbrella chart installed.
+
+Enabled modules:
+- governance operator: {{ .Values.governanceOperator.enabled }}
+- platform API: {{ .Values.platformApi.enabled }}
+- key-release gateway: {{ .Values.keyReleaseGateway.enabled }}
+- platform UI: {{ .Values.platformUi.enabled }}
+- attestation scheduler: {{ .Values.attestationScheduler.enabled }}

@@ -1,5 +1,12 @@
 # Démo locale sur kind
 
+> **Pour la démonstration complète (4 apps réelles → plusieurs modèles via Envoy AI Gateway →
+> coût/souveraineté/budget/latence/quality dans Grafana), utilisez la démo réelle
+> [`automatisation/envoy-aigw/`](../../automatisation/envoy-aigw/README.md) (`deploy.sh up` /
+> `make real-demo`).** Elle est idempotente et se lance sans intervention manuelle (prévoir
+> **≥ 6 Gi RAM libres** ; fermer les autres clusters kind au préalable). La présente page couvre
+> le mode minimal (CRs d'exemple, sans gateway) pour CI/debug/régression.
+
 Prérequis : `go`, `kubectl`, `kind`, `helm`. Machine contrainte en RAM ? Réutilisez un cluster
 existant plutôt que d'en créer un nouveau (voir note RAM en bas).
 
@@ -28,15 +35,18 @@ make run     # tourne en avant-plan ; Ctrl-C pour arrêter
 Option B — déployé dans le cluster (image) :
 
 ```bash
-make docker-build IMG=ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.4
-kind load docker-image ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.4 --name greenops
-make deploy IMG=ghcr.io/ihsenalaya/ai-sovereign-finops-operator:0.5.4
+make docker-build IMG=ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller:0.5.11
+kind load docker-image ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller:0.5.11 --name greenops
+make deploy IMG=ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller:0.5.11
 # ou via Helm :
 helm install greenops charts/ai-sovereign-finops-operator \
-  --set image.repository=ghcr.io/ihsenalaya/ai-sovereign-finops-operator \
-  --set image.tag=0.5.4 \
+  --set image.repository=ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller \
+  --set image.tag=0.5.11 \
   --set image.pullPolicy=Never
 ```
+
+Cette démo `kind` ne produit pas de résultat de sécurité/performance pour le
+papier Article 1. Elle sert seulement à la CI, au debug et à la régression.
 
 ## 4. Appliquer les exemples
 

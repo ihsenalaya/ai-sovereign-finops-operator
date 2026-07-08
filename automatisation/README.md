@@ -133,7 +133,7 @@ Accès :
 |----------|--------|------|
 | `CLUSTER_NAME` | `greenops` | nom du cluster kind |
 | `KIND_NODE_IMAGE` | `kindest/node:v1.31.0` | image Kubernetes utilisée par kind |
-| `IMAGE_REPO` / `IMAGE_TAG` | `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` / `0.5.4` | préfixe de registry et tag des images (6 images : controller, attestation-scheduler, key-release-gateway, platform-api, platform-ui, thesis-bench) |
+| `IMAGE_REPO` / `IMAGE_TAG` | `controller` / `0.5.11` | image opérateur utilisée par les scripts kind locaux ; pour GHCR, utiliser `ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller` |
 | `GRAFANA_RADAR_IMAGE` | `ghcr.io/ihsenalaya/ai-sovereign-finops-grafana-radar:11.2.2-echarts6.6.0` | image Grafana avec le plugin radar préinstallé |
 | `ENABLE_MISTRAL_DEMO` | `true` | active la 4e app `marketing/content-writer` sur Mistral EU |
 | `ENABLE_THIRD_QUALITY_PROVIDER` | `true` | applique le provider optionnel `openai-foundry-eu` après préflight réel |

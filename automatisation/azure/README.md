@@ -28,6 +28,7 @@ MODE=idle scripts/down.sh   # scale GPU pool to 0 (stop paying GPU); MODE=delete
 | 5 | `05-run-bench.sh` | port-forward vLLM+DCGM, run `gpubench` sweep | yes |
 | 6 | `06-collect-cost.sh` | record GPU node-hours / cost | yes |
 | 7 | `07-deploy-mistral-foundry.sh` | provision the three Azure AI Foundry demo deployments: Cohere, Mistral Large and GPT-4.1 Mini | no GPU |
+| 8 | `08-deploy-openai-fr-us.sh` | provision the two Azure OpenAI accounts (FR francecentral + US eastus) used by the real Envoy AI Gateway demo; writes gitignored keys and syncs the demo manifests | no GPU |
 |   | `down.sh` (MODE=idle) | scale GPU → 0 | stops |
 
 Config is in `scripts/common.sh` (region `francecentral` for EU sovereignty, SKU, model, image).

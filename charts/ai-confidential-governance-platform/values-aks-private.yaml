@@ -9,7 +9,9 @@
 #   - GPU disabled until real AKS GPU tests
 
 global:
-  registry: "myacr.azurecr.io"   # Replace with your ACR registry
+  registry: "ghcr.io/ihsenalaya/ai-sovereign-finops-operator"
+  imagePullSecrets:
+    - name: ghcr-pull
   environment: aks-private
   mode: startup
 
@@ -32,6 +34,22 @@ global:
 modules:
   thesisBench:
     enabled: false   # bench is not needed in production
+
+nodeAttestationAgent:
+  provider: maa
+  simulated: false
+  helperPath: /guest-attestation-helper
+  azureAttestationEndpoint: "https://sharedwus2.wus2.attest.azure.net"
+  tpmDevices:
+    enabled: true
+    privileged: true
+  nodeSelector:
+    ai.sovereign.io/tee: SEV-SNP
+  tolerations:
+  - key: ai.sovereign.io/confidential
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
 
 platformApi:
   insecureAuth: false  # REQUIRED: auth enabled in AKS

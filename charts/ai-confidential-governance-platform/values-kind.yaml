@@ -3,6 +3,8 @@
 # Note: platform-ui uses nginx-unprivileged:1.27-alpine (port 8080 internal)
 
 global:
+  registry: ""
+  imagePullSecrets: []
   environment: kind
   mode: thesis
   simulatedEvidence:

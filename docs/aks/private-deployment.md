@@ -5,20 +5,33 @@
 - AKS cluster with:
   - Private cluster networking (no public API server endpoint)
   - Azure CNI or Azure CNI Overlay
-  - Node pool with confidential VM SKU (future — see GPU validation doc)
+  - Node pool with confidential AMD SEV-SNP VM SKU (`Standard_DC8as_v6` for Article 1)
   - Azure Key Vault with CSI driver enabled (for secrets injection)
   - Internal load balancer only (`service.beta.kubernetes.io/azure-load-balancer-internal: "true"`)
-- Azure Container Registry (ACR) linked to the AKS cluster
+- GitHub Container Registry (GHCR) image access configured for the AKS cluster
 - Helm 3.14+
 - kubectl with cluster access
 
+## Article 1 AKS runtime scope
+
+Article 1 uses AKS `Standard_DC8as_v6` confidential VM nodes as real
+node-level AMD SEV-SNP evidence. AKS rejected `workloadRuntime=KataMshvVmIsolation`
+on this SKU because Pod Sandboxing/Kata requires nested virtualization. Therefore
+the Article 1 AKS harness uses `runtimeClassName: runc` on tainted SEV-SNP nodes
+and reports the result as node-level attested placement, not pod-level
+confidential-container attestation.
+
+Do not set `kata-vm-isolation` or claim pod-level isolation for the DCasv6
+Article 1 results unless a separate AKS pool/SKU with supported Pod Sandboxing is
+created and measured as a distinct experiment.
+
 ## Image registry
 
-All images must be pushed to ACR before deployment:
+All images must be pushed to GHCR before deployment:
 
 ```bash
-export REGISTRY=myacr.azurecr.io
-export VERSION=0.5.4
+export REGISTRY=ghcr.io/ihsenalaya/ai-sovereign-finops-operator
+export VERSION=0.5.11
 
 make build-images REGISTRY=$REGISTRY VERSION=$VERSION
 make push-images REGISTRY=$REGISTRY VERSION=$VERSION PUSH=true
@@ -53,13 +66,18 @@ az keyvault secret set --vault-name <vault> --name token-public-key --value "<PU
 helm upgrade --install ai-platform \
   charts/ai-confidential-governance-platform \
   -f charts/ai-confidential-governance-platform/values-aks-private.yaml \
-  --set global.registry=myacr.azurecr.io \
+  --set global.registry=ghcr.io/ihsenalaya/ai-sovereign-finops-operator \
+  --set images.tag=0.5.11 \
   --namespace ai-platform \
   --create-namespace \
   --wait --timeout 10m
 ```
 
 ## Validation checklist
+
+For Article 1, only real AKS SEV-SNP outputs under `article1/results/raw/aks/`
+may be used as main-paper empirical results. `kind` and `kwok` outputs are
+regression/debug artifacts only.
 
 After deployment:
 ```bash

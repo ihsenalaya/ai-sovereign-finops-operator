@@ -30,6 +30,28 @@ type Options struct {
 	FailurePolicy    admissionregv1.FailurePolicyType
 }
 
+// excludeSystemNamespaces returns a NamespaceSelector that keeps the pod webhooks
+// away from control-plane and operator-infra namespaces. Without it, a validating
+// webhook with FailurePolicy=Fail would block pod creation cluster-wide whenever
+// the operator (its own backend) is momentarily unavailable — including the
+// operator's OWN replacement pod, a self-inflicted deadlock. Excluding these
+// namespaces guarantees the operator (and cluster infra) can always (re)start.
+func excludeSystemNamespaces(operatorNamespace string) *metav1.LabelSelector {
+	excluded := []string{"kube-system", "kube-node-lease", "kube-public",
+		"envoy-gateway-system", "envoy-ai-gateway-system"}
+	if operatorNamespace != "" {
+		excluded = append(excluded, operatorNamespace)
+	}
+	return &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+			// Every namespace carries this immutable label (K8s >= 1.21).
+			Key:      "kubernetes.io/metadata.name",
+			Operator: metav1.LabelSelectorOpNotIn,
+			Values:   excluded,
+		}},
+	}
+}
+
 // Ensure prepares serving certs and self-registers the mutating webhook.
 func Ensure(ctx context.Context, opts Options) error {
 	if opts.Client == nil {
@@ -87,6 +109,7 @@ func Ensure(ctx context.Context, opts Options) error {
 			TimeoutSeconds:          &timeout,
 			MatchPolicy:             &matchPolicy,
 			ReinvocationPolicy:      &reinvocation,
+			NamespaceSelector:       excludeSystemNamespaces(opts.ServiceNamespace),
 			ClientConfig: admissionregv1.WebhookClientConfig{
 				CABundle: caPEM,
 				Service: &admissionregv1.ServiceReference{
@@ -155,6 +178,7 @@ func EnsureValidation(ctx context.Context, opts Options) error {
 			FailurePolicy:           &failure,
 			TimeoutSeconds:          &timeout,
 			MatchPolicy:             &matchPolicy,
+			NamespaceSelector:       excludeSystemNamespaces(opts.ServiceNamespace),
 			ClientConfig: admissionregv1.WebhookClientConfig{
 				CABundle: caPEM,
 				Service: &admissionregv1.ServiceReference{

@@ -1,4 +1,4 @@
-# Provider 3 — Azure OpenAI France Central (greenops-fr-ec0e82-06181356.openai.azure.com)
+# Provider 3 — Azure OpenAI France Central (greenops-fr-60f9b0.openai.azure.com)
 # Deployment: gpt-france-mini (gpt-4.1-mini, Standard SKU = données traitées en France)
 # Zone: FR → CONFORME à la politique regulated-france-policy
 # Apps: rh/chatbot-rh + legal/contract-review
@@ -60,7 +60,7 @@ metadata:
 spec:
   endpoints:
     - fqdn:
-        hostname: greenops-fr-ec0e82-06181356.openai.azure.com
+        hostname: greenops-fr-60f9b0.openai.azure.com
         port: 443
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha3
@@ -75,7 +75,7 @@ spec:
       name: greenops-openai-fr
   validation:
     wellKnownCACertificates: "System"
-    hostname: greenops-fr-ec0e82-06181356.openai.azure.com
+    hostname: greenops-fr-60f9b0.openai.azure.com
 ---
 # Catalogue : provider France (zone FR) → AUCUNE violation de souveraineté.
 apiVersion: aiops.imperium.io/v1alpha1

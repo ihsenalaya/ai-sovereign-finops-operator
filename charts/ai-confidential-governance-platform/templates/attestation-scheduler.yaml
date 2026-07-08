@@ -20,17 +20,26 @@ rules:
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
-  resources: ["pods/binding"]
+  resources: ["pods/binding", "bindings"]
   verbs: ["create"]
 - apiGroups: [""]
-  resources: ["nodes"]
+  resources: ["nodes", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["node.k8s.io"]
+  resources: ["runtimeclasses"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create", "patch"]
 - apiGroups: ["aiops.imperium.io"]
-  resources: ["attestationevidences", "aiplacementdecisions", "confidentialinferencepolicies", "airevocationpolicies"]
+  resources: ["attestationevidences", "confidentialinferencepolicies", "airevocationpolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["aiplacementdecisions"]
   verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["aiplacementdecisions/status"]
+  verbs: ["get", "update", "patch"]
 - apiGroups: ["coordination.k8s.io"]
   resources: ["leases"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -71,6 +80,7 @@ spec:
         component: attestation-scheduler
     spec:
       serviceAccountName: attestation-scheduler
+      {{- include "platform.imagePullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532

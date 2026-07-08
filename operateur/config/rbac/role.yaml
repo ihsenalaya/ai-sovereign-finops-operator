@@ -122,6 +122,7 @@ rules:
   - airoutingpolicies/status
   - aisovereigntypolicies/status
   - attestationevidences/status
+  - rawattestationreports/status
   verbs:
   - get
   - patch
@@ -133,6 +134,16 @@ rules:
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - aiops.imperium.io
+  resources:
+  - rawattestationreports
+  verbs:
+  - get
+  - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - batch

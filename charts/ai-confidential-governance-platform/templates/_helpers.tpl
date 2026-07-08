@@ -41,6 +41,16 @@ Usage: include "platform.image" (list . .Values.images.governanceOperator)
 {{- end }}
 
 {{/*
+Optional image pull secrets for private registries such as GHCR.
+*/}}
+{{- define "platform.imagePullSecrets" -}}
+{{- with .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
 Common labels.
 */}}
 {{- define "platform.labels" -}}

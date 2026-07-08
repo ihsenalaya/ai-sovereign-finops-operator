@@ -1,0 +1,10 @@
+apiVersion: v2
+name: ai-sovereign-platform
+description: Umbrella chart for the AI Sovereign Platform.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: ai-sovereign-finops-operator
+    version: 0.5.11
+    repository: "file://../../operateur/charts/ai-sovereign-finops-operator"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"sync"
 
@@ -127,7 +128,9 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 	changed := false
 
 	if confidentialMutation != nil {
+		beforeAnnotations := maps.Clone(mutated.Annotations)
 		annotateConfidentialPod(mutated, confidentialMutation)
+		changed = changed || !maps.Equal(beforeAnnotations, mutated.Annotations)
 		if confidentialMutation.appliedRuntime != "" && (mutated.Spec.RuntimeClassName == nil || strings.TrimSpace(*mutated.Spec.RuntimeClassName) == "") {
 			runtimeClass := confidentialMutation.appliedRuntime
 			mutated.Spec.RuntimeClassName = &runtimeClass

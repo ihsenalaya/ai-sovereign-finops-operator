@@ -29,7 +29,11 @@ Un opérateur Kubernetes qui observe le trafic vers les LLM, calcule les coûts 
 
 Les entreprises utilisent des LLM via plusieurs fournisseurs (Azure OpenAI, Mistral, Anthropic...) sans visibilité consolidée sur les coûts, la latence ou la conformité réglementaire (RGPD, AI Act). L'**AI Sovereign FinOps Operator** résout ce problème en :
 
-> **Version 0.5.4** — inclut le module de gouvernance confidentielle (attestation TEE, planificateur, key-release gateway, platform-api/ui, thesis-bench).
+> **Version 0.5.11** — inclut le module de gouvernance confidentielle (attestation TEE, planificateur, key-release gateway, platform-api/ui, thesis-bench), les mesures scheduler haute résolution, le respect des contraintes `RuntimeClass.scheduling` par le scheduler custom, le patch webhook de hash de politique, et le fail-closed Confidential GPU tant que l'attestation GPU réelle n'existe pas.
+
+> **Article 1 — règle d'évaluation** : les résultats du papier principal doivent venir d'AKS réel SEV-SNP. Les runs `kind`/`kwok` servent uniquement à la CI, au debug et aux tests de régression. Les images de reproduction sont publiées sur GHCR (`ghcr.io/ihsenalaya/ai-sovereign-finops-operator`) ; ne pas utiliser ACR. Sur `Standard_DC8as_v6`, les résultats sont du **node-level SEV-SNP** avec `runtimeClassName=runc`; AKS refuse Pod Sandboxing/Kata sur ce SKU faute de nested virtualization, donc ne pas présenter ces lignes comme pod-level `kata-vm-isolation`.
+
+> **📄 Article scientifique (Article 1)** — *Attestation-Aware Scheduling for Verifiable AI Placement on SEV-SNP Confidential Kubernetes Nodes*. Projet LaTeX dans [`article1/overleaf/`](article1/overleaf/). Résultats AKS réels disponibles : attestation MAA SEV-SNP node-level sur `Standard_DC8as_v6` westus2, snapshot multi-noeuds avec 4 noeuds confidentiels actifs, workloads IA gouvernés **3/3 PASS**, campagne A1-A10 **300/300 bloquée**, A11 fail-closed GPU-scope, identity binding 6/6, B1-B5 avec B5 médiane client-observed **1167.0 ms** et métrique scheduler-interne séparée **216.232 ms**, et B4 vs B5 comme résultat central (`B4` médiane fenêtre externe 1104.5 ms, B5 supprime cette fenêtre du chemin schedulable). Traçabilité : [`article1/results/raw/aks/`](article1/results/raw/aks/), [`article1/results/tables/`](article1/results/tables/). Périmètre honnête : **node-level SEV-SNP uniquement** — pas de pod-level, pas de GPU confidentiel, pas de TDX, pas de confidentialité du service OpenAI ou du modèle. Revue IP requise avant soumission.
 
 - **Observant** le trafic réel via l'Envoy AI Gateway (métriques OpenTelemetry `gen_ai_*`)
 - **Attribuant** chaque dépense à un namespace, une application et une équipe
@@ -136,7 +140,7 @@ kind create cluster --config automatisation/kind/kind-config.yaml --name greenop
 
 # 3. Construire et charger les 6 images (séquentiel pour éviter l'OOM)
 IMAGE_REPO=ghcr.io/ihsenalaya/ai-sovereign-finops-operator \
-IMAGE_TAG=0.5.4 \
+IMAGE_TAG=0.5.11 \
 CLUSTER_NAME=greenops \
   ./automatisation/scripts/02-build-load-image.sh
 
@@ -196,7 +200,7 @@ L'opérateur lit les métriques de l'Envoy AI Gateway. Celui-ci doit déjà êtr
 
 ```bash
 helm install greenops oci://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts/ai-sovereign-finops-operator \
-  --version 0.5.4 \
+  --version 0.5.11 \
   --namespace greenops-system \
   --create-namespace
 ```
@@ -882,7 +886,7 @@ L'opérateur expose les métriques suivantes sur le port `8080` (chemin `/metric
 | `ai_finops_sovereignty_requests` | namespace, application, zone | Requêtes par zone |
 | `ai_finops_shadow_ai_egress` | namespace | Trafic IA non-gouverné (eBPF) |
 
-### Gouvernance confidentielle (v0.5.4+)
+### Gouvernance confidentielle (v0.5.11+)
 
 | Métrique | Labels | Description |
 |----------|--------|-------------|

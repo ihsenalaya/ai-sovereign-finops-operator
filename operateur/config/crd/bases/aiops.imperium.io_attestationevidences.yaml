@@ -135,6 +135,13 @@ spec:
             type: object
           status:
             properties:
+              attestationType:
+                description: AttestationType records the attestation flow (guest-attestation|simulated).
+                type: string
+              claimsDigest:
+                description: ClaimsDigest is a canonical digest of the verified attestation
+                  claims.
+                type: string
               conditions:
                 description: Conditions captures readiness and verification state.
                 items:
@@ -195,22 +202,76 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              evidenceMode:
+                description: |-
+                  EvidenceMode is "real" only after genuine attestation verification,
+                  "simulated" in kind/dev, "unverified" when verification could not run.
+                enum:
+                - real
+                - simulated
+                - unverified
+                type: string
+              expiresAt:
+                format: date-time
+                type: string
+              failureReason:
+                description: FailureReason explains a Failed/Unavailable verification.
+                type: string
+              freshnessSeconds:
+                description: FreshnessSeconds is the accepted freshness window in
+                  seconds.
+                format: int64
+                type: integer
+              issuedAt:
+                description: IssuedAt / ExpiresAt bound the validity window derived
+                  from the claims.
+                format: date-time
+                type: string
               lastVerifiedTime:
                 description: LastVerifiedTime is the last successful verification
                   time.
                 format: date-time
+                type: string
+              maaTokenHash:
+                description: MAATokenHash is the SHA-256 of the raw MAA/guest-attestation
+                  token.
+                type: string
+              nodeUID:
+                description: NodeUID binds the evidence to a concrete node object
+                  UID.
+                type: string
+              nonce:
+                description: Nonce echoes the freshness nonce that was verified.
                 type: string
               observedGeneration:
                 description: ObservedGeneration is the last generation observed by
                   a controller.
                 format: int64
                 type: integer
+              provider:
+                description: Provider is the attestation provider actually used (maa|simulator).
+                type: string
               revoked:
                 description: Revoked indicates the evidence has been invalidated.
                 type: boolean
+              verificationStatus:
+                description: VerificationStatus is Verified|Failed|Unavailable.
+                enum:
+                - Verified
+                - Failed
+                - Unavailable
+                type: string
               verified:
                 description: Verified indicates the latest verification outcome.
                 type: boolean
+              verifiedBy:
+                description: VerifiedBy names the verifier controller identity that
+                  produced this status.
+                type: string
+              verifierPodUID:
+                description: VerifierPodUID is the pod UID of the verifier that wrote
+                  this status.
+                type: string
             type: object
         type: object
     served: true

@@ -3,7 +3,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator
+  repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller
   # Overridden for local kind demos, e.g. --set image.repository=greenops --set image.tag=dev
   tag: ""        # defaults to .Chart.AppVersion when empty
   pullPolicy: IfNotPresent

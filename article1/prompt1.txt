@@ -1,0 +1,859 @@
+# PROMPT  — Article 1 v9 FULL RUN AKS DCasv6 CONFIRMED
+
+Tu es claude code. Tu travailles dans un fork PRIVÉ du dépôt `ai-sovereign-finops-operator`.
+
+## OVERRIDE 2026-07-05 — GHCR / DCasv6 / AKS-only
+
+Les lignes historiques ci-dessous mentionnant ACR, eastus2 ou DCASv5 sont
+supplantées par cette règle plus récente :
+
+- utiliser GHCR uniquement :
+  `ghcr.io/ihsenalaya/ai-sovereign-finops-operator` ;
+- utiliser `IMAGE_TAG=0.5.11` pour la prochaine campagne ;
+- cible Azure actuelle : `westus2`, `Standard DCasv6 Family vCPUs`,
+  `Standard_DC8as_v6`, quota 32 vCPU ;
+- les résultats du papier principal viennent d'AKS réel SEV-SNP uniquement ;
+- `kind`/`kwok` servent à la CI, au debug et aux tests de régression, jamais à
+  remplacer un résultat AKS manquant.
+
+## INSTRUCTION DE LANCEMENT POUR CETTE VERSION
+
+Cette version historique visait DCASv5. Pour la suite réelle, suivre
+l'override 2026-07-05 ci-dessus : DCasv6 westus2, GHCR, image `0.5.11`.
+
+ doit exécuter tout le pipeline automatiquement :
+
+```text
+A0 → A1 → A2 → A3 → A4 AKS réel → A5 → A6
+```
+
+La partie AKS réelle est activée :
+
+```text
+AZURE_APPLY_APPROVED=true
+RUN_AKS_REAL=true
+DESTROY_AKS_AFTER_RUN=true
+```
+
+Ne pas s'arrêter après A0/A1 sauf erreur critique. Continuer phase par phase jusqu'au rapport final.
+
+## OBJECTIF
+
+Préparer, implémenter, tester et rédiger le package complet du PREMIER ARTICLE de doctorat :
+
+**Attestation-Aware Kubernetes Scheduling for Confidential AI Inference**
+
+Ce premier article doit couvrir :
+
+1. modèle de menace ;
+2. `ConfidentialInferencePolicy` ;
+3. scheduler Kubernetes attestation-aware ;
+4. placement vérifiable ;
+5. propriétés `Placement Safety`, `Evidence Freshness`, `Identity Binding`, `Label Resistance`, `Runtime Consistency`, `Verifiable Placement` ;
+6. évaluation expérimentale reproductible sur :
+   - `kind` avec evidence simulée ;
+   - `kwok` pour scalabilité scheduler-only ;
+   - AKS confidentiel réel SEV-SNP si et seulement si autorisation Azure explicite ;
+7. draft LaTeX complet ;
+8. figures, tableaux, résultats, scripts, BibTeX et checklists Q1.
+
+La key release complète, la révocation complète et l’audit complet sont réservés aux articles 2 et 3. Pour l’article 1, implémenter seulement un `placement token` minimal et un vérificateur indépendant `verify-placement`.
+
+---
+
+# MODE AUTO-RUN OBLIGATOIRE
+
+Contrairement à la version précédente du prompt, cette version doit exécuter toutes les phases automatiquement :
+
+```text
+A0 → A1 → A2 → A3 → A4 → A5 → A6
+```
+
+claude code doit traiter les phases l’une après l’autre dans la même session, sans attendre une nouvelle instruction entre les phases.
+
+Mais claude code doit respecter ces règles :
+
+1. **Après chaque phase**, lancer les tests/checks de la phase.
+2. **Si une phase échoue**, STOP immédiat.
+3. Ne pas continuer vers la phase suivante si :
+   - un test obligatoire échoue ;
+   - une commande critique échoue ;
+   - une dépendance obligatoire manque ;
+   - une hypothèse Azure/Kubernetes n’est pas vérifiée ;
+   - une source bibliographique est inventée ;
+   - un résultat expérimental manque mais est présenté comme obtenu.
+4. À chaque STOP, produire un rapport clair :
+   - phase atteinte ;
+   - fichiers modifiés ;
+   - commandes exécutées ;
+   - résultats ;
+   - erreurs ;
+   - prochaines actions exactes.
+
+---
+
+# VARIABLES D’EXÉCUTION
+
+Utiliser ces variables, avec valeurs par défaut prudentes :
+
+```text
+AZURE_APPLY_APPROVED=true
+AZURE_REGION=westus2
+AZURE_CONFIDENTIAL_VCPU_QUOTA=32
+AZURE_CONFIDENTIAL_VM_FAMILY=Standard DCasv6 Family vCPUs
+AKS_CONFIDENTIAL_SKU_PRIMARY=Standard_DC8as_v6
+AKS_CONFIDENTIAL_SKU_SECONDARY=Standard_DC4as_v6
+AKS_KATACC_SKU_TO_VERIFY=
+REGISTRY=ghcr.io/ihsenalaya/ai-sovereign-finops-operator
+IMAGE_TAG=0.5.11
+RUN_AKS_REAL=true
+RUN_KWOK=true
+RUN_KIND=true
+PUSH_IMAGES=true
+PUSH_CHARTS=false
+DESTROY_AKS_AFTER_RUN=true
+```
+
+Règle importante pour cette version v6 :
+
+Le quota DCasv6 westus2 est maintenant obtenu par l'utilisateur. claude code doit donc tenter l'exécution complète, y compris AKS réel, mais uniquement après vérifications automatiques.
+
+claude code peut exécuter A4 réel car :
+
+```text
+AZURE_APPLY_APPROVED=true
+RUN_AKS_REAL=true
+```
+
+Cependant, avant toute création de ressource Azure, claude code doit obligatoirement :
+
+1. exécuter `az account show` et afficher l'abonnement actif sans écrire le subscription ID dans un fichier ;
+2. exécuter `automation/scripts/aks-preflight.sh` ;
+3. vérifier que la région est bien `westus2` ;
+4. vérifier que le quota `Standard DCasv6 Family vCPUs` est au moins 32 vCPUs ;
+5. vérifier que le quota régional total vCPU permet le déploiement ;
+6. vérifier que la famille Dsv5 ou alternative pour le system pool est disponible ;
+7. afficher une estimation de coût avec `automation/scripts/aks-cost-check.sh` ;
+8. appliquer les tags obligatoires : `project=article1`, `owner`, `ttl`, `env=research` ;
+9. ne jamais dépasser 32 vCPUs DCasv6 ;
+10. arrêter immédiatement si la vérification quota/région/SKU échoue.
+
+Après les expériences AKS, claude code doit obligatoirement :
+
+1. exporter tous les résultats AKS dans `results/article1/raw/aks/` ;
+2. exécuter `make aks-stop` pour mettre le pool confidentiel à 0 si possible ;
+3. exécuter `make aks-down` si `DESTROY_AKS_AFTER_RUN=true` ;
+4. vérifier que le resource group et les ressources associées sont détruits ;
+5. produire un rapport de coût et de nettoyage.
+
+Dans cette version, la valeur par défaut reste :
+
+```text
+DESTROY_AKS_AFTER_RUN=true
+```
+
+Donc claude code doit détruire l'infrastructure Azure après collecte des résultats, sauf si l'utilisateur change explicitement cette variable.
+
+---
+
+# CONTRAINTES ABSOLUES
+
+Ne rien inventer.
+
+Ne pas créer de faux résultats.
+
+Ne pas mettre de citations fictives.
+
+Ne pas écrire de DOI fictif.
+
+Ne pas produire de tests vides.
+
+Ne pas utiliser :
+```text
+|| true
+skip failing tests
+--validate=false
+continue on error
+```
+
+Ne pas prétendre que Confidential GPU est testé.
+
+Ne pas prétendre que TDX réel est testé.
+
+Le quota actuel concerne `Standard DCasv6 Family vCPUs`, donc l’article 1 est publiable sans GPU et sans TDX réel.
+
+Ne pas commiter de secrets :
+- Azure subscription ID ;
+- kubeconfig ;
+- tokens ;
+- deploy keys ;
+- secrets ;
+- clés privées ;
+- fichiers `.tfstate`.
+
+Ne jamais pousser vers un remote public.
+
+Ne jamais publier le code scheduler/token/key-release/audit sans validation IP/brevet.
+
+Toutes les expériences simulées doivent être marquées :
+
+```text
+SIMULATED — KIND ONLY — NOT REAL TEE/GPU
+```
+
+Les expériences AKS DCasv6 réelles doivent être marquées :
+
+```text
+REAL SEV-SNP — AKS DCasv6 WESTUS2
+```
+
+---
+
+# CLARIFICATION AZURE IMPORTANTE
+
+`Standard DCasv6 Family vCPUs` ne contient pas de GPU.
+
+Cette famille sert pour :
+- AKS confidential VM node pools ;
+- AMD SEV-SNP ;
+- Confidential Containers CPU ;
+- validation article 1.
+
+Cette famille ne sert pas pour :
+- NVIDIA H100 ;
+- Confidential GPU ;
+- NCCads H100.
+
+L’article 1 doit être publiable sans GPU.
+
+Si le mode AKS `KataCcIsolation` exige un SKU distinct de `Standard_DC8as_v6`, claude code doit :
+1. stopper la partie AKS réelle ;
+2. documenter le mismatch ;
+3. ne pas remplacer silencieusement les SKU ;
+4. produire une recommandation de quota séparée ;
+5. continuer uniquement les parties kind/kwok si possible.
+
+---
+
+# CONTRAINTE IP / BREVET
+
+Créer :
+
+```text
+paper/article1-attestation-aware-scheduling/docs/ip-disclosure-checklist.md
+```
+
+Inclure :
+- placement token ;
+- identity binding ;
+- scheduler PreBind re-check ;
+- signed `AIPlacementDecision`;
+- `verify-placement`;
+- lien potentiel avec l’article 2 key release.
+
+Dans le manuscrit, toute section qui décrit le placement token doit contenir :
+
+```latex
+% IP REVIEW REQUIRED BEFORE SUBMISSION
+```
+
+Dans `q1-readiness-checklist.md`, ajouter item bloquant :
+
+```text
+Validation IP/valorisation obtenue AVANT soumission de l'article 1.
+```
+
+---
+
+# PHASE A0 — AUDIT ET PLANIFICATION
+
+Objectif : comprendre le dépôt et préparer le plan article.
+
+Actions :
+
+1. Inspecter :
+   - README ;
+   - Makefile ;
+   - charts ;
+   - config ;
+   - api ;
+   - controllers ;
+   - internal ;
+   - automation ;
+   - CI ;
+   - go.mod ;
+   - version Kubernetes ;
+   - versions controller-runtime ;
+   - structure Helm.
+
+2. Créer :
+
+```text
+paper/article1-attestation-aware-scheduling/docs/article1-implementation-plan.md
+paper/article1-attestation-aware-scheduling/docs/literature-matrix.md
+paper/article1-attestation-aware-scheduling/docs/gap-analysis.md
+paper/article1-attestation-aware-scheduling/docs/evaluation-plan.md
+paper/article1-attestation-aware-scheduling/docs/statistical-methodology.md
+paper/article1-attestation-aware-scheduling/docs/ip-disclosure-checklist.md
+automation/docs/aks-setup.md
+```
+
+3. `literature-matrix.md` doit contenir :
+   - sources officielles seed ;
+   - catégories académiques à compléter ;
+   - au moins 15 travaux peer-reviewed à rechercher ;
+   - toutes les références non vérifiées marquées `TO VERIFY — DO NOT CITE AS FINAL`.
+
+4. `evaluation-plan.md` doit inclure :
+   - expériences 1–5 ;
+   - baselines B1–B5 ;
+   - kind/kwok/AKS ;
+   - N≥10 ;
+   - seeds ;
+   - warm-up ;
+   - IC 95 % ;
+   - données brutes.
+
+5. `automation/docs/aks-setup.md` doit décrire :
+   - quota actuel DCasv6 ;
+   - région westus2 ;
+   - pas de GPU ;
+   - pas de TDX réel ;
+   - AKS SEV-SNP node-level ;
+   - point à vérifier : compatibilité `Standard_DC8as_v6` avec l'isolation attendue.
+
+Check fin A0 :
+- Tous les fichiers docs existent.
+- Aucun code source modifié sauf docs.
+- Aucun Terraform créé.
+- Aucune ressource Azure créée.
+
+Si A0 échoue : STOP.
+
+---
+
+# PHASE A1 — SKELETON PAPER
+
+Créer :
+
+```text
+paper/article1-attestation-aware-scheduling/manuscript/main.tex
+paper/article1-attestation-aware-scheduling/manuscript/abstract.tex
+paper/article1-attestation-aware-scheduling/manuscript/introduction.tex
+paper/article1-attestation-aware-scheduling/manuscript/background.tex
+paper/article1-attestation-aware-scheduling/manuscript/related-work.tex
+paper/article1-attestation-aware-scheduling/manuscript/threat-model.tex
+paper/article1-attestation-aware-scheduling/manuscript/design.tex
+paper/article1-attestation-aware-scheduling/manuscript/implementation.tex
+paper/article1-attestation-aware-scheduling/manuscript/evaluation.tex
+paper/article1-attestation-aware-scheduling/manuscript/security-analysis.tex
+paper/article1-attestation-aware-scheduling/manuscript/discussion.tex
+paper/article1-attestation-aware-scheduling/manuscript/threats-to-validity.tex
+paper/article1-attestation-aware-scheduling/manuscript/limitations.tex
+paper/article1-attestation-aware-scheduling/manuscript/conclusion.tex
+paper/article1-attestation-aware-scheduling/manuscript/references.bib
+```
+
+Créer aussi :
+
+```text
+paper/article1-attestation-aware-scheduling/tables/related-work-comparison.csv
+paper/article1-attestation-aware-scheduling/tables/baseline-comparison.csv
+paper/article1-attestation-aware-scheduling/tables/attack-results.csv
+paper/article1-attestation-aware-scheduling/tables/performance-results.csv
+paper/article1-attestation-aware-scheduling/tables/scalability-results.csv
+paper/article1-attestation-aware-scheduling/artifact/README.md
+paper/article1-attestation-aware-scheduling/docs/reproducibility-checklist.md
+paper/article1-attestation-aware-scheduling/docs/q1-readiness-checklist.md
+paper/article1-attestation-aware-scheduling/docs/q1-targets.md
+```
+
+Le manuscrit doit être un squelette structuré, pas encore rempli avec de faux résultats.
+
+`references.bib` :
+- sources seed ;
+- toutes marquées `TO VERIFY` si non validées ;
+- aucun DOI inventé.
+
+Check fin A1 :
+- LaTeX compile si possible.
+- Tables CSV contiennent headers.
+- `q1-readiness-checklist.md` contient item IP bloquant.
+- Aucun résultat inventé.
+
+Si A1 échoue : STOP.
+
+---
+
+# PHASE A2 — CŒUR TECHNIQUE
+
+Implémenter le cœur de l’article 1.
+
+CRDs minimales :
+
+1. `ConfidentialInferencePolicy`
+2. `AttestationEvidence`
+3. `AIPlacementDecision`
+
+Champs minimaux :
+
+## ConfidentialInferencePolicy
+
+```text
+target.namespaceSelector
+target.workloadSelector
+requiredTEE: NONE|TDX|SEV_SNP|NVIDIA_CC|SIMULATED
+requireConfidentialContainers
+requireConfidentialGPU
+allowedRuntimeClasses
+maxEvidenceAgeSeconds
+clockSkewToleranceSeconds
+requireImageDigest
+requireModelDigest
+schedulerName
+enforcementMode: audit|warn|enforce
+```
+
+## AttestationEvidence
+
+```text
+nodeName
+teeType
+runtimeClass
+evidenceMode: real|simulated
+attestationProvider: maa|simulator
+evidenceHash
+validFrom
+validUntil
+revoked
+conditions
+```
+
+## AIPlacementDecision
+
+```text
+podUID
+podSpecHash
+namespace
+podName
+selectedNode
+runtimeClass
+policyHash
+evidenceHash
+imageDigest
+modelDigest
+placementToken
+tokenSignature
+keyID
+validUntil
+decisionReason
+schedulerVersion
+```
+
+Implémenter :
+
+1. validation/defaulting webhook ;
+2. admission webhook ;
+3. mutation pod sensible :
+   - schedulerName ;
+   - runtimeClassName ;
+   - annotations policyHash ;
+   - annotations modelDigest ;
+4. vrai second scheduler :
+   - `schedulerName: ai-attestation-scheduler`;
+   - PreFilter ;
+   - Filter ;
+   - Score ;
+   - Reserve ;
+   - Permit ;
+   - PreBind ;
+5. fail-closed PreBind :
+   - policy hash mismatch → reject ;
+   - evidence hash mismatch → reject ;
+   - evidence expired → reject ;
+   - evidence revoked → reject ;
+   - API read error → reject ;
+6. Permit :
+   - timeout configurable 15 s ;
+   - attendre uniquement evidence imminente ;
+   - sinon reject ;
+7. hashing canonique déterministe ;
+8. placement token Ed25519 ;
+9. clé Ed25519 stockée en Kubernetes Secret en kind ;
+10. `artifact/verify-placement` CLI indépendant ;
+11. métriques Prometheus minimales.
+
+Tests unitaires obligatoires :
+- policy matching ;
+- validation policy ;
+- freshness avec skew ;
+- revoked evidence ;
+- runtime allowed/denied ;
+- fake label ignored ;
+- policyHash deterministic ;
+- podSpecHash deterministic ;
+- placement token generation ;
+- verify-placement independent verification ;
+- token expiration ;
+- Filter accepts valid node ;
+- Filter rejects missing evidence ;
+- Filter rejects expired evidence ;
+- Filter rejects revoked evidence ;
+- Filter rejects wrong TEE ;
+- Score prefers freshest evidence ;
+- PreBind detects revoked evidence ;
+- PreBind detects policy modified ;
+- PreBind fail-closed on API read error ;
+- Permit timeout ;
+- Permit accepts evidence becoming valid.
+
+Envtest :
+- CRD validation ;
+- webhook mutation ;
+- pod sensible modifié ;
+- pod non sensible non modifié ;
+- production refuse RuntimeClass simulée.
+
+Check fin A2 :
+- `make test` ou test ciblé passe.
+- `go test ./...` passe ou raison claire si dépôt existant empêche.
+- CRDs générées.
+- Aucun test vide.
+- `verify-placement` compile.
+
+Si A2 échoue : STOP.
+
+---
+
+# PHASE A3 — KIND + SIMULATION
+
+Objectif : exécuter le système dans kind avec simulation honnête.
+
+Implémenter :
+
+1. RuntimeClass simulées :
+   - `simulated-kata-qemu-tdx`;
+   - `simulated-kata-qemu-snp`;
+   - handler `runc`;
+   - label `ai.sovereign.io/simulated=true`.
+
+2. evidence simulator :
+   - create ;
+   - refresh ;
+   - expire ;
+   - revoke ;
+   - skew ;
+   - logs timestampés.
+
+3. e2e kind scénario positif :
+   - cluster kind ;
+   - CRDs ;
+   - scheduler ;
+   - RuntimeClass simulée ;
+   - `ConfidentialInferencePolicy`;
+   - `AttestationEvidence` simulée valide ;
+   - pod sensible ;
+   - pod Running ;
+   - `AIPlacementDecision`;
+   - `verify-placement PASS`;
+   - métriques exposées.
+
+4. attaques kind A1–A9 :
+   - faux label ;
+   - evidence expirée ;
+   - evidence révoquée ;
+   - mauvais TEE ;
+   - mauvais RuntimeClass ;
+   - policy modifiée entre Filter et PreBind ;
+   - evidence révoquée entre Filter et PreBind ;
+   - placement token modifié ;
+   - RuntimeClass simulée en production refusée.
+
+5. thesis-bench article1 mode.
+
+Make targets :
+```text
+make article1-kind-up
+make article1-kind-down
+make article1-build-images
+make article1-load-kind
+make article1-install
+make article1-run-security
+make article1-run-races
+make article1-run-all
+make article1-collect
+```
+
+Check fin A3 :
+- e2e kind positif passe.
+- attaques A1–A9 passent.
+- résultats bruts JSON créés.
+- tout simulé marqué correctement.
+- aucune mention de TEE réel dans kind.
+
+Si A3 échoue : STOP.
+
+---
+
+# PHASE A4 — AKS SEV-SNP RÉEL OU DRY-RUN
+
+Objectif : préparer ou exécuter l’environnement AKS confidentiel réel.
+
+Créer/mettre à jour :
+
+```text
+automation/terraform/aks-confidential/
+automation/gitops/clusters/aks-article1/
+automation/scripts/aks-preflight.sh
+automation/scripts/aks-cost-check.sh
+automation/scripts/aks-smoke-test.sh
+automation/docs/aks-setup.md
+automation/docs/gitops-flow.md
+```
+
+Contraintes :
+- région : `westus2`;
+- quota : maximum 32 vCPU DCasv6 ;
+- pas de GPU ;
+- pas de TDX réel ;
+- AKS SEV-SNP node-level ;
+- system pool non confidentiel ;
+- confidential pool DCasv6 ;
+- min=0 pour pool confidentiel si autoscaler possible ;
+- GHCR privé ;
+- Flux vers fork privé ;
+- aucune clé en clair ;
+- tags : `project=article1`, `owner`, `ttl`, `env=research`.
+
+Dans cette version v6, `AZURE_APPLY_APPROVED=true` et `RUN_AKS_REAL=true`.
+
+claude code doit donc tenter l'exécution AKS réelle :
+
+1. exécuter preflight ;
+2. vérifier quota DCasv6 >= 32 vCPUs ;
+3. vérifier région westus2 ;
+4. vérifier SKU `Standard_DC8as_v6` ou `Standard_DC4as_v6` disponible ;
+5. vérifier séparément la disponibilité du system pool non confidentiel ;
+6. lancer `terraform apply` seulement après preflight vert ;
+7. déployer via GitOps ;
+8. exécuter smoke test ;
+9. créer evidence real SEV-SNP si MAA/guest attestation est vérifiée ;
+10. si MAA/guest attestation n'est pas encore implémentable avec preuve officielle, stopper la sous-partie evidence real et documenter précisément `AKS cluster created but real evidence not proven`;
+11. exécuter AK1–AK4 si evidence real est disponible ;
+12. collecter résultats ;
+13. exécuter `make aks-stop`;
+14. si `DESTROY_AKS_AFTER_RUN=true`, exécuter `make aks-down` et vérifier destruction.
+
+Si une étape Azure échoue, claude code doit :
+- stopper A4 ;
+- ne pas continuer vers A5/A6 en prétendant avoir des résultats AKS ;
+- produire commandes de nettoyage ;
+- afficher les ressources encore actives s'il y en a.
+
+Check fin A4 :
+- si dry-run : fichiers et validations prêts.
+- si real : AKS smoke vert, résultats AKS collectés, coût estimé, ressources arrêtées/détruites.
+- aucune ressource orpheline.
+- aucun secret commité.
+
+Si A4 échoue : STOP, avec instructions de nettoyage.
+
+---
+
+# PHASE A5 — CAMPAGNE EXPÉRIMENTALE
+
+Exécuter les expériences.
+
+Expérience 1 — Security effectiveness :
+- B1 Kubernetes standard ;
+- B2 nodeSelector/labels ;
+- B3 RuntimeClass only ;
+- B4 schedulingGates + external controller fort ;
+- B5 solution proposée.
+
+Attaques A1–A9 en kind.
+AK1–AK4 en AKS seulement si A4 réel exécuté.
+
+Expérience 2 — Scheduling overhead :
+- default scheduler ;
+- nodeSelector ;
+- RuntimeClass only ;
+- B4 ;
+- B5.
+
+Mesurer :
+```text
+admission_latency_ms
+scheduling_latency_ms
+filter_latency_ms
+score_latency_ms
+permit_wait_ms
+prebind_latency_ms
+pod_pending_duration_ms
+pod_admission_to_running_ms
+```
+
+Expérience 3 — Scalability :
+- kind : 10 / 50 / 100 pods ;
+- 500 pods seulement si hôte supporte ;
+- kwok : scheduler-only scalability avec nœuds/pods simulés.
+
+Expérience 4 — Race/freshness :
+- revoke after Filter before PreBind ;
+- expire during scheduling ;
+- policy update during scheduling ;
+- comparer B4 vs B5.
+
+Expérience 5 — Ablation :
+- policy only ;
+- policy + admission ;
+- policy + admission + Filter ;
+- policy + admission + Filter + PreBind ;
+- full + token + verify-placement.
+
+Méthodologie :
+- N≥10 runs par configuration ;
+- seeds documentés ;
+- warm-up exclu mais conservé ;
+- raw JSON par run ;
+- médiane ;
+- p95 ;
+- p99 ;
+- IC 95 % ;
+- Mann-Whitney U si comparaison latence formelle ;
+- overhead absolu et relatif.
+
+Créer :
+```text
+results/article1/raw/
+results/article1/tables/security.csv
+results/article1/tables/performance.csv
+results/article1/tables/scalability.csv
+results/article1/figures/security_bar.pdf
+results/article1/figures/scheduling_latency_cdf.pdf
+results/article1/figures/scalability_line.pdf
+```
+
+Check fin A5 :
+- données brutes présentes ;
+- stats calculées ;
+- figures générées ;
+- aucun résultat inventé ;
+- environnement de chaque résultat indiqué : kind / kwok / AKS.
+
+Si A5 échoue : STOP.
+
+---
+
+# PHASE A6 — RÉDACTION FINALE
+
+Remplir le manuscrit avec résultats réels.
+
+Sections obligatoires :
+1. Abstract
+2. Introduction
+3. Background
+4. Threat Model
+5. Design
+6. Implementation
+7. Evaluation
+8. Security Analysis
+9. Related Work
+10. Discussion
+11. Threats to Validity
+12. Limitations
+13. Conclusion
+
+Rules :
+- intégrer uniquement résultats réels A5 ;
+- si AKS non exécuté, le dire clairement ;
+- si sources non vérifiées, garder `TO VERIFY`;
+- ne pas écrire "Q1 garanti";
+- ne pas écrire "real GPU";
+- ne pas écrire "TDX real";
+- ne pas écrire "pod-level attestation" si seulement node-level SEV-SNP ;
+- ajouter `% IP REVIEW REQUIRED BEFORE SUBMISSION` dans les sections placement token ;
+- compiler LaTeX ;
+- générer PDF si possible ;
+- exécuter checklist Q1.
+
+Créer rapport final :
+```text
+paper/article1-attestation-aware-scheduling/article1-final-report.md
+```
+
+Il doit contenir :
+- état du papier ;
+- résultats disponibles ;
+- résultats manquants ;
+- sources vérifiées ;
+- sources TO VERIFY ;
+- tests passés ;
+- limites ;
+- statut IP ;
+- statut AKS ;
+- statut Q1 readiness ;
+- prochaines actions avant soumission.
+
+Check fin A6 :
+- papier compile ou erreur claire ;
+- figures/tables intégrées ;
+- limitations honnêtes ;
+- Q1 checklist remplie ;
+- pas de faux résultat.
+
+---
+
+# DÉFINITION DE DONE
+
+Le travail est terminé seulement si :
+
+1. A0 à A6 exécutées dans l’ordre ;
+2. aucune phase échouée ignorée ;
+3. `ConfidentialInferencePolicy` existe et est testée ;
+4. `AttestationEvidence` existe et est testée ;
+5. `AIPlacementDecision` existe et est testée ;
+6. scheduler plugin réel existe ;
+7. `verify-placement` existe et vérifie indépendamment ;
+8. kind e2e positif fonctionne ;
+9. attaques A1–A9 testées ;
+10. B4 baseline forte implémentée ;
+11. B5 solution proposée testée ;
+12. stats N≥10 + IC 95 % produites ;
+13. figures générées ;
+14. papier LaTeX compilable ;
+15. AKS dry-run ou AKS réel documenté honnêtement ;
+16. aucun secret commité ;
+17. aucun résultat inventé ;
+18. aucun push public ;
+19. IP checklist présente ;
+20. limitations honnêtes.
+
+---
+
+# RAPPORT FINAL ATTENDU DE claude code
+
+À la fin de toute la session, afficher :
+
+1. phases exécutées ;
+2. phase d’arrêt si arrêt anticipé ;
+3. fichiers créés/modifiés ;
+4. CRDs ajoutées ;
+5. composants ajoutés ;
+6. commandes exécutées ;
+7. tests passés/échoués ;
+8. résultats kind ;
+9. résultats kwok ;
+10. résultats AKS réels SEV-SNP ou raison précise d'échec, avec preuves de nettoyage Azure ;
+11. figures générées ;
+12. tables générées ;
+13. état du manuscrit ;
+14. état bibliographie ;
+15. sources TO VERIFY ;
+16. limitations ;
+17. statut IP ;
+18. statut coût Azure ;
+19. commandes exactes pour reproduire ;
+20. prochaines actions avant soumission Q1.
+
+Commence maintenant par A0, puis continue automatiquement vers A1, A2, A3, A4, A5 et A6 si et seulement si chaque phase passe ses checks.

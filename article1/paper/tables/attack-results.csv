@@ -1,0 +1,13 @@
+attack_id,scenario,property,expected,actual,status,evidence_scope,environment,artifact
+A1,Forged attested=true label without AttestationEvidence,Label Resistance,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A2,Expired attestation evidence,Evidence Freshness,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A3,Revoked attestation evidence,Placement Safety,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A4,Evidence TEE mismatch,Placement Safety,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A5,Forbidden simulated runtimeClass in production policy,Runtime Consistency,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A5b,Missing required model-digest annotation,Identity Binding,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A6,Policy hash modified between Filter and PreBind,Runtime Consistency,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A7,Evidence revoked between Filter and PreBind,Evidence Freshness,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A8,Tampered placement token at key release,Verifiable Placement,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A9,Simulated runtimeClass used in production mode,Runtime Consistency,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A10,Compromised node attempts to forge appraised evidence,Trust-Chain Separation,BLOCKED,30/30 blocked,BLOCKED,on-cluster,aks-real-sevsnp,article1/results/raw/aks/security_attacks_A1_A11.csv
+A11,Confidential GPU required without GPU evidence,Fail-Closed Scope Control,BLOCKED,1/1 denied,BLOCKED_GPU_SCOPE,on-cluster,aks-real-sevsnp,article1/results/raw/aks/a11_gpu_required_no_evidence.csv

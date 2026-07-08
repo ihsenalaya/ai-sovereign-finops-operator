@@ -49,6 +49,30 @@ compatibilité). La présence d'une clé seule ne suffit pas : `deploy.sh` fait 
 **préflight Cohere, Mistral Large et GPT-4.1 Mini Foundry** avant de démarrer quand
 `REQUIRE_THIRD_QUALITY_PROVIDER=true`.
 
+### Provisionner les backends Azure (une fois)
+
+Les 4 apps appellent de vrais modèles Azure. Deux scripts idempotents créent tout et
+synchronisent clés + manifests automatiquement (rien à éditer à la main) :
+
+```bash
+cd automatisation/azure/scripts
+bash 07-deploy-mistral-foundry.sh    # compte Foundry : Cohere + Mistral-Large + GPT-4.1-mini (EU)
+bash 08-deploy-openai-fr-us.sh       # comptes Azure OpenAI FR (francecentral) + US (eastus)
+# 08 écrit operateur/docs/openai-{fr,us}-key.txt (gitignored) et réécrit les hostnames/noms
+# dans 06-openai-fr.yaml / 07-openai-us.yaml / deploy.sh (noms suffixés par sub id → idempotent).
+# La clé Foundry : az cognitiveservices account keys list -n greenops-foundry -g greenops-rg \
+#   --query key1 -o tsv > operateur/docs/foundrykey.txt
+```
+
+### Ressources machine (IMPORTANT)
+
+La stack complète (opérateur + Envoy Gateway + AI Gateway extproc + 4 apps + Tetragon eBPF +
+Prometheus/Grafana + jobs qualité) est lourde pour un mono-nœud kind. Prévoir **≥ 6 Gi de RAM
+libres** : sous cette limite, le conteneur du proxy Envoy est **OOM/liveness-killed (exit 137)** et
+les apps reçoivent des **502**. Fermer les autres clusters kind (`kind get clusters` puis
+`kind delete cluster --name <c>`) avant de lancer. Tetragon (shadow-AI) nécessite le BTF noyau
+(`/sys/kernel/btf/vmlinux`) — présent sur la plupart des noyaux WSL2 récents.
+
 `verify` est le mode recommandé pour une preuve reproductible sans laisser
 d'app consommatrice tourner. Il borne les clients à environ une minute de trafic par app,
 collecte les preuves, scale les apps à zéro, puis supprime le cluster kind.

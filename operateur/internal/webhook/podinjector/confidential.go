@@ -185,6 +185,9 @@ func validatePodAgainstPolicy(ctx context.Context, c client.Reader, mode string,
 	if policy.Spec.RequireModelDigest && strings.TrimSpace(pod.Annotations[ModelDigestAnnotation]) == "" {
 		errs = append(errs, fmt.Sprintf("annotation %q is required", ModelDigestAnnotation))
 	}
+	if policy.Spec.RequireConfidentialGPU {
+		errs = append(errs, "confidential GPU attestation is not implemented in Article 1; GPU-required workloads fail closed")
+	}
 	if policy.Spec.RequireConfidentialContainers {
 		runtimeClass := firstAllowedRuntime(policy.Spec.AllowedRuntimeClasses)
 		if pod.Spec.RuntimeClassName != nil && strings.TrimSpace(*pod.Spec.RuntimeClassName) != "" {
@@ -251,11 +254,17 @@ func applySimulatedRuntimeMetric(namespace, policyName, runtimeClass string, sim
 }
 
 func platformMode() string {
-	switch strings.TrimSpace(strings.ToLower(strings.ReplaceAll(os.Getenv(PlatformModeEnv), "_", "-"))) {
-	case PlatformModeProduction:
+	mode := strings.TrimSpace(strings.ToLower(strings.ReplaceAll(os.Getenv(PlatformModeEnv), "_", "-")))
+	switch mode {
+	case PlatformModeProduction, "prod", "aks", "aks-private", "aks-real-sevsnp":
 		return PlatformModeProduction
-	default:
+	case "", "kind", PlatformModeSimulatedKind, "simulated", "dev", "development", "local":
 		return PlatformModeSimulatedKind
+	default:
+		if strings.Contains(mode, "aks") || strings.Contains(mode, "prod") {
+			return PlatformModeProduction
+		}
+		return mode
 	}
 }
 

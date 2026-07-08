@@ -37,6 +37,7 @@ spec:
         app: platform-ui
         component: platform-ui
     spec:
+      {{- include "platform.imagePullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: false
       containers:

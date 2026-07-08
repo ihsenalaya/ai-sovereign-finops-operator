@@ -272,6 +272,67 @@ type AttestationEvidenceStatus struct {
 	// +optional
 	LastVerifiedTime *metav1.Time `json:"lastVerifiedTime,omitempty"`
 
+	// ─── Trust-chain fields (Q1 hardening) ──────────────────────────────────
+	// These are written ONLY by the central verifier controller, never by a
+	// node agent. EvidenceMode is authoritative for downstream consumers.
+
+	// EvidenceMode is "real" only after genuine attestation verification,
+	// "simulated" in kind/dev, "unverified" when verification could not run.
+	// +kubebuilder:validation:Enum=real;simulated;unverified
+	// +optional
+	EvidenceMode string `json:"evidenceMode,omitempty"`
+
+	// VerifiedBy names the verifier controller identity that produced this status.
+	// +optional
+	VerifiedBy string `json:"verifiedBy,omitempty"`
+
+	// VerifierPodUID is the pod UID of the verifier that wrote this status.
+	// +optional
+	VerifierPodUID string `json:"verifierPodUID,omitempty"`
+
+	// NodeUID binds the evidence to a concrete node object UID.
+	// +optional
+	NodeUID string `json:"nodeUID,omitempty"`
+
+	// Provider is the attestation provider actually used (maa|simulator).
+	// +optional
+	Provider string `json:"provider,omitempty"`
+
+	// AttestationType records the attestation flow (guest-attestation|simulated).
+	// +optional
+	AttestationType string `json:"attestationType,omitempty"`
+
+	// MAATokenHash is the SHA-256 of the raw MAA/guest-attestation token.
+	// +optional
+	MAATokenHash string `json:"maaTokenHash,omitempty"`
+
+	// ClaimsDigest is a canonical digest of the verified attestation claims.
+	// +optional
+	ClaimsDigest string `json:"claimsDigest,omitempty"`
+
+	// Nonce echoes the freshness nonce that was verified.
+	// +optional
+	Nonce string `json:"nonce,omitempty"`
+
+	// IssuedAt / ExpiresAt bound the validity window derived from the claims.
+	// +optional
+	IssuedAt *metav1.Time `json:"issuedAt,omitempty"`
+	// +optional
+	ExpiresAt *metav1.Time `json:"expiresAt,omitempty"`
+
+	// FreshnessSeconds is the accepted freshness window in seconds.
+	// +optional
+	FreshnessSeconds int64 `json:"freshnessSeconds,omitempty"`
+
+	// VerificationStatus is Verified|Failed|Unavailable.
+	// +kubebuilder:validation:Enum=Verified;Failed;Unavailable
+	// +optional
+	VerificationStatus string `json:"verificationStatus,omitempty"`
+
+	// FailureReason explains a Failed/Unavailable verification.
+	// +optional
+	FailureReason string `json:"failureReason,omitempty"`
+
 	// Conditions captures readiness and verification state.
 	// +optional
 	// +patchMergeKey=type
@@ -280,6 +341,17 @@ type AttestationEvidenceStatus struct {
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
+
+// EvidenceMode constants.
+const (
+	EvidenceModeReal       = "real"
+	EvidenceModeSimulated  = "simulated"
+	EvidenceModeUnverified = "unverified"
+
+	VerificationStatusVerified    = "Verified"
+	VerificationStatusFailed      = "Failed"
+	VerificationStatusUnavailable = "Unavailable"
+)
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status

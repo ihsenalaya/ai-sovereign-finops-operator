@@ -40,8 +40,11 @@ func EnsureSimulatedRuntimeClasses(ctx context.Context, c client.Client) error {
 }
 
 func platformMode() string {
-	switch strings.TrimSpace(strings.ToLower(strings.ReplaceAll(os.Getenv(platformModeEnv), "_", "-"))) {
-	default:
+	mode := strings.TrimSpace(strings.ToLower(strings.ReplaceAll(os.Getenv(platformModeEnv), "_", "-")))
+	switch mode {
+	case "", "kind", platformModeSimulatedKind:
 		return platformModeSimulatedKind
+	default:
+		return mode
 	}
 }

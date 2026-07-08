@@ -134,6 +134,13 @@ Transverse :
 
 ## 5. Les CRDs (`aiops.imperium.io/v1alpha1`)
 
+Le groupe `aiops.imperium.io/v1alpha1` expose **18 CRDs**, réconciliées par un **opérateur unique**
+(un seul controller-manager, [`cmd/main.go`](cmd/main.go)) enregistrant **17 controllers**. Elles se
+répartissent en deux domaines : (a) **FinOps & souveraineté** (plan de contrôle des coûts/routage) et
+(b) **gouvernance confidentielle & attestation** (placement vérifiable sur nœuds SEV-SNP).
+
+### 5.1 FinOps & souveraineté
+
 | CRD | shortName | Rôle | Champs clés (spec) | Résultat (status) |
 |---|---|---|---|---|
 | **AIGateway** | `aigw` | Gateway IA observée + mode de télémétrie | `type`, `endpoint`, `telemetry.mode`, `namespaceSelector` | `governedNamespaces` |
@@ -144,6 +151,25 @@ Transverse :
 | **AIBreakEvenAnalysis** | `aibreakeven` | Point mort API managée vs auto-hébergement | `currentModelRef`, `alternativeSelfHosted`, `analysisWindowDays` | `managed/selfHostedMonthlyCostEUR`, `monthlySavingsEUR`, `paybackMonths`, `recommendation` |
 | **AIFinOpsReport** | `aireport` | Rapport consolidé généré | `target`, `period`, `gatewayRef` | `totalCostEUR`, `totalInput/OutputTokens`, `topModels`, `sovereigntyFindings`, `recommendations` |
 | **AIQualityGate** | `aiqgate` | Validation qualité par application avant changement de modèle | `target`, `sourceModel`, `candidateModel`, `goldenDatasetRef`, `evidenceRef`, `evaluation`, `requiredChecks`, `canary`, `rollback` | `phase`, `verdict`, `qualityScore`, `evaluationJobPhase`, `source/candidateObservation` |
+| **AIRoutingPolicy** | `airpolicy` | Politique de routage inter-modèles/providers | `target`, `rules`, `enforcementMode` | conditions, décisions de routage |
+| **AIRouteOverride** | `airoverride` | Override ponctuel d'une route gateway | `routeRef`, `override` | `applied`, conditions |
+| **AIChangeRequest** | `aicrq` | Demande de changement gouvernée (workflow d'approbation) | `target`, `change`, `approval` | `phase`, `verdict` |
+
+### 5.2 Gouvernance confidentielle & attestation (SEV-SNP)
+
+Ces CRDs portent la chaîne de confiance RATS et le placement vérifiable (cœur de l'article Q1). Le
+**central-verifier est l'unique writer** de `AttestationEvidence` ; le `node-attestation-agent` ne
+produit que des `RawAttestationReport` non fiables.
+
+| CRD | shortName | Rôle | Champs clés (spec) | Résultat (status) |
+|---|---|---|---|---|
+| **ConfidentialInferencePolicy** | `cip` | Exigence TEE/fraîcheur/runtime pour un workload sensible | `requiredTEE`, `maxEvidenceAge`, `allowedRuntimeClasses` | conditions |
+| **RawAttestationReport** | `rar` | Rapport brut **non appraisé** émis par l'agent nœud | `nodeName`, `rawQuote`, `maaToken` | `submitted` |
+| **AttestationEvidence** | `aevid` | Évidence **appraisée** (seul le central-verifier écrit) | `nodeName`, `teeType`, `evidenceMode`, `maaTokenHash`, `claimsDigest` | `verificationStatus`, `verifiedAt`, `expiresAt` |
+| **AIPlacementDecision** | `apd` | Décision de placement signée (token Ed25519) | `podRef`, `nodeName`, `evidenceRef`, `policyRef` | `token`, `verified`, `boundAt` |
+| **AIKeyReleasePolicy** | `akrp` | Conditions de libération de clé liées à l'attestation | `requiredEvidence`, `keyRef` | conditions |
+| **AIRevocationPolicy** | `airvp` | Révocation d'évidence/nœud | `target`, `reason` | `revokedAt` |
+| **AIEvidenceRecord** | `aier` | Journal d'audit d'évidence | `evidenceRef`, `record` | conditions |
 
 Documentation détaillée par CRD : [`docs/crds/`](docs/crds/) · par moteur : [`docs/features/`](docs/features/).
 
@@ -301,8 +327,11 @@ Conventions et architecture : [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) ·
 
 ## 11. Statut & limites
 
-MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image déployée par Helm** : 7 CRDs,
-7 controllers, 6 moteurs, collecteurs, observabilité, reporting, chart, automatisation.
+MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image déployée par Helm**. Le repo
+compte désormais **18 CRDs** et **17 controllers** pilotés par un **opérateur unique**, plus 6 moteurs
+purs, collecteurs, observabilité, reporting, chart et automatisation. S'y ajoute la brique de
+gouvernance confidentielle (chaîne d'attestation SEV-SNP, scheduler attestation-aware,
+central-verifier, node-attestation-agent, verify-placement) livrée en binaires de service distincts.
 
 **Enforcement livré (slices 1, 2 et budget fallback managé)** : l'opérateur **agit** selon l'`enforcementMode`
 — Events Kubernetes différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les

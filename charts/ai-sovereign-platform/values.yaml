@@ -1,0 +1,39 @@
+global:
+  mode: simulated-kind
+
+governanceOperator:
+  enabled: true
+
+platformApi:
+  enabled: true
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/platform-api
+    tag: "0.5.11"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8083
+
+keyReleaseGateway:
+  enabled: true
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/key-release-gateway
+    tag: "0.5.11"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8082
+
+platformUi:
+  enabled: false
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/platform-ui
+    tag: "0.5.11"
+    pullPolicy: IfNotPresent
+
+attestationScheduler:
+  enabled: false
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/attestation-scheduler
+    tag: "0.5.11"
+    pullPolicy: IfNotPresent

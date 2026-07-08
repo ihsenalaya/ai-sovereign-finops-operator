@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/pkg/attestation/maa"
 )
 
 const testNamespace = "default"
@@ -262,6 +263,165 @@ var _ = Describe("aiops reconcilers", func() {
 			Expect(got.Status.Recommendation).To(Equal(aiopsv1alpha1.RecommendationKeepManaged))
 			Expect(got.Status.SelfHostedMonthlyCostEUR).NotTo(BeNil())
 			Expect(meta.IsStatusConditionTrue(got.Status.Conditions, aiopsv1alpha1.ConditionReady)).To(BeTrue())
+		})
+	})
+
+	Context("AttestationEvidence refresh", func() {
+		It("requeues simulated evidence to keep it fresh, but not real evidence", func() {
+			simEvidence := &aiopsv1alpha1.AttestationEvidence{
+				ObjectMeta: metav1.ObjectMeta{Name: "ae-sim-refresh", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AttestationEvidenceSpec{
+					SubjectRef:   aiopsv1alpha1.ObjectReference{Name: "node-sim"},
+					EvidenceType: "cpu",
+					TEE:          "TDX",
+					Freshness:    aiopsv1alpha1.EvidenceFreshness{MaxAgeSeconds: 300, Simulated: true},
+					Simulated:    true,
+				},
+			}
+			Expect(k8sClient.Create(ctx, simEvidence)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, simEvidence) })
+
+			evr := &AttestationEvidenceReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			res, err := evr.Reconcile(ctx, reqFor("ae-sim-refresh"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(res.RequeueAfter).To(BeNumerically(">", 0), "simulated evidence must be requeued for refresh")
+
+			got := &aiopsv1alpha1.AttestationEvidence{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "ae-sim-refresh", Namespace: testNamespace}, got)).To(Succeed())
+			Expect(got.Status.Verified).To(BeTrue())
+			Expect(got.Status.LastVerifiedTime).NotTo(BeNil())
+
+			// Real evidence (digest-backed, not simulated) must NOT be auto-refreshed.
+			realEvidence := &aiopsv1alpha1.AttestationEvidence{
+				ObjectMeta: metav1.ObjectMeta{Name: "ae-real-norefresh", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.AttestationEvidenceSpec{
+					SubjectRef:   aiopsv1alpha1.ObjectReference{Name: "node-real"},
+					EvidenceType: "cpu",
+					TEE:          "SEV-SNP",
+					Freshness:    aiopsv1alpha1.EvidenceFreshness{MaxAgeSeconds: 300},
+					Digest:       "sha256:real-evidence-digest",
+				},
+			}
+			Expect(k8sClient.Create(ctx, realEvidence)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, realEvidence) })
+
+			resReal, err := evr.Reconcile(ctx, reqFor("ae-real-norefresh"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resReal.RequeueAfter).To(BeZero(), "real evidence freshness must not be auto-refreshed")
+		})
+	})
+
+	Context("RawAttestationReport central verifier", func() {
+		It("turns a simulated raw report into simulated verified evidence", func() {
+			report := &aiopsv1alpha1.RawAttestationReport{
+				ObjectMeta: metav1.ObjectMeta{Name: "raw-sim-report", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.RawAttestationReportSpec{
+					NodeName:            "node-sim-report",
+					NodeUID:             "node-uid-sim",
+					Provider:            "simulator",
+					RawToken:            "simulated-token",
+					RawTokenHash:        "simulated-token-hash",
+					Nonce:               "nonce-sim",
+					CollectedAt:         metav1.Now(),
+					AgentPodUID:         "agent-pod-sim",
+					AgentServiceAccount: "node-attestation-agent",
+					Simulated:           true,
+				},
+			}
+			Expect(k8sClient.Create(ctx, report)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, report) })
+			DeferCleanup(func() {
+				_ = k8sClient.Delete(ctx, &aiopsv1alpha1.AttestationEvidence{
+					ObjectMeta: metav1.ObjectMeta{Name: "evidence-node-sim-report", Namespace: testNamespace},
+				})
+			})
+
+			r := &RawAttestationReportReconciler{
+				Client:           k8sClient,
+				Scheme:           k8sClient.Scheme(),
+				VerifierIdentity: "test-central-verifier",
+				VerifierPodUID:   "verifier-pod-sim",
+				ExpectedTEE:      "sevsnpvm",
+			}
+			res, err := r.Reconcile(ctx, reqFor("raw-sim-report"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(res.RequeueAfter).To(BeNumerically(">", 0))
+
+			evidence := &aiopsv1alpha1.AttestationEvidence{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "evidence-node-sim-report", Namespace: testNamespace}, evidence)).To(Succeed())
+			Expect(evidence.Spec.Simulated).To(BeTrue())
+			Expect(evidence.Status.Verified).To(BeTrue())
+			Expect(evidence.Status.EvidenceMode).To(Equal(aiopsv1alpha1.EvidenceModeSimulated))
+			Expect(evidence.Status.VerificationStatus).To(Equal(aiopsv1alpha1.VerificationStatusVerified))
+			Expect(evidence.Status.VerifiedBy).To(Equal("test-central-verifier"))
+			Expect(meta.IsStatusConditionTrue(evidence.Status.Conditions, aiopsv1alpha1.ConditionReady)).To(BeTrue())
+
+			gotReport := &aiopsv1alpha1.RawAttestationReport{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "raw-sim-report", Namespace: testNamespace}, gotReport)).To(Succeed())
+			Expect(gotReport.Status.Processed).To(BeTrue())
+			Expect(gotReport.Status.EvidenceRef).To(Equal("evidence-node-sim-report"))
+			Expect(gotReport.Status.VerificationStatus).To(Equal(aiopsv1alpha1.VerificationStatusVerified))
+		})
+
+		It("keeps a failed real raw report unverified", func() {
+			report := &aiopsv1alpha1.RawAttestationReport{
+				ObjectMeta: metav1.ObjectMeta{Name: "raw-real-fail-report", Namespace: testNamespace},
+				Spec: aiopsv1alpha1.RawAttestationReportSpec{
+					NodeName:            "node-real-fail-report",
+					NodeUID:             "node-uid-real",
+					Provider:            "maa",
+					RawToken:            "not-a-valid-maa-token",
+					RawTokenHash:        "raw-token-hash",
+					Nonce:               "nonce-real",
+					CollectedAt:         metav1.Now(),
+					AgentPodUID:         "agent-pod-real",
+					AgentServiceAccount: "node-attestation-agent",
+					Simulated:           false,
+				},
+			}
+			Expect(k8sClient.Create(ctx, report)).To(Succeed())
+			DeferCleanup(func() { _ = k8sClient.Delete(ctx, report) })
+			DeferCleanup(func() {
+				_ = k8sClient.Delete(ctx, &aiopsv1alpha1.AttestationEvidence{
+					ObjectMeta: metav1.ObjectMeta{Name: "evidence-node-real-fail-report", Namespace: testNamespace},
+				})
+			})
+
+			r := &RawAttestationReportReconciler{
+				Client:           k8sClient,
+				Scheme:           k8sClient.Scheme(),
+				VerifierIdentity: "test-central-verifier",
+				VerifierPodUID:   "verifier-pod-real",
+				ExpectedTEE:      "sevsnpvm",
+				verifyFn: func(token string, opts maa.Options) maa.Result {
+					Expect(token).To(Equal("not-a-valid-maa-token"))
+					Expect(opts.ExpectedNonce).To(Equal("nonce-real"))
+					return maa.Result{
+						Status:    maa.StatusFailed,
+						Reason:    "injected verifier failure",
+						TokenHash: "sha256:bogus",
+					}
+				},
+			}
+			res, err := r.Reconcile(ctx, reqFor("raw-real-fail-report"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(res.RequeueAfter).To(BeZero())
+
+			evidence := &aiopsv1alpha1.AttestationEvidence{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "evidence-node-real-fail-report", Namespace: testNamespace}, evidence)).To(Succeed())
+			Expect(evidence.Spec.Simulated).To(BeFalse())
+			Expect(evidence.Status.Verified).To(BeFalse())
+			Expect(evidence.Status.EvidenceMode).To(Equal(aiopsv1alpha1.EvidenceModeUnverified))
+			Expect(evidence.Status.VerificationStatus).To(Equal(aiopsv1alpha1.VerificationStatusFailed))
+			Expect(evidence.Status.FailureReason).To(Equal("injected verifier failure"))
+			Expect(evidence.Status.MAATokenHash).To(Equal("sha256:bogus"))
+			Expect(meta.IsStatusConditionFalse(evidence.Status.Conditions, aiopsv1alpha1.ConditionReady)).To(BeTrue())
+
+			gotReport := &aiopsv1alpha1.RawAttestationReport{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: "raw-real-fail-report", Namespace: testNamespace}, gotReport)).To(Succeed())
+			Expect(gotReport.Status.Processed).To(BeTrue())
+			Expect(gotReport.Status.EvidenceRef).To(Equal("evidence-node-real-fail-report"))
+			Expect(gotReport.Status.VerificationStatus).To(Equal(aiopsv1alpha1.VerificationStatusFailed))
 		})
 	})
 

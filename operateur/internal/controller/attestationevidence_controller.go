@@ -55,8 +55,21 @@ func (r *AttestationEvidenceReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err := r.Status().Update(ctx, &evidence); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// Simulated evidence models a periodic attestation refresh loop: re-reconcile
+	// so LastVerifiedTime stays fresh within the policy freshness window. Real
+	// (non-simulated) evidence is NOT auto-refreshed here — its freshness must
+	// come from genuine re-attestation, never from bumping a timestamp.
+	if evidence.Status.Verified && evidence.Spec.Simulated {
+		return ctrl.Result{RequeueAfter: simulatedEvidenceRefreshInterval}, nil
+	}
 	return ctrl.Result{}, nil
 }
+
+// simulatedEvidenceRefreshInterval is how often simulated evidence is
+// re-verified in kind. Kept well below typical maxEvidenceAgeSeconds (e.g. 300s)
+// so freshness does not lapse between refreshes.
+const simulatedEvidenceRefreshInterval = 60 * time.Second
 
 func (r *AttestationEvidenceReconciler) isEvidenceRevoked(ctx context.Context, evidence *aiopsv1alpha1.AttestationEvidence) (bool, error) {
 	var policies aiopsv1alpha1.AIRevocationPolicyList

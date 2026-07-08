@@ -7,6 +7,9 @@
 *.dylib
 bin/*
 operateur/bin/
+operateur/attestation-scheduler
+operateur/verify-placement
+dist/
 Dockerfile.cross
 operateur/Dockerfile.cross
 
@@ -15,6 +18,12 @@ operateur/Dockerfile.cross
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*.pyc
+__pycache__/
+*.bak-*
+charts/**/charts/*.tgz
+article1/overleaf.zip
+article_q1_revised_keyvault.zip
 
 # Go workspace file
 go.work
@@ -51,3 +60,23 @@ operateur/docs/foundrykey.txt
 *openaikey*
 *mistralkey*
 *foundrykey*
+
+# Article 1 secrets — NEVER commit
+article1/ai_key.txt
+article1/**/ai_key.txt
+article1/**/*apikey*
+article1/**/*api_key*
+article1/_handover_inputs/
+article1/**/run.env
+article1/**/main.aux
+article1/**/main.blg
+article1/**/main.fdb_latexmk
+article1/**/main.fls
+article1/**/main.log
+**/openai*key*.txt
+**/tfplan*
+
+# Terraform run logs may contain the Azure subscription ID in resource IDs — never commit
+article1/results/raw/aks/terraform-apply.log
+article1/results/raw/aks/terraform-destroy.log
+article1/results/raw/**/terraform-*.log

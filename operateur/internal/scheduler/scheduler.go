@@ -25,6 +25,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	nodev1 "k8s.io/api/node/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -41,6 +42,13 @@ const (
 	SchedulerName          = "ai-attestation-scheduler"
 	SimulatedEvidenceLabel = "ai.sovereign.io/simulated-evidence"
 	NodeAttestationLabel   = "ai.sovereign.io/attested"
+
+	// PlacementTokenAnnotation carries the full signed placement token on the
+	// AIPlacementDecision so an independent verifier (verify-placement) can
+	// check the signature offline. The verification public key is deliberately
+	// NOT stored here — it must be obtained out-of-band from the scheduler
+	// deployment configuration.
+	PlacementTokenAnnotation = "ai.sovereign.io/placement-token"
 )
 
 // NodeCandidate holds a node with its score and evidence.
@@ -59,6 +67,7 @@ type Scheduler struct {
 	tokenTTL           time.Duration
 	permitTimeout      time.Duration
 	permitPollInterval time.Duration
+	preBindDelay       time.Duration
 }
 
 // New creates a Scheduler.
@@ -79,17 +88,36 @@ func New(c client.Client, signingKey ed25519.PrivateKey, pubKey ed25519.PublicKe
 // Client returns the underlying Kubernetes client.
 func (s *Scheduler) Client() client.Client { return s.client }
 
+// SetPreBindDelay installs an optional test-only delay between candidate
+// selection/reservation and the fail-closed PreBind re-check. It is used by the
+// AKS adversarial harness to deterministically exercise TOCTOU races; the
+// re-check remains unchanged and still fails closed.
+func (s *Scheduler) SetPreBindDelay(delay time.Duration) {
+	if delay < 0 {
+		delay = 0
+	}
+	s.preBindDelay = delay
+}
+
 // SchedulePod is the main entry point: given a pending pod, find the best node
 // and bind the pod to it, creating an AIPlacementDecision.
 func (s *Scheduler) SchedulePod(ctx context.Context, pod *corev1.Pod) error {
 	logger := log.FromContext(ctx).WithValues("pod", pod.Name, "namespace", pod.Namespace)
 	logger.Info("attestation-scheduler: scheduling pod")
 
+	// In-process millisecond-resolution phase timing (Q1 latency instrumentation).
+	// These are measured with the monotonic clock and reported in microseconds so
+	// intra-scheduler phases are resolved far below Kubernetes' 1s timestamp grain.
+	t0 := time.Now()
+	usSince := func(start time.Time) int64 { return time.Since(start).Microseconds() }
+
 	// --- PreFilter: load policy ---
+	tPre := time.Now()
 	policy, err := s.preFilter(ctx, pod)
 	if err != nil {
 		return fmt.Errorf("prefilter: %w", err)
 	}
+	prefilterUS := usSince(tPre)
 
 	// --- List candidate nodes ---
 	var nodeList corev1.NodeList
@@ -98,12 +126,18 @@ func (s *Scheduler) SchedulePod(ctx context.Context, pod *corev1.Pod) error {
 	}
 
 	// --- Filter: keep only nodes with valid evidence ---
+	tFilter := time.Now()
 	candidates, err := s.filter(ctx, pod, policy, nodeList.Items)
 	if err != nil {
 		return fmt.Errorf("filter: %w", err)
 	}
+	filterUS := usSince(tFilter)
+
+	permitUS := int64(0)
 	if len(candidates) == 0 {
+		tPermit := time.Now()
 		candidates, err = s.permit(ctx, pod, policy, nodeList.Items)
+		permitUS = usSince(tPermit)
 		if err != nil {
 			return fmt.Errorf("permit: %w", err)
 		}
@@ -113,6 +147,7 @@ func (s *Scheduler) SchedulePod(ctx context.Context, pod *corev1.Pod) error {
 	}
 
 	// --- Score: rank candidates ---
+	tScore := time.Now()
 	s.score(candidates, policy)
 
 	// Sort descending by score
@@ -120,23 +155,47 @@ func (s *Scheduler) SchedulePod(ctx context.Context, pod *corev1.Pod) error {
 		return candidates[i].Score > candidates[j].Score
 	})
 	selected := candidates[0]
+	scoreUS := usSince(tScore)
 	logger.Info("attestation-scheduler: node selected", "node", selected.Node.Name, "score", selected.Score)
 
-	// --- Reserve: create AIPlacementDecision ---
-	placementToken, tokenStr, err := s.reserve(ctx, pod, policy, selected)
+	// --- Reserve: create AIPlacementDecision (includes PreBind re-check) ---
+	tReserve := time.Now()
+	placementToken, tokenStr, prebindUS, err := s.reserveTimed(ctx, pod, policy, selected)
 	if err != nil {
 		return fmt.Errorf("reserve: %w", err)
 	}
+	reservePrebindUS := usSince(tReserve)
+	reserveUS := reservePrebindUS - prebindUS
+	if reserveUS < 0 {
+		reserveUS = 0
+	}
 
 	// --- Bind: bind pod to node ---
+	tBind := time.Now()
 	if err := s.bind(ctx, pod, selected.Node.Name); err != nil {
 		return fmt.Errorf("bind: %w", err)
 	}
+	bindUS := usSince(tBind)
+	totalUS := usSince(t0)
 
 	logger.Info("attestation-scheduler: pod bound",
 		"node", selected.Node.Name,
 		"placementDecision", placementToken.Name,
 		"tokenDigest", tokenStr[:min(16, len(tokenStr))],
+	)
+	// Machine-readable phase timings in microseconds (ms-resolution, monotonic).
+	logger.Info("attestation-scheduler: phase timings",
+		"prefilter_us", prefilterUS,
+		"filter_us", filterUS,
+		"permit_wait_us", permitUS,
+		"score_us", scoreUS,
+		"reserve_us", reserveUS,
+		"prebind_us", prebindUS,
+		"reserve_prebind_us", reservePrebindUS,
+		"reserve_total_us", reservePrebindUS,
+		"bind_us", bindUS,
+		"total_us", totalUS,
+		"scheduler_total_us", totalUS,
 	)
 	return nil
 }
@@ -206,12 +265,20 @@ func (s *Scheduler) filter(
 	nodes []corev1.Node,
 ) ([]NodeCandidate, error) {
 	var candidates []NodeCandidate
+	runtimeScheduling, err := s.runtimeClassScheduling(ctx, pod)
+	if err != nil {
+		return nil, err
+	}
 
 	for i := range nodes {
 		node := &nodes[i]
 
 		// Skip unschedulable or tainted nodes.
 		if node.Spec.Unschedulable {
+			continue
+		}
+		if !podMatchesNodeConstraints(pod, node, runtimeScheduling) {
+			log.FromContext(ctx).V(1).Info("attestation-scheduler: node filtered", "node", node.Name, "reason", "pod node constraints do not match")
 			continue
 		}
 
@@ -223,6 +290,21 @@ func (s *Scheduler) filter(
 		candidates = append(candidates, NodeCandidate{Node: *node, Evidence: ev})
 	}
 	return candidates, nil
+}
+
+func (s *Scheduler) runtimeClassScheduling(ctx context.Context, pod *corev1.Pod) (*nodev1.Scheduling, error) {
+	if pod == nil || pod.Spec.RuntimeClassName == nil || strings.TrimSpace(*pod.Spec.RuntimeClassName) == "" {
+		return nil, nil
+	}
+	var runtimeClass nodev1.RuntimeClass
+	name := strings.TrimSpace(*pod.Spec.RuntimeClassName)
+	if err := s.client.Get(ctx, types.NamespacedName{Name: name}, &runtimeClass); err != nil {
+		return nil, fmt.Errorf("read RuntimeClass %q: %w", name, err)
+	}
+	if runtimeClass.Scheduling == nil {
+		return nil, nil
+	}
+	return runtimeClass.Scheduling, nil
 }
 
 // nodeHasValidEvidence returns the best matching AttestationEvidence for a node, or a reason for rejection.
@@ -237,15 +319,24 @@ func (s *Scheduler) nodeHasValidEvidence(
 	}
 
 	now := metav1.Now()
+	// A node is acceptable if ANY of its evidence objects satisfies every check.
+	// We must therefore scan ALL evidence for the node and only reject once none
+	// qualifies — a single stale or wrong-TEE evidence must never shadow a valid
+	// one, and a revoked evidence must never let an otherwise-invalid node pass.
+	lastReason := "no valid AttestationEvidence for node"
+	sawEvidenceForNode := false
 	for i := range evList.Items {
 		ev := &evList.Items[i]
 		if ev.Spec.SubjectRef.Name != node.Name {
 			continue
 		}
+		sawEvidenceForNode = true
 		if ev.Status.Revoked {
-			return nil, fmt.Sprintf("AttestationEvidence %q is revoked", ev.Name), false
+			lastReason = fmt.Sprintf("AttestationEvidence %q is revoked", ev.Name)
+			continue
 		}
 		if !ev.Status.Verified {
+			lastReason = fmt.Sprintf("AttestationEvidence %q is not verified", ev.Name)
 			continue
 		}
 		// Check freshness
@@ -253,18 +344,23 @@ func (s *Scheduler) nodeHasValidEvidence(
 			age := now.Sub(ev.Status.LastVerifiedTime.Time)
 			maxAge := time.Duration(policy.Spec.MaxEvidenceAgeSeconds) * time.Second
 			if age > maxAge {
-				return nil, fmt.Sprintf("evidence age %v exceeds max %v", age.Round(time.Second), maxAge), false
+				lastReason = fmt.Sprintf("evidence %q age %v exceeds max %v", ev.Name, age.Round(time.Second), maxAge)
+				continue
 			}
 		}
 		// Check TEE requirements
 		if policy != nil && len(policy.Spec.RequiredTEE) > 0 {
 			if !teeMatches(ev.Spec.TEE, policy.Spec.RequiredTEE) {
-				return nil, fmt.Sprintf("TEE %q not in required list", ev.Spec.TEE), false
+				lastReason = fmt.Sprintf("evidence %q TEE %q not in required list", ev.Name, ev.Spec.TEE)
+				continue
 			}
 		}
 		return ev, "", true
 	}
-	return nil, "no valid AttestationEvidence for node", false
+	if !sawEvidenceForNode {
+		return nil, "no AttestationEvidence for node", false
+	}
+	return nil, lastReason, false
 }
 
 // score assigns a score to each candidate node. Higher is better.
@@ -310,22 +406,34 @@ func (s *Scheduler) reserve(
 	policy *aiopsv1alpha1.ConfidentialInferencePolicy,
 	selected NodeCandidate,
 ) (*aiopsv1alpha1.AIPlacementDecision, string, error) {
+	decision, tokenStr, _, err := s.reserveTimed(ctx, pod, policy, selected)
+	return decision, tokenStr, err
+}
+
+// reserveTimed creates or updates the AIPlacementDecision, mints the placement
+// token, and returns the measured PreBind re-check duration separately.
+func (s *Scheduler) reserveTimed(
+	ctx context.Context,
+	pod *corev1.Pod,
+	policy *aiopsv1alpha1.ConfidentialInferencePolicy,
+	selected NodeCandidate,
+) (*aiopsv1alpha1.AIPlacementDecision, string, int64, error) {
 	podSpecHash, err := platformcrypto.CanonicalSHA256Hex(pod.Spec)
 	if err != nil {
-		return nil, "", fmt.Errorf("hash pod spec: %w", err)
+		return nil, "", 0, fmt.Errorf("hash pod spec: %w", err)
 	}
 
 	var policyHash, evidenceHash string
 	if policy != nil {
 		policyHash, err = platformcrypto.CanonicalSHA256Hex(policy.Spec)
 		if err != nil {
-			return nil, "", fmt.Errorf("hash policy spec: %w", err)
+			return nil, "", 0, fmt.Errorf("hash policy spec: %w", err)
 		}
 	}
 	if selected.Evidence != nil {
 		evidenceHash, err = evidenceHashForPlacement(selected.Evidence)
 		if err != nil {
-			return nil, "", fmt.Errorf("hash evidence: %w", err)
+			return nil, "", 0, fmt.Errorf("hash evidence: %w", err)
 		}
 	}
 
@@ -339,29 +447,6 @@ func (s *Scheduler) reserve(
 		imageDigest = pod.Spec.Containers[0].Image
 	}
 	modelDigest := pod.Annotations["ai.sovereign.io/model-digest"]
-
-	// Mint placement token (no-op if no signing key)
-	tokenStr := ""
-	if s.signingKey != nil {
-		tok, err := token.Mint(s.signingKey,
-			string(pod.UID), podSpecHash,
-			imageDigest, modelDigest,
-			selected.Node.Name, runtimeClass,
-			evidenceHash, policyHash,
-			s.tokenTTL,
-			token.MintOptions{},
-		)
-		if err != nil {
-			return nil, "", fmt.Errorf("mint placement token: %w", err)
-		}
-		encoded, err := token.Encode(tok)
-		if err != nil {
-			return nil, "", fmt.Errorf("encode placement token: %w", err)
-		}
-		tokenStr = encoded
-	}
-
-	tokenDigest := platformcrypto.SHA256Hex([]byte(tokenStr))
 
 	decisionName := fmt.Sprintf("%s-%s", pod.Name, pod.Namespace)
 	if len(decisionName) > 63 {
@@ -378,7 +463,7 @@ func (s *Scheduler) reserve(
 		},
 	}
 
-	decision, _, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+	applyBaseDecision := func(decision *aiopsv1alpha1.AIPlacementDecision) {
 		decision.Spec.TargetRef = aiopsv1alpha1.ObjectReference{Name: pod.Name, Namespace: pod.Namespace}
 		if policy != nil {
 			decision.Spec.PolicyRef = aiopsv1alpha1.ObjectReference{Name: policy.Name, Namespace: policy.Namespace}
@@ -388,20 +473,89 @@ func (s *Scheduler) reserve(
 			decision.Spec.EvidenceRef = &ref
 		}
 		decision.Spec.SchedulerName = SchedulerName
-		decision.Status.Decision = "allow"
 		decision.Status.NodeName = selected.Node.Name
-		decision.Status.PlacementTokenDigest = tokenDigest
 		decision.Status.Simulated = selected.Evidence != nil && selected.Evidence.Spec.Simulated
+	}
+
+	decision, _, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+		applyBaseDecision(decision)
+		if decision.Annotations != nil {
+			delete(decision.Annotations, PlacementTokenAnnotation)
+		}
+		decision.Status.Decision = "pending"
+		decision.Status.PlacementTokenDigest = ""
 	})
 	if err != nil {
-		return nil, "", fmt.Errorf("upsert AIPlacementDecision: %w", err)
+		return nil, "", 0, fmt.Errorf("upsert pending AIPlacementDecision: %w", err)
 	}
 
+	if s.preBindDelay > 0 {
+		log.FromContext(ctx).Info("attestation-scheduler: prebind test delay",
+			"delay", s.preBindDelay.String(),
+			"pod", pod.Name,
+			"namespace", pod.Namespace,
+		)
+		select {
+		case <-ctx.Done():
+			return decision, "", 0, ctx.Err()
+		case <-time.After(s.preBindDelay):
+		}
+	}
+
+	tPreBind := time.Now()
 	if err := s.preBind(ctx, pod, decision, selected); err != nil {
-		return nil, "", fmt.Errorf("prebind: %w", err)
+		prebindUS := time.Since(tPreBind).Microseconds()
+		_, _, _ = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+			applyBaseDecision(decision)
+			if decision.Annotations != nil {
+				delete(decision.Annotations, PlacementTokenAnnotation)
+			}
+			decision.Status.Decision = "deny"
+			decision.Status.PlacementTokenDigest = ""
+		})
+		return decision, "", prebindUS, fmt.Errorf("prebind: %w", err)
+	}
+	prebindUS := time.Since(tPreBind).Microseconds()
+
+	// Mint placement token only after the fail-closed PreBind re-check passes.
+	tokenStr := ""
+	if s.signingKey != nil {
+		tok, err := token.Mint(s.signingKey,
+			string(pod.UID), podSpecHash,
+			imageDigest, modelDigest,
+			selected.Node.Name, runtimeClass,
+			evidenceHash, policyHash,
+			s.tokenTTL,
+			token.MintOptions{},
+		)
+		if err != nil {
+			return nil, "", prebindUS, fmt.Errorf("mint placement token: %w", err)
+		}
+		encoded, err := token.Encode(tok)
+		if err != nil {
+			return nil, "", prebindUS, fmt.Errorf("encode placement token: %w", err)
+		}
+		tokenStr = encoded
 	}
 
-	return decision, tokenStr, nil
+	tokenDigest := platformcrypto.SHA256Hex([]byte(tokenStr))
+
+	decision, _, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+		applyBaseDecision(decision)
+		if tokenStr != "" {
+			if decision.Annotations == nil {
+				decision.Annotations = map[string]string{}
+			}
+			decision.Annotations[PlacementTokenAnnotation] = tokenStr
+		}
+		decision.Status.Decision = "allow"
+		decision.Status.PlacementTokenDigest = tokenDigest
+	})
+	if err != nil {
+		return nil, "", prebindUS, fmt.Errorf("finalize AIPlacementDecision: %w", err)
+	}
+
+	return decision, tokenStr, prebindUS, nil
 }
 
 // bind binds the pod to the target node using the Kubernetes Binding API.
@@ -431,6 +585,44 @@ func policyMatchesPod(policy *aiopsv1alpha1.ConfidentialInferencePolicy, ns *cor
 	if policy.Spec.Target.WorkloadSelector != nil {
 		sel, err := metav1.LabelSelectorAsSelector(policy.Spec.Target.WorkloadSelector)
 		if err != nil || !sel.Matches(labels.Set(pod.Labels)) {
+			return false
+		}
+	}
+	return true
+}
+
+func podMatchesNodeConstraints(pod *corev1.Pod, node *corev1.Node, runtimeScheduling *nodev1.Scheduling) bool {
+	if pod.Spec.NodeName != "" && pod.Spec.NodeName != node.Name {
+		return false
+	}
+	if len(pod.Spec.NodeSelector) > 0 && !labels.SelectorFromSet(pod.Spec.NodeSelector).Matches(labels.Set(node.Labels)) {
+		return false
+	}
+	if runtimeScheduling != nil && len(runtimeScheduling.NodeSelector) > 0 &&
+		!labels.SelectorFromSet(runtimeScheduling.NodeSelector).Matches(labels.Set(node.Labels)) {
+		return false
+	}
+	for i := range node.Spec.Taints {
+		taint := &node.Spec.Taints[i]
+		if taint.Effect != corev1.TaintEffectNoSchedule && taint.Effect != corev1.TaintEffectNoExecute {
+			continue
+		}
+		tolerated := false
+		for j := range pod.Spec.Tolerations {
+			if pod.Spec.Tolerations[j].ToleratesTaint(taint) {
+				tolerated = true
+				break
+			}
+		}
+		if !tolerated && runtimeScheduling != nil {
+			for j := range runtimeScheduling.Tolerations {
+				if runtimeScheduling.Tolerations[j].ToleratesTaint(taint) {
+					tolerated = true
+					break
+				}
+			}
+		}
+		if !tolerated {
 			return false
 		}
 	}
@@ -496,14 +688,15 @@ func (s *Scheduler) preBind(
 			return fmt.Errorf("read policy before bind: %w", err)
 		}
 		expectedPolicyHash := strings.TrimSpace(latestPod.Annotations["ai.sovereign.io/policy-hash"])
-		if expectedPolicyHash != "" {
-			currentPolicyHash, err := platformcrypto.CanonicalSHA256Hex(policy.Spec)
-			if err != nil {
-				return fmt.Errorf("hash policy before bind: %w", err)
-			}
-			if currentPolicyHash != expectedPolicyHash {
-				return fmt.Errorf("policy hash mismatch before bind")
-			}
+		if expectedPolicyHash == "" {
+			return fmt.Errorf("missing policy hash before bind")
+		}
+		currentPolicyHash, err := platformcrypto.CanonicalSHA256Hex(policy.Spec)
+		if err != nil {
+			return fmt.Errorf("hash policy before bind: %w", err)
+		}
+		if currentPolicyHash != expectedPolicyHash {
+			return fmt.Errorf("policy hash mismatch before bind")
 		}
 	}
 

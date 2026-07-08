@@ -1,0 +1,6 @@
+dependencies:
+- name: ai-sovereign-finops-operator
+  repository: file://../../operateur/charts/ai-sovereign-finops-operator
+  version: 0.5.11
+digest: sha256:8f835c6b5fd467c3cfe59dd84b91e3fa4a86e915647cda09d6c3e580f71a0104
+generated: "2026-07-08T06:58:39.966716911+01:00"

@@ -2,7 +2,7 @@
 # Override with -f values-kind.yaml or -f values-aks-private.yaml
 
 global:
-  registry: ""
+  registry: "ghcr.io/ihsenalaya/ai-sovereign-finops-operator"
   imagePullSecrets: []
   environment: kind  # kind | aks-private | production
   mode: thesis        # dev | thesis | startup
@@ -38,6 +38,10 @@ modules:
     enabled: true
   trustEvidenceOperator:
     enabled: true
+  centralVerifier:
+    enabled: true
+  nodeAttestationAgent:
+    enabled: true
   attestationScheduler:
     enabled: true
   keyReleaseGateway:
@@ -51,12 +55,20 @@ modules:
 
 # Per-module image configuration
 images:
-  tag: "0.5.4"
+  tag: "0.5.11"
   pullPolicy: IfNotPresent
 
   governanceOperator:
     repository: controller
     tag: ""  # defaults to images.tag
+
+  centralVerifier:
+    repository: central-verifier
+    tag: ""
+
+  nodeAttestationAgent:
+    repository: node-attestation-agent
+    tag: ""
 
   attestationScheduler:
     repository: attestation-scheduler
@@ -93,6 +105,46 @@ attestationScheduler:
     limits:
       cpu: 200m
       memory: 256Mi
+
+# Central verifier configuration. This is the only component allowed to create
+# or update AttestationEvidence from RawAttestationReport.
+centralVerifier:
+  replicaCount: 1
+  expectedTEE: sevsnpvm
+  maaIssuerPrefix: ""
+  maxTokenAgeSeconds: 300
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Node attestation agent configuration. The DaemonSet can create
+# RawAttestationReport only; it cannot write AttestationEvidence.
+nodeAttestationAgent:
+  provider: simulator
+  simulated: true
+  reportIntervalSeconds: 60
+  tokenEndpoint: ""
+  tokenFile: ""
+  helperPath: ""
+  helperTimeoutSeconds: 120
+  azureAttestationEndpoint: "https://sharedwus2.wus2.attest.azure.net"
+  tpmDevices:
+    enabled: false
+    privileged: false
+    supplementalGroup: 104
+  nodeSelector: {}
+  tolerations: []
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
 
 # Key release gateway configuration
 keyReleaseGateway:

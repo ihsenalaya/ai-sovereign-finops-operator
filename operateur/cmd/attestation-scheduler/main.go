@@ -84,6 +84,14 @@ func main() {
 	}
 
 	sched := scheduler.New(c, privKey, pubKey, tokenTTL)
+	if v := os.Getenv("AIOPS_PREBIND_TEST_DELAY_MS"); v != "" {
+		var ms int
+		if _, err := fmt.Sscan(v, &ms); err == nil && ms > 0 {
+			delay := time.Duration(ms) * time.Millisecond
+			sched.SetPreBindDelay(delay)
+			logger.Info("enabled prebind test delay", "delay", delay.String())
+		}
+	}
 
 	// Watch pending pods assigned to this scheduler
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{

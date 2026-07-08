@@ -317,9 +317,13 @@ ensure_operator_image() {
   # then finds it without any registry access). Build from source by default so the
   # operator always matches this repo's metrics/dashboard.
   if [ "${BUILD_OPERATOR}" = "true" ]; then
-    DOCKER_CONFIG="${HOME}/.docker" docker build -t "${OPERATOR_IMG}" "${OPERATOR}"
+    # Only public base images (golang, distroless) are pulled, so build with the
+    # anonymous DOCKER_CONFIG (set at the top of this script) and the legacy builder:
+    # the WSL Docker-Desktop credential helper is flaky (`error getting credentials`)
+    # and BuildKit hits vsock errors under WSL2. DOCKER_BUILDKIT=0 avoids both.
+    DOCKER_BUILDKIT=0 docker build -t "${OPERATOR_IMG}" "${OPERATOR}"
   elif ! docker image inspect "${OPERATOR_IMG}" >/dev/null 2>&1; then
-    DOCKER_CONFIG="${HOME}/.docker" docker pull "${OPERATOR_IMG}" \
+    docker pull "${OPERATOR_IMG}" \
       || { echo "cannot pull ${OPERATOR_IMG}; 'docker login ghcr.io' or set BUILD_OPERATOR=true" >&2; exit 1; }
   fi
   kind load docker-image "${OPERATOR_IMG}" --name "${CLUSTER}"
@@ -395,13 +399,28 @@ deploy_gateway_and_apps() {
   ${K} -n default create secret generic greenops-foundry-apikey \
     --from-literal=apiKey="${fkey}" --dry-run=client -o yaml | apply_stdin >/dev/null
   apply_file "${HERE}/01-gateway-cohere.yaml"
-  ${K} wait pods --timeout=180s -l gateway.envoyproxy.io/owning-gateway-name=greenops-aigw \
-    -n envoy-gateway-system --for=condition=Ready
+  # Envoy Gateway re-rolls the proxy Deployment every time a route/backend is added,
+  # so `kubectl wait pods -l ... --for=condition=Ready` is racy: a pod that gets
+  # replaced mid-wait makes it fail ("timed out waiting for condition on pods/<name>").
+  # Wait on the proxy Deployment's rollout instead, retrying across reconciles.
+  local proxy_deploy=""
+  for i in $(seq 1 30); do
+    proxy_deploy="$(${K} -n envoy-gateway-system get deploy \
+      -l gateway.envoyproxy.io/owning-gateway-name=greenops-aigw \
+      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+    if [ -n "${proxy_deploy}" ] && ${K} -n envoy-gateway-system rollout status \
+        "deploy/${proxy_deploy}" --timeout=60s >/dev/null 2>&1; then
+      echo "Envoy proxy deployment ${proxy_deploy} is Available."
+      break
+    fi
+    echo "waiting for Envoy proxy deployment to appear/settle (${i}/30)..."
+    sleep 10
+  done
   apply_file "${HERE}/02-metrics-and-catalog.yaml"
 }
 
 deploy_openai_fr() {
-  # Provider France — Azure OpenAI France Central (greenops-fr-ec0e82-06181356.openai.azure.com)
+  # Provider France — Azure OpenAI France Central (greenops-fr-60f9b0.openai.azure.com)
   # Apps: rh/chatbot-rh + legal/contract-review — zone FR → conforme
   step "4b/6 OpenAI France (souverain FR) — rh + legal"
   local fr_key_file="${OPERATOR}/docs/openai-fr-key.txt"
@@ -409,13 +428,13 @@ deploy_openai_fr() {
     # Récupération automatique via az CLI si disponible
     if command -v az >/dev/null 2>&1; then
       az cognitiveservices account keys list \
-        --name greenops-fr-ec0e82-06181356 --resource-group greenops-rg \
+        --name greenops-fr-60f9b0 --resource-group greenops-rg \
         --query key1 -o tsv > "${fr_key_file}" 2>/dev/null || true
     fi
   fi
   if [ ! -f "${fr_key_file}" ] || [ ! -s "${fr_key_file}" ]; then
     echo "Clé Azure OpenAI France manquante — skip."
-    echo "  az cognitiveservices account keys list -n greenops-fr-ec0e82-06181356 -g greenops-rg --query key1 -o tsv > operateur/docs/openai-fr-key.txt"
+    echo "  az cognitiveservices account keys list -n greenops-fr-60f9b0 -g greenops-rg --query key1 -o tsv > operateur/docs/openai-fr-key.txt"
     return 0
   fi
   local frkey
@@ -427,20 +446,20 @@ deploy_openai_fr() {
 }
 
 deploy_openai_us() {
-  # Provider US — Azure OpenAI US East (greenops-us-ec0e82-06181356.openai.azure.com)
+  # Provider US — Azure OpenAI US East (greenops-us-60f9b0.openai.azure.com)
   # App: finance/risk-assistant — zone US → violation de souveraineté
   step "4c/6 OpenAI US (non-souverain US) — finance"
   local us_key_file="${OPERATOR}/docs/openai-us-key.txt"
   if [ ! -f "${us_key_file}" ]; then
     if command -v az >/dev/null 2>&1; then
       az cognitiveservices account keys list \
-        --name greenops-us-ec0e82-06181356 --resource-group greenops-rg \
+        --name greenops-us-60f9b0 --resource-group greenops-rg \
         --query key1 -o tsv > "${us_key_file}" 2>/dev/null || true
     fi
   fi
   if [ ! -f "${us_key_file}" ] || [ ! -s "${us_key_file}" ]; then
     echo "Clé Azure OpenAI US manquante — skip."
-    echo "  az cognitiveservices account keys list -n greenops-us-ec0e82-06181356 -g greenops-rg --query key1 -o tsv > operateur/docs/openai-us-key.txt"
+    echo "  az cognitiveservices account keys list -n greenops-us-60f9b0 -g greenops-rg --query key1 -o tsv > operateur/docs/openai-us-key.txt"
     return 0
   fi
   local uskey

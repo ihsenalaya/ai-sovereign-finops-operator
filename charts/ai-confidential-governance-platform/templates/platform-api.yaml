@@ -17,7 +17,25 @@ metadata:
     {{- include "platform.labels" . | nindent 4 }}
 rules:
 - apiGroups: ["aiops.imperium.io"]
-  resources: ["*"]
+  resources:
+  - aibreakevenanalyses
+  - aibudgetpolicies
+  - aichangerequests
+  - aievidencerecords
+  - aifinopsreports
+  - aigateways
+  - aikeyreleasepolicies
+  - aimodels
+  - aiplacementdecisions
+  - aiproviders
+  - aiqualitygates
+  - airevocationpolicies
+  - airouteoverrides
+  - airoutingpolicies
+  - aisovereigntypolicies
+  - attestationevidences
+  - confidentialinferencepolicies
+  - rawattestationreports
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["pods", "nodes", "namespaces"]
@@ -76,6 +94,7 @@ spec:
         component: platform-api
     spec:
       serviceAccountName: platform-api
+      {{- include "platform.imagePullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532

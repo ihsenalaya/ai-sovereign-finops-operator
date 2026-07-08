@@ -20,6 +20,7 @@ spec:
         app: thesis-bench
     spec:
       restartPolicy: Never
+      {{- include "platform.imagePullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532

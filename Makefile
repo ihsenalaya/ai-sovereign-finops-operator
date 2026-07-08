@@ -2,14 +2,15 @@ SHELL := /usr/bin/env bash
 
 # ─── Variables ────────────────────────────────────────────────────────────────
 REGISTRY       ?=
-VERSION        ?= 0.5.4
+VERSION        ?= 0.5.11
 IMAGE_TAG      ?= $(VERSION)
 CHART_VERSION  ?= $(VERSION)
 PUSH           ?= false
 HELM_REGISTRY  ?=
-GHCR_NAMESPACE ?= ghcr.io
+GHCR_NAMESPACE ?= ghcr.io/ihsenalaya/ai-sovereign-finops-operator
+DOCKER         ?= $(shell if command -v docker >/dev/null 2>&1; then command -v docker; elif [ -x "/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe" ]; then printf '%s' "/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe"; else printf '%s' docker; fi)
 
-IMAGES := governance-operator attestation-scheduler key-release-gateway platform-api platform-ui thesis-bench
+IMAGES := controller central-verifier node-attestation-agent attestation-scheduler key-release-gateway platform-api platform-ui thesis-bench
 
 NAMESPACE ?= ai-platform
 KIND_CLUSTER ?= ai-platform
@@ -21,6 +22,7 @@ KIND_CLUSTER ?= ai-platform
   build-images push-images \
   kind-up kind-down kind-load deploy-kind undeploy-kind \
   article1-build-images article1-kind-up article1-kind-down article1-load-kind article1-install article1-run-security article1-run-races article1-run-all article1-collect \
+  aks-run-ai-workload aks-run-multinode aks-run-performance-b1-b5 article1-update-q1-artifacts \
   helm-lint helm-template-kind helm-template-aks-private helm-package helm-push \
   thesis-bench \
   bootstrap-tools \
@@ -53,6 +55,9 @@ help:
 	@printf "  helm-package                 Package Helm chart\n"
 	@printf "  helm-push                    Push chart to OCI registry (HELM_REGISTRY=... required)\n"
 	@printf "  thesis-bench                 Run thesis bench inside kind cluster\n"
+	@printf "  aks-run-ai-workload          Run Article 1 governed AI workloads on AKS\n"
+	@printf "  aks-run-multinode            Run Article 1 AKS multi-node qualification\n"
+	@printf "  aks-run-performance-b1-b5    Run Article 1 AKS B1-B5 performance campaign\n"
 	@printf "  ui-install                   npm install for platform-ui\n"
 	@printf "  ui-build                     Build platform-ui for production\n"
 	@printf "  ui-dev                       Start platform-ui dev server\n"
@@ -108,27 +113,31 @@ OPERATEUR_DIR := operateur
 
 build-images:
 	@echo "Building images (tag: $(IMAGE_TAG))"
-	docker build -t $(if $(REGISTRY),$(REGISTRY)/,)controller:$(IMAGE_TAG) \
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)controller:$(IMAGE_TAG) \
 	  -f $(OPERATEUR_DIR)/Dockerfile $(OPERATEUR_DIR)
-	docker build -t $(if $(REGISTRY),$(REGISTRY)/,)attestation-scheduler:$(IMAGE_TAG) \
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)central-verifier:$(IMAGE_TAG) \
+	  -f $(OPERATEUR_DIR)/Dockerfile.central-verifier $(OPERATEUR_DIR)
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)node-attestation-agent:$(IMAGE_TAG) \
+	  -f $(OPERATEUR_DIR)/Dockerfile.node-attestation-agent $(OPERATEUR_DIR)
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)attestation-scheduler:$(IMAGE_TAG) \
 	  -f $(OPERATEUR_DIR)/Dockerfile.scheduler $(OPERATEUR_DIR)
-	docker build -t $(if $(REGISTRY),$(REGISTRY)/,)key-release-gateway:$(IMAGE_TAG) \
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)key-release-gateway:$(IMAGE_TAG) \
 	  -f $(OPERATEUR_DIR)/Dockerfile.key-release-gateway $(OPERATEUR_DIR)
-	docker build -t $(if $(REGISTRY),$(REGISTRY)/,)platform-api:$(IMAGE_TAG) \
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)platform-api:$(IMAGE_TAG) \
 	  -f $(OPERATEUR_DIR)/Dockerfile.platform-api $(OPERATEUR_DIR)
-	docker build -t $(if $(REGISTRY),$(REGISTRY)/,)thesis-bench:$(IMAGE_TAG) \
+	"$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)thesis-bench:$(IMAGE_TAG) \
 	  -f $(OPERATEUR_DIR)/Dockerfile.thesis-bench $(OPERATEUR_DIR)
 	@if [ -f platform-ui/src/main.tsx ]; then \
-	  docker build -t $(if $(REGISTRY),$(REGISTRY)/,)platform-ui:$(IMAGE_TAG) platform-ui; \
+	  "$(DOCKER)" build -t $(if $(REGISTRY),$(REGISTRY)/,)platform-ui:$(IMAGE_TAG) platform-ui; \
 	else \
-	  docker pull nginx:1.27-alpine && docker tag nginx:1.27-alpine platform-ui:$(IMAGE_TAG); \
+	  "$(DOCKER)" pull nginx:1.27-alpine && "$(DOCKER)" tag nginx:1.27-alpine platform-ui:$(IMAGE_TAG); \
 	fi
 
 push-images:
 	@if [ "$(PUSH)" != "true" ]; then echo "PUSH is not true — skipping. Use PUSH=true to push."; exit 0; fi
 	@if [ -z "$(REGISTRY)" ]; then echo "ERROR: REGISTRY is not set"; exit 1; fi
-	for img in controller attestation-scheduler key-release-gateway platform-api platform-ui thesis-bench; do \
-	  docker push $(REGISTRY)/$$img:$(IMAGE_TAG); \
+	for img in $(IMAGES); do \
+	  "$(DOCKER)" push $(REGISTRY)/$$img:$(IMAGE_TAG); \
 	done
 
 # ─── Article 1 ───────────────────────────────────────────────────────────────
@@ -161,6 +170,25 @@ article1-collect:
 	chmod +x automation/scripts/article1-collect.sh
 	./automation/scripts/article1-collect.sh
 
+aks-run-ai-workload:
+	KUBECONFIG=$${KUBECONFIG:-automation/terraform/aks-confidential/kubeconfig-aks} \
+	ENV_NAME=aks-real-sevsnp PLATFORM_NS=$(NAMESPACE) OUT_DIR=article1/results/raw/aks \
+	bash article1/experiments/ai-workload/run_ai_workloads_aks.sh
+
+aks-run-multinode:
+	KUBECONFIG=$${KUBECONFIG:-automation/terraform/aks-confidential/kubeconfig-aks} \
+	ENV_NAME=aks-real-sevsnp PLATFORM_NS=$(NAMESPACE) OUT_DIR=article1/results/raw/aks \
+	bash article1/experiments/aks/run_multinode_node_selection.sh
+
+aks-run-performance-b1-b5:
+	KUBECONFIG=$${KUBECONFIG:-automation/terraform/aks-confidential/kubeconfig-aks} \
+	ENV_NAME=aks-real-sevsnp PLATFORM_NS=$(NAMESPACE) OUT_DIR=article1/results/raw/aks \
+	N_RUNS_PERFORMANCE=$${N_RUNS_PERFORMANCE:-30} WARMUP=$${WARMUP:-2} \
+	bash article1/experiments/performance/run_aks_b1_b5_latency.sh
+
+article1-update-q1-artifacts:
+	python3 article1/scripts/update_q1_final_artifacts.py
+
 # ─── Kind ────────────────────────────────────────────────────────────────────
 
 kind-up:
@@ -171,7 +199,7 @@ kind-down:
 	kind delete cluster --name $(KIND_CLUSTER) || true
 
 kind-load: build-images
-	@for img in controller attestation-scheduler key-release-gateway platform-api platform-ui thesis-bench; do \
+	@for img in $(IMAGES); do \
 	  kind load docker-image $$img:$(IMAGE_TAG) --name $(KIND_CLUSTER); \
 	done
 

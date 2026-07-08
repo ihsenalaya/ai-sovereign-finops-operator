@@ -1,0 +1,1131 @@
+# PROMPT CODEX — Q1 FINAL HARDENING FROM REVIEWER CRITIQUE
+## Article 1: Attestation-Aware Scheduling for Verifiable Placement on SEV-SNP Confidential Kubernetes Nodes
+
+## 2026-07-06 CODEX FINAL UPDATE — DO NOT REVERT
+
+The following reviewer-critical items have been completed on real AKS
+(`aks-real-sevsnp`) and must be preserved:
+
+- Real AI workloads are present and passing:
+  `article1/results/raw/aks/ai_workloads.csv`,
+  `article1/results/tables/ai_workloads.csv`.
+  Workloads: `openai-chat-minimal`, `openai-embedding-minimal`,
+  `local-cpu-minimal`. All have `placement_decision=allow`,
+  `verify_result=PASS`, and `status=PASS`.
+- Multi-node AKS qualification is present and passing:
+  `article1/results/raw/aks/multinode_node_selection.csv`,
+  `article1/results/tables/multinode_node_selection.csv`.
+  Snapshot: four active `Standard_DC8as_v6` confidential nodes with real
+  verified evidence in
+  `article1/results/raw/aks/multinode-node-selection/evidence-initial.json`.
+  Cases: valid binds; revoked, expired, and no-evidence do not bind.
+- B1-B5 AKS performance is present and passing:
+  `article1/results/raw/aks/performance_b1_b5_high_resolution.csv`,
+  `article1/results/tables/performance.csv`,
+  `article1/paper/figures/scheduling_latency_cdf.pdf`.
+  There are 30 measured runs per baseline plus 2 warmups; anti-quantization
+  status is PASS; B5 client-observed median is 1167.0 ms. The B5
+  scheduler-internal phase median is separately 216.232 ms and must not be
+  mixed with B1-B4 on the same latency axis.
+- Reviewer-facing tables/figures are generated:
+  `article1/paper/tables/security_attack_matrix.csv`,
+  `article1/paper/tables/b4_b5_comparison.csv`,
+  `article1/paper/tables/claim_evidence_mapping.csv`,
+  `article1/paper/figures/security_attack_heatmap.pdf`.
+- Manuscript and Overleaf sources have been updated to keep AI, but only within
+  the narrow claim: governed real AI workloads on node-level SEV-SNP AKS with
+  placement-token verification and model/image digest binding. Do not claim
+  model confidentiality, OpenAI service confidentiality, confidential GPU,
+  Intel TDX, or pod-level attestation.
+- Kind/KWOK remain CI/debug/regression or scheduler-only context. They must not
+  be presented as main paper security or cloud-performance results.
+- B4/B5 wording must remain reviewer-safe: B5 eliminates the externally
+  schedulable gate-removal-to-bind window, but a residual in-process
+  PreBind-to-Bind interval remains theoretically possible.
+
+You are Codex. You are working in the PRIVATE fork of the repository:
+
+`ai-sovereign-finops-operator`
+
+Your mission is to fix the current manuscript and experimental package so that it has the best possible chance for a Q1 journal submission.
+
+You must act like a severe systems/security reviewer. Do not optimize for a pretty PDF. Optimize for a defensible paper.
+
+The current paper has a strong core:
+
+- central verifier + RawAttestationReport → AttestationEvidence trust chain;
+- attestation-aware Kubernetes scheduler;
+- fail-closed PreBind re-check;
+- B4 schedulingGate baseline vs B5 proposed scheduler;
+- signed AIPlacementDecision / Ed25519 placement token;
+- offline `verify-placement`;
+- real AKS SEV-SNP node-level attestation;
+- deployed adversarial campaign;
+- explicit node-level limitation.
+
+But the current draft is not yet Q1-ready. You must fix the weak points listed below.
+
+---
+
+# 0A. AUTHOR DECISION — KEEP AI, BUT WITH REAL AI WORKLOADS
+
+Author decision: do **not** remove `AI` from the title or main positioning.
+Instead, keep `AI` only after adding real AI workload evidence on AKS.
+
+Reviewer-safe strategy:
+
+- run more than one real AI workload when feasible, not only a single toy case;
+- use the existing private key file `article1/ai_key.txt` only as a runtime
+  secret and never print it, commit it, copy it into raw logs, or include it in
+  generated artifacts;
+- keep all AI claims narrow: the paper may claim that real AI API/model
+  workloads were placed through the attestation-aware scheduler and bound to
+  model/image digests on a node-level SEV-SNP AKS node;
+- the paper must **not** claim model confidentiality, local LLM confidentiality,
+  confidential GPU execution, OpenAI service confidentiality, or large-model
+  throughput;
+- each AI workload must produce raw CSV evidence under
+  `article1/results/raw/aks/` and a table under `article1/results/tables/`;
+- if a workload fails, record `FAILED`/`NOT_EXECUTED` with raw logs and weaken
+  the paper; do not hide the failed run.
+
+Minimum AI workload set to attempt on AKS:
+
+1. `openai-chat-minimal`: a real OpenAI text-generation request from a governed
+   pod, with request count, success count, median latency, model name, model
+   digest identifier, image digest and placement-token verification.
+2. `openai-embedding-minimal`: a real OpenAI embedding request from a governed
+   pod, with the same placement and verification fields.
+3. `local-cpu-minimal` if feasible without adding heavy images: a tiny CPU-only
+   local inference/classification script or deterministic model artifact inside
+   the governed pod. If this cannot be done cleanly, mark it `NOT_EXECUTED` and
+   keep the two OpenAI API workloads as the supported AI evidence.
+
+Required CSV:
+
+```text
+article1/results/raw/aks/ai_workloads.csv
+article1/results/tables/ai_workloads.csv
+```
+
+Required columns:
+
+```text
+timestamp,env,run_id,workload_id,workload_type,model_name,model_digest,image_digest,namespace,pod,placement_decision,verify_result,request_count,success_count,latency_ms_median,status,raw_log_path
+```
+
+Required paper wording:
+
+```text
+Confidential AI inference is the motivating use case. Our AKS experiment runs
+minimal real AI workloads from attestation-governed pods and binds placement to
+model and image digests. We evaluate node-level attested placement and offline
+placement verification, not model confidentiality, GPU execution, or large-model
+throughput.
+```
+
+# 0. ABSOLUTE RULES
+
+Never:
+
+- invent results;
+- invent citations;
+- invent DOI;
+- claim pod-level attestation unless measured;
+- claim confidential GPU evaluation;
+- claim Intel TDX evaluation;
+- claim “AI inference evaluation” unless an actual AI workload is run;
+- report kind results as cloud performance;
+- report kwok as real cluster performance;
+- hide failures;
+- cherry-pick only successful runs;
+- use `|| true`, unjustified `skip`, `t.Skip`, `--validate=false`, `continue-on-error`;
+- commit kubeconfig, tfstate, subscription IDs, tokens, secrets, private keys;
+- push to a public remote.
+
+Every result in the paper must map to raw data under:
+
+`article1/results/raw/`
+
+Every figure must be generated by a script.
+
+Every table must identify its raw input.
+
+Every major claim must appear in:
+
+`article1/paper/tables/claim_evidence_mapping.csv`
+
+with status:
+
+`SUPPORTED | WEAKEN | REMOVE | NEEDS_EXPERIMENT`
+
+If a claim is not supported by raw evidence, weaken it or remove it.
+
+---
+
+# 1. FIRST TASK — CREATE REVIEWER-CRITIQUE ACTION MATRIX
+
+Read the current PDF/manuscript and create:
+
+`article1/status/reviewer_q1_critique_action_matrix.md`
+
+Columns:
+
+```text
+id, reviewer_issue, severity, affected_sections, required_fix, files_to_modify, experiments_needed, status
+```
+
+Include at least these issues:
+
+1. AI claim is fragile without a real AI workload.
+2. Only one active confidential node weakens the scheduling claim.
+3. Performance lacks full B1–B5 overhead comparison.
+4. Security figures are too uninformative.
+5. “B5 = 0 TOCTOU” wording is too strong.
+6. Scheduler self-security is only RBAC minimality, not full self-security.
+7. Scalability is absent or explicitly deferred.
+8. Related work contains risky preprints and must be audited.
+9. Identity-binding figure is visually weak.
+10. “unauthenticated metadata” wording is technically attackable.
+11. SKU/region consistency must be verified from raw Azure outputs.
+12. Artifact private vs reproducibility claim tension.
+13. Abstract and conclusion overclaim relative to limitations.
+14. B4 vs B5 central result must be promoted as the paper’s core.
+15. Key-release/audit-chain material must not pollute Article 1 claims.
+
+Do not start editing the paper before this matrix is created.
+
+---
+
+# 2. FIX CLAIM AND TITLE STRATEGY
+
+The current title contains “AI”. This is only acceptable if the evaluation includes a real AI workload.
+
+## Option A — Preferred if feasible: keep AI by adding a minimal real AI workload
+
+Add a minimal CPU-only AI inference workload that does not require GPU:
+
+Possible options:
+
+- `llama.cpp` with a tiny GGUF model;
+- ONNX Runtime with a small public model;
+- a minimal embedding or classification model;
+- a toy but real inference container with a hashed model artifact.
+
+Requirements:
+
+- model artifact has `modelDigest`;
+- container image has `imageDigest`;
+- pod is governed by `ConfidentialInferencePolicy`;
+- workload submits real inference requests;
+- scheduler placement is evaluated as before;
+- no claim about model confidentiality beyond node-level placement;
+- no claim about GPU.
+
+Create:
+
+```text
+article1/experiments/ai-workload/run_minimal_ai_workload_aks.sh
+article1/results/raw/aks/ai_workload_minimal.csv
+article1/results/tables/ai_workload.csv
+```
+
+CSV columns:
+
+```text
+timestamp,env,run_id,model_name,model_digest,image_digest,namespace,pod,placement_decision,verify_result,request_count,success_count,latency_ms_median,raw_log_path
+```
+
+Paper wording allowed:
+
+```text
+Confidential AI inference is the motivating use case; our experiment uses a minimal CPU inference workload to bind the scheduler mechanism to an actual model artifact and image digest. We do not evaluate model confidentiality, GPU execution, or throughput of large LLMs.
+```
+
+## Option B — If real AI workload is not feasible: remove “AI” from the main claim
+
+Use this title:
+
+```text
+Attestation-Aware Kubernetes Scheduling for Verifiable Placement on SEV-SNP Confidential Nodes
+```
+
+Then mention AI only as motivation:
+
+```text
+Confidential AI inference is a motivating workload class, but the mechanism applies to sensitive Kubernetes workloads generally.
+```
+
+Create:
+
+```text
+article1/status/ai_claim_decision.md
+```
+
+with:
+
+```text
+decision = KEEP_AI_WITH_MINIMAL_WORKLOAD | REMOVE_AI_FROM_TITLE
+evidence_path = ...
+paper_changes = ...
+```
+
+Do not leave the paper in the middle.
+
+---
+
+# 3. STRENGTHEN SCHEDULING EVALUATION WITH MULTI-NODE AKS
+
+The current real cluster uses only one active confidential node. This weakens a scheduling paper.
+
+Add an AKS experiment with a heterogeneous node set if quota allows.
+
+Target setup:
+
+```text
+1 valid confidential node with real evidence
+1 confidential node with revoked evidence
+1 confidential node with expired evidence
+1 non-confidential system node or worker node
+```
+
+If the pool can autoscale to 4, scale it up for the experiment.
+
+Create:
+
+```text
+article1/experiments/aks/run_multinode_node_selection.sh
+article1/results/raw/aks/multinode_node_selection.csv
+article1/results/tables/multinode_node_selection.csv
+```
+
+CSV columns:
+
+```text
+timestamp,env,run_id,node_name,node_type,evidence_status,tee_type,eligible,score,selected,pod_bound,reason,raw_log_path
+```
+
+Expected:
+
+- only the node with fresh, verified, non-revoked SEV-SNP evidence is eligible;
+- revoked/expired/no-evidence nodes are rejected;
+- labels alone never make a node eligible.
+
+If multi-node AKS is not possible due to quota or AKS constraints:
+
+- write `NOT_EXECUTED`;
+- explain why;
+- add a smaller two-node version if possible;
+- do not pretend scheduling diversity was tested.
+
+Paper update:
+
+- include a table or short subsection:
+  `Multi-node node qualification`.
+
+---
+
+# 4. PERFORMANCE — ADD TRUE B1–B5 OVERHEAD COMPARISON
+
+Superseded final state: the paper now reports the AKS B1-B5 comparison from
+`performance_b1_b5_high_resolution.csv`; the B1-B5 table and CDF use one
+client-observed scheduling-path instrument. B5 client-observed median is
+1167.0 ms. B5 scheduler-internal phase median is 216.232 ms and must remain a
+separate metric, never plotted against B1-B4 on the same latency axis.
+
+Create or update:
+
+```text
+article1/experiments/performance/run_aks_b1_b5_latency.sh
+article1/results/raw/aks/performance_b1_b5_high_resolution.csv
+article1/results/tables/performance.csv
+article1/paper/figures/scheduling_latency_cdf.pdf
+```
+
+Baselines:
+
+```text
+B1 default kube-scheduler
+B2 nodeSelector / label confidential=true
+B3 RuntimeClass only
+B4 schedulingGates + external verifier controller
+B5 proposed attestation-aware scheduler
+```
+
+Required metrics:
+
+```text
+admission_latency_ms
+prefilter_latency_ms
+filter_latency_ms
+score_latency_ms
+permit_wait_ms
+prebind_latency_ms
+bind_latency_ms
+scheduler_total_latency_ms
+pod_pending_duration_ms
+pod_admission_to_running_ms
+scheduler_cpu_millicores
+scheduler_memory_mib
+```
+
+Statistics:
+
+- N ≥ 30 measured runs per baseline;
+- at least 2 warm-up runs kept in raw data but excluded from aggregation;
+- median;
+- p95;
+- p99;
+- bootstrap CI95;
+- Mann–Whitney U for B5 vs B1 and B5 vs B4;
+- absolute overhead in ms;
+- relative overhead in %.
+
+Add anti-quantization check:
+
+```text
+If >90% of latency values are exact multiples of 1000 ms, FAIL.
+```
+
+Paper table must include:
+
+```text
+baseline,n,median_ms,p95_ms,p99_ms,ci95_low,ci95_high,overhead_vs_B1_ms,overhead_vs_B1_pct,overhead_vs_B4_ms,mannwhitney_p
+```
+
+Paper rule:
+
+Do not write “acceptable overhead” unless the table supports it.
+
+If overhead is high, write:
+
+```text
+The prototype favors safety over latency; phase-level timing shows where optimization is needed.
+```
+
+---
+
+# 5. REPHRASE TOCTOU CLAIM SAFELY
+
+Current wording around “B5=0” is dangerous.
+
+Replace strong zero-window language with:
+
+```text
+B5 eliminates the externally schedulable gate-removal-to-bind TOCTOU window observed in B4. A residual in-process PreBind-to-Bind interval remains theoretically possible, but it is bounded to a single local scheduling path and does not hand control back to the API server between check and bind.
+```
+
+Update:
+
+```text
+abstract.tex
+introduction.tex
+evaluation.tex
+security-analysis.tex
+conclusion.tex
+```
+
+Keep the figure, but label it:
+
+```text
+Externally controllable TOCTOU window
+```
+
+not simply:
+
+```text
+TOCTOU = 0
+```
+
+---
+
+# 6. PROMOTE B4 VS B5 AS CENTRAL CONTRIBUTION
+
+The B4 vs B5 result is the strongest publishable contribution.
+
+Make it the center of:
+
+- Abstract;
+- Introduction contributions;
+- Evaluation;
+- Discussion;
+- Conclusion.
+
+Explain clearly:
+
+```text
+B4 is a strong non-strawman baseline:
+- it checks real evidence;
+- it verifies freshness/revocation/TEE;
+- it removes schedulingGate;
+- then default scheduler binds.
+
+But:
+- it has a gate-removal-to-bind TOCTOU window;
+- it has no scheduler-native PreBind re-check;
+- it emits no offline-verifiable placement token.
+
+B5:
+- re-checks at PreBind;
+- refuses on policy/evidence mismatch;
+- signs AIPlacementDecision;
+- supports offline verification.
+```
+
+Create a table:
+
+```text
+article1/paper/tables/b4_b5_comparison.csv
+```
+
+Columns:
+
+```text
+feature,B4_schedulingGate,B5_attestation_scheduler,raw_evidence
+```
+
+Features:
+
+```text
+real evidence check
+freshness check
+revocation check
+TEE check
+scheduler-native PreBind re-check
+gate-removal-to-bind window
+offline-verifiable placement token
+independent verify-placement
+```
+
+---
+
+# 7. IMPROVE SECURITY EVALUATION FIGURES AND TABLES
+
+The current security figure with bars at 1.0 is weak.
+
+Create a more informative table:
+
+```text
+article1/paper/tables/security_attack_matrix.csv
+```
+
+Columns:
+
+```text
+attack_id,adversary,target_property,defense_point,runs,blocked,block_rate,ci95_low,ci95_high,primary_raw_file
+```
+
+Create a figure:
+
+```text
+article1/paper/figures/security_attack_heatmap.pdf
+```
+
+Rows: A1–A11  
+Columns:
+
+```text
+Admission
+Filter
+Permit
+PreBind
+Verifier
+RBAC
+Verify-placement
+```
+
+Cell value:
+
+```text
+main defense point used
+```
+
+For A11, explicitly mark:
+
+```text
+GPU-scope fail-closed, not confidential GPU evaluation
+```
+
+Do not rely only on a bar chart that shows all attacks at 1.0.
+
+---
+
+# 8. FIX SCHEDULER SELF-SECURITY SCOPE
+
+Current section tests 12 RBAC probes. This is useful but not full self-security.
+
+Option A — rename honestly:
+
+```text
+Scheduler RBAC Minimality Audit
+```
+
+If you choose this option:
+
+- change section title;
+- remove overbroad “self-security” claim;
+- state that fake scheduler / NetworkPolicy / pod hardening / image signing are future hardening;
+- keep table III as RBAC audit.
+
+Option B — complete S1–S30 and keep self-security
+
+If feasible, implement and test:
+
+```text
+S13 non-root
+S14 read-only root filesystem
+S15 drop capabilities
+S16 no hostPath
+S17 not privileged
+S18 seccomp RuntimeDefault
+S19 metrics restricted by NetworkPolicy
+S20 egress restricted if NetworkPolicy enabled
+S21 fake scheduler cannot create pods/binding
+S22 fake scheduler cannot create AIPlacementDecision
+S23 fake scheduler cannot produce valid placement token
+S24 policy API unavailable -> reject
+S25 evidence API unavailable -> reject
+S26 signing key unavailable -> reject
+S27 PreBind API read error -> reject
+S28 malformed evidence -> reject
+S29 missing evidence -> reject
+S30 invalid signature path -> reject
+```
+
+Create:
+
+```text
+article1/results/raw/aks/scheduler_security_s1_s30.csv
+article1/results/tables/scheduler_security.csv
+article1/paper/figures/scheduler_security_matrix.pdf
+```
+
+Rule:
+
+Do not call the section “Scheduler Self-Security” unless S1–S30 are completed or clearly marked with status and limitations.
+
+---
+
+# 9. ADD SCHEDULER-ONLY SCALABILITY WITH KWOK
+
+The paper currently says scale is future work. For a scheduling paper, add at least scheduler-only scale.
+
+Do NOT run large scalability on AKS.
+
+AKS is for:
+
+- real attestation;
+- real security;
+- performance B1–B5;
+- B4 vs B5.
+
+Scalability is:
+
+- kind for small end-to-end functional scale;
+- kwok for scheduler-only scale.
+
+Create:
+
+```text
+article1/experiments/scalability/run_kind_scalability.sh
+article1/experiments/scalability/run_kwok_scheduler_scalability.sh
+article1/results/raw/kind/scalability_kind.csv
+article1/results/raw/kwok/scalability_scheduler_only.csv
+article1/results/tables/scalability.csv
+article1/paper/figures/scalability_line.pdf
+```
+
+Kind:
+
+```text
+10, 50, 100 pods
+500 if host supports
+```
+
+KWOK:
+
+```text
+nodes: 100, 500, 1000
+pods: 100, 500, 1000
+policies: 1, 10, 50
+evidence objects: 10, 100, 500
+```
+
+Metrics:
+
+```text
+scheduler_throughput
+filter_latency_ms
+score_latency_ms
+prebind_latency_ms
+scheduler_cpu
+scheduler_memory
+```
+
+Required wording:
+
+```text
+KWOK results are scheduler-only simulated-node scalability results; they are not real cluster performance. Real security and performance are evaluated on AKS.
+```
+
+If KWOK cannot be integrated, keep scale as limitation and mark:
+
+```text
+NO_GO_SCALABILITY_MISSING
+```
+
+in the final report.
+
+---
+
+# 10. FIX IDENTITY-BINDING FIGURE
+
+Current identity-binding figure is visually weak.
+
+Create:
+
+```text
+article1/paper/figures/identity_binding_matrix.pdf
+```
+
+Better visualization:
+
+Rows:
+
+```text
+correct token
+mutate podUID
+mutate podSpecHash
+mutate node identity
+mutate evidenceHash
+mutate policyHash
+mutate timestamp
+mutate signer/keyID if tested
+```
+
+Columns:
+
+```text
+verify result
+failure reason
+```
+
+Use clear color coding:
+
+- green = PASS only for correct token;
+- red = FAIL for mutations.
+
+Update text to say:
+
+```text
+Only the unmodified placement token verifies; all field mutations fail with explicit reasons.
+```
+
+---
+
+# 11. FIX WORDING “UNAUTHENTICATED METADATA”
+
+Replace:
+
+```text
+unauthenticated metadata
+```
+
+with:
+
+```text
+non-cryptographic, mutable cluster metadata
+```
+
+Rationale:
+
+Kubernetes labels are authenticated through API server/RBAC, but they are not cryptographic attestation evidence and have no freshness/revocation semantics.
+
+Apply this to:
+
+```text
+abstract
+introduction
+background
+security analysis
+conclusion
+```
+
+Do not let a reviewer attack the wording.
+
+---
+
+# 12. VERIFY SKU / REGION CONSISTENCY
+
+The paper must be internally consistent.
+
+Create:
+
+```text
+article1/status/azure_sku_region_audit.md
+```
+
+Extract from raw Azure outputs:
+
+```text
+region
+resource group
+AKS version
+Kubernetes version
+confidential node pool name
+VM SKU
+quota family
+active confidential node count
+max confidential node count
+MAA endpoint
+experiment date
+```
+
+Search the whole paper/repo for:
+
+```text
+DCasv5
+DCASv5
+DC8as_v5
+DCasv6
+DCASv6
+DC8as_v6
+eastus2
+westus2
+sharedwus2
+```
+
+Correct everything according to raw outputs.
+
+If the real SKU is `Standard_DC8as_v6`, keep it.  
+If the real quota is v5, correct v6.  
+Do not rely on memory or chat history; use raw outputs.
+
+Create table in paper:
+
+```text
+Experimental Environment
+```
+
+from raw file only.
+
+---
+
+# 13. FIX REPRODUCIBILITY / PRIVATE ARTIFACT TENSION
+
+Current paper says reproducible by single command but artifact is private.
+
+Replace broad claim with:
+
+```text
+Within our private artifact, all reported figures are regenerated from raw results by a single command. Public artifact release is pending IP review.
+```
+
+Create:
+
+```text
+article1/status/artifact_ip_reproducibility_plan.md
+```
+
+Include options:
+
+1. publish anonymized raw data + analysis scripts;
+2. keep scheduler/token implementation private pending IP;
+3. provide confidential artifact to reviewers if journal allows;
+4. release full artifact after IP clearance.
+
+Update:
+
+```text
+reproducibility section
+limitations
+conclusion
+```
+
+---
+
+# 14. AUDIT RELATED WORK AND REFERENCES
+
+The current bibliography is broad and risky.
+
+Create:
+
+```text
+article1/paper/literature_audit.md
+article1/paper/references_verified.bib
+```
+
+For each reference:
+
+```text
+citation_key,title,authors,year,venue,status,doi_or_url,used_for,action
+```
+
+Status:
+
+```text
+VERIFIED
+PREPRINT_VERIFIED
+TO_VERIFY
+REMOVE
+```
+
+Critical references to verify:
+
+```text
+C8s
+dstack-capsule
+Constellation
+Confidential Containers
+Trustee/KBS
+MAA
+SEV-SNP
+Kubernetes Scheduling Framework
+RuntimeClass
+schedulingGates
+DRA
+Misono CVM paper
+TDX demystified
+CIPHERLEAKS
+SCONE
+Graphene
+Occlum
+Confidential ML/AI papers
+GPU CC papers
+```
+
+Rules:
+
+- no DOI invented;
+- no venue invented;
+- preprints must be labeled preprint;
+- remove references that are not used;
+- do not use 2026 preprints as the main foundation unless explicitly labeled.
+
+---
+
+# 15. FINAL ABSTRACT / INTRODUCTION / CONCLUSION HARDENING
+
+After all fixes, rewrite:
+
+```text
+abstract.tex
+introduction.tex
+conclusion.tex
+```
+
+Rules:
+
+- no claim unsupported by raw data;
+- no confidential GPU claim;
+- no pod-level claim;
+- no TDX claim;
+- do not overclaim scale;
+- do not overclaim performance if B1–B5 missing;
+- phrase TOCTOU carefully;
+- keep B4 vs B5 central;
+- state AI either supported by minimal workload or only motivating use case.
+
+Abstract must include:
+
+1. problem;
+2. gap;
+3. design;
+4. central B4 vs B5 result;
+5. AKS SEV-SNP validation;
+6. limitations in one sentence.
+
+Avoid overloaded result lists.
+
+---
+
+# 16. UPDATE LIMITATIONS AND THREATS TO VALIDITY
+
+Update:
+
+```text
+limitations.tex
+threats-to-validity.tex
+discussion.tex
+```
+
+Limitations must reflect final state:
+
+- node-level, not pod-level;
+- no GPU / no TDX;
+- if AI workload absent, AI is motivating use case only;
+- if KWOK added, scale is scheduler-only simulated nodes;
+- if B1–B5 performance added, claim fine-grained scheduler overhead;
+- if not, keep performance limitation;
+- MAA trust anchor;
+- private artifact/IP.
+
+Threats to validity:
+
+- internal validity: instrumentation, seeds, warmups, CI;
+- external validity: one cloud, one region, one TEE family, one/multiple active nodes depending on final result;
+- construct validity: whether attacks map to P1–P6;
+- conclusion validity: N, CI, statistical tests.
+
+---
+
+# 17. GENERATE FINAL TABLES AND FIGURES
+
+Expected final figures:
+
+```text
+fig_architecture.pdf
+fig_toctou_window_b4_b5.pdf
+fig_security_attack_heatmap.pdf
+fig_scheduling_latency_cdf.pdf
+fig_identity_binding_matrix.pdf
+fig_ablation_security_latency.pdf
+fig_scalability_line.pdf   # if KWOK completed
+fig_scheduler_security_matrix.pdf  # if S1–S30 completed
+```
+
+Expected final tables:
+
+```text
+tab_environment
+tab_security_properties
+tab_attack_matrix
+tab_b4_b5_comparison
+tab_performance_b1_b5
+tab_scheduler_rbac_or_self_security
+tab_limitations
+```
+
+Every table/figure must have:
+
+```text
+raw_input_file
+script_path
+generation_command
+```
+
+recorded in:
+
+```text
+article1/status/figure_table_provenance.md
+```
+
+---
+
+# 18. FINAL GO / NO-GO REPORT
+
+Create:
+
+```text
+article1/status/q1_final_go_nogo_report.md
+```
+
+Include:
+
+```text
+manuscript_status
+claim_evidence_mapping_status
+AKS_security_campaign_status
+AI_workload_status
+multi_node_scheduling_status
+performance_b1_b5_status
+B4_vs_B5_status
+scalability_kwok_status
+scheduler_security_status
+related_work_audit_status
+artifact_ip_status
+remaining_blockers
+submission_recommendation
+```
+
+Allowed final verdicts:
+
+```text
+GO_Q1_DRAFT
+MAJOR_REVISION_NEEDED
+NO_GO_MISSING_AI_OR_TITLE_FIX
+NO_GO_MISSING_PERFORMANCE_BASELINES
+NO_GO_MISSING_SCALABILITY
+NO_GO_UNVERIFIED_REFERENCES
+NO_GO_UNSUPPORTED_CLAIMS
+```
+
+Do not output `GO_Q1_DRAFT` unless:
+
+- abstract claims all map to raw evidence;
+- B4 vs B5 result is central and supported;
+- security attack matrix is clear;
+- performance is compared B1–B5 or claims are weakened;
+- AI title decision is resolved;
+- SKU/region consistency is proven;
+- bibliography is audited;
+- limitations are honest;
+- PDF compiles.
+
+---
+
+# 19. COMMANDS TO RUN OR PREPARE
+
+Run or prepare:
+
+```bash
+go test ./...
+go test -race ./...
+make test
+make manifests
+make generate
+make docker-build
+make kind-e2e
+make aks-preflight
+make aks-up
+make aks-deploy
+make aks-smoke
+make aks-run-security
+make aks-run-race
+make aks-run-performance-b1-b5
+make aks-run-multinode
+make aks-run-ai-workload
+make aks-run-scheduler-security
+make aks-collect
+make aks-stop
+make aks-down
+make kwok-up
+make article1-run-scalability
+make article1-analyze
+make article1-figures
+latexmk -pdf article1/paper/main.tex
+```
+
+If a command fails:
+
+- fix it if possible;
+- otherwise document exact failure;
+- do not pretend the result exists.
+
+---
+
+# 20. WORK ORDER
+
+Do the tasks in this order:
+
+1. Create reviewer critique action matrix.
+2. Create takeover inventory and package diff if revised package exists.
+3. Fix claim/title strategy around AI.
+4. Verify SKU/region consistency.
+5. Strengthen B4 vs B5 as central result.
+6. Add B1–B5 performance comparison.
+7. Improve security attack matrix and figures.
+8. Add multi-node AKS scheduling experiment if feasible.
+9. Add KWOK scheduler-only scalability.
+10. Fix scheduler self-security scope.
+11. Fix identity-binding figure.
+12. Fix wording “unauthenticated metadata”.
+13. Audit related work.
+14. Update limitations/threats/discussion.
+15. Rewrite abstract/introduction/conclusion.
+16. Generate final figures/tables.
+17. Produce GO/NO-GO report.
+
+Start by reading the current manuscript and creating `reviewer_q1_critique_action_matrix.md`.
+
+Do not make broad claims before raw evidence exists.
