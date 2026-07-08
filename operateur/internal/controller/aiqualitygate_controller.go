@@ -17,11 +17,15 @@ limitations under the License.
 package controller
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strings"
@@ -757,10 +761,32 @@ func (r *AIQualityGateReconciler) evaluationJobEvidence(ctx context.Context, nam
 			if strings.TrimSpace(terminated.Message) == "" {
 				return nil, fmt.Errorf("quality evaluation pod %s/%s completed without evidence in termination message", namespace, pod.Name)
 			}
-			return []byte(terminated.Message), nil
+			return decodeEvaluationEvidencePayload([]byte(terminated.Message))
 		}
 	}
 	return nil, fmt.Errorf("quality evaluation job %s/%s succeeded but no completed evaluator pod was found", namespace, jobName)
+}
+
+func decodeEvaluationEvidencePayload(raw []byte) ([]byte, error) {
+	const prefix = "gzip+base64:"
+	text := strings.TrimSpace(string(raw))
+	if !strings.HasPrefix(text, prefix) {
+		return raw, nil
+	}
+	blob, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(text, prefix))
+	if err != nil {
+		return nil, fmt.Errorf("decode base64 quality evaluation evidence: %w", err)
+	}
+	gzr, err := gzip.NewReader(bytes.NewReader(blob))
+	if err != nil {
+		return nil, fmt.Errorf("open gzip quality evaluation evidence: %w", err)
+	}
+	defer func() { _ = gzr.Close() }()
+	decoded, err := io.ReadAll(gzr)
+	if err != nil {
+		return nil, fmt.Errorf("read gzip quality evaluation evidence: %w", err)
+	}
+	return decoded, nil
 }
 
 func validateEvaluationEvidence(raw []byte) error {

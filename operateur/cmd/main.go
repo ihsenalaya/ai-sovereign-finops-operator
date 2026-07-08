@@ -17,10 +17,14 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -393,7 +397,11 @@ func runQualityEval(args []string) error {
 }
 
 func writeTerminationMessage(path string, raw []byte) error {
-	if err := os.WriteFile(path, raw, 0o600); err != nil {
+	payload, err := encodeTerminationMessage(raw)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
 		return fmt.Errorf("write termination log %s: %w", path, err)
 	}
 	return nil
@@ -406,6 +414,48 @@ func writeTerminationError(path string, cause error) error {
 		raw = raw[:maxTerminationLogBytes]
 	}
 	return writeTerminationMessage(path, raw)
+}
+
+func encodeTerminationMessage(raw []byte) ([]byte, error) {
+	const maxTerminationLogBytes = 4096
+	if len(raw) <= maxTerminationLogBytes {
+		return raw, nil
+	}
+	var compressed bytes.Buffer
+	gzw := gzip.NewWriter(&compressed)
+	if _, err := gzw.Write(raw); err != nil {
+		return nil, fmt.Errorf("gzip quality evidence: %w", err)
+	}
+	if err := gzw.Close(); err != nil {
+		return nil, fmt.Errorf("close gzip quality evidence: %w", err)
+	}
+	encoded := "gzip+base64:" + base64.StdEncoding.EncodeToString(compressed.Bytes())
+	if len(encoded) > maxTerminationLogBytes {
+		return nil, fmt.Errorf("quality evaluation evidence too large for termination log even after compression (%d bytes)", len(encoded))
+	}
+	return []byte(encoded), nil
+}
+
+func decodeTerminationMessage(raw []byte) ([]byte, error) {
+	const prefix = "gzip+base64:"
+	text := strings.TrimSpace(string(raw))
+	if !strings.HasPrefix(text, prefix) {
+		return raw, nil
+	}
+	blob, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(text, prefix))
+	if err != nil {
+		return nil, fmt.Errorf("decode base64 termination evidence: %w", err)
+	}
+	gzr, err := gzip.NewReader(bytes.NewReader(blob))
+	if err != nil {
+		return nil, fmt.Errorf("open gzip termination evidence: %w", err)
+	}
+	defer func() { _ = gzr.Close() }()
+	decoded, err := io.ReadAll(gzr)
+	if err != nil {
+		return nil, fmt.Errorf("read gzip termination evidence: %w", err)
+	}
+	return decoded, nil
 }
 
 func envBool(key string, fallback bool) bool {

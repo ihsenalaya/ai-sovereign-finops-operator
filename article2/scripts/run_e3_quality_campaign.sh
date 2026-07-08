@@ -248,8 +248,8 @@ delete_if_exists aiqualitygate legal-contract-quality
 delete_if_exists aiqualitygate marketing-content-quality
 delete_if_exists aiqualitygate rh-chatbot-quality
 
-log "Ensuring GHCR pull secrets for injected sidecars"
-for ns in finance legal marketing rh; do
+log "Ensuring GHCR pull secrets for injected sidecars and quality-eval jobs"
+for ns in default finance legal marketing rh; do
   ensure_ghcr_pull_secret "$ns"
 done
 
