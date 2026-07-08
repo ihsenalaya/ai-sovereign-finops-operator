@@ -1,0 +1,120 @@
+- id: privacy-launch
+  prompt: "List privacy checks before launching a lead-generation form and explicitly include: consent, retention, minimization, privacy notice."
+  expected:
+    reference: "Privacy checks before launch should cover consent, retention, data minimization and a clear privacy notice."
+    requiredKeywords: ["consent", "retention", "privacy"]
+    maxTokens: 90
+- id: unsubscribe
+  prompt: "Explain what a compliant unsubscribe flow needs and explicitly include: easy, immediate, preference."
+  expected:
+    reference: "A compliant unsubscribe flow should be easy to use, take effect immediately and support preference management."
+    requiredKeywords: ["easy", "immediate", "preference"]
+    maxTokens: 85
+- id: claim-substantiation
+  prompt: "State how a marketing claim should be validated and explicitly include: evidence, approval, archive."
+  expected:
+    reference: "A marketing claim should be backed by evidence, approved before release and archived for audit."
+    requiredKeywords: ["evidence", "approval", "archive"]
+    maxTokens: 80
+- id: age-gating
+  prompt: "Explain age-gating for a campaign and explicitly include: age, restriction, verification."
+  expected:
+    reference: "Age-gating applies age restrictions and uses verification where required by law or policy."
+    requiredKeywords: ["age", "restriction", "verification"]
+    maxTokens: 80
+- id: cookie-banner
+  prompt: "Summarize cookie-banner requirements and explicitly include: choice, categories, record."
+  expected:
+    reference: "A compliant cookie banner should offer choice, describe cookie categories and keep a consent record."
+    requiredKeywords: ["choice", "categories", "record"]
+    maxTokens: 85
+- id: lead-scoring
+  prompt: "Describe a governance check for lead scoring and explicitly include: criteria, fairness, review."
+  expected:
+    reference: "Lead scoring governance should document criteria, review fairness and schedule periodic review."
+    requiredKeywords: ["criteria", "fairness", "review"]
+    maxTokens: 85
+- id: localization
+  prompt: "Explain what localization review should check and explicitly include: language, regulation, audience."
+  expected:
+    reference: "Localization review should check language accuracy, regulatory fit and audience appropriateness."
+    requiredKeywords: ["language", "regulation", "audience"]
+    maxTokens: 80
+- id: accessibility
+  prompt: "State accessibility checks for campaign assets and explicitly include: alt text, contrast, captions."
+  expected:
+    reference: "Accessibility checks should cover alt text, color contrast and captions where relevant."
+    requiredKeywords: ["alt", "contrast", "captions"]
+    maxTokens: 80
+- id: influencer-disclosure
+  prompt: "Summarize influencer disclosure requirements and explicitly include: sponsorship, visibility, platform."
+  expected:
+    reference: "Influencer disclosure should make sponsorship visible and adapted to the platform format."
+    requiredKeywords: ["sponsorship", "visibility", "platform"]
+    maxTokens: 80
+- id: crm-sync
+  prompt: "Explain a CRM sync control and explicitly include: mapping, duplicates, consent."
+  expected:
+    reference: "A CRM sync control should validate field mapping, prevent duplicates and preserve consent state."
+    requiredKeywords: ["mapping", "duplicates", "consent"]
+    maxTokens: 85
+- id: deletion-request
+  prompt: "State how a marketing team should handle a deletion request and explicitly include: identify, suppress, confirm."
+  expected:
+    reference: "A deletion request workflow should identify the record, suppress further outreach and confirm completion."
+    requiredKeywords: ["identify", "suppress", "confirm"]
+    maxTokens: 80
+- id: event-signup
+  prompt: "List checks before enabling an event signup page and explicitly include: fields, purpose, notice."
+  expected:
+    reference: "An event signup page should limit fields, state purpose and display a privacy notice."
+    requiredKeywords: ["fields", "purpose", "notice"]
+    maxTokens: 80
+- id: moderation-escalation
+  prompt: "Explain social moderation escalation and explicitly include: harmful content, review, response."
+  expected:
+    reference: "Social moderation escalation should flag harmful content, route it for review and define the response."
+    requiredKeywords: ["harmful", "review", "response"]
+    maxTokens: 85
+- id: ab-testing
+  prompt: "State what should be documented for an A/B test and explicitly include: hypothesis, audience, metric."
+  expected:
+    reference: "An A/B test record should document the hypothesis, target audience and success metric."
+    requiredKeywords: ["hypothesis", "audience", "metric"]
+    maxTokens: 80
+- id: paid-media
+  prompt: "Summarize a paid-media approval check and explicitly include: budget, targeting, compliance."
+  expected:
+    reference: "A paid-media approval check should validate budget, audience targeting and compliance constraints."
+    requiredKeywords: ["budget", "targeting", "compliance"]
+    maxTokens: 80
+- id: brand-safety
+  prompt: "Explain brand-safety review and explicitly include: adjacency, suitability, exclusion."
+  expected:
+    reference: "Brand-safety review checks content adjacency, suitability rules and exclusion lists."
+    requiredKeywords: ["adjacency", "suitability", "exclusion"]
+    maxTokens: 80
+- id: campaign-brief
+  prompt: "State what a compliant campaign brief should include and explicitly include: objective, audience, constraints."
+  expected:
+    reference: "A compliant campaign brief should define the objective, target audience and legal or policy constraints."
+    requiredKeywords: ["objective", "audience", "constraints"]
+    maxTokens: 85
+- id: referral-program
+  prompt: "Explain checks for a referral program and explicitly include: incentive, disclosure, abuse."
+  expected:
+    reference: "Referral-program checks should review incentive design, required disclosure and abuse prevention."
+    requiredKeywords: ["incentive", "disclosure", "abuse"]
+    maxTokens: 85
+- id: profile-enrichment
+  prompt: "Summarize profile enrichment controls and explicitly include: source, accuracy, lawful basis."
+  expected:
+    reference: "Profile enrichment controls should validate data source, maintain accuracy and confirm lawful basis."
+    requiredKeywords: ["source", "accuracy", "lawful"]
+    maxTokens: 85
+- id: content-retention
+  prompt: "Explain retention for campaign assets and explicitly include: schedule, archive, deletion."
+  expected:
+    reference: "Campaign asset retention should define a schedule, archive needs and deletion timing."
+    requiredKeywords: ["schedule", "archive", "deletion"]
+    maxTokens: 80

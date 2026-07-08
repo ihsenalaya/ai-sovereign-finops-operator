@@ -1,0 +1,120 @@
+- id: renewal-risk
+  prompt: "List risks in an auto-renewal clause in one concise paragraph and explicitly include: notice period, renewal lock-in, termination requirements."
+  expected:
+    reference: "Auto-renewal risk includes short notice periods, renewal lock-in and burdensome termination requirements."
+    requiredKeywords: ["notice", "renewal", "termination"]
+    maxTokens: 90
+- id: liability-cap
+  prompt: "Summarize a limitation-of-liability clause and explicitly include: cap, damages, exclusions."
+  expected:
+    reference: "A limitation-of-liability clause sets a cap, defines covered damages and lists exclusions."
+    requiredKeywords: ["cap", "damages", "exclusions"]
+    maxTokens: 85
+- id: indemnity
+  prompt: "Explain a standard indemnity obligation and explicitly include: claim, defense, losses."
+  expected:
+    reference: "An indemnity obligation covers third-party claims, assigns defense responsibilities and allocates losses."
+    requiredKeywords: ["claim", "defense", "losses"]
+    maxTokens: 85
+- id: dpa-purpose
+  prompt: "State what a data processing agreement must address and explicitly include: roles, instructions, security."
+  expected:
+    reference: "A data processing agreement should define controller and processor roles, processing instructions and security obligations."
+    requiredKeywords: ["roles", "instructions", "security"]
+    maxTokens: 90
+- id: scc-transfer
+  prompt: "Explain why standard contractual clauses are used and explicitly include: transfer, safeguards, jurisdiction."
+  expected:
+    reference: "Standard contractual clauses support international data transfer with contractual safeguards across jurisdictions."
+    requiredKeywords: ["transfer", "safeguards", "jurisdiction"]
+    maxTokens: 85
+- id: audit-rights
+  prompt: "Summarize vendor audit rights and explicitly include: access, evidence, remediation."
+  expected:
+    reference: "Vendor audit rights provide access to control evidence and support remediation when findings are identified."
+    requiredKeywords: ["access", "evidence", "remediation"]
+    maxTokens: 80
+- id: confidentiality-exceptions
+  prompt: "List common confidentiality exceptions and explicitly include: public, legal requirement, prior knowledge."
+  expected:
+    reference: "Common confidentiality exceptions cover public information, legal disclosure requirements and prior knowledge."
+    requiredKeywords: ["public", "legal", "prior"]
+    maxTokens: 80
+- id: termination-cause
+  prompt: "Explain termination for cause and explicitly include: breach, cure period, exit."
+  expected:
+    reference: "Termination for cause applies after a material breach, a cure period and an orderly exit."
+    requiredKeywords: ["breach", "cure", "exit"]
+    maxTokens: 80
+- id: sla-credits
+  prompt: "Summarize SLA service credits and explicitly include: uptime, calculation, remedy."
+  expected:
+    reference: "SLA service credits link uptime failure to a calculation method and a contractual remedy."
+    requiredKeywords: ["uptime", "calculation", "remedy"]
+    maxTokens: 80
+- id: governing-law
+  prompt: "Explain the purpose of a governing-law clause and explicitly include: law, dispute, interpretation."
+  expected:
+    reference: "A governing-law clause identifies the applicable law for dispute resolution and contract interpretation."
+    requiredKeywords: ["law", "dispute", "interpretation"]
+    maxTokens: 80
+- id: notice-clause
+  prompt: "State what a contract notice clause should specify and explicitly include: method, address, effective date."
+  expected:
+    reference: "A notice clause should specify the delivery method, the notice address and the effective date of receipt."
+    requiredKeywords: ["method", "address", "effective"]
+    maxTokens: 85
+- id: subprocessor-change
+  prompt: "Explain a subprocessor change clause and explicitly include: notice, objection, replacement."
+  expected:
+    reference: "A subprocessor change clause should require notice, permit objection and address replacement options."
+    requiredKeywords: ["notice", "objection", "replacement"]
+    maxTokens: 85
+- id: warranty-disclaimer
+  prompt: "Summarize a warranty disclaimer and explicitly include: as is, implied warranties, limitation."
+  expected:
+    reference: "A warranty disclaimer states the service is provided as is, excludes implied warranties and limits promises."
+    requiredKeywords: ["as is", "implied", "limitation"]
+    maxTokens: 85
+- id: assignment
+  prompt: "Explain an assignment clause and explicitly include: transfer, consent, affiliate."
+  expected:
+    reference: "An assignment clause governs contract transfer, may require consent and often treats affiliate transfers separately."
+    requiredKeywords: ["transfer", "consent", "affiliate"]
+    maxTokens: 85
+- id: force-majeure
+  prompt: "Describe force majeure and explicitly include: event, control, delay."
+  expected:
+    reference: "Force majeure covers events outside reasonable control that delay contractual performance."
+    requiredKeywords: ["event", "control", "delay"]
+    maxTokens: 75
+- id: change-control
+  prompt: "State why a change-control clause matters and explicitly include: scope, approval, cost."
+  expected:
+    reference: "A change-control clause governs scope changes, required approval and resulting cost adjustments."
+    requiredKeywords: ["scope", "approval", "cost"]
+    maxTokens: 80
+- id: retention-schedule
+  prompt: "Explain a retention clause and explicitly include: duration, deletion, legal hold."
+  expected:
+    reference: "A retention clause should define duration, deletion requirements and exceptions for legal hold."
+    requiredKeywords: ["duration", "deletion", "hold"]
+    maxTokens: 85
+- id: exclusivity-risk
+  prompt: "Summarize exclusivity risk and explicitly include: restriction, competition, duration."
+  expected:
+    reference: "Exclusivity risk comes from restrictive competition limits that last for a defined duration."
+    requiredKeywords: ["restriction", "competition", "duration"]
+    maxTokens: 80
+- id: open-source-use
+  prompt: "State what an open-source software clause should address and explicitly include: license, obligations, compliance."
+  expected:
+    reference: "An open-source clause should address license terms, downstream obligations and compliance requirements."
+    requiredKeywords: ["license", "obligations", "compliance"]
+    maxTokens: 85
+- id: penalty-clause
+  prompt: "Explain a penalty clause and explicitly include: breach, amount, enforceability."
+  expected:
+    reference: "A penalty clause links breach to a stated amount, but enforceability depends on applicable law."
+    requiredKeywords: ["breach", "amount", "enforceability"]
+    maxTokens: 80

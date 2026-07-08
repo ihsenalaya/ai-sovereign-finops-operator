@@ -1,0 +1,120 @@
+- id: counterparty-risk
+  prompt: "Summarize key counterparty risks for a new supplier in one concise paragraph and explicitly include: counterparty, liquidity, operational risk."
+  expected:
+    reference: "Counterparty risk for a new supplier includes liquidity exposure, operational disruption risk and the possibility that the counterparty does not meet contractual obligations."
+    requiredKeywords: ["counterparty", "liquidity", "operational"]
+    maxTokens: 90
+- id: var-definition
+  prompt: "Explain value-at-risk in two sentences and explicitly include: loss threshold, confidence level, time horizon."
+  expected:
+    reference: "Value-at-risk estimates a portfolio loss threshold over a defined time horizon at a stated confidence level."
+    requiredKeywords: ["loss", "confidence", "horizon"]
+    maxTokens: 80
+- id: concentration-risk
+  prompt: "State the main issue with supplier concentration risk and explicitly include: dependency, disruption, diversification."
+  expected:
+    reference: "Supplier concentration risk arises from dependency on too few vendors, which increases disruption risk and requires diversification."
+    requiredKeywords: ["dependency", "disruption", "diversification"]
+    maxTokens: 80
+- id: fx-exposure
+  prompt: "Describe foreign-exchange exposure for imports and explicitly include: currency, volatility, hedge."
+  expected:
+    reference: "Foreign-exchange exposure means import costs change with currency volatility and may require a hedge."
+    requiredKeywords: ["currency", "volatility", "hedge"]
+    maxTokens: 80
+- id: invoice-fraud
+  prompt: "List controls against invoice fraud and explicitly include: verification, bank account, approval."
+  expected:
+    reference: "Invoice fraud controls include supplier verification, bank account validation and documented approval before payment."
+    requiredKeywords: ["verification", "bank", "approval"]
+    maxTokens: 85
+- id: liquidity-buffer
+  prompt: "Explain why a treasury liquidity buffer matters and explicitly include: cash, obligations, shock."
+  expected:
+    reference: "A liquidity buffer preserves cash to meet obligations during a market or operational shock."
+    requiredKeywords: ["cash", "obligations", "shock"]
+    maxTokens: 75
+- id: covenant-breach
+  prompt: "Summarize the impact of a covenant breach and explicitly include: debt, default, remediation."
+  expected:
+    reference: "A covenant breach can trigger debt default risk and requires remediation with lenders."
+    requiredKeywords: ["debt", "default", "remediation"]
+    maxTokens: 75
+- id: stress-test
+  prompt: "Explain a cash-flow stress test and explicitly include: scenario, cash flow, downside."
+  expected:
+    reference: "A cash-flow stress test applies a downside scenario to estimate how resilient projected cash flow remains."
+    requiredKeywords: ["scenario", "cash", "downside"]
+    maxTokens: 80
+- id: approval-matrix
+  prompt: "State why a payment approval matrix is used and explicitly include: limit, segregation, escalation."
+  expected:
+    reference: "A payment approval matrix sets limit-based approvals, preserves segregation of duties and defines escalation."
+    requiredKeywords: ["limit", "segregation", "escalation"]
+    maxTokens: 80
+- id: hedge-documentation
+  prompt: "Explain what should appear in hedge documentation and explicitly include: objective, instrument, exposure."
+  expected:
+    reference: "Hedge documentation should state the hedging objective, the instrument used and the exposure being covered."
+    requiredKeywords: ["objective", "instrument", "exposure"]
+    maxTokens: 85
+- id: month-end-close
+  prompt: "Summarize a month-end finance control and explicitly include: reconciliation, variance, sign-off."
+  expected:
+    reference: "A month-end finance control requires reconciliation, variance review and formal sign-off."
+    requiredKeywords: ["reconciliation", "variance", "sign-off"]
+    maxTokens: 75
+- id: sanctions-screening
+  prompt: "Explain supplier sanctions screening and explicitly include: list, match, escalation."
+  expected:
+    reference: "Supplier sanctions screening checks the supplier against restricted lists, reviews possible matches and escalates true matches."
+    requiredKeywords: ["list", "match", "escalation"]
+    maxTokens: 85
+- id: price-variance
+  prompt: "Define purchase price variance and explicitly include: standard cost, actual cost, difference."
+  expected:
+    reference: "Purchase price variance is the difference between standard cost and actual cost for purchased items."
+    requiredKeywords: ["standard", "actual", "difference"]
+    maxTokens: 70
+- id: working-capital
+  prompt: "Explain working capital pressure and explicitly include: receivables, payables, inventory."
+  expected:
+    reference: "Working capital pressure appears when receivables, payables and inventory tie up too much cash."
+    requiredKeywords: ["receivables", "payables", "inventory"]
+    maxTokens: 80
+- id: segregation-duties
+  prompt: "State why segregation of duties is important in finance and explicitly include: initiate, approve, pay."
+  expected:
+    reference: "Segregation of duties prevents one person from initiating, approving and paying the same transaction."
+    requiredKeywords: ["initiate", "approve", "pay"]
+    maxTokens: 80
+- id: onboarding-checks
+  prompt: "List supplier onboarding checks and explicitly include: tax ID, bank details, contract."
+  expected:
+    reference: "Supplier onboarding checks should validate tax ID, bank details and the signed contract."
+    requiredKeywords: ["tax", "bank", "contract"]
+    maxTokens: 80
+- id: limit-breach
+  prompt: "Explain a credit limit breach and explicitly include: exposure, threshold, action."
+  expected:
+    reference: "A credit limit breach means exposure exceeds a defined threshold and requires immediate action."
+    requiredKeywords: ["exposure", "threshold", "action"]
+    maxTokens: 70
+- id: anomaly-triage
+  prompt: "Describe anomaly triage for payments and explicitly include: alert, investigation, resolution."
+  expected:
+    reference: "Payment anomaly triage starts with an alert, continues with investigation and ends with documented resolution."
+    requiredKeywords: ["alert", "investigation", "resolution"]
+    maxTokens: 80
+- id: portfolio-mix
+  prompt: "Summarize portfolio concentration at a high level and explicitly include: exposure, sector, diversification."
+  expected:
+    reference: "Portfolio concentration means too much exposure to one sector or name and calls for diversification."
+    requiredKeywords: ["exposure", "sector", "diversification"]
+    maxTokens: 75
+- id: capital-cost
+  prompt: "Explain cost of capital in one concise paragraph and explicitly include: financing, return, risk."
+  expected:
+    reference: "Cost of capital is the return required to finance the business and reflects financing risk."
+    requiredKeywords: ["financing", "return", "risk"]
+    maxTokens: 80

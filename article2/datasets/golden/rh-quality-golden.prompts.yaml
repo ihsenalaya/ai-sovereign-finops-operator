@@ -1,0 +1,120 @@
+- id: leave-policy
+  prompt: "Explique la politique de conges en une phrase courte et inclus explicitement les mots: conges, manager, solde."
+  expected:
+    reference: "Le manager valide la demande de conges selon le solde disponible."
+    requiredKeywords: ["conges", "manager", "solde"]
+    maxTokens: 70
+- id: expense-note
+  prompt: "Explique comment soumettre une note de frais et inclus: justificatifs, approbation, centre de cout."
+  expected:
+    reference: "La note de frais doit inclure les justificatifs, le centre de cout et passer par approbation."
+    requiredKeywords: ["justificatifs", "approbation", "cout"]
+    maxTokens: 80
+- id: overtime-approval
+  prompt: "Resume la regle sur les heures supplementaires et inclus: demande, manager, validation."
+  expected:
+    reference: "Les heures supplementaires doivent faire l'objet d'une demande et d'une validation manager prealables."
+    requiredKeywords: ["demande", "manager", "validation"]
+    maxTokens: 75
+- id: sick-leave
+  prompt: "Explique la declaration d'absence maladie et inclus: certificat, delai, RH."
+  expected:
+    reference: "Une absence maladie doit etre declaree rapidement avec certificat selon le delai RH."
+    requiredKeywords: ["certificat", "delai", "RH"]
+    maxTokens: 75
+- id: onboarding-docs
+  prompt: "Liste les controles d'onboarding et inclus: identite, contrat, acces."
+  expected:
+    reference: "L'onboarding verifie l'identite, le contrat signe et l'activation des acces."
+    requiredKeywords: ["identite", "contrat", "acces"]
+    maxTokens: 75
+- id: probation-review
+  prompt: "Explique le suivi de periode d'essai et inclus: objectifs, feedback, decision."
+  expected:
+    reference: "Le suivi de periode d'essai repose sur des objectifs, du feedback et une decision documentee."
+    requiredKeywords: ["objectifs", "feedback", "decision"]
+    maxTokens: 80
+- id: payslip-access
+  prompt: "Explique l'acces au bulletin de paie et inclus: portail, securite, confidentialite."
+  expected:
+    reference: "Le bulletin de paie est accessible sur un portail securise respectant la confidentialite."
+    requiredKeywords: ["portail", "securite", "confidentialite"]
+    maxTokens: 75
+- id: grievance-intake
+  prompt: "Resume la reception d'un signalement RH et inclus: confidentialite, enquete, suivi."
+  expected:
+    reference: "Un signalement RH doit etre traite avec confidentialite, enquete et suivi documente."
+    requiredKeywords: ["confidentialite", "enquete", "suivi"]
+    maxTokens: 80
+- id: exit-checklist
+  prompt: "Liste les etapes d'offboarding et inclus: acces, materiel, documents."
+  expected:
+    reference: "L'offboarding retire les acces, recupere le materiel et cloture les documents."
+    requiredKeywords: ["acces", "materiel", "documents"]
+    maxTokens: 75
+- id: training-enrollment
+  prompt: "Explique l'inscription a une formation et inclus: demande, validation, planning."
+  expected:
+    reference: "L'inscription a une formation passe par une demande, une validation et un planning confirme."
+    requiredKeywords: ["demande", "validation", "planning"]
+    maxTokens: 75
+- id: travel-request
+  prompt: "Resume la demande de deplacement et inclus: motif, budget, approbation."
+  expected:
+    reference: "Une demande de deplacement doit preciser le motif, le budget et l'approbation requise."
+    requiredKeywords: ["motif", "budget", "approbation"]
+    maxTokens: 75
+- id: performance-review
+  prompt: "Explique l'entretien annuel et inclus: objectifs, evaluation, plan d'action."
+  expected:
+    reference: "L'entretien annuel evalue les objectifs et produit un plan d'action."
+    requiredKeywords: ["objectifs", "evaluation", "plan"]
+    maxTokens: 75
+- id: interview-notes
+  prompt: "Resume la gestion des notes d'entretien et inclus: pertinence, confidentialite, retention."
+  expected:
+    reference: "Les notes d'entretien doivent rester pertinentes, confidentielles et conservees selon la retention applicable."
+    requiredKeywords: ["pertinence", "confidentialite", "retention"]
+    maxTokens: 85
+- id: remote-work
+  prompt: "Explique la demande de teletravail et inclus: accord, equipement, securite."
+  expected:
+    reference: "Le teletravail requiert un accord, un equipement adapte et des regles de securite."
+    requiredKeywords: ["accord", "equipement", "securite"]
+    maxTokens: 75
+- id: maternity-leave
+  prompt: "Resume le conge maternite et inclus: calendrier, droits, retour."
+  expected:
+    reference: "Le conge maternite doit preciser le calendrier, les droits associes et les conditions de retour."
+    requiredKeywords: ["calendrier", "droits", "retour"]
+    maxTokens: 80
+- id: timesheet-correction
+  prompt: "Explique la correction d'une feuille de temps et inclus: erreur, justification, validation."
+  expected:
+    reference: "Une correction de feuille de temps demande une justification et une validation de l'erreur corrigee."
+    requiredKeywords: ["erreur", "justification", "validation"]
+    maxTokens: 80
+- id: equipment-return
+  prompt: "Resume le retour de materiel et inclus: inventaire, date, confirmation."
+  expected:
+    reference: "Le retour de materiel suit un inventaire, une date de restitution et une confirmation."
+    requiredKeywords: ["inventaire", "date", "confirmation"]
+    maxTokens: 75
+- id: conflict-declaration
+  prompt: "Explique la declaration de conflit d'interets et inclus: situation, evaluation, mitigation."
+  expected:
+    reference: "Un conflit d'interets doit decrire la situation, permettre l'evaluation et prevoir une mitigation."
+    requiredKeywords: ["situation", "evaluation", "mitigation"]
+    maxTokens: 85
+- id: access-badge
+  prompt: "Resume l'attribution d'un badge d'acces et inclus: autorisation, profil, trace."
+  expected:
+    reference: "Un badge d'acces est attribue selon autorisation, profil d'acces et trace de remise."
+    requiredKeywords: ["autorisation", "profil", "trace"]
+    maxTokens: 75
+- id: recruitment-decision
+  prompt: "Explique la decision de recrutement et inclus: evaluation, justification, approbation."
+  expected:
+    reference: "Une decision de recrutement doit reposer sur evaluation, justification et approbation finale."
+    requiredKeywords: ["evaluation", "justification", "approbation"]
+    maxTokens: 80

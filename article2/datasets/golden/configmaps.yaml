@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-quality-golden
+  namespace: default
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+data:
+  prompts.yaml: |
+{{FINANCE_PROMPTS}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legal-quality-golden
+  namespace: default
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+data:
+  prompts.yaml: |
+{{LEGAL_PROMPTS}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketing-quality-golden
+  namespace: default
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+data:
+  prompts.yaml: |
+{{MARKETING_PROMPTS}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rh-quality-golden
+  namespace: default
+  labels:
+    app.kubernetes.io/name: ai-sovereign-finops-operator
+data:
+  prompts.yaml: |
+{{RH_PROMPTS}}
