@@ -72,10 +72,9 @@ type GoldenPrompt struct {
 type EvidenceSample struct {
 	ID                      string            `json:"id"`
 	Model                   string            `json:"model,omitempty"`
-	Reference               string            `json:"reference,omitempty"`
-	Actual                  string            `json:"actual,omitempty"`
 	ExpectedFields          map[string]string `json:"expectedFields,omitempty"`
 	ActualFields            map[string]string `json:"actualFields,omitempty"`
+	CorrectnessScore        *float64          `json:"correctnessScore,omitempty"`
 	SemanticScore           *float64          `json:"semanticScore,omitempty"`
 	SchemaValid             *bool             `json:"schemaValid,omitempty"`
 	UnexpectedRefusal       *bool             `json:"unexpectedRefusal,omitempty"`
@@ -321,7 +320,10 @@ func evidenceFor(prompt GoldenPrompt, model, actual string) EvidenceSample {
 		}
 	}
 	var semanticScore *float64
+	var correctnessScore *float64
 	if strings.TrimSpace(reference) != "" {
+		correctness := qualityengine.ReferenceCorrectnessScore(reference, actual)
+		correctnessScore = &correctness
 		semantic := qualityengine.SemanticSimilarityScore(reference, actual)
 		if len(prompt.Expected.RequiredKeywords) > 0 {
 			semantic = 0.75*semantic + 0.25*keywordCoverageScore(actual, prompt.Expected.RequiredKeywords)
@@ -334,10 +336,9 @@ func evidenceFor(prompt GoldenPrompt, model, actual string) EvidenceSample {
 	return EvidenceSample{
 		ID:                      prompt.ID,
 		Model:                   model,
-		Reference:               reference,
-		Actual:                  actual,
 		ExpectedFields:          prompt.Expected.Fields,
 		ActualFields:            actualFields,
+		CorrectnessScore:        correctnessScore,
 		SemanticScore:           semanticScore,
 		SchemaValid:             &schemaValid,
 		UnexpectedRefusal:       &unexpectedRefusal,

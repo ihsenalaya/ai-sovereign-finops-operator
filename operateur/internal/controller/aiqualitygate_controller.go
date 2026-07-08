@@ -93,6 +93,7 @@ type qualityEvidenceSample struct {
 	ExpectedFields          map[string]string `json:"expectedFields,omitempty"`
 	ActualFields            map[string]string `json:"actualFields,omitempty"`
 	Fields                  map[string]string `json:"fields,omitempty"`
+	CorrectnessScore        *float64          `json:"correctnessScore,omitempty"`
 	SemanticScore           *float64          `json:"semanticScore,omitempty"`
 	JudgedScore             *float64          `json:"judgedScore,omitempty"`
 	SchemaValid             *bool             `json:"schemaValid,omitempty"`
@@ -1034,6 +1035,7 @@ func buildQualitySamples(prompts []goldenPrompt, evidence []qualityEvidenceSampl
 			MustBeJSON:              p.Expected.MustBeJSON,
 			ExpectedFields:          expectedFields,
 			ActualFields:            actualFields,
+			CorrectnessScore:        ev.CorrectnessScore,
 			SemanticScore:           ev.SemanticScore,
 			JudgedScore:             ev.JudgedScore,
 			RequiredKeywordsPresent: ev.RequiredKeywordsPresent,

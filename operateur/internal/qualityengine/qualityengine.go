@@ -86,6 +86,7 @@ type EvidenceSample struct {
 	MustBeJSON              bool
 	ExpectedFields          map[string]string
 	ActualFields            map[string]string
+	CorrectnessScore        *float64
 	RequiredKeywordsPresent *bool
 	SemanticScore           *float64
 	JudgedScore             *float64
@@ -240,7 +241,10 @@ func CorrectnessScore(samples []EvidenceSample) (float64, bool) {
 	for _, s := range samples {
 		var sampleTotal float64
 		var sampleCount int
-		if strings.TrimSpace(s.Expected) != "" || strings.TrimSpace(s.Actual) != "" {
+		if s.CorrectnessScore != nil {
+			sampleTotal += clamp100(*s.CorrectnessScore)
+			sampleCount++
+		} else if strings.TrimSpace(s.Expected) != "" || strings.TrimSpace(s.Actual) != "" {
 			sampleTotal += ReferenceCorrectnessScore(s.Expected, s.Actual)
 			sampleCount++
 		}
