@@ -124,7 +124,7 @@ spec:
   evaluation:
     endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
     maxTokens: $max_tokens
-    timeoutSeconds: 90
+    timeoutSeconds: 300
   weights:
     judged: 0
 EOF
@@ -156,7 +156,7 @@ spec:
   evaluation:
     endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
     maxTokens: 80
-    timeoutSeconds: 90
+    timeoutSeconds: 300
   weights:
     judged: 0
 ---
@@ -186,7 +186,7 @@ spec:
   evaluation:
     endpoint: http://greenops-aigw.envoy-gateway-system.svc.cluster.local:80/v1/chat/completions
     maxTokens: 80
-    timeoutSeconds: 90
+    timeoutSeconds: 300
   weights:
     judged: 0
 EOF
