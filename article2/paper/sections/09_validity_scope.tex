@@ -1,0 +1,12 @@
+\section{Validity and Scope}
+This study is intentionally narrow. It supports live AKS claims about FinOps attribution, quality-gate execution, budget tracking through \texttt{Warning}, \texttt{Critical}, and \texttt{Exceeded}, declared-residency reporting plus an FR-only enforce-mode reroute, human approval gating with route actuation, true-positive shadow-AI detection on labeled rogue workloads, an eight-baseline routing campaign confounded by provider throttling, and small-to-medium performance profiles on one cluster. The compliance framing is deliberately limited to configured policy enforcement and declared-residency observability rather than formal legal certification, which is important when reading the work against GDPR, the EU AI Act, NIST AI RMF, OWASP guidance, and ISO/IEC 42001 \cite{gdprInfo,euAIActSummary,nistAIRMF,owaspLLMTop10,iso42001}. It does not yet support:
+\begin{itemize}[leftmargin=*]
+\item final routing-tradeoff claims against a full baseline family,
+\item confidence-interval-backed or other inferential headline numbers,
+\item broad residency-enforcement claims that ignore live catalog routability limits and quality-gate bypasses,
+\item tamper-evident approval or audit-integrity claims,
+\item full shadow-AI precision/recall characterization or adversarial evasion coverage, or
+\item production-scale performance and scalability claims.
+\end{itemize}
+
+Additional validity threats are specific and concrete: all evidence comes from one cluster rebuilt on one day; the E2 campaign was dominated by Azure OpenAI 429 throttling on the France deployment; the E8 large profile was blocked by a single-node scheduler limit rather than by a multi-node stress test; the E3 gate verdicts used one prompt per application-specific golden dataset with \texttt{minSamples=1}; and the current shadow-AI evidence is true-positive only. Accordingly, the paper should be read as a measured AKS systems study with a deliberately narrowed claim set, not as a final comparative routing, security, or scalability paper.
