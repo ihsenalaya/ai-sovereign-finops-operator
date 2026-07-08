@@ -242,6 +242,12 @@ delete_if_exists aiqualitygate finance-quality-missing-evidence
 delete_if_exists aiqualitygate finance-quality-missing-telemetry
 delete_if_exists configmap finance-quality-missing-telemetry-evidence
 
+log "Deleting baseline demo quality gates to isolate E3"
+delete_if_exists aiqualitygate finance-risk-assistant-quality
+delete_if_exists aiqualitygate legal-contract-quality
+delete_if_exists aiqualitygate marketing-content-quality
+delete_if_exists aiqualitygate rh-chatbot-quality
+
 log "Ensuring GHCR pull secrets for injected sidecars"
 for ns in finance legal marketing rh; do
   ensure_ghcr_pull_secret "$ns"
