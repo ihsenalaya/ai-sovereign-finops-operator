@@ -1,0 +1,109 @@
+\section{Results}
+The current AKS deployment demonstrates that the governance control plane is operational on live Azure infrastructure. The strongest observations from the latest run are descriptive and directly traceable to Kubernetes resources and captured logs.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{1.2cm} p{7.0cm} p{2.4cm}}
+\toprule
+ID & Strongest current result & Status \\
+\midrule
+E1 & Live \texttt{AIFinOpsReport} with per-application cost, request, token, and recommendation fields on AKS & Partial \\
+E3 & Repeated five-run quality-gate campaign with 20-prompt golden datasets, quantified stability, and two \texttt{insufficient-data} controls & Partial \\
+E4 & Live budget phases observed through \texttt{Warning}, \texttt{Critical}, and \texttt{Exceeded} & Partial \\
+E5 & Report-only findings plus enforce-mode FR-only reroute and rollback & Partial \\
+E6 & Live \texttt{AIRouteOverride}, approved actuation, and rejected no-op \texttt{AIChangeRequest} behavior & Partial \\
+E7 & Tetragon-backed gateway-bypass detection with two true-positive operator warning paths & Partial \\
+E2 & Eight-baseline live routing campaign completed, but comparative conclusions are confounded by upstream 429 throttling & Partial \\
+E8 & 12-app and 50-app profiles completed; 100-app profile blocked by single-node pod-density limits & Partial \\
+\bottomrule
+\end{tabular}
+\caption{Summary of the current Article 2 experiment status on AKS.}
+\end{table}
+
+\paragraph{FinOps attribution.}
+The live \texttt{AIFinOpsReport} for \texttt{ai-report-all} reached a total estimated cost of 0.022599 EUR with 1{,}842 input tokens and 13{,}083 output tokens. The dominant cost contributor was \texttt{finance/risk-assistant} on \texttt{gpt-us-mini}, with 660 requests and 0.016477 EUR attributed to a non-compliant US provider. The report also retained per-application routing-score entries and application-specific cost-saving recommendations.
+
+A later post-extension portfolio snapshot already shows that attribution is not
+limited to the original four-app subset. In that later report, new portfolio
+applications such as \texttt{finance/invoice-extractor} and
+\texttt{legal/compliance-classifier} appeared as separate application entries
+with their own request counts, costs, and routing-score rows. This is useful as
+an implementation milestone because it demonstrates that the gateway attribution
+path scales beyond the earliest smoke-test tenants, even though the full
+prompt-level routing baseline study remains incomplete.
+
+\paragraph{Quality gates.}
+The updated 2026-07-08 AKS quality campaign replaced the earlier one-prompt run with four application-specific golden datasets of 20 curated prompts each, \texttt{minSamples=20}, and five repetitions per gate. The resulting evidence is no longer a single-shot controller demonstration; it quantifies stability under live response variance. Two gates were stable-safe across all five repetitions: \texttt{finance-risk-assistant-quality} averaged 73.219 with standard deviation 1.017, and \texttt{marketing-content-quality} averaged 73.832 with standard deviation 0.418. One gate was stable-risk across all five repetitions: \texttt{rh-chatbot-quality} averaged 69.495 with standard deviation 0.345 and never crossed the tolerance boundary. The most informative case was \texttt{legal-contract-quality}: it produced one \texttt{candidate-risk} verdict followed by four \texttt{candidate-safe} verdicts, yielding an unstable stability label with mean 66.013 and standard deviation 1.534. We also retained two auxiliary gates: one without \texttt{evidenceRef}, which remained \texttt{insufficient-data}, and one with a non-compliant candidate lacking both evidence and telemetry, which also remained \texttt{insufficient-data}. The robust conclusion is therefore stronger than simple accept/reject coverage: the live AKS run now demonstrates reproducible safe gates, reproducible risky gates, quantitatively unstable gates, and explicit abstention paths on real evidence.
+
+\begin{table}[t]
+\centering
+\small
+\input{tables/e3_qualitygate_detailed.tex}
+\caption{Detailed AKS \texttt{AIQualityGate} outcomes from the latest E3 campaign.}
+\end{table}
+
+\paragraph{Application coverage.}
+The deployed portfolio now contains 13 normal applications and two rogue workloads, but only a measured subset has been exercised deeply enough for the strongest result statements. The generated application matrix makes that boundary explicit: \texttt{finance/risk-assistant}, \texttt{legal/contract-review}, and \texttt{marketing/content-writer} are already tied to E1/E2-ready workload definitions, while most extension applications are currently only E3-ready from a policy and dataset perspective. This distinction matters because it prevents us from overstating multi-tenant evaluation breadth.
+
+\paragraph{Budget tracking.}
+The most informative budget result is \texttt{finance-budget}. Under real traffic it entered the \texttt{Warning} phase at 86\% of a 0.02 EUR budget, with 0.017104 EUR current spend. We then captured a controlled phase progression on the live cluster by tightening the policy thresholds: with \texttt{criticalThresholdPercent=80} and \texttt{hardLimitPercent=95}, the same observed spend moved the policy to \texttt{Critical}; after temporarily lowering \texttt{budgetEUR} to 0.017, the policy moved to \texttt{Exceeded} at 101\%. The operator emitted matching \texttt{BudgetThreshold} warning events for both transitions. The other three application budgets remained within budget. This supports live phase-transition behavior, but not automatic fallback actuation, because no cheaper observed managed fallback model exists in the current catalog.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=14mm,
+  state/.style={draw, rounded corners, minimum width=24mm, minimum height=8mm, align=center},
+  arr/.style={-{Latex[length=2mm]}, thick}
+]
+\node[state] (within) {WithinBudget};
+\node[state, right=of within] (warning) {Warning\\86\%};
+\node[state, right=of warning] (critical) {Critical\\same spend,\\thresholds tightened};
+\node[state, right=of critical] (exceeded) {Exceeded\\101\% after\\budget cut};
+\draw[arr] (within) -- (warning);
+\draw[arr] (warning) -- (critical);
+\draw[arr] (critical) -- (exceeded);
+\end{tikzpicture}
+\caption{Observed budget-policy phase progression for \texttt{finance-budget}. The latter two transitions were induced by threshold and budget changes, not by additional spend.}
+\end{figure}
+
+\paragraph{Human workflow and reroute actuation.}
+After publishing operator image \texttt{ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller:0.5.12}, a live \texttt{AIRouteOverride} actuated a reroute from \texttt{gpt-us-mini} to \texttt{gpt-france-mini}. The corresponding \texttt{AIGatewayRoute} changed backend from \texttt{greenops-openai-us} to \texttt{greenops-openai-fr} and added a \texttt{bodyMutation} that rewrote the request model field. Deleting the override restored the original route. We then exercised \texttt{AIChangeRequest}: in \texttt{Pending}, the route remained unchanged; after patching \texttt{spec.approval=Approved}, the request became \texttt{Actuated} and applied the same reroute. In a separate rejected-path run, the request stayed non-actuating while \texttt{Pending} and the route still remained unchanged after \texttt{spec.approval=Rejected}. This demonstrates live human approval gating, explicit rejection behavior, and route actuation, but not automatic rollback on deletion, which is not implemented in the current controller.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  lifeline/.style={draw, minimum width=24mm, minimum height=7mm, align=center},
+  arr/.style={-{Latex[length=2mm]}, thick}
+]
+\node[lifeline] (user) at (0,0) {User / RBAC subject};
+\node[lifeline] (cr) at (4.2,0) {\texttt{AIChangeRequest}};
+\node[lifeline] (op) at (8.4,0) {Operator};
+\node[lifeline] (route) at (12.6,0) {\texttt{AIGatewayRoute}};
+\draw[dashed] (user.south) -- ++(0,-3.6);
+\draw[dashed] (cr.south) -- ++(0,-3.6);
+\draw[dashed] (op.south) -- ++(0,-3.6);
+\draw[dashed] (route.south) -- ++(0,-3.6);
+\draw[arr] (user) -- node[above]{create pending request} (cr);
+\draw[arr] (cr.south) ++(0,-0.7) -- node[above]{observe pending: no actuation} (op.south |- 0,-0.7);
+\draw[arr] (user.south) ++(0,-1.5) -- node[above]{patch \texttt{spec.approval}} (cr.south |- 0,-1.5);
+\draw[arr] (cr.south) ++(0,-2.3) -- node[above]{approved request} (op.south |- 0,-2.3);
+\draw[arr] (op.south) ++(0,-3.1) -- node[above]{mutate backend + body} (route.south |- 0,-3.1);
+\end{tikzpicture}
+\caption{Measured \texttt{AIChangeRequest} path. The current implementation gates actuation on a writable approval field; it does not provide signature-backed approval integrity.}
+\end{figure}
+
+\paragraph{Declared-residency reporting.}
+The current \texttt{AISovereigntyPolicy} produced both report-only and enforce-mode evidence. In \texttt{reportOnly}, the operator emitted a critical finding and a warning for \texttt{finance/risk-assistant} traffic sent to \texttt{openai-us} in the forbidden \texttt{US} zone. We then enabled \texttt{enforce}. With \texttt{allowedZones=\{FR,EU\}}, the controller first selected the cheapest compliant target (\texttt{mistral-small}) but did not mutate the route because that target was not routable in the live gateway stack. After temporarily narrowing \texttt{allowedZones} to \texttt{FR}, the cheapest compliant routable target became \texttt{gpt-france-mini}, and the operator actuated a real reroute of \texttt{greenops-openai-us} to \texttt{greenops-openai-fr} with an \texttt{enforced-reroutes} annotation and request-body model rewrite. Restoring \texttt{reportOnly} restored the original route automatically. This is a stronger result than report-only detection alone because it both demonstrates enforce-mode capability and exposes an implementation limit that must be discussed honestly.
+
+\paragraph{E2 routing baselines.}
+The live E2 campaign completed after we repaired stale gateway backends and stale provider API-key secrets in the cluster. The resulting run issued 512 requests through the AKS gateway across eight routing baselines, with 60 objective items and 4 open-ended items per baseline. The dominant finding is not a winning baseline but a confounder: 441 of the 512 requests failed with upstream HTTP 429 responses, concentrated on the \texttt{gpt-france-mini} deployment in \texttt{francecentral}. Under that throttled regime, objective exact-match values ranged from 0.000 to 0.133 and error rates ranged from 0.688 to 0.969 across baselines. The campaign is therefore still informative for systems analysis because it shows that the comparative routing experiment was blocked by provider quota behavior rather than by missing control-plane automation. It does not support superiority, inferential ranking, or even stable pairwise ranking claims among baselines.
+
+\paragraph{E8 performance and scale.}
+The E8 campaign measured gateway-facing application latency under increasing numbers of deployed workloads. The 12-application profile completed 12 requests with no errors and p50/p95/p99 latencies of 165.0/1468.1/1558.9 ms. The 50-application profile completed 50 requests with four errors and p50/p95/p99 latencies of 255.5/25193.9/26696.9 ms. The 100-application profile did not complete because the single-node AKS cluster hit a scheduler pod-density limit: 74 pods remained pending, 26 were running, and the scheduler repeatedly reported \texttt{0/1 nodes are available: 1 Too many pods}. These latency percentiles are descriptive only: with 12 and 50 requests, the upper-tail numbers are too small-sample to support a scalability claim, and the 50-application tail is plausibly contaminated by the same provider throttling seen in E2. The current artifact therefore documents an incomplete scale attempt, not a completed overhead study of the controller itself.
+
+\paragraph{Shadow-AI detection.}
+After deploying Tetragon and a labeled rogue workload, the \texttt{shadow-egress} ConfigMap recorded \texttt{finance/rogue-script -> api.openai.com} with eight direct connections. The operator log then emitted a \texttt{ShadowAI} warning for direct forbidden-zone egress that bypassed the gateway. A second rogue workload in the \texttt{shadow} namespace generated direct \texttt{api.anthropic.com} egress. Tetragon export logs captured that traffic as repeated \texttt{tcp\_connect} observations, and after reconstructing the bridge input using the same forwarder logic, the operator emitted repeated \texttt{ShadowAI} warnings for \texttt{shadow/rogue-direct-llm-2 -> api.anthropic.com}. Across those captured bridge snapshots, no normal gateway-routed application appeared in the \texttt{shadow-egress} payload. This strengthens the current evidence beyond a single endpoint family, while also revealing that the continuous eBPF-to-ConfigMap bridge must be treated as an explicit operational dependency.
+
+\paragraph{Scope note.}
+The limits of E2, E3, E7, and E8 are consolidated in Section~10 rather than repeated here.

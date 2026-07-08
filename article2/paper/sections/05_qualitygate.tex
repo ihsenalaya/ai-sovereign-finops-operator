@@ -1,0 +1,102 @@
+\section{Measured Quality and AIQualityGate}
+The implemented \texttt{AIQualityGate} is an auditable safety gate for route
+changes. It is not a learned black-box router and it is not a pure LLM judge.
+Instead, it combines measured evidence and operational telemetry into a
+composite score with explicit insufficiency behavior. This positioning is
+closer to governance-oriented evaluation than to benchmark-only reporting, even
+though benchmark suites such as HELM, MMLU, GSM8K, and MT-Bench motivate some
+of the signal choices \cite{liang2022helm,hendrycks2020mmlu,cobbe2021gsm8k,zheng2023mtbench}.
+
+The default AI Quality Score is:
+\[
+Q = 0.40 \cdot Correctness +
+    0.20 \cdot Reliability +
+    0.15 \cdot Latency +
+    0.15 \cdot Semantic +
+    0.10 \cdot Judged
+\]
+with negative weights clamped to zero and the remaining weights normalized.
+When judge mode is disabled, the judged weight is removed before
+normalization. In this paper, however, the composite score is treated as an
+operator policy heuristic rather than as a validated scientific metric. The
+weights are implementation defaults, not values justified by sensitivity
+analysis or human-judgment calibration.
+
+\paragraph{Correctness.}
+The correctness dimension is computed from golden evidence. The implemented
+checks can combine normalized exact match, reference-vs-actual similarity,
+required-keyword presence, JSON validity, and field-level F1. This is an
+auditable deterministic evidence path, not a hidden online model score.
+
+\paragraph{Reliability.}
+Reliability is derived from live telemetry as:
+\[
+100 \cdot \left(1 - \frac{errors + timeouts + invalidJSON}{requests}\right)
+\]
+when request telemetry is available.
+
+\paragraph{Latency.}
+Latency uses a threshold-based score: latency at half the threshold maps to
+100, latency at the threshold maps to 50, and latency at twice the threshold
+maps to 0, with linear interpolation between those points.
+
+\paragraph{Semantic and judged signals.}
+Semantic and judged scores are not fetched magically by the scoring engine.
+They are injected through the collected evidence. Judged score is therefore an
+auxiliary acceptability signal when enabled, not proof of objective
+correctness.
+
+\paragraph{Insufficient-data behavior.}
+If a weighted signal is missing, or if source/candidate evidence falls below
+\texttt{minSamples}, the gate returns \texttt{insufficient-data}. This is a key
+design property: the operator is designed not to approve a downgrade when the
+required evidence has not been observed.
+
+\paragraph{Base decision rule.}
+Let \(Q_s\) be the source-model score, \(Q_c\) the candidate-model score, and
+\(\tau\) the configured \texttt{tolerancePoints}. The base decision is:
+\[
+\texttt{candidate-safe} \iff Q_c \geq Q_s - \tau
+\]
+Otherwise the verdict is \texttt{candidate-risk}. In the current code path,
+defaults are \texttt{minSamples=1} and \texttt{tolerancePoints=3} when not
+configured explicitly.
+
+\paragraph{Statistical gate status.}
+The controller code also contains an optional confidence-bound statistical
+path, but the present paper does not evaluate or rely on that path. The
+available AKS sample sizes are too small to support a statistically defensible
+inferential claim, so all result statements in this manuscript should be read
+as descriptive operational evidence rather than inferential quality proof.
+
+\paragraph{Task-specific metrics.}
+The current live AKS evidence exercises enterprise-style golden prompts plus
+two objective adapters in the external E2 campaign: GSM8K numeric exact match
+and MMLU multiple-choice exact match. Those objective signals are reported
+separately in the results because the composite score itself has not yet been
+validated as a general-purpose quality metric. For this reason, the manuscript
+uses the gate to study accept/reject/abstain behavior and not to claim
+task-general objective correctness from one cluster run alone
+\cite{hendrycks2020mmlu,cobbe2021gsm8k}.
+
+The currently mounted golden datasets now contain four application-specific
+\texttt{ConfigMap} datasets (\texttt{finance}, \texttt{legal},
+\texttt{marketing}, and \texttt{rh}) with 20 curated prompts each in the live
+E3 run. The repeated AKS campaign enforces \texttt{minSamples=20} and measures
+five repetitions per gate, which is enough to characterize stability versus
+instability for the tested applications, but still not enough to claim broad
+task-general calibration beyond this portfolio.
+
+\paragraph{qualityeval evidence flow.}
+The \texttt{qualityeval} job calls the production gateway endpoint for both the
+source and candidate models, serializes response evidence, and stores the
+material consumed by the gate. In Article~2, quality claims are therefore tied
+to real gateway-backed evaluation rather than offline fabricated comparisons.
+
+\paragraph{Integration with routing and budget enforcement.}
+The intended control loop is that routing or budget-driven candidate changes are
+safe only when quality evidence is adequate. The current implementation does
+not yet enforce that invariant on every route mutation path, which is
+particularly important for declared-residency enforcement. The results section
+therefore separates what the gate measured from what the controller actually
+enforced.
