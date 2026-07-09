@@ -94,9 +94,12 @@ material consumed by the gate. In Article~2, quality claims are therefore tied
 to real gateway-backed evaluation rather than offline fabricated comparisons.
 
 \paragraph{Integration with routing and budget enforcement.}
-The intended control loop is that routing or budget-driven candidate changes are
-safe only when quality evidence is adequate. The current implementation does
-not yet enforce that invariant on every route mutation path, which is
-particularly important for declared-residency enforcement. The results section
-therefore separates what the gate measured from what the controller actually
-enforced.
+The control loop couples actuation to quality evidence: a candidate model change
+is safe only when a matching quality gate reports a fresh candidate-safe verdict.
+For the declared-residency enforcement path this coupling is implemented --- an
+enforce-mode reroute consults the latest matching \texttt{AIQualityGate} and, on
+a non-candidate-safe or missing verdict, withholds the route change and opens a
+\texttt{Pending} \texttt{AIChangeRequest} for human approval instead of actuating
+automatically. Budget-driven fallback does not yet apply the same gate, so the
+results section separates what the gate measured from what each controller path
+actually enforced.
