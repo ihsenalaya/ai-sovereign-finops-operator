@@ -120,6 +120,43 @@ The updated E8 campaign replaced provider-dependent latency with a controlled mo
 \caption{Measured E8 empirical latency distributions for direct and gateway paths across the 12-, 50-, and 100-application profiles. The dominant scaling limit in this run was cluster capacity, not a large deterministic gateway penalty.}
 \end{figure}
 
+\paragraph{Controller overhead.}
+E8 characterizes the data plane, but the contribution of this paper is the
+control plane, so we additionally measured controller overhead directly from the
+operator's controller-runtime metrics while growing the number of reconciled
+policy objects (a mock-backend campaign with no LLM calls). Across three tiers of
+40, 120, and 240 reconciled objects (equal numbers of \texttt{AIBudgetPolicy} and
+\texttt{AISovereigntyPolicy}), the operator processed 172, 555, and 1{,}260
+reconciles per measurement window respectively, yet reconcile latency did not
+degrade: p50 stayed at 21.7/20.6/19.8~ms and p95 actually fell from 91.3 to
+66.2~ms as load increased (Fig.~\ref{fig:e8bis-reconcile}), the workqueue depth
+was zero at every scrape (no backlog), and resource use stayed low and flat ---
+CPU rose only from 0.012 to 0.020 cores and resident memory remained near
+53~MiB (Fig.~\ref{fig:e8bis-resources}). The induced API/etcd write rate from the
+ConfigMap-as-bus and status-update pattern grew modestly from 2.3 to 5.5
+writes/s. The defensible control-plane result is therefore that reconciliation
+overhead is small and does not grow with the number of governed objects over the
+tested range; the earlier ``capacity ceiling'' was a node-pool pod-density limit
+of the data plane, not a controller limit, and is discussed as a cluster-shape
+validity threat in Section~\ref{sec:validity} rather than as a scalability law.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/fig_e8bis_reconcile.pdf}
+\caption{Controller reconcile latency (p50/p95) versus the number of reconciled
+policy objects, live AKS controller-runtime metrics. Latency stays flat as load
+grows.}
+\label{fig:e8bis-reconcile}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/fig_e8bis_resources.pdf}
+\caption{Operator CPU (cores) and resident memory (MiB) versus reconciled-object
+count. Both remain low and nearly flat.}
+\label{fig:e8bis-resources}
+\end{figure}
+
 \paragraph{Shadow-AI detection.}
 The updated shadow-AI campaign moved beyond true-positive-only evidence and produced a small live FP/FN matrix on AKS. Direct rogue calls to both \texttt{api.openai.com} and \texttt{api.anthropic.com} were detected end-to-end: Tetragon \texttt{tcp\_connect} observations were converted into \texttt{shadow-egress} entries, and the operator emitted \texttt{ShadowAI} warnings for \texttt{shadow-t4/tp-openai} and \texttt{shadow-t4/tp-anthropic}. A direct-IP OpenAI variant was also detected, showing that the current bridge can still classify some IP-only calls by mapping destination IPs back to known LLM hosts. However, the same campaign also exposed concrete weaknesses. Two near-miss Anthropic workloads, \texttt{anthropic.com} and \texttt{docs.anthropic.com}, were falsely classified as \texttt{api.anthropic.com}, yielding two false positives among four negative scenarios. Two positive scenarios were missed: a proxy-mediated OpenAI call did not produce a detection for the client workload, and a call to an unlisted endpoint (\texttt{api.perplexity.ai}) produced no detection at all. The resulting nine-scenario matrix yielded FP rate \(=0.50\) and FN rate \(=0.40\). This is not a polished detection result, but it is a publishable systems result: the current implementation works for direct known-host egress, partially survives direct-IP use, and fails in predictable ways under near-miss hostnames, proxy indirection, and unlisted endpoints because endpoint classification in this AKS run depended on Tetragon \texttt{tcp\_connect} events plus destination-IP matching against a fixed known-host list rather than on TLS SNI or a broader endpoint catalog.
 

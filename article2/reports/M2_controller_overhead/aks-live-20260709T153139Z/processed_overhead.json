@@ -1,0 +1,48 @@
+{
+  "run": "aks-live-20260709T153139Z",
+  "note": "controller-runtime metrics scraped live; per-tier deltas over snapshot mtime windows.",
+  "tiers": [
+    {
+      "tier_policies_each_kind": 20,
+      "window_s": 109.8,
+      "reconciles_in_window": 172,
+      "reconcile_mean_ms": 29.09,
+      "reconcile_p50_ms": 21.73,
+      "reconcile_p95_ms": 91.33,
+      "workqueue_depth_at_scrape": 0,
+      "workqueue_adds_in_window": 172,
+      "api_writes_in_window": 248,
+      "api_writes_per_s": 2.26,
+      "cpu_cores_avg": 0.0124,
+      "memory_mib": 53.9
+    },
+    {
+      "tier_policies_each_kind": 60,
+      "window_s": 182.1,
+      "reconciles_in_window": 555,
+      "reconcile_mean_ms": 26.1,
+      "reconcile_p50_ms": 20.56,
+      "reconcile_p95_ms": 81.91,
+      "workqueue_depth_at_scrape": 0,
+      "workqueue_adds_in_window": 555,
+      "api_writes_in_window": 738,
+      "api_writes_per_s": 4.05,
+      "cpu_cores_avg": 0.018,
+      "memory_mib": 53.6
+    },
+    {
+      "tier_policies_each_kind": 120,
+      "window_s": 276.1,
+      "reconciles_in_window": 1260,
+      "reconcile_mean_ms": 23.59,
+      "reconcile_p50_ms": 19.82,
+      "reconcile_p95_ms": 66.18,
+      "workqueue_depth_at_scrape": 0,
+      "workqueue_adds_in_window": 1260,
+      "api_writes_in_window": 1523,
+      "api_writes_per_s": 5.52,
+      "cpu_cores_avg": 0.0198,
+      "memory_mib": 52.7
+    }
+  ]
+}
