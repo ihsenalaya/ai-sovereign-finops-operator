@@ -1,0 +1,109 @@
+{
+  "source_run": "experiments/runs/E1_finops_attribution/aks-live-20260708T160246Z",
+  "finding": "Report 'requests' equalled the ERROR count (collector took max over duration series, incl. error_type). Cost/tokens come only from the token metric, which the gateway emits solely for successful responses -> error responses carry ZERO billed tokens.",
+  "error_responses_carry_billed_tokens": false,
+  "error_codes": [
+    {
+      "triplet": [
+        "finance",
+        "risk-assistant",
+        "gpt-us-mini"
+      ],
+      "error_type": "_OTHER",
+      "response_model": "unknown",
+      "count": 660
+    }
+  ],
+  "per_triplet": [
+    {
+      "namespace": "finance",
+      "application": "risk-assistant",
+      "model": "gpt-france-mini",
+      "successful_requests": 1,
+      "error_requests": 0,
+      "total_requests": 1,
+      "input_tokens_successful": 33,
+      "output_tokens_successful": 80
+    },
+    {
+      "namespace": "finance",
+      "application": "risk-assistant",
+      "model": "gpt-us-mini",
+      "successful_requests": 85,
+      "error_requests": 660,
+      "total_requests": 745,
+      "input_tokens_successful": 1299,
+      "output_tokens_successful": 10882
+    },
+    {
+      "namespace": "finance",
+      "application": "risk-assistant",
+      "model": "mistral-large-latest",
+      "successful_requests": 1,
+      "error_requests": 0,
+      "total_requests": 1,
+      "input_tokens_successful": 30,
+      "output_tokens_successful": 80
+    },
+    {
+      "namespace": "legal",
+      "application": "contract-review",
+      "model": "gpt-france-mini",
+      "successful_requests": 6,
+      "error_requests": 0,
+      "total_requests": 6,
+      "input_tokens_successful": 115,
+      "output_tokens_successful": 836
+    },
+    {
+      "namespace": "legal",
+      "application": "contract-review",
+      "model": "mistral-large-latest",
+      "successful_requests": 1,
+      "error_requests": 0,
+      "total_requests": 1,
+      "input_tokens_successful": 30,
+      "output_tokens_successful": 90
+    },
+    {
+      "namespace": "marketing",
+      "application": "content-writer",
+      "model": "gpt-france-mini",
+      "successful_requests": 1,
+      "error_requests": 0,
+      "total_requests": 1,
+      "input_tokens_successful": 30,
+      "output_tokens_successful": 90
+    },
+    {
+      "namespace": "marketing",
+      "application": "content-writer",
+      "model": "mistral-large-latest",
+      "successful_requests": 6,
+      "error_requests": 0,
+      "total_requests": 6,
+      "input_tokens_successful": 93,
+      "output_tokens_successful": 390
+    },
+    {
+      "namespace": "rh",
+      "application": "chatbot-rh",
+      "model": "gpt-france-mini",
+      "successful_requests": 8,
+      "error_requests": 0,
+      "total_requests": 8,
+      "input_tokens_successful": 149,
+      "output_tokens_successful": 571
+    },
+    {
+      "namespace": "rh",
+      "application": "chatbot-rh",
+      "model": "mistral-large-latest",
+      "successful_requests": 1,
+      "error_requests": 0,
+      "total_requests": 1,
+      "input_tokens_successful": 29,
+      "output_tokens_successful": 37
+    }
+  ]
+}
