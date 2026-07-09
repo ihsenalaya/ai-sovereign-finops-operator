@@ -1,0 +1,18 @@
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: sov-evidence-gpt-us-to-fr
+  namespace: default
+  labels:
+    article2-m4: "true"
+spec:
+  sourceModel: gpt-us-mini
+  candidateModel: gpt-france-mini
+  gatewayRef: main-gateway
+  goldenDatasetRef:
+    name: finance-quality-golden
+  minSamples: 1
+  target:
+    namespace: finance
+    application: risk-assistant
+    team: finance

@@ -1,0 +1,32 @@
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIChangeRequest
+metadata:
+  creationTimestamp: "2026-07-09T18:50:37Z"
+  generation: 1
+  labels:
+    aiops.imperium.io/escalation: quality-evidence
+    aiops.imperium.io/sovereignty-policy: regulated-france-policy
+  name: sov-regulated-france-policy-gpt-us-mini
+  namespace: default
+  resourceVersion: "591676"
+  uid: ffe60ce4-f713-4662-b5e7-c8f3d22acc43
+spec:
+  action: reroute
+  approval: Pending
+  reason: 'residency reroute withheld: no AIQualityGate found for gpt-us-mini -> gpt-france-mini;
+    escalating to human approval'
+  riskLevel: high
+  sourceModel: gpt-us-mini
+  targetModel: gpt-france-mini
+status:
+  conditions:
+  - lastTransitionTime: "2026-07-09T18:50:37Z"
+    message: waiting for approval; expires at 2026-07-11T18:50:37Z
+    observedGeneration: 1
+    reason: Reconciled
+    status: "True"
+    type: Ready
+  expiresAt: "2026-07-11T18:50:37Z"
+  message: waiting for approval; expires at 2026-07-11T18:50:37Z
+  observedGeneration: 1
+  phase: Pending

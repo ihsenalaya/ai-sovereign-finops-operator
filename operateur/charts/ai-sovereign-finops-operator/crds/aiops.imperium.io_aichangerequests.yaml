@@ -84,6 +84,24 @@ spec:
                 - Approved
                 - Rejected
                 type: string
+              approvalKeyID:
+                description: |-
+                  ApprovalKeyID optionally identifies which trusted approval key signed the
+                  decision, letting operators rotate keys without ambiguity. When empty, the
+                  signature is checked against every configured trusted key.
+                type: string
+              approvalSignature:
+                description: |-
+                  ApprovalSignature is a hex-encoded Ed25519 signature over the canonical
+                  approval message (namespace, name, action, sourceModel, targetModel,
+                  approval). When the signed-approval admission control is enabled (the
+                  operator is configured with one or more trusted approval public keys), a
+                  decisive approval (Approved or Rejected) is admitted only when this
+                  signature verifies against a trusted key, so a bare unsigned approval
+                  patch is rejected at admission time. The signature binds the decision to
+                  this specific request, so it cannot be replayed onto another request or
+                  after the target model is altered.
+                type: string
               expectedSavingEUR:
                 description: ExpectedSavingEUR is the projected saving over the observation
                   window.

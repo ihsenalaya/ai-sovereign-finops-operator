@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,6 +34,7 @@ import (
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/enforcementengine"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/qualitygate"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
 )
 
@@ -176,6 +179,29 @@ func (r *AISovereigntyPolicyReconciler) Reconcile(ctx context.Context, req ctrl.
 			}
 		}
 	}
+
+	// "No route change without adequate evidence": when enabled, a residency
+	// reroute is actuated only if a matching AIQualityGate is fresh candidate-safe.
+	// Otherwise we do not actuate; we create a Pending AIChangeRequest for human
+	// escalation and drop the reroute from the actuation set.
+	escalated := map[string]string{}
+	if mode == enforcementengine.ModeEnforce &&
+		policy.Spec.RequireQualityEvidenceForReroute != nil &&
+		*policy.Spec.RequireQualityEvidenceForReroute && len(desiredReroutes) > 0 {
+		var gcErr error
+		escalated, gcErr = r.gateCheckReroutes(ctx, &policy, desiredReroutes)
+		if gcErr != nil {
+			logger.Error(gcErr, "quality-gate evidence check failed")
+		}
+		for src := range escalated {
+			delete(desiredReroutes, src)
+			if r.Recorder != nil {
+				r.Recorder.Eventf(&policy, corev1.EventTypeWarning, "RerouteEscalated",
+					"reroute of %q withheld pending quality evidence; created AIChangeRequest for human approval", src)
+			}
+		}
+	}
+
 	gwActuated, err := actuateSovereigntyControls(ctx, r.Client, policy.Namespace, desiredReroutes, desiredBlocks)
 	if err != nil {
 		logger.Error(err, "gateway enforcement actuation failed")
@@ -231,4 +257,93 @@ func (r *AISovereigntyPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&aiopsv1alpha1.AISovereigntyPolicy{}).
 		Complete(r)
+}
+
+// gateCheckReroutes enforces the "no route change without adequate evidence"
+// invariant. For each desired source->target reroute it consults the latest
+// matching AIQualityGate; reroutes lacking a fresh candidate-safe verdict are
+// returned in the escalated map (caller drops them from actuation) and a Pending
+// AIChangeRequest is created for human approval.
+func (r *AISovereigntyPolicyReconciler) gateCheckReroutes(ctx context.Context, policy *aiopsv1alpha1.AISovereigntyPolicy, desired map[string]string) (map[string]string, error) {
+	var gateList aiopsv1alpha1.AIQualityGateList
+	if err := r.List(ctx, &gateList, client.InNamespace(policy.Namespace)); err != nil {
+		return nil, err
+	}
+	gates := make([]qualitygate.GateVerdict, 0, len(gateList.Items))
+	for i := range gateList.Items {
+		g := &gateList.Items[i]
+		var evaluatedAt time.Time
+		if c := meta.FindStatusCondition(g.Status.Conditions, "Ready"); c != nil {
+			evaluatedAt = c.LastTransitionTime.Time
+		}
+		gates = append(gates, qualitygate.GateVerdict{
+			Name:           g.Name,
+			SourceModel:    g.Spec.SourceModel,
+			CandidateModel: g.Spec.CandidateModel,
+			Verdict:        g.Status.Verdict,
+			EvaluatedAt:    evaluatedAt,
+		})
+	}
+
+	escalated := map[string]string{}
+	for src, target := range desired {
+		// maxAge 0: verdict-based (freshness enforcement is opt-in future work).
+		decision := qualitygate.EvaluateReroute(gates, src, target, time.Now(), 0)
+		if decision.Allowed {
+			continue
+		}
+		escalated[src] = target
+		if err := r.ensureRerouteEscalation(ctx, policy, src, target, decision.Reason); err != nil {
+			return escalated, err
+		}
+	}
+	return escalated, nil
+}
+
+// ensureRerouteEscalation creates (idempotently) a Pending AIChangeRequest asking
+// a human to approve a residency reroute that lacks fresh quality evidence.
+func (r *AISovereigntyPolicyReconciler) ensureRerouteEscalation(ctx context.Context, policy *aiopsv1alpha1.AISovereigntyPolicy, source, target, reason string) error {
+	name := fmt.Sprintf("sov-%s-%s", policy.Name, sanitizeName(source))
+	var existing aiopsv1alpha1.AIChangeRequest
+	key := client.ObjectKey{Namespace: policy.Namespace, Name: name}
+	if err := r.Get(ctx, key, &existing); err == nil {
+		return nil // already escalated
+	} else if client.IgnoreNotFound(err) != nil {
+		return err
+	}
+	crq := aiopsv1alpha1.AIChangeRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: policy.Namespace,
+			Labels: map[string]string{
+				"aiops.imperium.io/sovereignty-policy": policy.Name,
+				"aiops.imperium.io/escalation":         "quality-evidence",
+			},
+		},
+		Spec: aiopsv1alpha1.AIChangeRequestSpec{
+			Action:      aiopsv1alpha1.AIChangeRequestActionReroute,
+			SourceModel: source,
+			TargetModel: target,
+			Reason:      fmt.Sprintf("residency reroute withheld: %s", reason),
+			RiskLevel:   "high",
+			Approval:    aiopsv1alpha1.AIChangeRequestApprovalPending,
+		},
+	}
+	return r.Create(ctx, &crq)
+}
+
+// sanitizeName makes a model id safe for use in a Kubernetes object name.
+func sanitizeName(s string) string {
+	out := make([]rune, 0, len(s))
+	for _, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z', c >= '0' && c <= '9', c == '-':
+			out = append(out, c)
+		case c >= 'A' && c <= 'Z':
+			out = append(out, c+('a'-'A'))
+		default:
+			out = append(out, '-')
+		}
+	}
+	return string(out)
 }

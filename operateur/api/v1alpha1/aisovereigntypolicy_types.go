@@ -85,6 +85,16 @@ type AISovereigntyPolicySpec struct {
 	// EnforcementMode controls reactions: reportOnly | warn | enforce.
 	// +kubebuilder:default=reportOnly
 	EnforcementMode EnforcementMode `json:"enforcementMode"`
+
+	// RequireQualityEvidenceForReroute enforces the "no route change without
+	// adequate evidence" invariant: in enforce mode, a residency-driven reroute
+	// from a forbidden model to a compliant candidate is actuated only when a
+	// matching AIQualityGate (same sourceModel and candidateModel) has a fresh
+	// candidate-safe verdict. Otherwise the reroute is NOT actuated automatically;
+	// a Pending AIChangeRequest is created for human escalation. Defaults to false
+	// (legacy behavior: actuate directly).
+	// +optional
+	RequireQualityEvidenceForReroute *bool `json:"requireQualityEvidenceForReroute,omitempty"`
 }
 
 // AISovereigntyPolicyStatus defines the observed state of AISovereigntyPolicy.
