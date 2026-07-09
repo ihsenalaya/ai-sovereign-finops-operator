@@ -1,0 +1,23 @@
+\section{Related Work}
+Existing systems in this problem space usually optimize one layer at a time: model routing, policy enforcement, gateway brokering, or cost attribution. Cost-quality routers such as RouteLLM and FrugalGPT focus on model-selection efficiency rather than Kubernetes-native governance workflows \cite{ding2024routellm,chen2023frugalgpt}. More recent routing work continues this direction with difficulty-aware, test-time, and universal routers such as Hybrid LLM, BEST-Route, EcoRouter, and Universal Model Routing \cite{ding2024hybridllm,go2025bestroute,yang2025ecorouter,jitkrittum2026universalrouting}. These systems are the right conceptual baselines for routing quality/cost trade-offs, but they do not by themselves expose workload-scoped Kubernetes objects, approval workflows, or gateway-bypass evidence.
+
+Gateway products such as Envoy AI Gateway, Kong AI Gateway, and Portkey concentrate on traffic brokering, fallback, observability, and provider-facing controls \cite{envoyAIGatewayDocs,kongAIGateway,portkeyAIGateway}. Kubernetes-native policy engines such as Gatekeeper and Kyverno are powerful for admission control and policy reporting, but they are not runtime LLM route-governance loops \cite{gatekeeperDocs,kyvernoIntro,kyvernoReports}. OpenCost provides vendor-neutral Kubernetes cost allocation, which is adjacent to but distinct from runtime governance-aware LLM routing \cite{opencostOverview,opencostSpec}. At the platform layer, the operator pattern, custom resources, and Gateway API provide the control-plane primitives used by this article's design \cite{kubernetesOperatorPattern,kubernetesCustomResources,kubernetesCRDTask,gatewayAPIDocs}. Gateway-bypass detection builds on eBPF-based egress observability, whose cloud-native deployment and portability are an active systems research area \cite{tetragonOverview,zheng2024wasmbpf}.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{2.4cm} p{2.0cm} p{2.0cm} p{1.7cm} p{2.0cm}}
+\toprule
+System family & Runtime route selection & Kubernetes workload attribution & Auditable control objects & Gateway-bypass visibility \\
+\midrule
+RouteLLM / FrugalGPT & yes & no & no & no \\
+AI gateways & partial & limited & limited & no \\
+Gatekeeper / Kyverno & no & partial & yes & no \\
+OpenCost & no & yes & limited & no \\
+This work & yes & yes & yes & partial \\
+\bottomrule
+\end{tabular}
+\caption{Positioning of the current system against adjacent families. ``Partial'' means the capability exists in a narrower form than the governance loop studied here.}
+\end{table}
+
+The current paper therefore claims a narrower contribution than a full routing paper: a live Kubernetes control plane can reconcile multiple governance signals and persist workload-scoped evidence across routing, budget, quality, and egress paths. The paper is also distinct from evaluation-only frameworks such as HELM, MMLU, GSM8K, and MT-Bench, which inform quality assessment but are not themselves governance control loops \cite{liang2022helm,hendrycks2020mmlu,cobbe2021gsm8k,zheng2023mtbench}.
