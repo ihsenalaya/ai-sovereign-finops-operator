@@ -1,0 +1,379 @@
+{
+  "run": "aks-live-20260709T061428Z",
+  "n_objective_per_baseline": 180,
+  "note": "Wilson 95% CIs; exact McNemar paired by (item,window); Holm-corrected across 28 pairs. Measured E2 data only.",
+  "exact_match_range": [
+    0.5222,
+    0.5833
+  ],
+  "any_pair_significant_after_holm": true,
+  "branch": "some_pairs_significant",
+  "per_baseline": {
+    "B1_premium_static": {
+      "n": 180,
+      "correct": 97,
+      "exact_match": 0.5389,
+      "wilson95": [
+        0.466,
+        0.6101
+      ],
+      "latency_mean_ms": 142.1,
+      "latency_ci95_ms": [
+        125.7,
+        158.5
+      ]
+    },
+    "B2_least_cost": {
+      "n": 180,
+      "correct": 103,
+      "exact_match": 0.5722,
+      "wilson95": [
+        0.4992,
+        0.6422
+      ],
+      "latency_mean_ms": 166.8,
+      "latency_ci95_ms": [
+        159.9,
+        173.7
+      ]
+    },
+    "B3_static_namespace": {
+      "n": 180,
+      "correct": 105,
+      "exact_match": 0.5833,
+      "wilson95": [
+        0.5103,
+        0.6529
+      ],
+      "latency_mean_ms": 175.2,
+      "latency_ci95_ms": [
+        167.6,
+        182.7
+      ]
+    },
+    "B4_policy_only_premium": {
+      "n": 180,
+      "correct": 105,
+      "exact_match": 0.5833,
+      "wilson95": [
+        0.5103,
+        0.6529
+      ],
+      "latency_mean_ms": 150.0,
+      "latency_ci95_ms": [
+        133.3,
+        166.8
+      ]
+    },
+    "B5_policy_only_least_cost": {
+      "n": 180,
+      "correct": 100,
+      "exact_match": 0.5556,
+      "wilson95": [
+        0.4826,
+        0.6262
+      ],
+      "latency_mean_ms": 161.4,
+      "latency_ci95_ms": [
+        115.2,
+        207.7
+      ]
+    },
+    "B6_routing_score_no_gate": {
+      "n": 180,
+      "correct": 100,
+      "exact_match": 0.5556,
+      "wilson95": [
+        0.4826,
+        0.6262
+      ],
+      "latency_mean_ms": 151.9,
+      "latency_ci95_ms": [
+        122.4,
+        181.5
+      ]
+    },
+    "B7_routing_score_with_gate": {
+      "n": 180,
+      "correct": 100,
+      "exact_match": 0.5556,
+      "wilson95": [
+        0.4826,
+        0.6262
+      ],
+      "latency_mean_ms": 133.5,
+      "latency_ci95_ms": [
+        124.7,
+        142.4
+      ]
+    },
+    "B8_routing_score_gate_change_request": {
+      "n": 180,
+      "correct": 94,
+      "exact_match": 0.5222,
+      "wilson95": [
+        0.4496,
+        0.594
+      ],
+      "latency_mean_ms": 137.5,
+      "latency_ci95_ms": [
+        126.9,
+        148.2
+      ]
+    }
+  },
+  "pairwise_mcnemar": [
+    {
+      "pair": "B4_policy_only_premium vs B8_routing_score_gate_change_request",
+      "a_only_correct": 11,
+      "b_only_correct": 0,
+      "discordant": 11,
+      "p_raw": 0.001,
+      "p_holm": 0.0273,
+      "significant_0.05": true
+    },
+    {
+      "pair": "B3_static_namespace vs B8_routing_score_gate_change_request",
+      "a_only_correct": 12,
+      "b_only_correct": 1,
+      "discordant": 13,
+      "p_raw": 0.0034,
+      "p_holm": 0.0923,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B2_least_cost vs B8_routing_score_gate_change_request",
+      "a_only_correct": 12,
+      "b_only_correct": 3,
+      "discordant": 15,
+      "p_raw": 0.0352,
+      "p_holm": 0.9141,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B4_policy_only_premium",
+      "a_only_correct": 2,
+      "b_only_correct": 10,
+      "discordant": 12,
+      "p_raw": 0.0386,
+      "p_holm": 0.9644,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B3_static_namespace",
+      "a_only_correct": 3,
+      "b_only_correct": 11,
+      "discordant": 14,
+      "p_raw": 0.0574,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B6_routing_score_no_gate vs B8_routing_score_gate_change_request",
+      "a_only_correct": 7,
+      "b_only_correct": 1,
+      "discordant": 8,
+      "p_raw": 0.0703,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B5_policy_only_least_cost vs B8_routing_score_gate_change_request",
+      "a_only_correct": 8,
+      "b_only_correct": 2,
+      "discordant": 10,
+      "p_raw": 0.1094,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B7_routing_score_with_gate vs B8_routing_score_gate_change_request",
+      "a_only_correct": 8,
+      "b_only_correct": 2,
+      "discordant": 10,
+      "p_raw": 0.1094,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B2_least_cost",
+      "a_only_correct": 4,
+      "b_only_correct": 10,
+      "discordant": 14,
+      "p_raw": 0.1796,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B3_static_namespace vs B5_policy_only_least_cost",
+      "a_only_correct": 9,
+      "b_only_correct": 4,
+      "discordant": 13,
+      "p_raw": 0.2668,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B3_static_namespace vs B7_routing_score_with_gate",
+      "a_only_correct": 9,
+      "b_only_correct": 4,
+      "discordant": 13,
+      "p_raw": 0.2668,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B4_policy_only_premium vs B6_routing_score_no_gate",
+      "a_only_correct": 9,
+      "b_only_correct": 4,
+      "discordant": 13,
+      "p_raw": 0.2668,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B4_policy_only_premium vs B5_policy_only_least_cost",
+      "a_only_correct": 10,
+      "b_only_correct": 5,
+      "discordant": 15,
+      "p_raw": 0.3018,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B4_policy_only_premium vs B7_routing_score_with_gate",
+      "a_only_correct": 10,
+      "b_only_correct": 5,
+      "discordant": 15,
+      "p_raw": 0.3018,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B3_static_namespace vs B6_routing_score_no_gate",
+      "a_only_correct": 11,
+      "b_only_correct": 6,
+      "discordant": 17,
+      "p_raw": 0.3323,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B8_routing_score_gate_change_request",
+      "a_only_correct": 5,
+      "b_only_correct": 2,
+      "discordant": 7,
+      "p_raw": 0.4531,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B5_policy_only_least_cost",
+      "a_only_correct": 4,
+      "b_only_correct": 7,
+      "discordant": 11,
+      "p_raw": 0.5488,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B6_routing_score_no_gate",
+      "a_only_correct": 4,
+      "b_only_correct": 7,
+      "discordant": 11,
+      "p_raw": 0.5488,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B1_premium_static vs B7_routing_score_with_gate",
+      "a_only_correct": 5,
+      "b_only_correct": 8,
+      "discordant": 13,
+      "p_raw": 0.5811,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B2_least_cost vs B6_routing_score_no_gate",
+      "a_only_correct": 9,
+      "b_only_correct": 6,
+      "discordant": 15,
+      "p_raw": 0.6072,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B2_least_cost vs B7_routing_score_with_gate",
+      "a_only_correct": 9,
+      "b_only_correct": 6,
+      "discordant": 15,
+      "p_raw": 0.6072,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B2_least_cost vs B5_policy_only_least_cost",
+      "a_only_correct": 10,
+      "b_only_correct": 7,
+      "discordant": 17,
+      "p_raw": 0.6291,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B2_least_cost vs B3_static_namespace",
+      "a_only_correct": 3,
+      "b_only_correct": 5,
+      "discordant": 8,
+      "p_raw": 0.7266,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B2_least_cost vs B4_policy_only_premium",
+      "a_only_correct": 5,
+      "b_only_correct": 7,
+      "discordant": 12,
+      "p_raw": 0.7744,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B3_static_namespace vs B4_policy_only_premium",
+      "a_only_correct": 7,
+      "b_only_correct": 7,
+      "discordant": 14,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B5_policy_only_least_cost vs B6_routing_score_no_gate",
+      "a_only_correct": 8,
+      "b_only_correct": 8,
+      "discordant": 16,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B5_policy_only_least_cost vs B7_routing_score_with_gate",
+      "a_only_correct": 6,
+      "b_only_correct": 6,
+      "discordant": 12,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    },
+    {
+      "pair": "B6_routing_score_no_gate vs B7_routing_score_with_gate",
+      "a_only_correct": 6,
+      "b_only_correct": 6,
+      "discordant": 12,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "significant_0.05": false
+    }
+  ]
+}
