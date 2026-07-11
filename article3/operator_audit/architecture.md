@@ -1,158 +1,35 @@
-# Operator Architecture Audit
+# Operator architecture audit
 
-## Executive Summary
+This audit is generated from the recovery branch source by `article3/tools/operator_inventory.py`. Inventories contain 18 CRDs, 17 controller files/manager registrations, and 40 Go test files. 15 controllers are normally enabled; the two attestation evidence/report reconcilers are conditional to preserve the dedicated verifier's single-writer role.
 
-The current operator is a Kubernetes control plane for AI FinOps, sovereignty, governance-aware routing, and confidential attestation. It is architected around:
+## Established request and control path
 
-- declarative CRDs in `operateur/api/v1alpha1`
-- reconcilers in `operateur/internal/controller`
-- pure business engines in `operateur/internal/*engine`
-- telemetry collectors decoupled from business logic
-- optional data-plane actuation against Envoy AI Gateway routes
+1. The mutating webhook (`internal/webhook/podinjector`) injects `greenops-header-proxy` and `HTTP_PROXY` for annotated workloads.
+2. The sidecar adds namespace/application headers; HTTPS `CONNECT` is tunnelled and therefore bypasses request inspection.
+3. Envoy AI Gateway routes from `x-ai-eg-model` to a backend.
+4. Envoy `gen_ai_*` Prometheus histograms expose aggregate token and latency telemetry.
+5. Prometheus collectors poll cumulative counters; requested daily/weekly/monthly ranges are not implemented as real sliding windows.
+6. The collector maps model traffic to workload/catalog dimensions. `internal/costengine` combines tokens with a 15-model price book dated 2026-01 and a fixed USD→EUR factor, but the price date is not propagated into cost records.
+7. Budget, sovereignty, FinOps, quality, routing, override, and change-request controllers update aggregate status/metrics and may patch `AIGatewayRoute` rules.
 
-This separation is favorable for GOV-AR because a new admission-and-reservation method can be introduced as a new pure decision layer plus a ledger-backed controller path, without rewriting the whole operator.
+This established path has no request-identified cost settlement. “OpenTelemetry” in the existing documentation refers to Envoy metrics; the operator has no end-to-end OpenTelemetry trace path.
 
-## Current Telemetry Flows
+## Branch-local GOV-AR scaffold
 
-The operator supports three real telemetry paths:
+The Article 3 branch adds `cmd/gov-ar-admission`, `internal/govar`, chart templates, and sidecar calls. The current sequence is sidecar `/v1/admit` → Kubernetes snapshot → partial feasibility filter → cheapest strict-max candidate → in-memory/PostgreSQL reservation → `x-ai-eg-model` → buffered provider response → `/v1/settle`.
 
-1. `aigw`
-   - source: Envoy AI Gateway or OpenTelemetry metrics
-   - expected signals: token usage and optionally latency
-   - role: production-grade source for cost, quality, budget and sovereignty logic
+It is not the requested algorithm or measured data path. The proxy submits `actual_cost: 0`; the database does not persist provider usage or price it. There is no dispatch transition, expiry worker, late-settlement compensation, window renewal, adaptive quantile, tenant risk allocation, drift fallback, durable queue, approval lookup, custom GOV-AR metrics, or trace propagation.
 
-2. `prometheus`
-   - source: Prometheus queries
-   - role: fallback real source for usage aggregation
+## Security and enforcement boundary
 
-3. `configmap`
-   - source: preloaded usage data in Kubernetes ConfigMaps
-   - role: deterministic demos and experiments
+Tenant, sensitivity, zones, and budget-policy name are caller/workload annotations without authentication. Admission/settlement/cancel/liability endpoints are unauthenticated. The webhook failure policy is `Ignore`; only `HTTP_PROXY` is injected; HTTPS tunnelling bypasses GOV-AR. The service reads catalog/policy objects from the workload namespace although existing demos centralize them in `default`. These are enforcement failures, not manuscript “limitations,” and must be fixed before E0.
 
-The fake collector is opt-in only and is explicitly not the default production path.
+## Reproduction
 
-## Token Attribution and Cost Computation
-
-- usage samples are collected per request/app/team/namespace/model depending on available labels
-- provider pricing is resolved from `AIProvider` or the built-in catalog
-- `costengine` computes input and output token cost in EUR-equivalent quantities
-- attribution is exposed through:
-  - `AIFinOpsReport.status`
-  - Prometheus metrics under `ai_finops_*`
-  - Markdown and JSON report payloads
-
-## Budget Transitions
-
-`AIBudgetPolicy` tracks spend against thresholds and assigns a phase:
-
-- `ok`
-- `warning`
-- `critical`
-- `hardLimit`
-
-In enforce mode, a guarded fallback may reroute traffic to a cheaper managed model if:
-
-- the fallback is actually cheaper
-- the model is not shared beyond the target scope
-- no sovereignty enforcement already conflicts
-- telemetry is sufficient for guardrails
-
-## Routing and Recommendation Logic
-
-Current routing logic is recommendation-centric:
-
-- `AIRoutingPolicy` computes candidate models using routing score logic
-- `recommendationengine` is sovereignty-aware and cost-aware
-- `AIChangeRequest` provides an approval path before live actuation
-- `AIRouteOverride` provides a manual immediate override path
-- `AIQualityGate` is the explicit quality safety check before switching models
-
-This is close to a decision-control loop, but not yet a joint admission, queueing, reservation, and delayed-settlement method.
-
-## Enforcement Logic
-
-`AISovereigntyPolicy.enforcementMode` drives the action level:
-
-- `reportOnly`
-- `warn`
-- `enforce`
-
-In enforce mode the operator mutates gateway routes and can:
-
-- reroute to a compliant backend
-- block via the reserved nonexistent backend `aiops-blocked`
-
-Mutations are reversible using annotations and finalizer-driven cleanup.
-
-## Shadow AI Path
-
-The operator also has a second sovereignty signal path independent of the gateway:
-
-- Tetragon observes egress
-- `shadowengine` classifies destination zones via `EndpointToZone`
-- metrics such as `ai_finops_shadow_ai_egress` expose off-gateway usage
-
-This is a useful substrate for GOV-AR because it already distinguishes governed and non-governed request paths.
-
-## Granularity and Idempotence
-
-Granularity today is mostly at:
-
-- model
-- provider
-- namespace
-- application
-- team
-
-Important limitation:
-
-- gateway enforcement is currently effectively model-scoped rather than fully namespace-scoped in the data plane
-
-Idempotence mechanisms already present:
-
-- controller reconciliation against desired state
-- status fields with `observedGeneration`
-- reversible route mutations
-- evidence ownership separation in the confidential track
-- `AIChangeRequest` phase-based workflow
-
-## Double-Counting and Async Risks
-
-Main risks already visible for a future GOV-AR design:
-
-- delayed telemetry can make budget state lag behind in-flight requests
-- gateway counters may reset after restarts
-- current budget logic is spend-observation-based, not reservation-ledger-based
-- concurrent requests can oversubscribe a tenant budget before post-hoc settlement arrives
-- governance enforcement and budget fallback can interact unless explicitly serialized
-
-These are precisely the gaps GOV-AR should target.
-
-## Modification Points for GOV-AR
-
-The most promising insertion points are:
-
-- new pure decision package under `article3/src/` and later shared operator package
-- admission webhook or gateway-side decision endpoint
-- tenant budget ledger reconciler or transactional store
-- predictor for output-token reservation
-- route-selection path adjacent to `AIRoutingPolicy`
-- settlement/idempotence path adjacent to `AIFinOpsReport` and `AIBudgetPolicy`
-
-## Audit Conclusion
-
-The current operator already provides:
-
-- telemetry ingestion
-- pricing and catalog semantics
-- routing recommendation
-- policy enforcement
-- quality guardrails
-- auditability
-
-It does not yet provide:
-
-- explicit in-flight liability accounting
-- atomic reserve-settle semantics
-- risk-bounded admission under delayed cost feedback
-- queue/reject/abstain as first-class online decisions
+```bash
+find operateur/config/crd/bases -maxdepth 1 -name '*.yaml' | wc -l
+find operateur/internal/controller -maxdepth 1 -name '*_controller.go' | wc -l
+rg -n 'SetupWithManager' operateur/cmd/main.go
+rg --files operateur -g '*_test.go' | wc -l
+rg -n '^func Test' operateur -g '*_test.go' | wc -l
+```

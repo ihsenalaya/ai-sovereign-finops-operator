@@ -1,0 +1,33 @@
+{
+  "review_id": "operator-architecture-audit-20260711",
+  "reviewer_role": "independent operator architecture auditor",
+  "reviewed_at_utc": "2026-07-11T08:25:00Z",
+  "scope": "source-derived CRD/controller/telemetry/cost/budget/routing/gateway/release/test architecture at takeover",
+  "verdict": "pass",
+  "inventory": {
+    "crds": 18,
+    "controller_files": 17,
+    "manager_registrations": 17,
+    "normally_enabled_controllers": 15,
+    "test_files": 40,
+    "direct_test_functions": 158
+  },
+  "findings": [
+    {"severity": "critical", "status": "accepted", "summary": "Distinct settlement IDs can settle one request twice; proxy sends actual_cost zero."},
+    {"severity": "critical", "status": "accepted", "summary": "Admission identity and mutation endpoints are unauthenticated; HTTPS/webhook failure can bypass enforcement."},
+    {"severity": "major", "status": "accepted", "summary": "No dispatch/expiry/late-settlement/window lifecycle or requested risk allocation/quantile/drift behavior exists."},
+    {"severity": "major", "status": "accepted", "summary": "Feasibility omits readiness, routability, quality, approval, sovereignty, pricing freshness and objective."},
+    {"severity": "major", "status": "accepted", "summary": "Release workflow/chart omit required GOV-AR image and PostgreSQL production support; measured-path tests are absent."}
+  ],
+  "evidence": [
+    "article3/operator_audit/architecture.md",
+    "article3/operator_audit/crd_inventory.csv",
+    "article3/operator_audit/controller_inventory.csv",
+    "article3/operator_audit/telemetry_and_cost_flow.md",
+    "article3/operator_audit/test_inventory.csv",
+    "article3/operator_audit/version_audit.md",
+    "article3/operator_audit/reuse_and_change_plan.md",
+    "article3/operator_audit/risk_register.csv"
+  ],
+  "note": "Pass means the recovery audit is source-complete and reproducible; implementation findings remain mandatory Phase D work."
+}

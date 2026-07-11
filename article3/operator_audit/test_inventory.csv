@@ -1,26 +1,41 @@
-test_path,test_type,scope,status,notes
-operateur/internal/breakevenengine/breakevenengine_test.go,unit,break-even engine,pass,Verified by `make test`
-operateur/internal/budgetengine/budgetengine_test.go,unit,budget engine,pass,Verified by `make test`
-operateur/internal/costengine/costengine_test.go,unit,cost engine,pass,Verified by `make test`
-operateur/internal/enforcementengine/enforcementengine_test.go,unit,enforcement engine,pass,Verified by `make test`
-operateur/internal/recommendationengine/recommendationengine_test.go,unit,recommendation engine,pass,Verified by `make test`
-operateur/internal/routingscore/score_test.go,unit,routing score engine,pass,Verified by `make test`
-operateur/internal/sovereigntyengine/sovereigntyengine_test.go,unit,sovereignty engine,pass,Verified by `make test`
-operateur/internal/shadowengine/shadowengine_test.go,unit,shadow AI engine,pass,Verified by `make test`
-operateur/internal/qualityengine/qualityengine_test.go,unit,quality gate logic,pass,Verified by `make test`
-operateur/internal/qualityeval/evaluator_test.go,unit,quality evaluator,pass,Verified by `make test`
-operateur/internal/collectors/aigw/aigw_test.go,unit,aigw collector,pass,Verified by `make test`
-operateur/internal/collectors/prometheus/prometheus_test.go,unit,prometheus collector,pass,Verified by `make test`
-operateur/internal/controller/reconcilers_test.go,envtest,main controller flows,pass after envtest install,Originally blocked until `bin/k8s/1.31.0-linux-amd64` was installed
-operateur/internal/controller/budgetfallback_test.go,envtest,budget fallback control path,pass after envtest install,Executed via `make test`
-operateur/internal/controller/shadow_test.go,envtest,shadow AI controller path,pass after envtest install,Executed via `make test`
-operateur/internal/controller/catalog_defaults_test.go,envtest,catalog default behavior,pass after envtest install,Executed via `make test`
-operateur/internal/controller/modelstubs_test.go,envtest,unknown model stub behavior,pass after envtest install,Executed via `make test`
-operateur/internal/metrics/dashboard_consistency_test.go,unit,dashboard consistency,pass,Verified by `make test`
-operateur/internal/webhook/bootstrap/runtimeclass_test.go,unit,bootstrap webhook helpers,pass,Verified by `make test`
-operateur/internal/webhook/podinjector/injector_test.go,unit,pod webhook injection,pass,Verified by `make test`
-operateur/pkg/audit/chain_test.go,unit,audit chain,pass,Verified by `make test`
-operateur/pkg/crypto/canonical_test.go,unit,crypto canonicalization,pass,Verified by `make test`
-operateur/pkg/token/token_test.go,unit,placement token helpers,pass,Verified by `make test`
-operateur/test/e2e/e2e_test.go,e2e,full cluster deployment,fail environment blocker,Failed on 2026-07-10 because kubectl targeted unreachable API server at `127.0.0.1:36785`
-operateur/test/e2e/e2e_suite_test.go,e2e,suite bootstrap,fail environment blocker,Depends on reachable cluster and external bundle installs
+path,test_functions,ginkgo_cases,category,executed_in_current_audit
+operateur/api/v1alpha1/confidential_platform_types_test.go,3,0,unit,false
+operateur/internal/breakevenengine/breakevenengine_test.go,4,0,unit,false
+operateur/internal/budgetengine/budgetengine_test.go,2,0,unit,false
+operateur/internal/catalog/defaults_test.go,5,0,unit,false
+operateur/internal/collectors/aigw/aigw_test.go,3,0,unit,false
+operateur/internal/collectors/prometheus/prometheus_test.go,1,0,unit,false
+operateur/internal/controller/budgetfallback_test.go,3,0,unit,false
+operateur/internal/controller/catalog_defaults_test.go,3,0,unit,false
+operateur/internal/controller/modelstubs_test.go,3,0,unit,false
+operateur/internal/controller/money_test.go,1,0,unit,false
+operateur/internal/controller/reconcilers_test.go,0,15,envtest/controller,false
+operateur/internal/controller/shadow_test.go,1,0,unit,false
+operateur/internal/controller/suite_test.go,1,0,envtest/controller,false
+operateur/internal/costengine/costengine_test.go,3,0,unit,false
+operateur/internal/enforcementengine/enforcementengine_test.go,5,0,unit,false
+operateur/internal/gatewayreroute/gatewayreroute_test.go,8,0,unit,false
+operateur/internal/govar/engine_test.go,2,0,unit,false
+operateur/internal/govar/postgres_engine_test.go,1,0,unit,false
+operateur/internal/govar/snapshot_test.go,2,0,unit,false
+operateur/internal/keyrelease/keyrelease_test.go,11,0,unit,false
+operateur/internal/metrics/dashboard_consistency_test.go,1,0,unit,false
+operateur/internal/placement/placement_test.go,2,0,unit,false
+operateur/internal/qualityengine/qualityengine_test.go,7,0,unit,false
+operateur/internal/qualityeval/evaluator_test.go,2,0,unit,false
+operateur/internal/recommendationengine/recommendationengine_test.go,3,0,unit,false
+operateur/internal/reporting/reporting_test.go,2,0,unit,false
+operateur/internal/routingscore/score_test.go,2,0,unit,false
+operateur/internal/scheduler/scheduler_test.go,19,0,unit,false
+operateur/internal/shadowengine/shadowengine_test.go,3,0,unit,false
+operateur/internal/sidecarproxy/proxy_test.go,4,0,unit,false
+operateur/internal/sovereigntyengine/sovereigntyengine_test.go,5,0,unit,false
+operateur/internal/webhook/bootstrap/runtimeclass_test.go,2,0,unit,false
+operateur/internal/webhook/podinjector/injector_test.go,11,0,unit,false
+operateur/pkg/attestation/maa/maa_test.go,11,0,unit,false
+operateur/pkg/audit/chain_test.go,8,0,unit,false
+operateur/pkg/crypto/canonical_test.go,1,0,unit,false
+operateur/pkg/qualitystats/qualitystats_test.go,6,0,unit,false
+operateur/pkg/token/token_test.go,6,0,unit,false
+operateur/test/e2e/e2e_suite_test.go,1,0,e2e scaffold,false
+operateur/test/e2e/e2e_test.go,0,1,e2e scaffold,false

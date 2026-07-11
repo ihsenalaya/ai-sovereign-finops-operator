@@ -1,15 +1,1 @@
-claim_id,section,claim_text,evidence_type,experiment_id,run_ids,raw_files,processed_files,figure_or_table,statistical_test,assumptions,limitations,status
-A3-AUDIT-001,audit,The clean remote baseline for Article 3 is origin/main at 07cdd3b,git_audit,,,,article3/operator_audit/version_audit.md,,,,Based on clean worktree and git fetch,SUPPORTED
-A3-AUDIT-002,audit,The current operator supports post-hoc budgeting and reroute enforcement but not reserve-settle admission,code_audit,,,,article3/operator_audit/architecture.md,,,,Backed by controller source review,SUPPORTED
-A3-AUDIT-003,audit,make test passes after installing envtest assets,test_run,,,,article3/operator_audit/test_inventory.csv,,,,Observed on 2026-07-10,SUPPORTED
-A3-AUDIT-004,audit,Full go test currently fails only on e2e cluster connectivity,test_run,,,,article3/operator_audit/test_inventory.csv,,,,Observed on 2026-07-10,SUPPORTED
-GOVAR-CLAIM-001,gov_ar,GOV-AR targets joint admit queue reject abstain decisions under delayed token-cost feedback,design_claim,,,,article3/design/problem_formulation.md,,,,Scientific framing to validate against literature,DRAFT
-GOVAR-CLAIM-002,gov_ar,GOV-AR introduces reserved budget plus settled budget accounting,design_claim,,,,article3/design/gov_ar_algorithm.md,,,,To be backed by implementation and experiments,DRAFT
-GOVAR-IMPL-001,gov_ar,The Article 3 scaffold contains an idempotent request ledger with reserve settle and expiry transitions,implementation,,,,article3/src/ledger/records.go,,,,Backed by unit tests in records_test.go,SUPPORTED
-GOVAR-IMPL-002,gov_ar,The Article 3 scaffold distinguishes admit queue reject and abstain decisions,implementation,,,,article3/src/admission/decision.go,,,,Backed by unit tests in decision_test.go,SUPPORTED
-GOVAR-IMPL-003,gov_ar,The Article 3 scaffold contains a delayed-settlement replay harness linking admission and ledger,implementation,,,,article3/src/trace_gateway/replay.go,,,,Backed by unit tests in replay_test.go,SUPPORTED
-GOVAR-IMPL-004,gov_ar,The Article 3 scaffold includes simple drift detection and can abstain on drifted candidates,implementation,,,,article3/src/predictor/drift.go,,,,Backed by predictor and replay tests,SUPPORTED
-GOVAR-IMPL-005,gov_ar,The Article 3 scaffold supports both quantile and mean-plus-standard-deviation reservation bounds,implementation,,,,article3/src/predictor/reservation.go,,,,Backed by reservation tests,SUPPORTED
-GOVAR-IMPL-006,gov_ar,The replay harness can derive reservation amounts from predictor policies at runtime,implementation,,,,article3/src/trace_gateway/replay.go,,,,Backed by replay predictor integration test,SUPPORTED
-GOVAR-IMPL-007,gov_ar,The Article 3 scaffold includes a parametric experiment matrix over seeds and budgets for E1/E2,implementation,,,,article3/cmd/experiment/matrix.go,,,,Backed by generated E1/E2 matrix outputs,SUPPORTED
-GOVAR-IMPL-008,gov_ar,The Article 3 scaffold includes auto-generated comparison reports between reservation variants,implementation,,,,article3/cmd/experiment/compare.go,,,,Backed by generated E1/E2 comparison outputs,SUPPORTED
+claim_id,claim_text,claim_scope,run_ids,raw_files,processed_files,analysis_script,statistical_output,figure_table_ids,status,reviewer

@@ -1,0 +1,29 @@
+{
+  "review_id": "experiment-power-audit-20260711",
+  "reviewer_role": "independent experiment and power-analysis reviewer",
+  "reviewed_at_utc": "2026-07-11T08:28:00Z",
+  "verdict": "fail_previous_evidence",
+  "findings": [
+    {"severity": "critical", "status": "accepted", "summary": "All previous E0-E7 evidence is toy/exploratory and below protocol floors."},
+    {"severity": "critical", "status": "accepted", "summary": "E1/E2 campaign variants use mismatched seeds but were analyzed as paired."},
+    {"severity": "critical", "status": "accepted", "summary": "Overshoot is request under-reservation rather than tenant budget-window overshoot."},
+    {"severity": "major", "status": "accepted", "summary": "No model-specific hidden outcome matrix, quality metric, leakage-safe feedback or oracle exists."},
+    {"severity": "major", "status": "accepted", "summary": "Workspace storage cannot safely hold JSON-scale final events; compressed columnar evidence and Linux scratch are required."}
+  ],
+  "recommended_pilot": {
+    "E1": "5 development seeds x 20000 shared requests over 12 corner/center cells",
+    "E2": "5 development seeds x 20000 events over 8 scenarios",
+    "E3": "5 development seeds x 5000 events over nominal plus 13 drift conditions",
+    "E4": "10 harness-validation repetitions per fault",
+    "E5": "2-minute development measurements at 10/1000/10000 objects and one/multiple replicas",
+    "E6": "30 successes per model in one pilot window"
+  },
+  "minimum_final_design": {
+    "E1_method_request_exposures": 35100000,
+    "E2_shared_events": 4000000,
+    "E4_post_fix_repetitions": 2000,
+    "E6_successful_calls_minimum_if_three_models_available": 900,
+    "E7_method_request_exposures": 3500000
+  },
+  "evidence": ["article3/audit/CODEX_OUTPUT_AUDIT.md", "article3/archive/codex_20260711/experiments"]
+}

@@ -1,0 +1,26 @@
+test_path,test_type,scope,status,notes
+operateur/internal/breakevenengine/breakevenengine_test.go,unit,break-even engine,pass,Verified by `make test`
+operateur/internal/budgetengine/budgetengine_test.go,unit,budget engine,pass,Verified by `make test`
+operateur/internal/costengine/costengine_test.go,unit,cost engine,pass,Verified by `make test`
+operateur/internal/enforcementengine/enforcementengine_test.go,unit,enforcement engine,pass,Verified by `make test`
+operateur/internal/recommendationengine/recommendationengine_test.go,unit,recommendation engine,pass,Verified by `make test`
+operateur/internal/routingscore/score_test.go,unit,routing score engine,pass,Verified by `make test`
+operateur/internal/sovereigntyengine/sovereigntyengine_test.go,unit,sovereignty engine,pass,Verified by `make test`
+operateur/internal/shadowengine/shadowengine_test.go,unit,shadow AI engine,pass,Verified by `make test`
+operateur/internal/qualityengine/qualityengine_test.go,unit,quality gate logic,pass,Verified by `make test`
+operateur/internal/qualityeval/evaluator_test.go,unit,quality evaluator,pass,Verified by `make test`
+operateur/internal/collectors/aigw/aigw_test.go,unit,aigw collector,pass,Verified by `make test`
+operateur/internal/collectors/prometheus/prometheus_test.go,unit,prometheus collector,pass,Verified by `make test`
+operateur/internal/controller/reconcilers_test.go,envtest,main controller flows,pass after envtest install,Originally blocked until `bin/k8s/1.31.0-linux-amd64` was installed
+operateur/internal/controller/budgetfallback_test.go,envtest,budget fallback control path,pass after envtest install,Executed via `make test`
+operateur/internal/controller/shadow_test.go,envtest,shadow AI controller path,pass after envtest install,Executed via `make test`
+operateur/internal/controller/catalog_defaults_test.go,envtest,catalog default behavior,pass after envtest install,Executed via `make test`
+operateur/internal/controller/modelstubs_test.go,envtest,unknown model stub behavior,pass after envtest install,Executed via `make test`
+operateur/internal/metrics/dashboard_consistency_test.go,unit,dashboard consistency,pass,Verified by `make test`
+operateur/internal/webhook/bootstrap/runtimeclass_test.go,unit,bootstrap webhook helpers,pass,Verified by `make test`
+operateur/internal/webhook/podinjector/injector_test.go,unit,pod webhook injection,pass,Verified by `make test`
+operateur/pkg/audit/chain_test.go,unit,audit chain,pass,Verified by `make test`
+operateur/pkg/crypto/canonical_test.go,unit,crypto canonicalization,pass,Verified by `make test`
+operateur/pkg/token/token_test.go,unit,placement token helpers,pass,Verified by `make test`
+operateur/test/e2e/e2e_test.go,e2e,full cluster deployment,fail environment blocker,Failed on 2026-07-10 because kubectl targeted unreachable API server at `127.0.0.1:36785`
+operateur/test/e2e/e2e_suite_test.go,e2e,suite bootstrap,fail environment blocker,Depends on reachable cluster and external bundle installs

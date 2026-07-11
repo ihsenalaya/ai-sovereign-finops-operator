@@ -1,0 +1,13 @@
+risk_id,severity,risk,impact,required_control
+R01,critical,Same request can be settled twice with distinct settlement IDs,budget corruption,"unique effective settlement plus event idempotency, concurrency regression"
+R02,critical,Proxy settles actual_cost=0,all live accounting invalid,price provider usage using immutable pricing snapshot
+R03,critical,Admission and settlement are unauthenticated; tenant/policy are caller-controlled,cross-tenant leakage/bypass,authenticated workload UID binding and authorization
+R04,critical,HTTPS CONNECT and webhook fail-open bypass admission,unenforced governed path,native Envoy-compatible synchronous path and fail-closed policy
+R05,major,No dispatch/expiry/late-settle/window lifecycle,stuck or prematurely released liability,"explicit state machine, worker, compensation"
+R06,major,DOUBLE PRECISION money and weak DB constraints,rounding/negative/inconsistent ledger,"integer minor units or decimal numeric, constraints, balance tests"
+R07,major,Readiness ignores PostgreSQL/Kubernetes and production falls back to memory,silent non-durable operation,fail readiness/startup when durable dependencies missing
+R08,major,"Feasibility ignores readiness, quality, approval, sovereignty and routability",policy-ineligible route,hard source-of-truth filter with reason codes
+R09,major,Model resource name may not match Envoy model name,failed or wrong route,validated deployment identity mapping
+R10,major,Aggregate Prometheus counters are treated as budget windows,incorrect daily/weekly/monthly spend,request ledger windows plus reconciler
+R11,major,"Release workflow omits GOV-AR, verifier and node-agent images",unreproducible chart,build/push all referenced images and resolve digests
+R12,major,No real PostgreSQL/gateway/race/fault/upgrade tests,measured-path bugs,complete D/E test matrix before pilot

@@ -1,0 +1,316 @@
+{
+  "bibliography": {
+    "files": [
+      {
+        "entries": 12,
+        "path": "article3/archive/codex_20260711/literature/references.bib"
+      },
+      {
+        "entries": 15,
+        "path": "article3/archive/codex_20260711/overleaf/references.bib"
+      }
+    ],
+    "reason": "No retained row contains primary-source verification evidence sufficient for the new protocol.",
+    "screening_rows": 14,
+    "verified_reference_count": 0
+  },
+  "experiments": {
+    "E4": {
+      "repetitions_per_check": 1,
+      "simulated_checks": 3
+    },
+    "E5": {
+      "cluster_recreations": 0,
+      "kind_measurement": false,
+      "rows": 4,
+      "steady_minutes": 0,
+      "total_requests": 1800
+    },
+    "E6": {
+      "attempts": 6,
+      "attempts_by_endpoint": {
+        "france_deployment_chat_2024_10_21": {
+          "has_usage": true,
+          "http_status": 200,
+          "input_tokens": 11,
+          "output_tokens": 2
+        },
+        "france_v1_responses": {
+          "has_usage": false,
+          "http_status": 200,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "mistral_services_models_chat_preview": {
+          "has_usage": true,
+          "http_status": 200,
+          "input_tokens": 7,
+          "output_tokens": 2
+        },
+        "mistral_services_openai_v1_chat": {
+          "has_usage": true,
+          "http_status": 200,
+          "input_tokens": 7,
+          "output_tokens": 2
+        },
+        "us_deployment_chat_2024_10_21": {
+          "has_usage": true,
+          "http_status": 200,
+          "input_tokens": 11,
+          "output_tokens": 2
+        },
+        "us_v1_responses": {
+          "has_usage": false,
+          "http_status": 200,
+          "input_tokens": null,
+          "output_tokens": null
+        }
+      },
+      "calls_with_usage": 4,
+      "independent_windows": 0,
+      "kind_path": false,
+      "successful_http": 6
+    },
+    "E7": {
+      "aggregate_rows": 8,
+      "decision_attempts_including_queue_retries": 158,
+      "original_method_request_exposures_from_generator": 104,
+      "scenarios": [
+        "budget_delay",
+        "multitenant"
+      ],
+      "variants": [
+        "mean_std",
+        "min_reservation",
+        "no_queue",
+        "quantile"
+      ]
+    },
+    "campaign_and_matrix": {
+      "E1": {
+        "campaigns": [
+          {
+            "method_request_exposures": 60,
+            "requests_per_run_from_generator": 12,
+            "runs": 5,
+            "variant": "mean_std"
+          },
+          {
+            "method_request_exposures": 60,
+            "requests_per_run_from_generator": 12,
+            "runs": 5,
+            "variant": "quantile"
+          }
+        ],
+        "matrix_method_request_exposures": 216,
+        "matrix_rows": 18,
+        "matrix_seeds": [
+          300,
+          301,
+          302
+        ]
+      },
+      "E2": {
+        "campaigns": [
+          {
+            "method_request_exposures": 70,
+            "requests_per_run_from_generator": 14,
+            "runs": 5,
+            "variant": "mean_std"
+          },
+          {
+            "method_request_exposures": 70,
+            "requests_per_run_from_generator": 14,
+            "runs": 5,
+            "variant": "quantile"
+          }
+        ],
+        "matrix_method_request_exposures": 504,
+        "matrix_rows": 36,
+        "matrix_seeds": [
+          400,
+          401,
+          402
+        ]
+      }
+    },
+    "initial": {
+      "E1": [
+        {
+          "decision_events": 2,
+          "tenants": [
+            "team-a"
+          ],
+          "unique_requests": 2,
+          "variant": "mean_std"
+        },
+        {
+          "decision_events": 2,
+          "tenants": [
+            "team-a"
+          ],
+          "unique_requests": 2,
+          "variant": "quantile"
+        }
+      ],
+      "E2": [
+        {
+          "decision_events": 4,
+          "tenants": [
+            "team-a",
+            "team-b"
+          ],
+          "unique_requests": 4,
+          "variant": "mean_std"
+        },
+        {
+          "decision_events": 4,
+          "tenants": [
+            "team-a",
+            "team-b"
+          ],
+          "unique_requests": 4,
+          "variant": "quantile"
+        }
+      ],
+      "E3": [
+        {
+          "decision_events": 2,
+          "tenants": [
+            "team-a"
+          ],
+          "unique_requests": 2,
+          "variant": "drift_block_and_fallback"
+        }
+      ]
+    }
+  },
+  "generated_from": "article3/archive/codex_20260711",
+  "ghcr": {
+    "base_controller_0_5_11_digest": "sha256:abc591624156aa2a6dc958221d3c0968a1fed11475d6a8e2b38c6b6644a62e88",
+    "gov_ar_admission_0_5_11_exists": false,
+    "old_report_claimed_published": false,
+    "old_report_result": "GHCR push denied; no Article 3 remote digest was recorded."
+  },
+  "implemented_baselines": [
+    "empirical_quantile_0.75",
+    "mean_plus_1_std"
+  ],
+  "kind": {
+    "conclusion": "A two-node cluster and Helm release existed, but diagnostics contain no workloads and no experiment Job.",
+    "jobs": [
+      {
+        "diagnostic": "20260711T011858Z",
+        "text": ""
+      },
+      {
+        "diagnostic": "20260711T011921Z",
+        "text": "No jobs found in namespace gov-ar"
+      }
+    ],
+    "nodes": [
+      {
+        "diagnostic": "20260711T011858Z",
+        "node_count": 2,
+        "node_names": [
+          "gov-ar-control-plane",
+          "gov-ar-worker"
+        ]
+      },
+      {
+        "diagnostic": "20260711T011921Z",
+        "node_count": 2,
+        "node_names": [
+          "gov-ar-control-plane",
+          "gov-ar-worker"
+        ]
+      }
+    ],
+    "workloads": [
+      {
+        "diagnostic": "20260711T011858Z",
+        "nonempty": false
+      },
+      {
+        "diagnostic": "20260711T011921Z",
+        "nonempty": false
+      }
+    ]
+  },
+  "pdfs": [
+    {
+      "bytes": 146911,
+      "pages": 3,
+      "path": "article3/archive/codex_20260711/artifacts/GOV_AR_article.pdf",
+      "words": 2238
+    },
+    {
+      "bytes": 149335,
+      "pages": 3,
+      "path": "article3/archive/codex_20260711/artifacts/article3-paper.pdf",
+      "words": 2356
+    },
+    {
+      "bytes": 149335,
+      "pages": 3,
+      "path": "article3/archive/codex_20260711/overleaf/main.pdf",
+      "words": 2356
+    }
+  ],
+  "replace_or_rederive": [
+    "all measurements",
+    "all processed statistics",
+    "all figures/tables",
+    "protocol",
+    "literature metadata",
+    "manuscript results/conclusions",
+    "GOV-AR ledger and admission algorithm",
+    "release declarations"
+  ],
+  "required_baselines_missing": [
+    "no_budget",
+    "settled_spend_only",
+    "mean",
+    "fixed_margin",
+    "fixed_offline_quantile",
+    "strict_max_output_tokens",
+    "fixed_estimate_reserve_settle",
+    "adaptive_quantile",
+    "expected_cost_router",
+    "oracle_future_cost",
+    "GOV_AR_risk_allocation"
+  ],
+  "reuse_after_review_and_tests": [
+    "Go package scaffolds",
+    "experiment CLI structure",
+    "Kind script layout",
+    "LaTeX build script structure"
+  ],
+  "tests": {
+    "commands_claimed_passed_in_old_report": [
+      "cd article3 && go test ./...",
+      "cd operateur && go test ./internal/govar ./internal/sidecarproxy ./cmd/gov-ar-admission/... ./cmd/header-proxy/...",
+      "cd operateur && go vet ./internal/govar ./internal/sidecarproxy ./cmd/gov-ar-admission/... ./cmd/header-proxy/...",
+      "cd operateur && helm lint charts/ai-sovereign-finops-operator --set govArAdmission.enabled=true --set govArAdmission.postgres.enabled=true",
+      "bash article3/overleaf/build.sh",
+      "python3 article3/analysis/scripts/generate_figures_tables.py",
+      "python3 article3/analysis/scripts/generate_statistical_summary.py",
+      "go test -race"
+    ],
+    "explicitly_not_completed": [
+      "full `go test ./...` for the entire operator repo including environment-bound",
+      "`go test -race` on the larger operator surface",
+      "OCI publication validation against GHCR, blocked by package-write permission"
+    ],
+    "independently_reexecuted_for_forensic_audit": false
+  },
+  "unsupported_or_contradicted_claims": [
+    "The three-page manuscript describes trace-driven E1-E7 evidence despite the absence of protocol-scale observations.",
+    "Campaign outputs were described as paired although the generator cumulatively mutated seeds between variants.",
+    "The reported overshoot metric is request under-reservation, not tenant budget-window overshoot.",
+    "E0 was called end-to-end but performed a Go test and three file-existence checks.",
+    "E5 throughput is an in-process Go replay measurement, not Kind service scalability.",
+    "E6 made six endpoint calls outside the Kind reserve-settle path, not a three-window live validation.",
+    "GHCR and OCI publication were incomplete despite final/complete artifact names."
+  ]
+}

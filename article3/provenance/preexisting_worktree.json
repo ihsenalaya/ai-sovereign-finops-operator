@@ -1,0 +1,15 @@
+{
+  "recorded_at_utc": "2026-07-11T08:00:20Z",
+  "preserved_untracked": [
+    {
+      "path": "propmt.txt",
+      "sha256": "85b24471e016a48e3322b6fc4c17e909f42219f4261ab31613629c0c77d79cd3",
+      "bytes": 50616,
+      "note": "Present before takeover; preserved untouched and excluded from Article 3 release packages."
+    }
+  ],
+  "adopted_into_recovery": [
+    ".gitignore",
+    "article3/Q1_GATE_CONTRACT.md"
+  ]
+}

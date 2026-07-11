@@ -1,0 +1,20 @@
+# Project-local settings are loaded only when this repository is trusted.
+# No credentials or provider configuration belong in this file.
+model_reasoning_effort = "xhigh"
+model_verbosity = "medium"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+web_search = "live"
+
+[history]
+persistence = "save-all"
+
+[features]
+goals = true
+multi_agent = true
+unified_exec = true
+
+[agents]
+max_threads = 4
+max_depth = 2
+job_max_runtime_seconds = 3600

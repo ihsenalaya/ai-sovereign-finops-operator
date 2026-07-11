@@ -1,0 +1,28 @@
+{
+  "review_id": "literature-novelty-first-pass-20260711",
+  "reviewer_role": "independent literature and novelty auditor",
+  "reviewed_at_utc": "2026-07-11T08:24:00Z",
+  "verdict": "conditional",
+  "findings": [
+    {"severity": "critical", "status": "accepted", "summary": "Broad novelty for joint routing/budget/adaptation is contradicted by current prior art."},
+    {"severity": "major", "status": "open", "summary": "Search has not yet completed two saturation passes or >=40 verified retained references."},
+    {"severity": "major", "status": "open", "summary": "Scientific red team must challenge the full matrix before contribution freeze."}
+  ],
+  "closest_prior_work": [
+    "Khan 2026 Token Budgets, arXiv:2606.04056",
+    "Taberner-Miller 2026 ParetoBandit, arXiv:2604.00136",
+    "Xue et al. 2026 R2-Router, ICML 2026",
+    "Panda et al. 2025 PILOT, Findings EMNLP 2025",
+    "Li and Li 2026 StageRoute, ICLR 2026",
+    "Wang et al. 2025 MixLLM, NAACL 2025"
+  ],
+  "provisional_nucleus": "Predictable tenant risk allocation over the concurrent outstanding monetary-liability set, coupled to joint eligible-model/reservation choice and an atomic delayed reserve-dispatch-settle ledger.",
+  "falsifier": "At matched empirical risk, adaptive quantile or Khan-style locked runtime reservation matches GOV-AR utilization, quality and budget outcomes, or drift prevents valid coverage without earlier fallback.",
+  "forbidden_claims": [
+    "first cost-aware or budget-constrained LLM router",
+    "first joint model/output-budget router",
+    "first risk-controlled or conformal router",
+    "novel output-length prediction, escrow, transaction or idempotence in isolation",
+    "deterministic hard-budget safety in nonzero-risk mode"
+  ]
+}

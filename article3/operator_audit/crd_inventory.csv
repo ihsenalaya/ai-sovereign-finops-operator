@@ -1,19 +1,19 @@
-kind,group,version,path,controller,status_fields,notes
-AIGateway,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aigateway_types.go,AIGatewayReconciler,governedNamespaces;conditions;observedGeneration,Gateway registration and telemetry mode selection
-AIProvider,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aiprovider_types.go,AIProviderReconciler,conditions;observedGeneration,Provider metadata pricing and compliance
-AIModel,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aimodel_types.go,AIModelReconciler,resolvedProvider;conditions;observedGeneration,Model catalog and provider binding
-AIBudgetPolicy,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aibudgetpolicy_types.go,AIBudgetPolicyReconciler,currentSpendEUR;usagePercent;phase;activeFallbackModel;fallbackActuated;conditions,Budget policy with guarded fallback
-AISovereigntyPolicy,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aisovereigntypolicy_types.go,AISovereigntyPolicyReconciler,findingsCount;conditions,Sovereignty findings and enforcement
-AIBreakEvenAnalysis,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aibreakevenanalysis_types.go,AIBreakEvenAnalysisReconciler,managedMonthlyCostEUR;selfHostedMonthlyCostEUR;monthlySavingsEUR;paybackMonths;recommendation;conditions,Managed versus self-hosted economics
-AIFinOpsReport,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aifinopsreport_types.go,AIFinOpsReportReconciler,totalCostEUR;topModels;sovereigntyFindings;recommendations;generatedAt;conditions,Main reporting object
-AIQualityGate,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aiqualitygate_types.go,AIQualityGateReconciler,phase;verdict;qualityScore;evaluationJobPhase;conditions,Pre-reroute quality validation
-AIRoutingPolicy,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/airoutingpolicy_types.go,AIRoutingPolicyReconciler,recommendations;lastEvaluatedAt;conditions,Recommendation-oriented routing policy
-AIRouteOverride,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/airoute_override_types.go,AIRouteOverrideReconciler,phase;message;actuatedRoutes;conditions;observedGeneration,Manual gateway override
-AIChangeRequest,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/aichangerequest_types.go,AIChangeRequestReconciler,phase;message;actuatedAt;expiresAt;actuatedRoutes;conditions;observedGeneration,Human approval workflow before actuation
-ConfidentialInferencePolicy,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/confidential_platform_types.go,controller embedded in confidential platform set,conditions,TEE and runtime requirements
-AttestationEvidence,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/confidential_platform_types.go,AttestationEvidenceReconciler optional,verificationStatus;verifiedAt;expiresAt;conditions,Legacy embedded reconciler is disabled by default
-AIPlacementDecision,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/confidential_platform_types.go,AIPlacementDecisionReconciler,token;verified;boundAt;conditions,Signed placement token
-AIKeyReleasePolicy,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/confidential_platform_types.go,AIKeyReleasePolicyReconciler,conditions,Key release bound to attestation evidence
-AIRevocationPolicy,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/confidential_platform_types.go,AIRevocationPolicyReconciler,revokedAt;conditions,Revocation semantics
-AIEvidenceRecord,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/confidential_platform_types.go,AIEvidenceRecordReconciler,conditions,Audit record chain
-RawAttestationReport,aiops.imperium.io,v1alpha1,operateur/api/v1alpha1/rawattestationreport_types.go,RawAttestationReportReconciler optional,submitted;conditions,Raw evidence intake; dedicated verifier path preferred
+kind,plural,scope,versions,crd_path,controller_path,article3_role
+AIBreakEvenAnalysis,aibreakevenanalyses,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aibreakevenanalyses.yaml,operateur/internal/controller/aibreakevenanalysis_controller.go,outside core paper; feasibility input only
+AIBudgetPolicy,aibudgetpolicies,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aibudgetpolicies.yaml,operateur/internal/controller/aibudgetpolicy_controller.go,policy/catalog/aggregate governance
+AIChangeRequest,aichangerequests,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aichangerequests.yaml,operateur/internal/controller/aichangerequest_controller.go,policy/catalog/aggregate governance
+AIEvidenceRecord,aievidencerecords,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aievidencerecords.yaml,operateur/internal/controller/aievidencerecord_controller.go,outside core paper; feasibility input only
+AIFinOpsReport,aifinopsreports,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aifinopsreports.yaml,operateur/internal/controller/aifinopsreport_controller.go,policy/catalog/aggregate governance
+AIGateway,aigateways,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aigateways.yaml,operateur/internal/controller/aibreakevenanalysis_controller.go,policy/catalog/aggregate governance
+AIKeyReleasePolicy,aikeyreleasepolicies,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aikeyreleasepolicies.yaml,operateur/internal/controller/aikeyreleasepolicy_controller.go,outside core paper; feasibility input only
+AIModel,aimodels,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aimodels.yaml,operateur/internal/controller/aibreakevenanalysis_controller.go,policy/catalog/aggregate governance
+AIPlacementDecision,aiplacementdecisions,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aiplacementdecisions.yaml,operateur/internal/controller/aikeyreleasepolicy_controller.go,outside core paper; feasibility input only
+AIProvider,aiproviders,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aiproviders.yaml,operateur/internal/controller/aibreakevenanalysis_controller.go,policy/catalog/aggregate governance
+AIQualityGate,aiqualitygates,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aiqualitygates.yaml,operateur/internal/controller/aiqualitygate_controller.go,policy/catalog/aggregate governance
+AIRevocationPolicy,airevocationpolicies,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_airevocationpolicies.yaml,operateur/internal/controller/airevocationpolicy_controller.go,outside core paper; feasibility input only
+AIRouteOverride,airouteoverrides,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_airouteoverrides.yaml,operateur/internal/controller/airoute_override_controller.go,policy/catalog/aggregate governance
+AIRoutingPolicy,airoutingpolicies,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_airoutingpolicies.yaml,operateur/internal/controller/airoutingpolicy_controller.go,policy/catalog/aggregate governance
+AISovereigntyPolicy,aisovereigntypolicies,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_aisovereigntypolicies.yaml,operateur/internal/controller/aifinopsreport_controller.go,policy/catalog/aggregate governance
+AttestationEvidence,attestationevidences,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_attestationevidences.yaml,operateur/internal/controller/aikeyreleasepolicy_controller.go,outside core paper; feasibility input only
+ConfidentialInferencePolicy,confidentialinferencepolicies,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_confidentialinferencepolicies.yaml,operateur/internal/controller/aiplacementdecision_controller.go,outside core paper; feasibility input only
+RawAttestationReport,rawattestationreports,Namespaced,,operateur/config/crd/bases/aiops.imperium.io_rawattestationreports.yaml,operateur/internal/controller/rawattestationreport_controller.go,outside core paper; feasibility input only

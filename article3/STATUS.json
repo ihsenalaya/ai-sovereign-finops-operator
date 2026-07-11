@@ -1,84 +1,342 @@
 {
-  "date": "2026-07-11",
-  "state": "strict_prompt_audit_in_progress",
-  "tasks": {
-    "operator_audit": "COMPLETE",
-    "literature_novelty_gate": "FAILED_RETRYABLE",
-    "gov_ar_design": "COMPLETE",
-    "operator_integration": "FAILED_RETRYABLE",
-    "software_tests": "FAILED_RETRYABLE",
-    "docker_helm_release": "BLOCKED",
-    "kind_automation": "FAILED_RETRYABLE",
-    "datasets_and_traces": "BLOCKED",
-    "frozen_protocol": "COMPLETE",
-    "e0_smoke": "PASSED",
-    "e1_budget_delay": "FAILED_RETRYABLE",
-    "e2_multitenant": "FAILED_RETRYABLE",
-    "e3_drift": "FAILED_RETRYABLE",
-    "e4_faults": "FAILED_RETRYABLE",
-    "e5_scalability": "FAILED_RETRYABLE",
-    "e6_azure_live": "FAILED_RETRYABLE",
-    "e7_ablation": "FAILED_RETRYABLE",
-    "statistical_analysis": "FAILED_RETRYABLE",
-    "orchestration_resume": "COMPLETE",
-    "manuscript": "FAILED_RETRYABLE",
-    "claims_evidence": "FAILED_RETRYABLE",
-    "figures_tables": "COMPLETE",
-    "final_artifacts": "FAILED_RETRYABLE"
-  },
-  "branch": "article3-gov-ar",
-  "base_commit": "07cdd3baad26abfa7248dd69cdd507aab4be8177",
-  "worktree": "/mnt/c/Users/Ihsen/Documents/kubebuilder/ai-sovereign-finops-operator-article3",
-  "verified_facts": [
-    "clean_remote_baseline_created",
-    "origin_main_version_coherent_at_0_5_11",
-    "local_dirty_checkout_contains_newer_unpublished_changes",
-    "make_test_passes_after_envtest_install",
-    "full_go_test_fails_only_on_e2e_cluster_connectivity",
-    "article3_go_module_initialized",
-    "article3_go_tests_pass",
-    "request_ledger_with_idempotent_settlement_implemented",
-    "admit_queue_reject_abstain_decision_scaffold_implemented",
-    "delayed_settlement_replay_harness_implemented",
-    "retryable_queue_behavior_implemented",
-    "simple_drift_detection_and_blocking_implemented",
-    "probabilistic_reservation_scaffold_implemented",
-    "replay_time_reservation_policy_integration_implemented",
-    "initial_e1_e2_outputs_generated",
-    "e1_e2_campaign_outputs_generated",
-    "e1_e2_matrix_outputs_generated",
-    "e1_e2_comparison_reports_generated",
-    "floating_point_settlement_precision_bug_fixed",
-    "e1_e2_outputs_regenerated_after_precision_fix",
-    "e1_e2_orchestrator_and_artifact_verification_implemented",
-    "operator_functionality_description_written",
-    "e0_local_smoke_experiment_implemented",
-    "e3_drift_experiment_implemented",
-    "e4_fault_injection_experiment_implemented",
-    "e5_scalability_experiment_implemented",
-    "e6_azure_live_validation_executed",
-    "e7_ablation_experiment_implemented",
-    "docker_image_built_for_article3_runner",
-    "kind_helm_local_execution_verified",
-    "draft_manuscript_pdf_compiled",
-    "overleaf_zip_generated",
-    "replication_bundle_generated",
-    "operator_govar_targeted_tests_revalidated",
-    "operator_govar_go_vet_revalidated",
-    "gov_ar_helm_lint_revalidated",
-    "final_named_prompt_artifacts_materialized",
-    "strict_prompt_audit_written",
-    "minimum_figure_and_table_counts_generated",
-    "initial_statistical_summary_generated"
-    ,"checkpointed_runner_verified"
-    ,"kind_profiles_and_healthchecks_verified"
-    ,"literature_matrix_schema_verified"
-    ,"article3_resume_run_completed"
+  "branch": "article3-q1-recovery-20260711",
+  "checks": [
+    {
+      "critical": true,
+      "detail": "article3-q1-recovery-20260711",
+      "group": "repository",
+      "name": "dedicated recovery branch",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "{\"base_branch\": \"origin/main\", \"base_sha\": \"07cdd3baad26abfa7248dd69cdd507aab4be8177\", \"controller_image\": \"ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller:0.5.11\", \"controller_index_digest\": \"sha256:abc591624156aa2a6dc958221d3c0968a1fed11475d6a8e2b38c6b6644a62e88\", \"oci_chart\": \"oci://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts/ai-confidential-governance-platform:0.5.11\", \"oci_chart_tgz_sha256\": \"7a21d883b7725b8321af24ad612078d6f952712134697f362a768f966d795db9\", \"operator_app_version\": \"0.5.11\", \"operator_chart_version\": \"0.5.11\", \"recorded_at\": \"2026-07-11T08:01:30Z\", \"",
+      "group": "repository",
+      "name": "recorded operator base is an ancestor",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "checked=178, failures=[]",
+      "group": "repository",
+      "name": "archived evidence checksum integrity",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "active evidence dirs=",
+      "group": "repository",
+      "name": "old evidence excluded from active roots",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "unexpected=['M .gitignore', 'R  article3/analysis/STATISTICAL_SUMMARY.md -> article3/archive/codex_20260711/STATISTICAL_SUMMARY.md', 'R  article3/STATUS.json -> article3/archive/codex_20260711/STATUS.json', 'R  article3/STATUS.md -> article3/archive/codex_20260711/STATUS.md', 'R  article3/artifacts/AZURE_VALIDATION_SUMMARY.md -> article3/archive/codex_20260711/artifacts/AZURE_VALIDATION_SUMMARY.md', 'R  article3/artifacts/CHANGELOG_ARTICLE3.md -> article3/archive/codex_20260711/artifacts/CHANGELOG_ARTICLE3.md', 'R  article3/artifacts/CLAIMS_TO_EVIDENCE.csv -> article3/archive/codex_20260711/artifacts/CLAIMS_TO_EVIDENCE.csv', 'R  article3/artifacts/EXPERIMENT_SUMMARY.csv -> article3/archive/codex_20260711/artifacts/EXPERIMENT_SUMMARY.csv', 'R  article3/artifacts/FINAL_REPORT.md -> article3/archive/codex_20260711/artifacts/FINAL_REPORT.md', 'R  article3/artifacts/GOV_AR_COMPLETE_TRANSFER_20260711.zip -> article3/archive/codex_20260711/artifacts/GOV_AR_COMPLETE_TRANSFER_20260711.zip', 'R  article3/artifacts/GOV_AR_article.pdf -> article3/archive/codex_20260711/artifacts/GOV_AR_article.pdf', 'R  article3/artifacts/GOV_AR_overleaf.zip -> article3/archive/codex_20260711/artifacts/GOV_AR_overleaf.zip', 'R  article3/artifacts/GOV_AR_replication_package.zip -> article3/archive/codex_20260711/artifacts/GOV_AR_replication_package.zip', 'R  article3/artifacts/HELM_RELEASE.md -> article3/archive/codex_20260711/artifacts/HELM_RELEASE.md', 'R  article3/artifacts/IMAGE_DIGESTS.csv -> article3/archive/codex_20260711/artifacts/IMAGE_DIGESTS.csv', 'R  article3/artifacts/LAST_RUN_COMMIT.txt -> article3/archive/codex_20260711/artifacts/LAST_RUN_COMMIT.txt', 'R  article3/artifacts/LAST_RUN_UTC.txt -> article3/archive/codex_20260711/artifacts/LAST_RUN_UTC.txt', 'R  article3/artifacts/LITERATURE_REVIEW.md -> article3/archive/codex_20260711/artifacts/LITERATURE_REVIEW.md', 'R  article3/artifacts/REPRODUCTION.md -> article3/archive/codex_20260711/artifacts/REPRODUCTION.md', 'R  article3/artifacts/STATISTICAL_SUMMARY.md -> article3/archive/codex_20260711/artifacts/STATISTICAL_SUMMARY.md', 'R  article3/artifacts/TEST_REPORT.md -> article3/archive/codex_20260711/artifacts/TEST_REPORT.md', 'R  article3/artifacts/TRANSFER_README.md -> article3/archive/codex_20260711/artifacts/TRANSFER_README.md', 'R  article3/artifacts/article3-overleaf.zip -> article3/archive/codex_20260711/artifacts/article3-overleaf.zip', 'R  article3/artifacts/article3-paper.pdf -> article3/archive/codex_20260711/artifacts/article3-paper.pdf', 'R  article3/artifacts/article3-replication-bundle.zip -> article3/archive/codex_20260711/artifacts/article3-replication-bundle.zip', 'R  article3/artifacts/helm/gov-ar-experiment-0.1.0.tgz -> article3/archive/codex_20260711/artifacts/helm/gov-ar-experiment-0.1.0.tgz', 'R  article3/experiments/registry/frozen_protocol.yaml -> article3/archive/codex_20260711/experiments/frozen_protocol.yaml', 'R  article3/experiments/logs/kind-diagnostics/20260711T011858Z/describe.txt -> article3/archive/codex_20260711/experiments/logs/kind-diagnostics/20260711T011858Z/describe.txt', 'R  article3/experiments/logs/kind-diagnostics/20260711T011858Z/helm-list.txt -> article3/archive/codex_20260711/experiments/logs/kind-diagnostics/20260711T011858Z/helm-list.txt', 'R  article3/experiments/logs/kind-diagnostics/20260711T011858Z/job-logs.txt -> article3/archive/codex_20260711/experiments/logs/kind-diagnostics/20260711T011858Z/job-logs.txt'], preserved=['?? propmt.txt']",
+      "group": "repository",
+      "name": "final tree committed",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "a77eca34b9c67eb2b974a90e6437e420d700e7aa",
+      "group": "repository",
+      "name": "HEAD resolves",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "hits=[]",
+      "group": "security",
+      "name": "tracked-file secret pattern scan",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "missing=['search_log.csv', 'screening.csv', 'related_work_matrix.csv', 'novelty_assessment.md', 'references.bib', 'rejected_references.csv']",
+      "group": "literature",
+      "name": "required review outputs",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "bib=0, verified_relevant=0",
+      "group": "literature",
+      "name": ">=40 verified relevant bibliography records",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "peer_reviewed=0/0",
+      "group": "literature",
+      "name": "majority peer-reviewed primary research",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "passes=0",
+      "group": "literature",
+      "name": "two material-novelty saturation passes",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "markers_present=[]",
+      "group": "literature",
+      "name": "closest current prior art explicitly assessed",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "verdict='conditional', unresolved_critical_major=2",
+      "group": "review",
+      "name": "literature_novelty_audit.json",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing or malformed JSON review",
+      "group": "review",
+      "name": "scientific_red_team.json",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing_or_failed=['envtest', 'format', 'gateway_e2e', 'go_race_govar', 'go_test', 'go_vet', 'helm_install', 'helm_lint', 'helm_rollback', 'helm_uninstall', 'helm_upgrade', 'idempotence', 'lint', 'postgres_integration', 'sbom', 'secret_scan', 'transactions', 'unit_reservations', 'vulnerability_scan']",
+      "group": "implementation",
+      "name": "required tests and scans pass",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing",
+      "group": "implementation",
+      "name": "full measured E0 path",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing",
+      "group": "theory",
+      "name": "formal invariant model passes",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid_digest_rows=0, types=[]",
+      "group": "release",
+      "name": "immutable image and OCI chart digests recorded",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "frozen=False, missing_terms=['hypotheses:', 'primary_metrics:', 'baselines:', 'seeds:', 'invalid_run_rules:', 'multiplicity', 'azure', 'frozen_test_data_hashes:', 'software_hashes:']",
+      "group": "protocol",
+      "name": "protocol frozen and complete",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "unresolved=0",
+      "group": "protocol",
+      "name": "no unresolved primary protocol deviation",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "valid=0/0",
+      "group": "datasets",
+      "name": "licensed checksummed datasets and split manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing",
+      "group": "datasets",
+      "name": "train/calibration/dev/test separation verified",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E1 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E2 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E3 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E4 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E5 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E6 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "valid=0, total=0",
+      "group": "experiments",
+      "name": "E7 valid checksummed manifests",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing or malformed JSON review",
+      "group": "statistics",
+      "name": "independent raw-only statistical audit",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing=['confidence_intervals', 'exclusions', 'figure_source_hashes', 'holm_correction', 'negative_null_results', 'observation_counts', 'primary_metrics', 'tests']",
+      "group": "statistics",
+      "name": "complete generated statistical output",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "supported=0/0",
+      "group": "claims",
+      "name": "principal claims mapped end-to-end",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing",
+      "group": "manuscript",
+      "name": "current in-scope Q1 target verified",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "words=0, placeholders=[]",
+      "group": "manuscript",
+      "name": "substantive 8k-14k manuscript with no placeholders",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "pages=0, bytes=0",
+      "group": "manuscript",
+      "name": "final PDF is substantive",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing=['GOV_AR_article.pdf', 'GOV_AR_overleaf.zip', 'GOV_AR_replication_package.zip', 'FINAL_REPORT.md', 'REPRODUCTION.md', 'EXPERIMENT_SUMMARY.csv', 'STATISTICAL_SUMMARY.md', 'LITERATURE_REVIEW.md', 'AZURE_VALIDATION_SUMMARY.md', 'IMAGE_DIGESTS.csv', 'TEST_REPORT.md', 'CLAIMS_TO_EVIDENCE.csv', 'CHANGELOG_ARTICLE3.md']",
+      "group": "release",
+      "name": "required final artifacts",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing",
+      "group": "security",
+      "name": "GOV_AR_overleaf.zip safe paths and secret scan",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing",
+      "group": "security",
+      "name": "GOV_AR_replication_package.zip safe paths and secret scan",
+      "passed": false
+    },
+    {
+      "critical": true,
+      "detail": "missing or malformed JSON review",
+      "group": "review",
+      "name": "clean-checkout release verification",
+      "passed": false
+    }
   ],
-  "next_steps": [
-    "close_major_prompt_compliance_gaps",
-    "expand_primary_literature_review",
-    "extend_envoy_native_operator_integration",
-    "upgrade_draft_manuscript_to_submission_ready_version"
-  ]
+  "gate_passed": false,
+  "generated_at_utc": "2026-07-11T08:28:45.199805+00:00",
+  "generated_by": "article3/tools/q1_gate.py",
+  "groups": {
+    "claims": {
+      "failed": 1,
+      "passed": 0
+    },
+    "datasets": {
+      "failed": 2,
+      "passed": 0
+    },
+    "experiments": {
+      "failed": 7,
+      "passed": 0
+    },
+    "implementation": {
+      "failed": 2,
+      "passed": 0
+    },
+    "literature": {
+      "failed": 5,
+      "passed": 0
+    },
+    "manuscript": {
+      "failed": 3,
+      "passed": 0
+    },
+    "protocol": {
+      "failed": 1,
+      "passed": 1
+    },
+    "release": {
+      "failed": 2,
+      "passed": 0
+    },
+    "repository": {
+      "failed": 0,
+      "passed": 6
+    },
+    "review": {
+      "failed": 3,
+      "passed": 0
+    },
+    "security": {
+      "failed": 2,
+      "passed": 1
+    },
+    "statistics": {
+      "failed": 2,
+      "passed": 0
+    },
+    "theory": {
+      "failed": 1,
+      "passed": 0
+    }
+  },
+  "head_sha": "a77eca34b9c67eb2b974a90e6437e420d700e7aa",
+  "schema_version": 1,
+  "strict": false,
+  "summary": {
+    "failed": 31,
+    "passed": 8
+  }
 }

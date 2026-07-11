@@ -1,0 +1,15 @@
+{
+  "recorded_at": "2026-07-11T08:01:30Z",
+  "base_branch": "origin/main",
+  "base_sha": "07cdd3baad26abfa7248dd69cdd507aab4be8177",
+  "operator_chart_version": "0.5.11",
+  "operator_app_version": "0.5.11",
+  "umbrella_chart_version": "0.5.11",
+  "umbrella_app_version": "0.5.11",
+  "release_tag": null,
+  "tag_note": "No fetched v0.5.11 tag exists; latest fetched tag is v0.5.4.",
+  "controller_image": "ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller:0.5.11",
+  "controller_index_digest": "sha256:abc591624156aa2a6dc958221d3c0968a1fed11475d6a8e2b38c6b6644a62e88",
+  "oci_chart": "oci://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts/ai-confidential-governance-platform:0.5.11",
+  "oci_chart_tgz_sha256": "7a21d883b7725b8321af24ad612078d6f952712134697f362a768f966d795db9"
+}
