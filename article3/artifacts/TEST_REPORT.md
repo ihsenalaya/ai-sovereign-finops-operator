@@ -9,6 +9,8 @@ Successful checks:
 - `cd operateur && go vet ./internal/govar ./internal/sidecarproxy ./cmd/gov-ar-admission/... ./cmd/header-proxy/...`
 - `cd operateur && helm lint charts/ai-sovereign-finops-operator --set govArAdmission.enabled=true --set govArAdmission.postgres.enabled=true`
 - `bash article3/overleaf/build.sh`
+- `python3 article3/analysis/scripts/generate_figures_tables.py`
+- `python3 article3/analysis/scripts/generate_statistical_summary.py`
 
 ## Fix applied during this validation pass
 

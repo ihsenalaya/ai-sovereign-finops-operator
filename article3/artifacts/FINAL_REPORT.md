@@ -52,6 +52,7 @@ full-scale paid production benchmark.
 - experiment summary: `article3/artifacts/EXPERIMENT_SUMMARY.csv`
 - claims mapping: `article3/artifacts/CLAIMS_TO_EVIDENCE.csv`
 - image digests: `article3/artifacts/IMAGE_DIGESTS.csv`
+- statistical summary: `article3/artifacts/STATISTICAL_SUMMARY.md`
 
 ## Remaining gaps
 

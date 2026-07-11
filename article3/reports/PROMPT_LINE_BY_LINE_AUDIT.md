@@ -256,9 +256,14 @@ bounded Azure live validation. The weakest areas are:
 
 ### Statistical analysis, lines 1538-1576
 
-- `NOT DONE`
+- `PARTIAL`
 - A statistical plan exists.
-- The prompt requires bootstrap CIs, paired tests, Holm correction, effect sizes, rare-event reporting, calibration analysis, and automated figure/table generation from final CSVs. The current repository does not yet provide the full completed analysis stack.
+- The repository now includes an automated statistical summary over available
+  E1 and E2 campaign outputs with paired bootstrap intervals and sign-test
+  p-values.
+- The prompt-grade analysis is still incomplete because Holm correction, rare-
+  event treatment, calibration reporting, and the full final experiment matrix
+  are not yet complete.
 
 ### Orchestration and resume, lines 1578-1630
 

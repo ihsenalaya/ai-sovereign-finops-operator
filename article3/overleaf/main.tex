@@ -178,7 +178,10 @@ The artifact contains a frozen protocol file, raw outputs, processed outputs,
 and reproducible orchestration scripts. However, the current execution depth
 must be distinguished from the ideal prompt protocol. The evidence package is
 reproducible, but most experiment families remain below the requested scale in
-seed count, request count, scenario breadth, and statistical completion.
+seed count, request count, scenario breadth, and statistical completion. The
+current repository now also includes an automatically generated statistical
+summary over the available E1 and E2 campaign outputs, using paired bootstrap
+intervals over run-level metric differences.
 
 \section{Budget Safety and Utilization}
 In the deterministic E1 summary, quantile reservation admitted two requests and
@@ -186,7 +189,11 @@ settled a total cost of 12.0 with 2.0 slack and zero overshoot. The
 mean-plus-standard-deviation variant admitted one request, queued one, settled
 7.0, and also had zero overshoot. In the campaign comparison, the trade-off
 shifts: one variant can reduce overshoot while increasing slack. This supports
-the central practical tension between utilization and conservatism.
+the central practical tension between utilization and conservatism. In the
+current paired campaign analysis, the E1 quantile variant shows higher
+overshoot than mean-plus-standard-deviation, with a mean overshoot difference
+of 1.18 and a paired bootstrap 95\% interval of approximately
+$[0.19, 2.35]$, while also using less slack by about 1.6 units.
 
 \section{Multi-Tenant Routing}
 In the deterministic E2 trace, both compared variants admitted three requests
@@ -195,7 +202,10 @@ mean-plus-standard-deviation variant used more slack and avoided overshoot.
 Tenant-level settled totals were recorded separately, confirming that the
 current harness tracks tenant-isolated accounting. That said, the prompt-grade
 multi-tenant study with six rich tenant profiles and large-scale scenarios is
-still incomplete.
+still incomplete. In the available E2 campaign analysis, the sign of the trade
+off reverses: quantile reservation reduces overshoot relative to
+mean-plus-standard-deviation by about 1.62 units on average, with a paired
+bootstrap 95\% interval of approximately $[-2.60, -0.59]$.
 
 \section{Drift and Fault Injection}
 The drift experiment demonstrates an observable conservative mode. After a

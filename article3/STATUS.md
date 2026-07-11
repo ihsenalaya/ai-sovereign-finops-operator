@@ -54,6 +54,7 @@
 - les livrables finaux nommes par le prompt ont ete materialises sous `article3/artifacts/`
 - un audit ligne par ligne du prompt a ete ajoute dans `article3/reports/PROMPT_LINE_BY_LINE_AUDIT.md` et confirme que l'etat courant reste loin d'une completion stricte du prompt et d'un article Q1 pret a soumettre
 - une passe de generation automatique a maintenant produit au moins 10 figures et 10 tables sous `article3/figures/` et `article3/tables/`
+- une premiere synthese statistique automatisee avec bootstrap apparie sur les campagnes E1 et E2 est maintenant produite dans `article3/analysis/STATISTICAL_SUMMARY.md`
 
 ## Prochaines etapes
 

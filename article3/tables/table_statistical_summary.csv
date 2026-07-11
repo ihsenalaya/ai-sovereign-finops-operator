@@ -1,0 +1,11 @@
+experiment_id,metric,left_variant,right_variant,left_mean,right_mean,left_median,right_median,mean_diff_left_minus_right,left_ci_low,left_ci_high,right_ci_low,right_ci_high,diff_ci_low,diff_ci_high,sign_test_pvalue,n_runs
+E1,admitted_count,E1_quantile,E1_mean_std,3.0,3.0,3.0,3.0,0.0,3.0,3.0,3.0,3.0,0.0,0.0,1.0,5
+E1,queued_count,E1_quantile,E1_mean_std,18.0,18.4,18.0,18.0,-0.4,18.0,18.0,18.0,18.8,-0.8,0.0,0.5,5
+E1,settled_total,E1_quantile,E1_mean_std,17.6,16.6,18.0,17.0,1.0,16.6,18.4,14.8,17.8,-1.0,3.2,1.0,5
+E1,slack_total,E1_quantile,E1_mean_std,1.8,3.4,1.5,3.0,-1.6,1.3,2.4,2.1,5.0,-3.7,-0.1,0.25,5
+E1,overshoot_total,E1_quantile,E1_mean_std,2.16,0.9800000000000001,1.8500000000000005,1.4000000000000004,1.1800000000000002,1.3900000000000003,2.93,0.4,1.48,0.1900000000000004,2.35,0.375,5
+E2,admitted_count,E2_quantile,E2_mean_std,5.2,5.0,5.0,5.0,0.2,5.0,5.6,4.4,5.6,-0.6,1.2,1.0,5
+E2,queued_count,E2_quantile,E2_mean_std,18.2,18.4,18.0,18.0,-0.2,18.0,18.6,17.6,19.4,-1.4,1.0,1.0,5
+E2,settled_total,E2_quantile,E2_mean_std,22.2,22.6,22.0,23.0,-0.4,21.6,22.8,19.4,26.0,-3.2,2.4,1.0,5
+E2,slack_total,E2_quantile,E2_mean_std,4.1,4.52,4.0,4.55,-0.41999999999999993,3.4,4.8,4.21,4.81,-1.31,0.4700000000000001,1.0,5
+E2,overshoot_total,E2_quantile,E2_mean_std,1.7300000000000002,3.3500000000000005,1.6000000000000005,2.8500000000000005,-1.6200000000000006,1.0300000000000002,2.56,2.5700000000000003,4.130000000000001,-2.6000000000000005,-0.5900000000000004,0.375,5
