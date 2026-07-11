@@ -55,6 +55,10 @@ bounded Azure live validation. The weakest areas are:
   - bug-after-freeze invalidation workflow was not fully enforced as specified.
   - final claims in the manuscript are not all backed by a fully prompt-compliant evidence ledger.
 
+- Since the previous audit, the experiment runner now persists per-step state,
+  logs, retries, and a checksum under `experiments/logs/runs/<run-id>/`; the
+  top-level `article3/run_all.sh` also regenerates analyses and the PDF.
+
 ### Scientific objective and contributions, lines 175-259
 
 - `PARTIAL`
@@ -80,13 +84,9 @@ bounded Azure live validation. The weakest areas are:
 
 - `PARTIAL`
 - Most requested paths now exist.
-- However, several required directories are structurally present but effectively empty or placeholder-level:
-  - `article3/infra/prometheus`
-  - `article3/infra/gateway`
-  - `article3/figures`
-  - `article3/tables`
-  - scenario subdirectories under `article3/experiments/e0_smoke` to `e7_ablation`
-- So the tree shape is there, but not every subtree is substantively populated.
+- The requested experiment, figure, table, and Kind paths are populated. The
+  prompt-specific Prometheus and gateway deployment assets remain incomplete,
+  so this requirement remains `PARTIAL` rather than `DONE`.
 
 ### Literature review, lines 413-540
 
@@ -95,7 +95,8 @@ bounded Azure live validation. The weakest areas are:
   - verified primary-source entries were added from ACL Anthology, USENIX, PMLR, ICLR proceedings, and arXiv.
   - `search_log.csv`, `screening.csv`, `related_work_matrix.csv`, `novelty_assessment.md`, and `.bib` files exist.
 - What is still missing:
-  - the matrix schema is not fully prompt-compliant: it still ends with `doi,url` instead of `doi,verified_url,verification_date`.
+- the matrix schema now ends with `doi,verified_url,verification_date`, with a
+  verification date on every current row.
   - the search has not demonstrated the stopping rule of two consecutive widened searches with no new directly relevant work.
   - the final reference count is still far below the prompt target of 35 to 50 references.
   - several requested source families and seed works were not systematically exhausted.
@@ -269,8 +270,9 @@ bounded Azure live validation. The weakest areas are:
 
 - `PARTIAL`
 - Orchestrator scripts exist.
-- `STATUS.json` is not prompt-compliant: it does not contain per-task entries with the required states `PENDING/RUNNING/PASSED/FAILED_RETRYABLE/BLOCKED/INVALIDATED/COMPLETE`.
-- Full checkpoint-driven resume semantics are not fully evidenced.
+- `STATUS.json` now contains per-task states from the required vocabulary, and
+  the orchestrator records checkpoint state, bounded retries, logs, and a
+  checksum. End-to-end resume of every large campaign is still not evidenced.
 
 ### Manuscript, lines 1632-1693
 

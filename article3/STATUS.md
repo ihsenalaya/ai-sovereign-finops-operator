@@ -55,6 +55,13 @@
 - un audit ligne par ligne du prompt a ete ajoute dans `article3/reports/PROMPT_LINE_BY_LINE_AUDIT.md` et confirme que l'etat courant reste loin d'une completion stricte du prompt et d'un article Q1 pret a soumettre
 - une passe de generation automatique a maintenant produit au moins 10 figures et 10 tables sous `article3/figures/` et `article3/tables/`
 - une premiere synthese statistique automatisee avec bootstrap apparie sur les campagnes E1 et E2 est maintenant produite dans `article3/analysis/STATISTICAL_SUMMARY.md`
+- l'orchestrateur principal `article3/run_all.sh` et le runner de campagnes
+  utilisent maintenant des checkpoints par etape, des retries bornes, des logs
+  par run et des checksums pour reprendre une execution interrompue
+- les profils Kind `dev`, `validation` et `performance` sont maintenant
+  definis explicitement et le healthcheck verifie les endpoints readyz/livez
+- la matrice bibliographique possede maintenant les colonnes
+  `verified_url` et `verification_date` avec une date par reference
 
 ## Prochaines etapes
 

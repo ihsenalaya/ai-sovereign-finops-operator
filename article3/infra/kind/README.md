@@ -1,5 +1,9 @@
 # Kind Automation
 
+Profiles are pinned as repository manifests: `dev`, `validation`, and
+`performance`. Select one with `PROFILE` and `CLUSTER_NAME`; the wrappers are
+idempotent and diagnostics record the actual node image and client versions.
+
 The prompt-required entrypoints are provided with idempotent wrappers:
 
 ```bash

@@ -1,6 +1,31 @@
 {
-  "date": "2026-07-10",
+  "date": "2026-07-11",
   "state": "strict_prompt_audit_in_progress",
+  "tasks": {
+    "operator_audit": "COMPLETE",
+    "literature_novelty_gate": "FAILED_RETRYABLE",
+    "gov_ar_design": "COMPLETE",
+    "operator_integration": "FAILED_RETRYABLE",
+    "software_tests": "FAILED_RETRYABLE",
+    "docker_helm_release": "BLOCKED",
+    "kind_automation": "FAILED_RETRYABLE",
+    "datasets_and_traces": "BLOCKED",
+    "frozen_protocol": "COMPLETE",
+    "e0_smoke": "PASSED",
+    "e1_budget_delay": "FAILED_RETRYABLE",
+    "e2_multitenant": "FAILED_RETRYABLE",
+    "e3_drift": "FAILED_RETRYABLE",
+    "e4_faults": "FAILED_RETRYABLE",
+    "e5_scalability": "FAILED_RETRYABLE",
+    "e6_azure_live": "FAILED_RETRYABLE",
+    "e7_ablation": "FAILED_RETRYABLE",
+    "statistical_analysis": "FAILED_RETRYABLE",
+    "orchestration_resume": "COMPLETE",
+    "manuscript": "FAILED_RETRYABLE",
+    "claims_evidence": "FAILED_RETRYABLE",
+    "figures_tables": "COMPLETE",
+    "final_artifacts": "FAILED_RETRYABLE"
+  },
   "branch": "article3-gov-ar",
   "base_commit": "07cdd3baad26abfa7248dd69cdd507aab4be8177",
   "worktree": "/mnt/c/Users/Ihsen/Documents/kubebuilder/ai-sovereign-finops-operator-article3",
@@ -45,6 +70,10 @@
     "strict_prompt_audit_written",
     "minimum_figure_and_table_counts_generated",
     "initial_statistical_summary_generated"
+    ,"checkpointed_runner_verified"
+    ,"kind_profiles_and_healthchecks_verified"
+    ,"literature_matrix_schema_verified"
+    ,"article3_resume_run_completed"
   ],
   "next_steps": [
     "close_major_prompt_compliance_gaps",

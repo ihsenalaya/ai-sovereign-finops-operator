@@ -1,12 +1,12 @@
 # E5 Scalability Results
 
-Scenario `budget_delay` with `50` requests completed in `0.234 ms` at `213481.80 req/s`.
+Scenario `budget_delay` with `50` requests completed in `0.234 ms` at `213161.44 req/s`.
 
-Scenario `budget_delay` with `250` requests completed in `0.727 ms` at `343525.03 req/s`.
+Scenario `budget_delay` with `250` requests completed in `0.771 ms` at `323917.27 req/s`.
 
-Scenario `multitenant` with `500` requests completed in `1.769 ms` at `282522.59 req/s`.
+Scenario `multitenant` with `500` requests completed in `1.641 ms` at `304548.80 req/s`.
 
-Scenario `multitenant` with `1000` requests completed in `6.229 ms` at `160513.82 req/s`.
+Scenario `multitenant` with `1000` requests completed in `5.894 ms` at `169652.78 req/s`.
 
 ```json
 {
@@ -16,7 +16,7 @@ Scenario `multitenant` with `1000` requests completed in `6.229 ms` at `160513.8
       "scenario": "budget_delay",
       "request_count": 50,
       "duration_millis": 0.234,
-      "requests_per_sec": 213481.80281112838,
+      "requests_per_sec": 213161.43994815912,
       "metrics": {
         "admitted_count": 15,
         "queued_count": 70,
@@ -45,8 +45,8 @@ Scenario `multitenant` with `1000` requests completed in `6.229 ms` at `160513.8
     {
       "scenario": "budget_delay",
       "request_count": 250,
-      "duration_millis": 0.727,
-      "requests_per_sec": 343525.0340433309,
+      "duration_millis": 0.771,
+      "requests_per_sec": 323917.27411952807,
       "metrics": {
         "admitted_count": 64,
         "queued_count": 372,
@@ -75,8 +75,8 @@ Scenario `multitenant` with `1000` requests completed in `6.229 ms` at `160513.8
     {
       "scenario": "multitenant",
       "request_count": 500,
-      "duration_millis": 1.769,
-      "requests_per_sec": 282522.5876808851,
+      "duration_millis": 1.641,
+      "requests_per_sec": 304548.801813649,
       "metrics": {
         "admitted_count": 183,
         "queued_count": 635,
@@ -104,8 +104,8 @@ Scenario `multitenant` with `1000` requests completed in `6.229 ms` at `160513.8
     {
       "scenario": "multitenant",
       "request_count": 1000,
-      "duration_millis": 6.229,
-      "requests_per_sec": 160513.82401232232,
+      "duration_millis": 5.894,
+      "requests_per_sec": 169652.78183059423,
       "metrics": {
         "admitted_count": 363,
         "queued_count": 1274,

@@ -19,3 +19,5 @@ fi
 kubectl --context "${KUBECONFIG_CONTEXT}" get nodes
 kubectl --context "${KUBECONFIG_CONTEXT}" -n "${NAMESPACE}" get all
 kubectl --context "${KUBECONFIG_CONTEXT}" -n "${NAMESPACE}" describe job "${RELEASE_NAME}" || true
+kubectl --context "${KUBECONFIG_CONTEXT}" get --raw='/readyz?verbose' >/dev/null
+kubectl --context "${KUBECONFIG_CONTEXT}" get --raw='/livez?verbose' >/dev/null

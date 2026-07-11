@@ -5,7 +5,7 @@
       "scenario": "budget_delay",
       "request_count": 50,
       "duration_millis": 0.234,
-      "requests_per_sec": 213481.80281112838,
+      "requests_per_sec": 213161.43994815912,
       "metrics": {
         "admitted_count": 15,
         "queued_count": 70,
@@ -34,8 +34,8 @@
     {
       "scenario": "budget_delay",
       "request_count": 250,
-      "duration_millis": 0.727,
-      "requests_per_sec": 343525.0340433309,
+      "duration_millis": 0.771,
+      "requests_per_sec": 323917.27411952807,
       "metrics": {
         "admitted_count": 64,
         "queued_count": 372,
@@ -64,8 +64,8 @@
     {
       "scenario": "multitenant",
       "request_count": 500,
-      "duration_millis": 1.769,
-      "requests_per_sec": 282522.5876808851,
+      "duration_millis": 1.641,
+      "requests_per_sec": 304548.801813649,
       "metrics": {
         "admitted_count": 183,
         "queued_count": 635,
@@ -93,8 +93,8 @@
     {
       "scenario": "multitenant",
       "request_count": 1000,
-      "duration_millis": 6.229,
-      "requests_per_sec": 160513.82401232232,
+      "duration_millis": 5.894,
+      "requests_per_sec": 169652.78183059423,
       "metrics": {
         "admitted_count": 363,
         "queued_count": 1274,
