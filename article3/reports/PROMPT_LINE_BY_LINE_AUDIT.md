@@ -350,3 +350,8 @@ bounded Azure live validation. The weakest areas are:
 The current repository is much stronger than an empty scaffold, but it is still
 well short of a line-by-line prompt completion. The user criticism that the
 current state is far from a true Q1-ready article is substantively correct.
+
+The generated `article3/reports/PROMPT_RELEASE_GATE.md` now enforces this
+conclusion from repository evidence: it passes artifact/schema/state checks and
+fails the strict gate for the incomplete 35--50 reference target and missing
+GHCR/OCI publication.

@@ -16,6 +16,7 @@ bash experiments/orchestrator/run_all.sh
 echo "[article3] generating figures, tables, statistics, and manuscript"
 python3 analysis/scripts/generate_figures_tables.py
 python3 analysis/scripts/generate_statistical_summary.py
+python3 analysis/validation/prompt_release_gate.py
 bash overleaf/build.sh
 
 echo "[article3] writing reproducibility manifest"
