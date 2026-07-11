@@ -23,24 +23,26 @@
 \citation{luo2026routelmt}
 \citation{uddin2026conformal}
 \citation{shi2026inferencedynamics,fu2026flare,zhang2026mtrouter}
+\citation{qiu2024ssjf,xie2026forelen,ruan2026libra}
 \citation{joulani2013delayed}
 \citation{badanidiyuru2014resourceful,han2023cbwk}
-\citation{qiu2024ssjf,xie2026forelen,ruan2026libra}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{\numberline {1.0.0.1}Contributions.}{1}{paragraph.1.0.0.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{1}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Problem Formulation}{2}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}GOV-AR Design}{2}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{\numberline {4.0.0.1}Governance filtering.}{2}{paragraph.4.0.0.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{\numberline {4.0.0.2}Reservation policy.}{2}{paragraph.4.0.0.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{\numberline {4.0.0.3}Tenant ledger.}{2}{paragraph.4.0.0.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{\numberline {4.0.0.4}Replay engine.}{2}{paragraph.4.0.0.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Implementation}{2}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Evaluation}{2}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}E1 and E2: Delayed Settlement and Multi-Tenancy}{2}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}E3 and E4: Drift and Faults}{2}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}E5: Scalability}{2}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}E6: Azure Live Validation}{2}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Motivation and Failure Example}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Related Work}{1}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Problem Formulation}{1}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}GOV-AR Design}{2}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {5.0.0.1}Governance filter.}{2}{paragraph.5.0.0.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {5.0.0.2}Reservation policy.}{2}{paragraph.5.0.0.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {5.0.0.3}Ledger and settlement.}{2}{paragraph.5.0.0.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {5.0.0.4}Conservative fallback.}{2}{paragraph.5.0.0.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Safety and Risk Analysis}{2}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Kubernetes and Gateway Implementation}{2}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Experimental Methodology}{2}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Budget Safety and Utilization}{2}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Multi-Tenant Routing}{2}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Drift and Fault Injection}{2}{section.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {12}Scalability and Live Azure Validation}{2}{section.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {13}Ablation and Sensitivity}{2}{section.13}\protected@file@percent }
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{panda2025adaptive}{1}
@@ -52,15 +54,14 @@
 \bibcite{shi2026inferencedynamics}{7}
 \bibcite{fu2026flare}{8}
 \bibcite{zhang2026mtrouter}{9}
-\bibcite{joulani2013delayed}{10}
-\bibcite{badanidiyuru2014resourceful}{11}
-\bibcite{han2023cbwk}{12}
-\bibcite{qiu2024ssjf}{13}
-\bibcite{xie2026forelen}{14}
-\bibcite{ruan2026libra}{15}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}E7: Ablation}{3}{subsection.6.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{3}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Threats to Validity}{3}{section.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{3}{section.9}\protected@file@percent }
+\bibcite{qiu2024ssjf}{10}
+\bibcite{xie2026forelen}{11}
+\bibcite{ruan2026libra}{12}
+\bibcite{joulani2013delayed}{13}
+\bibcite{badanidiyuru2014resourceful}{14}
+\bibcite{han2023cbwk}{15}
+\@writefile{toc}{\contentsline {section}{\numberline {14}Threats to Validity}{3}{section.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {15}Discussion}{3}{section.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {16}Conclusion}{3}{section.16}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{References}{3}{section*.1}\protected@file@percent }
 \gdef \@abspage@last{3}

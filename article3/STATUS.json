@@ -42,7 +42,8 @@
     "operator_govar_go_vet_revalidated",
     "gov_ar_helm_lint_revalidated",
     "final_named_prompt_artifacts_materialized",
-    "strict_prompt_audit_written"
+    "strict_prompt_audit_written",
+    "minimum_figure_and_table_counts_generated"
   ],
   "next_steps": [
     "close_major_prompt_compliance_gaps",

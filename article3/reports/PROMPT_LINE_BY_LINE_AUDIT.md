@@ -290,10 +290,12 @@ bounded Azure live validation. The weakest areas are:
 ### Figures and tables, lines 1745-1784
 
 - `PARTIAL`
-- `article3/analysis/scripts/generate_figures_tables.py` now generates a first
-  scripted batch of figures and tables from processed experiment outputs.
-- Current generated outputs are still below the prompt target of 10 figures and
-  10 tables, and they are not yet integrated into a fully polished manuscript.
+- `article3/analysis/scripts/generate_figures_tables.py` now generates at least
+  10 figure assets and at least 10 table files from processed experiment
+  outputs.
+- This closes the minimum count gap, but not the full scientific gap:
+  - several requested figure semantics are only approximated by current outputs
+  - the manuscript does not yet integrate and discuss them at submission grade
 
 ### Release gates, lines 1786-1826
 

@@ -53,6 +53,7 @@
 - la passe de verification du 2026-07-11 a revalide les tests operator GOV-AR cibles, `go vet`, `helm lint` et la compilation LaTeX
 - les livrables finaux nommes par le prompt ont ete materialises sous `article3/artifacts/`
 - un audit ligne par ligne du prompt a ete ajoute dans `article3/reports/PROMPT_LINE_BY_LINE_AUDIT.md` et confirme que l'etat courant reste loin d'une completion stricte du prompt et d'un article Q1 pret a soumettre
+- une passe de generation automatique a maintenant produit au moins 10 figures et 10 tables sous `article3/figures/` et `article3/tables/`
 
 ## Prochaines etapes
 

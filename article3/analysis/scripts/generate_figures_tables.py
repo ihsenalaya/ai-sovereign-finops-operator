@@ -103,6 +103,27 @@ def fig_e2_isolation() -> None:
     save_plot(fig, "fig_e2_tenant_isolation")
 
 
+def fig_e2_comparison() -> None:
+    comparison = load("E2_comparison.json")["comparisons"]
+    rows = []
+    labels, overshoot = [], []
+    for comp in comparison:
+        labels.append(comp["artifact"])
+        overshoot.append(comp["overshoot_delta"])
+        rows.append([comp["artifact"], comp["admitted_delta"], comp["overshoot_delta"], comp["slack_delta"]])
+    write_csv(
+        TABLES / "table_e2_comparison.csv",
+        ["artifact", "admitted_delta", "overshoot_delta", "slack_delta"],
+        rows,
+    )
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.bar(labels, overshoot, color="#444444")
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_ylabel("Quantile minus mean_std overshoot")
+    ax.set_title("E2 Variant Comparison")
+    save_plot(fig, "fig_e2_variant_comparison")
+
+
 def fig_e3_drift() -> None:
     drift = load("E3_drift_summary.json")
     rows = [
@@ -174,6 +195,29 @@ def fig_e6_live() -> None:
     save_plot(fig, "fig_e6_live_latency")
 
 
+def fig_e6_tokens() -> None:
+    attempts = load("E6_azure_live_summary.json")["attempts"]
+    rows = []
+    labels = []
+    totals = []
+    for name, payload in attempts.items():
+        usage = payload.get("usage", {})
+        total = usage.get("total_tokens")
+        if total is not None:
+            labels.append(name)
+            totals.append(total)
+            rows.append([name, total])
+    write_csv(TABLES / "table_e6_live_tokens.csv", ["attempt", "total_tokens"], rows)
+    if not rows:
+        return
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.bar(labels, totals, color="#888888")
+    ax.set_ylabel("Total tokens")
+    ax.set_title("E6 Live Azure Validation Token Snapshot")
+    ax.tick_params(axis="x", rotation=25)
+    save_plot(fig, "fig_e6_live_tokens")
+
+
 def fig_e7_ablation() -> None:
     rows = load("E7_ablation_summary.json")["rows"]
     budget_delay = [r for r in rows if r["scenario"] == "budget_delay"]
@@ -219,10 +263,12 @@ def main() -> None:
     fig_budget_risk()
     fig_e1_heatmap()
     fig_e2_isolation()
+    fig_e2_comparison()
     fig_e3_drift()
     fig_e4_faults()
     fig_e5_scalability()
     fig_e6_live()
+    fig_e6_tokens()
     fig_e7_ablation()
     print("generated figures and tables in", FIGURES, TABLES)
 

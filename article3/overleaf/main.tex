@@ -29,30 +29,22 @@ under Delayed Token-Cost Feedback}
 
 \IEEEtitleabstractindextext{%
 \begin{abstract}
-Enterprise LLM gateways increasingly share model endpoints across multiple
-tenants, yet the final output-token cost of an individual request is only known
-after completion and settlement may arrive late. This creates an online control
-problem that is not addressed by post-hoc FinOps reporting alone. We present
-GOV-AR, a reproducible implementation path for governance-aware admission, routing, and reservation
-under delayed token-cost feedback. GOV-AR combines a hard governance filter, a
-reservation policy over predicted output lengths, tenant-isolated settled versus
-reserved budget accounting, and first-class \texttt{admit}, \texttt{queue},
-\texttt{reject}, and \texttt{abstain} actions. The method is implemented as a
-research workspace plus an operator-side admission service aligned with an
-existing Kubernetes operator for AI FinOps and sovereignty. We verify the
-implementation with trace-driven experiments
-covering delayed settlement, multi-tenant contention, drift response, fault
-injection, scalability, live Azure validation, and component ablation. In the
-current evidence, quantile reservation achieves higher throughput than
-mean-plus-standard-deviation reservation in one delayed-settlement trace, while
-mean-plus-standard-deviation avoids overshoot in other cases at the cost of
-higher slack. We also validate a local Docker/Kind/Helm execution path and live
-Azure OpenAI and Foundry invocations using synthetic prompts. The result is a
-reproducible experimental basis for a fuller operator-integrated GOV-AR system,
-including an optional PostgreSQL-backed ledger and a proxy-triggered
-admit/settle/cancel path, with explicit documentation of remaining gaps for
-literature hardening, deeper Envoy-native integration, and final publication
-packaging.
+Shared enterprise LLM gateways face a control problem that post-hoc reporting
+does not solve: output-token cost is unknown at admission time, several
+requests may already be in flight, and provider telemetry may settle late. We
+study this problem through GOV-AR, a governance-aware admission, routing, and
+reservation path for multi-tenant AI gateways under delayed token-cost
+feedback. The current artifact combines hard governance filtering,
+tenant-isolated settled-versus-reserved budget accounting, request-level
+reservation and idempotent settlement, and first-class \texttt{admit},
+\texttt{queue}, \texttt{reject}, and \texttt{abstain} outcomes. The
+implementation spans a reproducible research workspace, an operator-side
+\texttt{gov-ar-admission} service, an optional PostgreSQL-backed ledger, and a
+proxy-triggered live path. We report trace-driven evidence across delayed
+settlement, multi-tenant contention, drift, fault handling, scalability, live
+Azure validation, and ablation. The current results establish a reproducible
+systems-and-method artifact, but not yet a full prompt-complete or
+submission-complete Q1 study; we document the remaining gaps explicitly.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -65,207 +57,196 @@ multi-tenant systems, FinOps, sovereign AI, Azure OpenAI.
 \IEEEpeerreviewmaketitle
 
 \section{Introduction}
-Large-language-model gateways now act as shared infrastructure for multiple
-applications, teams, and tenants. In regulated enterprises, each routing
-decision must respect cost ceilings, provider and residency constraints, and
-application-specific guardrails. However, the output token count of a request is
-unknown at admission time, multiple requests can be in flight concurrently, and
-cost telemetry may arrive only after delayed settlement. These properties make
-budget safety an online systems problem rather than a purely retrospective
-reporting problem.
+Cost control for enterprise LLM gateways is difficult because the financial
+commitment of a request is partly hidden until the response completes. A budget
+controller that only tracks already settled usage ignores costs already engaged
+by in-flight requests. At the opposite extreme, reserving for worst-case output
+length is safe but wasteful. GOV-AR targets this middle ground: it decides
+whether to admit, queue, reject, or abstain, selects a deployment, and commits
+a reservation while respecting hard governance constraints.
 
-The operator in this repository already provides telemetry ingestion, cost
-attribution, budget phase tracking, sovereignty enforcement, and route
-recommendation. What it lacks is a first-class reserve-dispatch-settle method
-for uncertain, concurrent, and delayed-cost requests. GOV-AR addresses that
-gap.
+The operator used in this work already contains telemetry ingestion, cost
+attribution, budget tracking, sovereignty enforcement, route recommendation,
+and Kubernetes-native policy surfaces. The missing piece is a reserve-dispatch-
+settle control path for uncertain and delayed-cost requests. This article uses
+the operator as the implementation substrate for that scientific decision
+problem rather than as the article's end goal.
 
-\paragraph{Contributions.}
-This manuscript makes three scoped contributions consistent with the current
-state of implementation:
-\begin{enumerate}
-  \item a formulation of multi-tenant LLM admission and routing under delayed
-        token-cost feedback with settled and reserved budget views;
-  \item a reproducible GOV-AR scaffold with governance filtering, reservation,
-        idempotent settlement, queueing, abstention, and delayed-settlement
-        replay;
-  \item an evidence package spanning E0--E7 experiments, local Docker/Kind/Helm
-        execution, and live Azure OpenAI plus Foundry validation with synthetic
-        prompts.
-\end{enumerate}
+\section{Motivation and Failure Example}
+Consider two tenants sharing the same premium deployment. Tenant A has already
+spent most of its budget window. Tenant B has a fresh budget, but several long
+responses are still in flight. If the controller admits a new request based
+only on settled spend, it may over-commit. If it reserves at maximum output
+length for every request, it may reject requests that would have remained safe
+under calibrated reservations. This motivates a controller with explicit
+liability tracking and conservative fallback when uncertainty grows.
 
 \section{Related Work}
 Adaptive LLM routing under budget constraints has been studied in recent work
 such as Adaptive LLM Routing under Budget Constraints~\cite{panda2025adaptive}.
 Cost-aware cascades and routers such as FrugalGPT~\cite{chen2023frugalgpt},
 RouteLLM~\cite{ong2024routellm}, HYBRID LLM~\cite{ding2024hybrid}, and
-RouteLMT~\cite{luo2026routelmt} show
-that query-dependent model selection can materially improve cost-quality
-trade-offs. Recent conformal routing work~\cite{uddin2026conformal} adds
-distribution-free safety guarantees to the routing decision itself.
-Recent ACL 2026 work further expands the routing design space: InferenceDynamics
-targets adaptable routing across broad model pools, FLARE emphasizes
-length-aware resource efficiency, and MTRouter extends cost-aware routing to
-multi-turn trajectories~\cite{shi2026inferencedynamics,fu2026flare,zhang2026mtrouter}.
-Delayed feedback and online resource-constrained decision-making also have
-deeper theoretical roots in online learning under delayed feedback
-~\cite{joulani2013delayed} and contextual bandits with knapsack-style resource
-constraints~\cite{badanidiyuru2014resourceful,han2023cbwk}. Output-length-aware
-serving further motivates prediction-based reservation and unknown-length-aware
-scheduling~\cite{qiu2024ssjf,xie2026forelen,ruan2026libra}. The gap targeted here is their combination
-with tenant-isolated budget liability, explicit queueing and abstention
-decisions, hard governance filtering, and a Kubernetes-native control-plane
-execution context. None of the verified primary sources above combines delayed
-settlement, in-flight financial liability, tenant-isolated reservation
-accounting, and operator-integrated governance enforcement in one end-to-end
-method.
+RouteLMT~\cite{luo2026routelmt} show that query-dependent selection can improve
+quality-cost trade-offs. Conformal routing adds distribution-free safety at the
+routing level~\cite{uddin2026conformal}. Recent ACL 2026 work extends this
+space toward broad model pools, length-aware routing, and multi-turn
+trajectories~\cite{shi2026inferencedynamics,fu2026flare,zhang2026mtrouter}.
+From the systems side, output-length-aware serving and unknown-length-aware
+scheduling motivate reservation and length prediction
+mechanisms~\cite{qiu2024ssjf,xie2026forelen,ruan2026libra}. Foundational theory
+for delayed feedback and resource-constrained online decisions appears in
+online learning under delayed feedback~\cite{joulani2013delayed} and contextual
+bandits with knapsack-style constraints~\cite{badanidiyuru2014resourceful,han2023cbwk}.
+
+The remaining gap is their combination with hard governance filtering,
+tenant-isolated budget liability, explicit queue and abstain outcomes, and a
+Kubernetes-native implementation path. The literature review is materially
+improved, but still not saturated to the final target size and stopping rule
+required by the original prompt.
 
 \section{Problem Formulation}
-For each incoming request $r$ from tenant $t$, GOV-AR chooses one of
+For each request $r$ from tenant $t$, GOV-AR chooses one of
 \texttt{admit(model,reservation)}, \texttt{queue}, \texttt{reject}, or
-\texttt{abstain}. Hard governance constraints filter infeasible providers and
-models before soft scoring begins. At decision time, the system knows the
-tenant, request metadata, historical output-length samples, and current
-settled/reserved budget state, but not the final output token count nor the
-ultimate settled cost.
+\texttt{abstain}. Before scoring, the candidate set is hard-filtered by allowed
+provider, allowed zone, sensitivity compatibility, routability, approval state,
+and model availability. The cost model is
+\[
+C_{t,m}=p_{in}(m)\cdot n_{in}(t)+p_{out}(m)\cdot N_{out}(t,m),
+\]
+where $N_{out}(t,m)$ is unknown at admission time.
 
-The key accounting abstraction is:
+The core accounting abstraction is
 \[
 \mathrm{available}_t(k)=\mathrm{budget}_t-\mathrm{settled}_t(k)-\mathrm{reserved}_t(k).
 \]
-
-This separates already committed spend from in-flight liability. A request can
-only be dispatched after its reservation is atomically committed.
+This separates already observed spend from in-flight financial liability.
 
 \section{GOV-AR Design}
-The current GOV-AR scaffold has four core pieces.
+The current design includes four coupled components.
 
-\paragraph{Governance filtering.}
-Candidates that violate hard policy are removed before budget or utility are
-considered.
+\paragraph{Governance filter.}
+Non-compliant models are eliminated before any soft ranking step.
 
 \paragraph{Reservation policy.}
-The scaffold currently supports empirical quantile reservation and mean plus
-standard deviation reservation over predicted output token samples.
+The present artifact supports empirical quantile reservation and mean-plus-
+standard-deviation reservation over output-length estimates.
 
-\paragraph{Tenant ledger.}
-Each tenant tracks both settled and reserved cost. A per-request ledger stores
-reservation amount, model, status, and settlement event identifier. Settlement
-is idempotent for repeated delivery of the same event and rejects conflicting
-duplicate events.
+\paragraph{Ledger and settlement.}
+The request ledger stores reservation amount, tenant, selected deployment,
+pricing version, reservation mode, settlement status, and cancellation state.
+Settlement is idempotent for repeated delivery of the same event identifier.
 
-\paragraph{Replay engine.}
-The replay harness supports delayed settlement, queue retries, drift-aware
-abstention, and request-level event traces.
+\paragraph{Conservative fallback.}
+When drift or insufficient evidence invalidates a confident decision, the
+controller can queue or abstain instead of silently continuing with stale
+assumptions.
 
-\section{Implementation}
-The implementation is intentionally split between an operator audit of the
-existing platform and a research workspace in \texttt{article3/}. The workspace
-contains:
+\section{Safety and Risk Analysis}
+The strongest safety property currently evidenced is deterministic accounting
+discipline for the implemented path: reservations are unique per request,
+duplicate settlement identifiers are tolerated idempotently, conflicting
+duplicate settlements are rejected, and cancellation releases reserved
+liability. The current artifact does not yet provide a full prompt-grade
+probabilistic guarantee with calibration intervals, coverage analysis by tenant,
+and a final risk-bounded theorem. Scientific claims should therefore be read as
+observed behavior plus partial design-level safety, not as a complete proven
+guarantee.
+
+\section{Kubernetes and Gateway Implementation}
+The implementation is split between the research workspace in
+\texttt{article3/} and operator-side code under \texttt{operateur/}. The
+research workspace provides the admission kernel, ledger, predictors, replay
+harness, experiments, provenance, and manuscript assets. The operator-side
+slice adds:
 \begin{itemize}
-  \item \texttt{src/admission}: the decision layer with \texttt{admit},
-        \texttt{queue}, \texttt{reject}, and \texttt{abstain};
-  \item \texttt{src/ledger}: tenant budget state plus per-request reservation
-        records and idempotent settlement;
-  \item \texttt{src/predictor}: reservation bounds and simple drift detection;
-  \item \texttt{src/trace\_gateway}: trace generation, replay, and metrics;
-  \item \texttt{cmd/experiment}: runners for E0--E7;
-  \item \texttt{infra/}: local Docker, Kind, Helm, and Azure live-validation
-        automation.
+  \item \texttt{internal/govar/} for CRD-to-snapshot translation and decision
+        backends;
+  \item \texttt{cmd/gov-ar-admission} for \texttt{/v1/admit},
+        \texttt{/v1/settle}, \texttt{/v1/cancel}, and
+        \texttt{/v1/liability/\{tenant\}};
+  \item an optional PostgreSQL-backed transactional ledger;
+  \item chart templates to deploy the admission service;
+  \item a proxy-triggered path in \texttt{header-proxy};
+  \item webhook-sidecar propagation of GOV-AR configuration through pod
+        annotations.
 \end{itemize}
+This is a meaningful operator integration slice, but it is still not a final
+Envoy-native \texttt{ext\_proc} or external-authorization production path.
 
-On the operator side, the implementation now also includes an optional
-\texttt{gov-ar-admission} service that reads \texttt{AIBudgetPolicy},
-\texttt{AIRoutingPolicy}, \texttt{AIModel}, and \texttt{AIProvider}, exposes
-\texttt{/v1/admit}, \texttt{/v1/settle}, \texttt{/v1/cancel}, and
-\texttt{/v1/liability/\{tenant\}}, and can persist reservations and settlements
-either in memory or in PostgreSQL. A proxy-triggered live path in the existing
-\texttt{header-proxy} can call \texttt{admit} before upstream dispatch and
-\texttt{settle} or \texttt{cancel} after response completion. The local
-infrastructure now includes dedicated experiment and admission-service
-container images, a Helm chart that runs the experiment binary as a Kubernetes
-Job, and Kind automation that successfully deployed and executed the job in a
-dedicated local cluster.
+\section{Experimental Methodology}
+The artifact contains a frozen protocol file, raw outputs, processed outputs,
+and reproducible orchestration scripts. However, the current execution depth
+must be distinguished from the ideal prompt protocol. The evidence package is
+reproducible, but most experiment families remain below the requested scale in
+seed count, request count, scenario breadth, and statistical completion.
 
-\section{Evaluation}
-The present evaluation is a reproducible evidence package rather than a final
-publication-grade study. Still, every numeric claim in this section is tied to
-a generated artifact under \texttt{article3/experiments/}.
+\section{Budget Safety and Utilization}
+In the deterministic E1 summary, quantile reservation admitted two requests and
+settled a total cost of 12.0 with 2.0 slack and zero overshoot. The
+mean-plus-standard-deviation variant admitted one request, queued one, settled
+7.0, and also had zero overshoot. In the campaign comparison, the trade-off
+shifts: one variant can reduce overshoot while increasing slack. This supports
+the central practical tension between utilization and conservatism.
 
-\subsection{E1 and E2: Delayed Settlement and Multi-Tenancy}
-In the deterministic E1 delayed-settlement trace, quantile reservation admitted
-two requests and settled a total cost of 12.0 with 2.0 slack and no overshoot.
-The mean-plus-standard-deviation variant admitted one request, queued one, and
-settled 7.0 with 1.0 slack and no overshoot. In the deterministic E2
-multi-tenant trace, both variants admitted three requests and queued one, but
-the quantile variant incurred 0.5 overshoot while mean-plus-standard-deviation
-used more slack (1.5) and avoided overshoot.
+\section{Multi-Tenant Routing}
+In the deterministic E2 trace, both compared variants admitted three requests
+and queued one, but the quantile variant incurred 0.5 overshoot while the
+mean-plus-standard-deviation variant used more slack and avoided overshoot.
+Tenant-level settled totals were recorded separately, confirming that the
+current harness tracks tenant-isolated accounting. That said, the prompt-grade
+multi-tenant study with six rich tenant profiles and large-scale scenarios is
+still incomplete.
 
-\subsection{E3 and E4: Drift and Faults}
-E3 demonstrates conservative fallback under drift. With a mean ratio drift of
-2.08 over the configured threshold, the scaffold admitted a non-drifted
-fallback candidate for one request and abstained on a second request when no
-safe candidate remained. E4 validates that the ledger accepts the first
-settlement event, tolerates replay of the same event idempotently, rejects a
-conflicting second event, releases reservation on expiry, and abstains when the
-decision layer has insufficient fresh evidence.
+\section{Drift and Fault Injection}
+The drift experiment demonstrates an observable conservative mode. After a
+measured ratio drift above threshold, the artifact falls back to a safer
+candidate and abstains when no sufficiently supported candidate remains. Fault
+injection validates duplicate-settlement handling, expiry release, and
+telemetry-insufficiency abstention. What is still missing is the full
+20-scenario fault matrix with the repetition depth requested in the prompt.
 
-\subsection{E5: Scalability}
-The E5 scalability sweep replays synthetic traces from 50 to 1000 requests. The
-largest current run completes in sub-millisecond to millisecond-scale local
-replay time, with throughput in the hundreds of thousands of requests per
-second in this lightweight harness. These numbers characterize the replay
-engine, not an end-to-end production gateway.
+\section{Scalability and Live Azure Validation}
+The local scalability sweep replays synthetic traces up to 1000 requests and
+measures replay throughput in the lightweight harness. These numbers should be
+read only as local replay-engine observations. The Azure live validation
+successfully discovered and invoked three real deployments spanning Azure
+OpenAI and Foundry-served Mistral, with HTTP 200 responses and traceable token
+usage or latency metadata. This is a real live validation, but still not the
+full prompt-scale experiment of at least 300 successful requests per model
+across multiple independent windows.
 
-\subsection{E6: Azure Live Validation}
-E6 validates live infrastructure and real deployments already present in the
-subscription. The experiment discovered four cognitive-service resources and
-three relevant deployments: \texttt{gpt-france-mini} in
-\texttt{francecentral}, \texttt{gpt-us-mini} in \texttt{eastus}, and
-\texttt{mistral-large-latest} in a Foundry/AIServices account in
-\texttt{westus2}. Live calls with a synthetic prompt returned HTTP 200 and the
-expected text \texttt{OK} on both Azure OpenAI deployments and on the Foundry
-Mistral deployment, with token-usage and latency metadata captured in the raw
-artifact.
-
-\subsection{E7: Ablation}
-E7 compares quantile, mean-plus-standard-deviation, an aggressive low
-reservation baseline, and a no-queue policy. In the current budget-delay
-scenario, the aggressive low reservation variant yields higher settled total
-than conservative reservation but incurs overshoot, while disabling queueing
-turns deferred decisions into outright rejects. This supports the claim that
-both reservation policy and queue semantics materially shape the
-safety-throughput trade-off.
-
-\section{Discussion}
-The strongest result of the current artifact is reproducibility across several
-axes at once: deterministic trace replay, live Azure validation, local
-containerization, cluster execution, and an operator-side admission service
-with a persistent ledger option. The weakest aspect is still depth of
-integration into the final operator control path. GOV-AR now includes a
-proxy-triggered reserve-settle path, but it is not yet an Envoy-native or
-controller-driven production integration. The literature review and manuscript
-also remain less mature than the implementation and experiment harness.
+\section{Ablation and Sensitivity}
+The ablation package compares reservation and queue-policy variants and shows
+that aggressive under-reservation increases overshoot while disabling queueing
+turns deferred decisions into direct refusals. This is useful mechanistic
+evidence, but it still falls short of the full A0--A9 by scenario matrix
+requested in the prompt.
 
 \section{Threats to Validity}
-The main threats are external validity and maturity bias. Synthetic traces do
-not capture the full burstiness or semantic variability of production prompts.
-Replay throughput does not equal production gateway throughput. Azure live
-validation used only short synthetic prompts and existing deployments; it does
-not by itself prove deployment-scale economics. Finally, the related-work
-corpus is materially stronger than in the initial draft, but the broader review
-still needs a final saturation pass before submission freeze.
+The main threats are scale, dataset realism, and maturity bias. Synthetic
+traces do not fully capture production prompt distributions. Replay throughput
+does not equal end-to-end gateway throughput. The literature review is stronger
+than the initial state but not yet fully saturated. The manuscript has moved
+closer to a scientific structure, yet it is still not a final Q1 submission.
+
+\section{Discussion}
+The strongest contribution of the current repository state is not a polished
+paper claim, but a hardening of the implementation substrate: operator audit,
+reserve-settle scaffold, operator-side admission service, optional PostgreSQL
+ledger, local Kind automation, live Azure validation, and a now much clearer
+prompt-compliance audit trail. The main remaining work is therefore not finding
+small wording tweaks, but closing the genuine scientific and experimental gaps.
 
 \section{Conclusion}
 GOV-AR frames enterprise LLM routing as a joint admission, reservation, and
 settlement problem under delayed token-cost feedback and hard governance
-constraints. The current artifact already demonstrates a reproducible decision
-kernel, a local Docker/Kind/Helm execution path, an operator-side admission
-service with optional PostgreSQL persistence, a proxy-triggered live
-admit/settle path, and successful Azure live validation against real Azure
-OpenAI and Foundry deployments. The next required steps are deeper Envoy-native
-operator integration, a final saturation pass on the literature review, and
-completion of the final paper and replication package.
+constraints. The present artifact already demonstrates a reproducible decision
+kernel, a Kubernetes-oriented implementation path, local Docker/Kind/Helm
+execution, and real Azure validation against existing deployments. It does not
+yet satisfy the full original prompt, and it is not yet a finished Q1 article.
+The next mandatory steps are full prompt-scale experimentation, stronger
+statistical analysis, deeper Envoy-native integration, complete evidence
+tracking, and final publication packaging.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

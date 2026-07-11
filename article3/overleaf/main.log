@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2026.5.18)  11 JUL 2026 07:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2026.5.18)  11 JUL 2026 07:39
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -496,68 +496,79 @@ LaTeX Info: Redefining \nameref on input line 28.
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
-LaTeX Font Info:    Trying to load font information for T1+phv on input line 64
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 56
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 )
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 64
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 56
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
-LaTeX Font Info:    Calculating math sizes for size <11.04124> on input line 64
+LaTeX Font Info:    Calculating math sizes for size <11.04124> on input line 56
 .
-LaTeX Font Info:    Trying to load font information for U+msa on input line 64.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 56.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 64.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 56.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Underfull \hbox (badness 1642) in paragraph at lines 77--82
-\T1/ppl/m/n/9.53561 try in-ges-tion, cost at-tri-bu-tion, bud-get phase track-i
-ng,
+LaTeX Font Info:    Calculating math sizes for size <9.53561> on input line 108
+.
+
+Underfull \hbox (badness 1406) in paragraph at lines 108--113
+\T1/ppl/m/n/9.53561 of \T1/pcr/m/n/9.53561 admit(model,reservation)\T1/ppl/m/n/
+9.53561 , \T1/pcr/m/n/9.53561 queue\T1/ppl/m/n/9.53561 , \T1/pcr/m/n/9.53561 re
+ject\T1/ppl/m/n/9.53561 , or
  []
 
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
 
 ]
-LaTeX Font Info:    Calculating math sizes for size <9.53561> on input line 124
-.
-
-Underfull \hbox (badness 2088) in paragraph at lines 177--189
-\T1/ppl/m/n/9.53561 and \T1/pcr/m/n/9.53561 AIProvider\T1/ppl/m/n/9.53561 , ex-
-poses \T1/pcr/m/n/9.53561 /v1/admit\T1/ppl/m/n/9.53561 , \T1/pcr/m/n/9.53561 /v
-1/settle\T1/ppl/m/n/9.53561 ,
+Underfull \hbox (badness 1983) in paragraph at lines 131--133
+ \T1/ppl/m/n/9.53561 5.0.0.2 Reser-va-tion pol-icy.: [][] The present ar-ti-fac
+t
  []
 
 
-Underfull \hbox (badness 2818) in paragraph at lines 221--230
-\T1/ppl/m/n/9.53561 de-ploy-ments: \T1/pcr/m/n/9.53561 gpt-france-mini \T1/ppl/
-m/n/9.53561 in \T1/pcr/m/n/9.53561 francecentral\T1/ppl/m/n/9.53561 ,
+Underfull \hbox (badness 1803) in paragraph at lines 131--133
+\T1/ppl/m/n/9.53561 standard-deviation reser-va-tion over output-length es-ti-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--167
+[]\T1/pcr/m/n/9.53561 cmd/gov-ar-admission \T1/ppl/m/n/9.53561 for \T1/pcr/m/n/
+9.53561 /v1/admit\T1/ppl/m/n/9.53561 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--167
+\T1/pcr/m/n/9.53561 /v1/settle\T1/ppl/m/n/9.53561 , \T1/pcr/m/n/9.53561 /v1/can
+cel\T1/ppl/m/n/9.53561 , and
  []
 
 [2] (./main.bbl) [3] (./main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: CFC0BB2CECE62300E73DA0B92DB1B953;2060.
+(rerunfilecheck)             Checksum: C8214585B2C957B2842AE16F5965D867;2606.
  ) 
 Here is how much of TeX's memory you used:
- 11434 strings out of 480247
- 178439 string characters out of 5896151
- 475987 words of memory out of 5000000
- 29157 multiletter control sequences out of 15000+600000
- 559922 words of font info for 164 fonts, out of 8000000 for 9000
+ 11432 strings out of 480247
+ 178384 string characters out of 5896151
+ 474984 words of memory out of 5000000
+ 29158 multiletter control sequences out of 15000+600000
+ 557192 words of font info for 162 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 60i,6n,63p,354b,452s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,7n,63p,282b,452s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/
@@ -569,10 +580,10 @@ fb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/sha
 re/texlive/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/share/texlive/t
 exmf-dist/fonts/type1/urw/palatino/uplri8a.pfb></usr/share/texlive/texmf-dist/f
 onts/type1/urw/zapfding/uzdr.pfb>
-Output written on main.pdf (3 pages, 145755 bytes).
+Output written on main.pdf (3 pages, 146911 bytes).
 PDF statistics:
- 186 PDF objects out of 1000 (max. 8388607)
- 157 compressed objects within 2 object streams
- 42 named destinations out of 1000 (max. 500000)
- 121 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 190 PDF objects out of 1000 (max. 8388607)
+ 161 compressed objects within 2 object streams
+ 40 named destinations out of 1000 (max. 500000)
+ 137 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -75,22 +75,6 @@ Y.~Zhang, H.~Li, Z.~Wang, S.~Feng, X.~Yang, D.~Wang, B.~Zhang, L.~Bai, and
   Association for Computational Linguistics (Volume 1: Long Papers)}, 2026, pp.
   44\,206--44\,226.
 
-\bibitem{joulani2013delayed}
-P.~Joulani, A.~Gyorgy, and C.~Szepesvari, ``Online learning under delayed
-  feedback,'' in \emph{Proceedings of the 30th International Conference on
-  Machine Learning}, 2013, pp. 1453--1461.
-
-\bibitem{badanidiyuru2014resourceful}
-A.~Badanidiyuru, J.~Langford, and A.~Slivkins, ``Resourceful contextual
-  bandits,'' in \emph{Proceedings of The 27th Conference on Learning Theory},
-  2014, pp. 1109--1134.
-
-\bibitem{han2023cbwk}
-Y.~Han, J.~Zeng, Y.~Wang, Y.~Xiang, and J.~Zhang, ``Optimal contextual bandits
-  with knapsacks under realizability via regression oracles,'' in
-  \emph{Proceedings of The 26th International Conference on Artificial
-  Intelligence and Statistics}, 2023, pp. 5011--5035.
-
 \bibitem{qiu2024ssjf}
 H.~Qiu \emph{et~al.}, ``Efficient interactive llm serving with proxy
   model-based sequence length prediction,'' \emph{arXiv preprint
@@ -106,5 +90,21 @@ C.~Ruan, Y.~Chen, D.~Tian, Y.~Shi, Y.~Wu, J.~Li, and C.~Li, ``Libra: Flexible
   request partitioning and scheduling for serving unbalanced and dynamic llm
   workloads,'' in \emph{23rd USENIX Symposium on Networked Systems Design and
   Implementation (NSDI 26)}, 2026, pp. 1243--1258.
+
+\bibitem{joulani2013delayed}
+P.~Joulani, A.~Gyorgy, and C.~Szepesvari, ``Online learning under delayed
+  feedback,'' in \emph{Proceedings of the 30th International Conference on
+  Machine Learning}, 2013, pp. 1453--1461.
+
+\bibitem{badanidiyuru2014resourceful}
+A.~Badanidiyuru, J.~Langford, and A.~Slivkins, ``Resourceful contextual
+  bandits,'' in \emph{Proceedings of The 27th Conference on Learning Theory},
+  2014, pp. 1109--1134.
+
+\bibitem{han2023cbwk}
+Y.~Han, J.~Zeng, Y.~Wang, Y.~Xiang, and J.~Zhang, ``Optimal contextual bandits
+  with knapsacks under realizability via regression oracles,'' in
+  \emph{Proceedings of The 26th International Conference on Artificial
+  Intelligence and Statistics}, 2023, pp. 5011--5035.
 
 \end{thebibliography}
