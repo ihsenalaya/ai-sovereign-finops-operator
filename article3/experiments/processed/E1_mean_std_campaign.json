@@ -1,0 +1,140 @@
+{
+  "experiment_id": "E1",
+  "variant": "mean_std",
+  "runs": 5,
+  "mean_metrics": {
+    "admitted_count": 3,
+    "queued_count": 18,
+    "rejected_count": 0,
+    "abstained_count": 0,
+    "settled_count": 2,
+    "reserved_total": 19.65,
+    "settled_total": 16.6,
+    "slack_total": 3.4,
+    "overshoot_total": 0.9800000000000001,
+    "tenant_settled_total": {
+      "team-a": 16.6
+    },
+    "application_settled_total": null,
+    "application_admitted_count": null
+  },
+  "run_metrics": [
+    {
+      "admitted_count": 3,
+      "queued_count": 19,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 3,
+      "reserved_total": 19,
+      "settled_total": 18,
+      "slack_total": 2.5,
+      "overshoot_total": 1.5,
+      "tenant_settled_total": {
+        "team-a": 18
+      },
+      "application_settled_total": {
+        "hr-chatbot": 11,
+        "rag-docs": 7
+      },
+      "application_admitted_count": {
+        "hr-chatbot": 2,
+        "rag-docs": 1
+      }
+    },
+    {
+      "admitted_count": 3,
+      "queued_count": 18,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 3,
+      "reserved_total": 22.1,
+      "settled_total": 17,
+      "slack_total": 6.5,
+      "overshoot_total": 1.4000000000000004,
+      "tenant_settled_total": {
+        "team-a": 17
+      },
+      "application_settled_total": {
+        "analytical-agent": 7,
+        "hr-chatbot": 4,
+        "rag-docs": 6
+      },
+      "application_admitted_count": {
+        "analytical-agent": 1,
+        "hr-chatbot": 1,
+        "rag-docs": 1
+      }
+    },
+    {
+      "admitted_count": 3,
+      "queued_count": 18,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 3,
+      "reserved_total": 19,
+      "settled_total": 17,
+      "slack_total": 3.5,
+      "overshoot_total": 1.5,
+      "tenant_settled_total": {
+        "team-a": 17
+      },
+      "application_settled_total": {
+        "hr-chatbot": 10,
+        "rag-docs": 7
+      },
+      "application_admitted_count": {
+        "hr-chatbot": 2,
+        "rag-docs": 1
+      }
+    },
+    {
+      "admitted_count": 3,
+      "queued_count": 19,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 2,
+      "reserved_total": 19.15,
+      "settled_total": 13,
+      "slack_total": 3,
+      "overshoot_total": 0,
+      "tenant_settled_total": {
+        "team-a": 13
+      },
+      "application_settled_total": {
+        "hr-chatbot": 5,
+        "rag-docs": 8
+      },
+      "application_admitted_count": {
+        "hr-chatbot": 2,
+        "rag-docs": 1
+      }
+    },
+    {
+      "admitted_count": 3,
+      "queued_count": 18,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 3,
+      "reserved_total": 19,
+      "settled_total": 18,
+      "slack_total": 1.5,
+      "overshoot_total": 0.5,
+      "tenant_settled_total": {
+        "team-a": 18
+      },
+      "application_settled_total": {
+        "hr-chatbot": 10,
+        "rag-docs": 8
+      },
+      "application_admitted_count": {
+        "hr-chatbot": 2,
+        "rag-docs": 1
+      }
+    }
+  ],
+  "config": {
+    "Mode": "mean_std",
+    "Quantile": 0,
+    "ZScore": 1
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "experiment_id": "E2",
+  "comparisons": [
+    {
+      "artifact": "summary",
+      "quantile_admitted": 3,
+      "mean_std_admitted": 3,
+      "quantile_overshoot": 0.5,
+      "mean_std_overshoot": 0,
+      "quantile_slack": 0.5,
+      "mean_std_slack": 1.5,
+      "admitted_delta": 0,
+      "overshoot_delta": 0.5,
+      "slack_delta": -1
+    },
+    {
+      "artifact": "campaign_mean",
+      "quantile_admitted": 5,
+      "mean_std_admitted": 5,
+      "quantile_overshoot": 1.7300000000000004,
+      "mean_std_overshoot": 3.3500000000000005,
+      "quantile_slack": 4.1,
+      "mean_std_slack": 4.5200000000000005,
+      "admitted_delta": 0,
+      "overshoot_delta": -1.62,
+      "slack_delta": -0.4200000000000008
+    }
+  ]
+}

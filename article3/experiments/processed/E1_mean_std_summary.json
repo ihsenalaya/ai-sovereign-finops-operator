@@ -1,0 +1,20 @@
+{
+  "admitted_count": 1,
+  "queued_count": 1,
+  "rejected_count": 0,
+  "abstained_count": 0,
+  "settled_count": 1,
+  "reserved_total": 8,
+  "settled_total": 7,
+  "slack_total": 1,
+  "overshoot_total": 0,
+  "tenant_settled_total": {
+    "team-a": 7
+  },
+  "application_settled_total": {
+    "": 7
+  },
+  "application_admitted_count": {
+    "": 1
+  }
+}

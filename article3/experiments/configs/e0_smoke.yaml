@@ -1,0 +1,4 @@
+experiment_id: E0
+name: smoke_end_to_end
+status: draft
+description: Baseline deployment and health validation for the GOV-AR stack.

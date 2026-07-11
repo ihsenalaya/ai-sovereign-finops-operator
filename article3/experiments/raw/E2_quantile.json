@@ -1,0 +1,102 @@
+{
+  "experiment_id": "E2",
+  "variant": "quantile",
+  "config": {
+    "Mode": "quantile",
+    "Quantile": 0.75,
+    "ZScore": 0
+  },
+  "metrics": {
+    "admitted_count": 3,
+    "queued_count": 1,
+    "rejected_count": 0,
+    "abstained_count": 0,
+    "settled_count": 3,
+    "reserved_total": 15,
+    "settled_total": 15,
+    "slack_total": 0.5,
+    "overshoot_total": 0.5,
+    "tenant_settled_total": {
+      "team-a": 11,
+      "team-b": 4
+    },
+    "application_settled_total": {
+      "": 15
+    },
+    "application_admitted_count": {
+      "": 3
+    }
+  },
+  "events": [
+    {
+      "Step": 0,
+      "RequestID": "a1",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "admitted",
+      "Model": "m1",
+      "Amount": 5.5,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 0,
+      "RequestID": "b1",
+      "TenantID": "team-b",
+      "Application": "",
+      "Type": "admitted",
+      "Model": "m2",
+      "Amount": 4,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 1,
+      "RequestID": "a2",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "admitted",
+      "Model": "m1",
+      "Amount": 5.5,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 1,
+      "RequestID": "a3",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "queued",
+      "Model": "",
+      "Amount": 0,
+      "Reason": "no feasible candidate under current budget or evidence constraints"
+    },
+    {
+      "Step": 2,
+      "RequestID": "a1",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 6,
+      "Reason": ""
+    },
+    {
+      "Step": 2,
+      "RequestID": "b1",
+      "TenantID": "team-b",
+      "Application": "",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 4,
+      "Reason": ""
+    },
+    {
+      "Step": 3,
+      "RequestID": "a2",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 5,
+      "Reason": ""
+    }
+  ]
+}

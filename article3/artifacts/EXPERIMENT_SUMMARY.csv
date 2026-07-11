@@ -1,0 +1,9 @@
+experiment_id,name,status,raw_output,processed_output,summary
+E0,smoke_end_to_end,reproducible_scaffold_run,article3/experiments/raw/E0_smoke.json,article3/experiments/processed/E0_smoke_summary.json,Smoke validation of article3 scaffold and artifact presence
+E1,budget_delay,reproducible_scaffold_run,article3/experiments/raw/,article3/experiments/processed/,Budget-delay replay campaign with regenerated raw outputs campaigns matrices and comparisons
+E2,multitenant_tradeoffs,reproducible_scaffold_run,article3/experiments/raw/,article3/experiments/processed/,Multitenant replay campaign with regenerated raw outputs campaigns matrices and comparisons
+E3,drift_response,reproducible_scaffold_run,article3/experiments/raw/E3_drift.json,article3/experiments/processed/E3_drift_summary.json,Drift detection and conservative fallback scenario
+E4,faults,reproducible_scaffold_run,article3/experiments/raw/E4_faults.json,article3/experiments/processed/E4_faults_summary.json,Deterministic fault injection over settlement duplication expiry and telemetry insufficiency
+E5,scalability,reproducible_scaffold_run,article3/experiments/raw/E5_scalability.json,article3/experiments/processed/E5_scalability_summary.json,Local replay scalability sweep on measured workstation environment
+E6,azure_live,reproducible_live_run,article3/experiments/raw/E6_azure_live.json,article3/experiments/processed/E6_azure_live_summary.json,Bounded live Azure OpenAI and Foundry validation against real deployments
+E7,ablation,reproducible_scaffold_run,article3/experiments/raw/E7_ablation.json,article3/experiments/processed/E7_ablation_summary.json,Ablation sweep over reservation and queue policy components

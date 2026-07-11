@@ -1,0 +1,29 @@
+# E4 Fault Injection Results
+
+Deterministic fault injection over duplicate settlement, reservation expiry, and telemetry insufficiency.
+
+```json
+{
+  "experiment_id": "E4",
+  "variant": "fault_injection_scaffold",
+  "duplicate_settlement": {
+    "first_accepted": true,
+    "same_event_accepted": true,
+    "second_distinct_rejected": true,
+    "error": "request \"dup-1\" already settled by another event"
+  },
+  "reservation_expiry": {
+    "expired": true,
+    "reserved_after": 0,
+    "available_after": 15,
+    "second_expire_failed": true
+  },
+  "telemetry_fault": {
+    "action": "abstain",
+    "reason": "insufficient evidence strength for a governed routing decision",
+    "abstained": true,
+    "telemetry_seen": false
+  }
+}
+```
+

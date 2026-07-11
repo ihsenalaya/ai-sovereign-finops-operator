@@ -1,0 +1,15 @@
+{
+  "captured_at": "2026-07-11T00:02:33+01:00",
+  "worktree": "/mnt/c/Users/Ihsen/Documents/kubebuilder/ai-sovereign-finops-operator-article3",
+  "os": "Linux",
+  "kernel": "6.6.87.2-microsoft-standard-WSL2",
+  "arch": "x86_64",
+  "distro": "Ubuntu-22.04",
+  "user": "ihsen",
+  "shell": "/bin/bash",
+  "notes": [
+    "Docker CLI was not available inside this WSL environment at audit time",
+    "kubectl client version was available locally",
+    "envtest assets were installed locally to run controller tests"
+  ]
+}

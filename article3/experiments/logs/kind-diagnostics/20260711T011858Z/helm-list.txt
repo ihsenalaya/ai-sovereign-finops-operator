@@ -1,0 +1,2 @@
+NAME             	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART                  	APP VERSION
+gov-ar-experiment	gov-ar   	1       	2026-07-11 02:02:34.212015093 +0100 WAT	deployed	gov-ar-experiment-0.1.0	0.1.0      

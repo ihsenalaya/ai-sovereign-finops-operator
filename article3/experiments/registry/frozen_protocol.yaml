@@ -1,0 +1,96 @@
+protocol_id: article3-gov-ar-frozen-protocol-v1
+frozen_at_utc: "2026-07-11T01:30:00Z"
+base_commit: "07cdd3baad26abfa7248dd69cdd507aab4be8177"
+hypotheses:
+  - id: H1
+    statement: GOV-AR reduces overshoot risk relative to settled-spend-only and no-control baselines under delayed settlement.
+  - id: H2
+    statement: GOV-AR preserves higher comparable budget utilization than strict max-output reservation while keeping governance violations at zero.
+  - id: H3
+    statement: In-flight liability accounting and idempotent settlement are necessary to avoid double spend and cross-tenant leakage under replayed faults.
+independent_variables:
+  baselines: [B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10]
+  concurrency_levels: [1, 10, 50, 100, 500]
+  settlement_delays_ms: [0, 100, 1000, 5000, 30000, 60000]
+  budget_levels_percent_of_premium: [20, 40, 60, 80, 100]
+  risk_epsilons: [0.0, 0.01, 0.05, 0.10]
+  ablations: [A0, A1, A2, A3, A4, A5, A6, A7, A8, A9]
+primary_metrics:
+  - OvershootRate
+  - BudgetUtilizationComparableRisk
+secondary_metrics:
+  - OvershootMagnitude
+  - OverReservationRatio
+  - FalseRefusalRate
+  - AdmittedRequests
+  - ServedQuality
+  - CostPerRequest
+  - AbstainRate
+  - QueueTime
+  - Fairness
+  - StarvationRate
+  - LatencyP50
+  - LatencyP95
+  - LatencyP99
+  - Throughput
+  - CPUUsage
+  - MemoryUsage
+  - RetryCount
+  - ConflictCount
+  - RecoveryTime
+baselines:
+  B0: no-control
+  B1: settled-spend-only
+  B2: mean-reservation
+  B3: mean-plus-fixed-margin
+  B4: fixed-offline-quantile
+  B5: max-output-strict
+  B6: fixed-reserve-settle
+  B7: adaptive-quantile-without-joint-routing
+  B8: budgeted-router-with-expected-cost
+  B9: GOV-AR
+  B10: oracle-replay-only
+factors:
+  - baseline
+  - concurrency
+  - settlement_delay
+  - budget
+  - risk_epsilon
+  - tenant_profile
+  - drift_type
+  - fault_scenario
+  - scalability_tenant_count
+levels:
+  tenant_profiles: [Finance, Legal, Support, Development, Marketing, Analytics]
+  e4_fault_scenarios: [F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20]
+  e5_tenant_counts: [10, 100, 1000, 5000, 10000]
+repetitions:
+  e1_per_cell_min_seeds: 10
+  e1_requests_per_seed_min: 10000
+  e1_rare_event_target_overshoots: 20
+  e1_rare_event_max_requests_per_cell: 100000
+  e2_per_scenario_seeds: 10
+  e2_events_per_seed_min: 50000
+  e4_repetitions_per_fault: 100
+  e5_repetitions_per_point: 3
+seeds:
+  source: deterministic_fixed_list
+  values: [11, 17, 23, 29, 31, 37, 41, 43, 47, 53]
+exclusion_criteria:
+  - infrastructure failure with explicit log evidence and no successful admission-path execution
+  - malformed input trace rejected before experiment start
+  - credential or quota denial in Azure live validation before request dispatch
+stopping_rules:
+  - stop E1 rare-event extension when 20 overshoots are observed or 100000 requests are reached in the cell
+  - stop E5 ramp when two consecutive points exceed sustained 1 percent error rate or p99 exceeds 2x reference or queues fail to drain
+  - stop E6 live expansion when planned cost cap or max-request cap is reached before confidence targets
+statistical_tests:
+  - paired bootstrap_95
+  - paired_nonparametric_tests
+  - wilson_or_exact_binomial_intervals
+  - effect_size_reporting
+multiple_comparisons_correction: holm
+infrastructure_error_rules:
+  - never mix pre-fix and post-fix measures in the same aggregate
+  - log every protocol deviation in article3/provenance/protocol_deviations.csv
+  - rerun every affected campaign after a correctness bug fix

@@ -1,0 +1,62 @@
+{
+  "experiment_id": "E3",
+  "variant": "drift_block_and_fallback",
+  "drift": {
+    "ReferenceMean": 9.6,
+    "RecentMean": 20,
+    "Ratio": 2.0833333333333335,
+    "Drifted": true
+  },
+  "metrics": {
+    "admitted_count": 1,
+    "queued_count": 0,
+    "rejected_count": 0,
+    "abstained_count": 1,
+    "settled_count": 1,
+    "reserved_total": 5,
+    "settled_total": 4.5,
+    "slack_total": 0.5,
+    "overshoot_total": 0,
+    "tenant_settled_total": {
+      "team-a": 4.5
+    },
+    "application_settled_total": {
+      "assistant-risky": 4.5
+    },
+    "application_admitted_count": {
+      "assistant-risky": 1
+    }
+  },
+  "events": [
+    {
+      "Step": 0,
+      "RequestID": "drift-01",
+      "TenantID": "team-a",
+      "Application": "assistant-risky",
+      "Type": "admitted",
+      "Model": "economy-safe",
+      "Amount": 5,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 1,
+      "RequestID": "drift-02",
+      "TenantID": "team-a",
+      "Application": "assistant-risky",
+      "Type": "abstained",
+      "Model": "",
+      "Amount": 0,
+      "Reason": "insufficient evidence strength for a governed routing decision"
+    },
+    {
+      "Step": 1,
+      "RequestID": "drift-01",
+      "TenantID": "team-a",
+      "Application": "assistant-risky",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 4.5,
+      "Reason": ""
+    }
+  ]
+}

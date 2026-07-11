@@ -1,0 +1,14 @@
+timestamp,source,query,filters,results_count,notes
+2026-07-10,web search,LLM routing under budget constraints paper 2024,primary-source preference,1,Led to ACL primary result for Adaptive LLM Routing under Budget Constraints
+2026-07-10,web search,online LLM routing delayed feedback paper,primary-source preference,1,No direct primary hit yet; delayed feedback theory routed to PMLR foundational work
+2026-07-10,web search,multi-tenant LLM routing budget paper,primary-source preference,0,No strong primary paper identified yet from initial pass
+2026-07-10,web search,output token length prediction LLM serving paper,primary-source preference,2,Led to ASPLOS workshop paper and recent arXiv 2026 work
+2026-07-10,web search,online learning with knapsacks paper proceedings.mlr.press,primary-source preference,3,Identified PMLR theoretical budgeted online learning references
+2026-07-11,web search,RouteLLM official paper,arXiv primary source,1,Verified RouteLLM metadata and abstract from arXiv
+2026-07-11,web search,FrugalGPT official paper,arXiv primary source,1,Verified FrugalGPT metadata and DOI from arXiv
+2026-07-11,web search,Hybrid LLM cost-efficient quality-aware query routing official paper,ICLR proceedings primary source,1,Verified Hybrid LLM title authors and conference status from ICLR proceedings PDF
+2026-07-11,web search,conformal LLM routing official paper,ACL Anthology primary source,1,Verified ACL 2026 metadata DOI and abstract
+2026-07-11,web search,adaptive LLM routing under budget constraints official paper,ACL Anthology primary source,1,Verified Findings of ACL EMNLP 2025 metadata DOI and abstract
+2026-07-11,web search,InferenceDynamics RouteMix official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue and budget-aware routing claims from ACL 2026 PDF
+2026-07-11,web search,FLARE length-aware routing official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue and length-aware resource routing claims from ACL 2026 PDF
+2026-07-11,web search,MTRouter official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue and multi-turn cost-aware routing claims from ACL 2026 PDF

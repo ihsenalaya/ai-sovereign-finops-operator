@@ -1,0 +1,4 @@
+experiment_id: E4
+name: faults
+status: draft
+description: Duplicate settlement expiry and telemetry fault injection.

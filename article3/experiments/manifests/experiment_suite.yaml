@@ -1,0 +1,83 @@
+suite_id: gov-ar-scaffold-suite
+generated_on: 2026-07-11
+root: article3
+commands:
+  - id: e0
+    run: go run ./cmd/experiment e0
+    outputs:
+      - experiments/raw/E0_smoke.json
+      - experiments/processed/E0_smoke_summary.json
+      - reports/E0_SMOKE_RESULTS.md
+  - id: e1
+    run: go run ./cmd/experiment e1
+    outputs:
+      - experiments/raw/E1_mean_std.json
+      - experiments/raw/E1_quantile.json
+      - experiments/processed/E1_mean_std_summary.json
+      - experiments/processed/E1_quantile_summary.json
+  - id: e2
+    run: go run ./cmd/experiment e2
+    outputs:
+      - experiments/raw/E2_mean_std.json
+      - experiments/raw/E2_quantile.json
+      - experiments/processed/E2_mean_std_summary.json
+      - experiments/processed/E2_quantile_summary.json
+  - id: e3
+    run: go run ./cmd/experiment e3
+    outputs:
+      - experiments/raw/E3_drift.json
+      - experiments/processed/E3_drift_summary.json
+      - reports/E3_DRIFT_RESULTS.md
+  - id: e4
+    run: go run ./cmd/experiment e4
+    outputs:
+      - experiments/raw/E4_faults.json
+      - experiments/processed/E4_faults_summary.json
+      - reports/E4_FAULT_RESULTS.md
+  - id: e5
+    run: go run ./cmd/experiment e5
+    outputs:
+      - experiments/raw/E5_scalability.json
+      - experiments/processed/E5_scalability_summary.json
+      - reports/E5_SCALABILITY_RESULTS.md
+  - id: e7
+    run: go run ./cmd/experiment e7
+    outputs:
+      - experiments/raw/E7_ablation.json
+      - experiments/processed/E7_ablation_summary.json
+      - reports/E7_ABLATION_RESULTS.md
+  - id: e1-campaign
+    run: go run ./cmd/experiment e1-campaign
+    outputs:
+      - experiments/processed/E1_mean_std_campaign.json
+      - experiments/processed/E1_quantile_campaign.json
+      - reports/E1_CAMPAIGN_RESULTS.md
+  - id: e2-campaign
+    run: go run ./cmd/experiment e2-campaign
+    outputs:
+      - experiments/processed/E2_mean_std_campaign.json
+      - experiments/processed/E2_quantile_campaign.json
+      - reports/E2_CAMPAIGN_RESULTS.md
+  - id: e1-matrix
+    run: go run ./cmd/experiment e1-matrix
+    outputs:
+      - experiments/processed/E1_matrix.json
+      - reports/E1_MATRIX_RESULTS.md
+  - id: e2-matrix
+    run: go run ./cmd/experiment e2-matrix
+    outputs:
+      - experiments/processed/E2_matrix.json
+      - reports/E2_MATRIX_RESULTS.md
+  - id: e1-compare
+    run: go run ./cmd/experiment e1-compare
+    outputs:
+      - experiments/processed/E1_comparison.json
+      - reports/E1_COMPARISON.md
+  - id: e2-compare
+    run: go run ./cmd/experiment e2-compare
+    outputs:
+      - experiments/processed/E2_comparison.json
+      - reports/E2_COMPARISON.md
+verification:
+  run: bash experiments/orchestrator/verify_outputs.sh
+  script: analysis/validation/verify_experiment_outputs.py

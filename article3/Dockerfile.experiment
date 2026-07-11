@@ -1,0 +1,17 @@
+FROM golang:1.25 AS builder
+
+WORKDIR /src
+ENV GOTOOLCHAIN=auto
+COPY article3/go.mod ./go.mod
+COPY article3/cmd ./cmd
+COPY article3/src ./src
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/experiment ./cmd/experiment
+
+FROM gcr.io/distroless/static-debian12
+
+WORKDIR /workspace
+COPY --from=builder /out/experiment /usr/local/bin/experiment
+
+ENTRYPOINT ["/usr/local/bin/experiment"]
+CMD ["e0"]

@@ -1,0 +1,71 @@
+{
+  "experiment_id": "E1",
+  "variant": "quantile",
+  "config": {
+    "Mode": "quantile",
+    "Quantile": 0.75,
+    "ZScore": 0
+  },
+  "metrics": {
+    "admitted_count": 2,
+    "queued_count": 0,
+    "rejected_count": 0,
+    "abstained_count": 0,
+    "settled_count": 2,
+    "reserved_total": 14,
+    "settled_total": 12,
+    "slack_total": 2,
+    "overshoot_total": 0,
+    "tenant_settled_total": {
+      "team-a": 12
+    },
+    "application_settled_total": {
+      "": 12
+    },
+    "application_admitted_count": {
+      "": 2
+    }
+  },
+  "events": [
+    {
+      "Step": 0,
+      "RequestID": "r1",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "admitted",
+      "Model": "m1",
+      "Amount": 7,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 1,
+      "RequestID": "r2",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "admitted",
+      "Model": "m1",
+      "Amount": 7,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 3,
+      "RequestID": "r1",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 7,
+      "Reason": ""
+    },
+    {
+      "Step": 3,
+      "RequestID": "r2",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 5,
+      "Reason": ""
+    }
+  ]
+}

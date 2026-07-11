@@ -1,0 +1,11 @@
+component,file,image,tag_source,notes
+governance-operator,operateur/Dockerfile,ghcr.io/<owner>/ai-sovereign-finops-operator/controller,release tag via workflow,Main operator image
+attestation-scheduler,operateur/Dockerfile.scheduler,ghcr.io/<owner>/ai-sovereign-finops-operator/attestation-scheduler,release tag via workflow,Confidential scheduling helper
+key-release-gateway,operateur/Dockerfile.key-release-gateway,ghcr.io/<owner>/ai-sovereign-finops-operator/key-release-gateway,release tag via workflow,Key release service
+platform-api,operateur/Dockerfile.platform-api,ghcr.io/<owner>/ai-sovereign-finops-operator/platform-api,release tag via workflow,Platform API
+platform-ui,platform-ui/Dockerfile,ghcr.io/<owner>/ai-sovereign-finops-operator/platform-ui,release tag via workflow,UI image
+thesis-bench,operateur/Dockerfile.thesis-bench,ghcr.io/<owner>/ai-sovereign-finops-operator/thesis-bench,release tag via workflow,Benchmark job image
+grafana-radar,automatisation/demo/Dockerfile.grafana,ghcr.io/<owner>/ai-sovereign-finops-grafana-radar,workflow constant,Prebaked Grafana demo image
+operator-chart,operateur/charts/ai-sovereign-finops-operator/values.yaml,ghcr.io/ihsenalaya/ai-sovereign-finops-operator/controller,Chart appVersion or explicit tag,Operator chart image reference
+umbrella-platform,charts/ai-sovereign-platform/values.yaml,multiple ghcr.io/ihsenalaya/ai-sovereign-finops-operator/*,explicit tags 0.5.11,API gateway UI and scheduler image references
+confidential-platform,charts/ai-confidential-governance-platform/values.yaml,multiple logical repositories defaulting to images.tag,global images.tag 0.5.11,Umbrella confidential platform image set

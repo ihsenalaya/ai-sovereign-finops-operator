@@ -1,0 +1,2 @@
+date,initial_protocol,modification,cause,impact,experiments_to_rerun
+2026-07-11,"E1/E2 scaffold outputs generated before final replay precision fix","Regenerated E1, E2, campaigns, matrices, and comparisons after ledger precision correction","Float rounding in settlement ledger could reject a valid settlement when reserved amounts were represented as inexact binary floats","Invalidated pre-fix E1/E2 artifacts and replaced them with regenerated outputs from the corrected implementation","E1;E2;E1M;E2M"

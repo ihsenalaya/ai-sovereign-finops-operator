@@ -1,0 +1,4 @@
+experiment_id: E3
+name: drift_response
+status: draft
+description: Distribution drift and conservative fallback behavior.

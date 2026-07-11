@@ -1,0 +1,13 @@
+image:
+  repository: gov-ar-experiment
+  tag: local
+  pullPolicy: IfNotPresent
+
+experiment:
+  command: e0
+
+job:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+
+resources: {}

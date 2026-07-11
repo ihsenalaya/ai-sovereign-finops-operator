@@ -1,0 +1,4 @@
+image,tag,digest,source,notes
+gov-ar-experiment,local,sha256:20d9b6b43b06e04767497601b24a7bd08d5a89008ee3a2095b8052a522452f0f,docker image inspect,Local experiment image built from article3/Dockerfile.experiment
+kindest/node,v1.35.0,sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f,docker inspect gov-ar-control-plane,Kind node image digest observed during validation
+gov-ar-admission,local,sha256:4ebdcfe48cc47b15e7aa7dd6b985ca0c43395841845ba4a446847c442da33e9b,docker image inspect,Local operator-side GOV-AR admission service image built from operateur/Dockerfile.gov-ar-admission with optional PostgreSQL-backed ledger

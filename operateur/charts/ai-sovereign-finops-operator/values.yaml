@@ -68,3 +68,22 @@ affinity: {}
 
 # Extra args appended to the manager command.
 extraArgs: []
+
+govArAdmission:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-admission
+    tag: ""
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  postgres:
+    enabled: false
+    existingSecret: ""
+    secretKey: DATABASE_URL

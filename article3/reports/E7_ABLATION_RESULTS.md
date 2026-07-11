@@ -1,0 +1,346 @@
+# E7 Ablation Results
+
+Generated 8 ablation rows over budget-delay and multitenant scenarios.
+
+```json
+{
+  "experiment_id": "E7",
+  "rows": [
+    {
+      "scenario": "budget_delay",
+      "variant": {
+        "name": "quantile",
+        "description": "Empirical quantile reservation with queue enabled.",
+        "config": {
+          "Mode": "quantile",
+          "Quantile": 0.75,
+          "ZScore": 0
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": true,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 3,
+        "queued_count": 18,
+        "rejected_count": 0,
+        "abstained_count": 0,
+        "settled_count": 3,
+        "reserved_total": 16.8,
+        "settled_total": 15,
+        "slack_total": 3,
+        "overshoot_total": 1.2000000000000002,
+        "tenant_settled_total": {
+          "team-a": 15
+        },
+        "application_settled_total": {
+          "hr-chatbot": 8,
+          "rag-docs": 7
+        },
+        "application_admitted_count": {
+          "hr-chatbot": 2,
+          "rag-docs": 1
+        }
+      }
+    },
+    {
+      "scenario": "budget_delay",
+      "variant": {
+        "name": "mean_std",
+        "description": "Mean plus standard deviation reservation with queue enabled.",
+        "config": {
+          "Mode": "mean_std",
+          "Quantile": 0,
+          "ZScore": 1
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": true,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 2,
+        "queued_count": 20,
+        "rejected_count": 0,
+        "abstained_count": 0,
+        "settled_count": 2,
+        "reserved_total": 16,
+        "settled_total": 11,
+        "slack_total": 5,
+        "overshoot_total": 0,
+        "tenant_settled_total": {
+          "team-a": 11
+        },
+        "application_settled_total": {
+          "hr-chatbot": 4,
+          "rag-docs": 7
+        },
+        "application_admitted_count": {
+          "hr-chatbot": 1,
+          "rag-docs": 1
+        }
+      }
+    },
+    {
+      "scenario": "budget_delay",
+      "variant": {
+        "name": "min_reservation",
+        "description": "Aggressive low reservation ablation approximating no risk buffer.",
+        "config": {
+          "Mode": "quantile",
+          "Quantile": 0,
+          "ZScore": 0
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": true,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 3,
+        "queued_count": 18,
+        "rejected_count": 0,
+        "abstained_count": 0,
+        "settled_count": 3,
+        "reserved_total": 17,
+        "settled_total": 18,
+        "slack_total": 0,
+        "overshoot_total": 1,
+        "tenant_settled_total": {
+          "team-a": 18
+        },
+        "application_settled_total": {
+          "analytical-agent": 7,
+          "hr-chatbot": 4,
+          "rag-docs": 7
+        },
+        "application_admitted_count": {
+          "analytical-agent": 1,
+          "hr-chatbot": 1,
+          "rag-docs": 1
+        }
+      }
+    },
+    {
+      "scenario": "budget_delay",
+      "variant": {
+        "name": "no_queue",
+        "description": "Queue disabled while keeping quantile reservation.",
+        "config": {
+          "Mode": "quantile",
+          "Quantile": 0.75,
+          "ZScore": 0
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": false,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 3,
+        "queued_count": 0,
+        "rejected_count": 9,
+        "abstained_count": 0,
+        "settled_count": 3,
+        "reserved_total": 16.8,
+        "settled_total": 15,
+        "slack_total": 3,
+        "overshoot_total": 1.2000000000000002,
+        "tenant_settled_total": {
+          "team-a": 15
+        },
+        "application_settled_total": {
+          "hr-chatbot": 8,
+          "rag-docs": 7
+        },
+        "application_admitted_count": {
+          "hr-chatbot": 2,
+          "rag-docs": 1
+        }
+      }
+    },
+    {
+      "scenario": "multitenant",
+      "variant": {
+        "name": "quantile",
+        "description": "Empirical quantile reservation with queue enabled.",
+        "config": {
+          "Mode": "quantile",
+          "Quantile": 0.75,
+          "ZScore": 0
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": true,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 5,
+        "queued_count": 18,
+        "rejected_count": 0,
+        "abstained_count": 0,
+        "settled_count": 5,
+        "reserved_total": 24.55,
+        "settled_total": 23,
+        "slack_total": 4.5,
+        "overshoot_total": 2.95,
+        "tenant_settled_total": {
+          "team-a": 11,
+          "team-b": 12
+        },
+        "application_settled_total": {
+          "finance-analyst": 11,
+          "support-chatbot": 12
+        },
+        "application_admitted_count": {
+          "finance-analyst": 2,
+          "support-chatbot": 3
+        }
+      }
+    },
+    {
+      "scenario": "multitenant",
+      "variant": {
+        "name": "mean_std",
+        "description": "Mean plus standard deviation reservation with queue enabled.",
+        "config": {
+          "Mode": "mean_std",
+          "Quantile": 0,
+          "ZScore": 1
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": true,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 6,
+        "queued_count": 17,
+        "rejected_count": 0,
+        "abstained_count": 0,
+        "settled_count": 6,
+        "reserved_total": 27.599999999999998,
+        "settled_total": 29,
+        "slack_total": 4,
+        "overshoot_total": 5.4,
+        "tenant_settled_total": {
+          "team-a": 17,
+          "team-b": 12
+        },
+        "application_settled_total": {
+          "finance-analyst": 17,
+          "support-chatbot": 12
+        },
+        "application_admitted_count": {
+          "finance-analyst": 3,
+          "support-chatbot": 3
+        }
+      }
+    },
+    {
+      "scenario": "multitenant",
+      "variant": {
+        "name": "min_reservation",
+        "description": "Aggressive low reservation ablation approximating no risk buffer.",
+        "config": {
+          "Mode": "quantile",
+          "Quantile": 0,
+          "ZScore": 0
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": true,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 6,
+        "queued_count": 16,
+        "rejected_count": 0,
+        "abstained_count": 0,
+        "settled_count": 6,
+        "reserved_total": 22.35,
+        "settled_total": 28,
+        "slack_total": 0,
+        "overshoot_total": 5.65,
+        "tenant_settled_total": {
+          "team-a": 17,
+          "team-b": 11
+        },
+        "application_settled_total": {
+          "finance-analyst": 17,
+          "support-chatbot": 11
+        },
+        "application_admitted_count": {
+          "finance-analyst": 3,
+          "support-chatbot": 3
+        }
+      }
+    },
+    {
+      "scenario": "multitenant",
+      "variant": {
+        "name": "no_queue",
+        "description": "Queue disabled while keeping quantile reservation.",
+        "config": {
+          "Mode": "quantile",
+          "Quantile": 0.75,
+          "ZScore": 0
+        },
+        "policy": {
+          "StrictMode": true,
+          "AllowQueue": false,
+          "RequireFreshSignals": true,
+          "RequireStrongEvidence": false,
+          "BlockOnDrift": false
+        }
+      },
+      "metrics": {
+        "admitted_count": 5,
+        "queued_count": 0,
+        "rejected_count": 9,
+        "abstained_count": 0,
+        "settled_count": 5,
+        "reserved_total": 24.55,
+        "settled_total": 23,
+        "slack_total": 4.5,
+        "overshoot_total": 2.95,
+        "tenant_settled_total": {
+          "team-a": 11,
+          "team-b": 12
+        },
+        "application_settled_total": {
+          "finance-analyst": 11,
+          "support-chatbot": 12
+        },
+        "application_admitted_count": {
+          "finance-analyst": 2,
+          "support-chatbot": 3
+        }
+      }
+    }
+  ]
+}
+```
+

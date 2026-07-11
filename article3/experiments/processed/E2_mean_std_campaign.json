@@ -1,0 +1,144 @@
+{
+  "experiment_id": "E2",
+  "variant": "mean_std",
+  "runs": 5,
+  "mean_metrics": {
+    "admitted_count": 5,
+    "queued_count": 18,
+    "rejected_count": 0,
+    "abstained_count": 0,
+    "settled_count": 4,
+    "reserved_total": 24.38,
+    "settled_total": 22.6,
+    "slack_total": 4.5200000000000005,
+    "overshoot_total": 3.3500000000000005,
+    "tenant_settled_total": {
+      "team-a": 14.8,
+      "team-b": 7.8
+    },
+    "application_settled_total": null,
+    "application_admitted_count": null
+  },
+  "run_metrics": [
+    {
+      "admitted_count": 4,
+      "queued_count": 20,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 4,
+      "reserved_total": 21.150000000000002,
+      "settled_total": 19,
+      "slack_total": 5,
+      "overshoot_total": 2.8500000000000005,
+      "tenant_settled_total": {
+        "team-a": 12,
+        "team-b": 7
+      },
+      "application_settled_total": {
+        "finance-analyst": 12,
+        "support-chatbot": 7
+      },
+      "application_admitted_count": {
+        "finance-analyst": 2,
+        "support-chatbot": 2
+      }
+    },
+    {
+      "admitted_count": 5,
+      "queued_count": 18,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 5,
+      "reserved_total": 24.75,
+      "settled_total": 23,
+      "slack_total": 4.5,
+      "overshoot_total": 2.750000000000001,
+      "tenant_settled_total": {
+        "team-a": 15,
+        "team-b": 8
+      },
+      "application_settled_total": {
+        "finance-analyst": 15,
+        "support-chatbot": 8
+      },
+      "application_admitted_count": {
+        "finance-analyst": 3,
+        "support-chatbot": 2
+      }
+    },
+    {
+      "admitted_count": 6,
+      "queued_count": 17,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 6,
+      "reserved_total": 28.1,
+      "settled_total": 28,
+      "slack_total": 4.55,
+      "overshoot_total": 4.450000000000001,
+      "tenant_settled_total": {
+        "team-a": 18,
+        "team-b": 10
+      },
+      "application_settled_total": {
+        "finance-analyst": 18,
+        "support-chatbot": 10
+      },
+      "application_admitted_count": {
+        "finance-analyst": 3,
+        "support-chatbot": 3
+      }
+    },
+    {
+      "admitted_count": 5,
+      "queued_count": 19,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 4,
+      "reserved_total": 23.35,
+      "settled_total": 18,
+      "slack_total": 4.55,
+      "overshoot_total": 2.25,
+      "tenant_settled_total": {
+        "team-a": 12,
+        "team-b": 6
+      },
+      "application_settled_total": {
+        "finance-analyst": 12,
+        "support-chatbot": 6
+      },
+      "application_admitted_count": {
+        "finance-analyst": 2,
+        "support-chatbot": 3
+      }
+    },
+    {
+      "admitted_count": 5,
+      "queued_count": 18,
+      "rejected_count": 0,
+      "abstained_count": 0,
+      "settled_count": 5,
+      "reserved_total": 24.549999999999997,
+      "settled_total": 25,
+      "slack_total": 4,
+      "overshoot_total": 4.450000000000001,
+      "tenant_settled_total": {
+        "team-a": 17,
+        "team-b": 8
+      },
+      "application_settled_total": {
+        "finance-analyst": 17,
+        "support-chatbot": 8
+      },
+      "application_admitted_count": {
+        "finance-analyst": 3,
+        "support-chatbot": 2
+      }
+    }
+  ],
+  "config": {
+    "Mode": "mean_std",
+    "Quantile": 0,
+    "ZScore": 1
+  }
+}

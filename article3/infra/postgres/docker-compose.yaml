@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: article3-govar-postgres
+    environment:
+      POSTGRES_DB: govar
+      POSTGRES_USER: govar
+      POSTGRES_PASSWORD: govar
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro

@@ -1,0 +1,61 @@
+{
+  "experiment_id": "E1",
+  "variant": "mean_std",
+  "config": {
+    "Mode": "mean_std",
+    "Quantile": 0,
+    "ZScore": 1
+  },
+  "metrics": {
+    "admitted_count": 1,
+    "queued_count": 1,
+    "rejected_count": 0,
+    "abstained_count": 0,
+    "settled_count": 1,
+    "reserved_total": 8,
+    "settled_total": 7,
+    "slack_total": 1,
+    "overshoot_total": 0,
+    "tenant_settled_total": {
+      "team-a": 7
+    },
+    "application_settled_total": {
+      "": 7
+    },
+    "application_admitted_count": {
+      "": 1
+    }
+  },
+  "events": [
+    {
+      "Step": 0,
+      "RequestID": "r1",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "admitted",
+      "Model": "m1",
+      "Amount": 8,
+      "Reason": "highest utility among feasible candidates"
+    },
+    {
+      "Step": 1,
+      "RequestID": "r2",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "queued",
+      "Model": "",
+      "Amount": 0,
+      "Reason": "no feasible candidate under current budget or evidence constraints"
+    },
+    {
+      "Step": 3,
+      "RequestID": "r1",
+      "TenantID": "team-a",
+      "Application": "",
+      "Type": "settled",
+      "Model": "",
+      "Amount": 7,
+      "Reason": ""
+    }
+  ]
+}

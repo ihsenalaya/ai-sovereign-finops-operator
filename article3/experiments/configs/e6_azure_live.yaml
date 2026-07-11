@@ -1,0 +1,4 @@
+experiment_id: E6
+name: azure_live
+status: draft
+description: Live Azure OpenAI and Foundry validation using non-sensitive prompts.

@@ -16,9 +16,15 @@ func main() {
 	flag.Parse()
 
 	handler := sidecarproxy.New(sidecarproxy.Config{
-		Namespace:   strings.TrimSpace(getenv("GREENOPS_NAMESPACE", "")),
-		Application: strings.TrimSpace(getenv("GREENOPS_APPLICATION", "")),
-		Targets:     splitCSV(getenv("GREENOPS_TARGET_HOSTS", "")),
+		Namespace:         strings.TrimSpace(getenv("GREENOPS_NAMESPACE", "")),
+		Application:       strings.TrimSpace(getenv("GREENOPS_APPLICATION", "")),
+		Targets:           splitCSV(getenv("GREENOPS_TARGET_HOSTS", "")),
+		GOVAREndpoint:     strings.TrimSpace(getenv("GOVAR_ENDPOINT", "")),
+		TenantID:          strings.TrimSpace(getenv("GOVAR_TENANT_ID", "")),
+		BudgetPolicyName:  strings.TrimSpace(getenv("GOVAR_BUDGET_POLICY", "")),
+		RoutingPolicyName: strings.TrimSpace(getenv("GOVAR_ROUTING_POLICY", "")),
+		AllowedZones:      splitCSV(getenv("GOVAR_ALLOWED_ZONES", "")),
+		SensitiveData:     strings.EqualFold(strings.TrimSpace(getenv("GOVAR_SENSITIVE_DATA", "false")), "true"),
 	})
 
 	log.Printf("starting greenops header proxy on %s", listen)

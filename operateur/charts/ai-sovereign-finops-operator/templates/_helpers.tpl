@@ -38,3 +38,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
 {{- printf "%s:%s" .Values.image.repository $tag -}}
 {{- end -}}
+
+{{- define "operator.govArAdmissionImage" -}}
+{{- $tag := .Values.govArAdmission.image.tag | default .Chart.AppVersion -}}
+{{- printf "%s:%s" .Values.govArAdmission.image.repository $tag -}}
+{{- end -}}
