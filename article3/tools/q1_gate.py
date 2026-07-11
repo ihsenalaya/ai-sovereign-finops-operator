@@ -200,7 +200,7 @@ def literature_checks(strict: bool) -> None:
     bib = (lit / "references.bib").read_text(encoding="utf-8", errors="ignore") if file_ok(lit / "references.bib") else ""
     bib_count = len(re.findall(r"(?m)^\s*@(?:article|inproceedings|book|incollection|misc|techreport|phdthesis|mastersthesis)\s*\{", bib, re.I))
     screening = csv_rows(lit / "screening.csv")
-    verified = [r for r in screening if r.get("decision", "").lower() in {"include", "included"}
+    verified = [r for r in screening if r.get("decision", "").lower() in {"include", "included", "retain", "retained"}
                 and r.get("metadata_verified", "").lower() == "true" and r.get("relevant", "").lower() == "true"]
     peer = [r for r in verified if r.get("peer_reviewed", "").lower() == "true"]
     add("literature", ">=40 verified relevant bibliography records", bib_count >= 40 and len(verified) >= 40,

@@ -1,0 +1,30 @@
+{
+  "review_id": "scientific-red-team-20260711-v2",
+  "reviewer_role": "fresh-context scientific red-team reviewer",
+  "reviewed_at_utc": "2026-07-11T08:36:00Z",
+  "verdict": "approved",
+  "findings": [
+    {"id": "RT-C1", "severity": "critical", "status": "resolved", "summary": "Algorithmic risk-allocation novelty was explicitly rejected; classical allocation is treated as known machinery."},
+    {"id": "RT-C2", "severity": "critical", "status": "resolved", "summary": "The novelty assessment rejects conditional validity from marginal quantiles and defaults to an explicit fixed-cohort event."},
+    {"id": "RT-C3", "severity": "critical", "status": "resolved", "summary": "Request, cohort, selected outstanding-set, and budget-window events are separated in the approved framing."},
+    {"id": "RT-C4", "severity": "critical", "status": "accepted", "summary": "Phase C must implement D007: expiry/missing telemetry carries unresolved liability rather than releasing it."},
+    {"id": "RT-C5", "severity": "critical", "status": "accepted", "summary": "Phase C/D must use transactional outbox/inbox and claim exactly-once ledger effects, not atomic provider execution."},
+    {"id": "RT-M1", "severity": "major", "status": "accepted", "summary": "Phase C strict-mode assumptions must enumerate every billable token/attempt/pricing dimension and concern estimated token cost unless invoices are reconciled."},
+    {"id": "RT-M2", "severity": "major", "status": "accepted", "summary": "Phase C state machine must add approval, late settlement, corrections, attempts, workload UID and rollover."},
+    {"id": "RT-M3", "severity": "major", "status": "accepted", "summary": "Phase C invariant proof must cover every transition, not admission only."},
+    {"id": "RT-M4", "severity": "major", "status": "accepted", "summary": "Drift fallback is operational and does not restore statistical calibration without revalidation."},
+    {"id": "RT-M5", "severity": "major", "status": "accepted", "summary": "Matched-risk fixed/adaptive allocation falsifier remains frozen-design work; failure removes any optional algorithmic claim."},
+    {"id": "RT-M6", "severity": "major", "status": "accepted", "summary": "Phase H/J must use hierarchical independent units and state live-tail precision limits."}
+  ],
+  "closest_work": [
+    {"work": "Token Budgets", "url": "https://arxiv.org/abs/2606.04056", "overlap": "reservation, concurrency races, adaptive estimation, live APIs"},
+    {"work": "StageRoute", "url": "https://iclr.cc/virtual/2026/poster/10010213", "overlap": "online cost-budget routing and concurrency cap"},
+    {"work": "PILOT", "url": "https://aclanthology.org/2025.findings-emnlp.1301/", "overlap": "bandit routing and knapsack budget policy"},
+    {"work": "R2-Router", "url": "https://openreview.net/forum?id=S3m1tSp8F4", "overlap": "joint model/output-length budget"},
+    {"work": "Iterative Risk Allocation", "url": "https://groups.csail.mit.edu/mers/papers/Ono-Williams_CDC08.pdf", "overlap": "flexible individual risk allocation under a joint Boole bound"},
+    {"work": "Online Chance-Constrained Resource Allocation", "url": "https://arxiv.org/abs/2303.03254", "overlap": "online acceptance/allocation under uncertain consumption"}
+  ],
+  "resolution_decisions": ["D005", "D006", "D007"],
+  "required_rereview": false,
+  "progression_verdict": "Phase B novelty resolution passes; safe to advance to Phase C with no unresolved critical or major novelty-language issue."
+}

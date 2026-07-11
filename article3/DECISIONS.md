@@ -15,3 +15,15 @@ Current prior art invalidates broad novelty claims about cost-aware routing, mod
 ## 2026-07-11 — D004 — Safety wording
 
 Nonzero-risk mode cannot claim deterministic hard-window safety. Deterministic safety is restricted to strict reservation/provider-enforced caps under explicit assumptions. Probabilistic mode may claim only the reviewed conditional instantaneous union bound when each tail statement is conditional on pre-dispatch history and predictable allocated risks sum within the tenant target. Missing telemetry never releases liability optimistically.
+
+## 2026-07-11 — D005 — Red-team narrowing to systems and measurement
+
+The fresh scientific red team found that classical chance-constraint risk allocation, online uncertain allocation, and selection effects make the provisional algorithmic novelty and conditional instantaneous claim unsafe. The paper will therefore treat the following as its default contribution set: (1) precise formulation of tenant-scoped outstanding estimated-cost liabilities under delayed/failed settlement and hard eligibility, (2) a fault-tolerant synchronous reserve/outbox/dispatch/settle systems realization, and (3) a reproducible risk–utilization/failure study. Risk allocation is not claimed as novel unless a complete rule is formally distinct and beats the fixed/adaptive-quantile matched-risk falsifier.
+
+## 2026-07-11 — D006 — Probability event and inferential unit
+
+The design must distinguish request under-reservation, fixed-cohort aggregate liability exceedance, fixed-time selected outstanding-set exceedance, and tenant budget-window overshoot. No theorem may transfer a bound between them. The default defensible probabilistic result is a fixed-cohort union bound under explicit dispatch-time tail assumptions; conditioning on the still-outstanding set requires a non-informative-delay assumption or a separate selection-valid method. Seeds/streams, budget windows, Azure windows, and cluster recreations—not individual requests—are the independent inferential units.
+
+## 2026-07-11 — D007 — Unresolved liability and external delivery semantics
+
+Expiry, client disconnect, timeout, or missing telemetry does not release a potentially billable liability. It moves to an unresolved/quarantined state charged at the prespecified conservative amount until authoritative cancellation or late settlement. Window renewal carries the originating liability/debt. PostgreSQL can provide atomic reserve and exactly-once ledger effects; it cannot make external provider execution atomic. Dispatch uses an outbox/inbox protocol, provider idempotency only when verified, and separately reserved chargeable attempts otherwise.

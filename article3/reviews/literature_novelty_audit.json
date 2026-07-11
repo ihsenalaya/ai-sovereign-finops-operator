@@ -1,12 +1,12 @@
 {
-  "review_id": "literature-novelty-first-pass-20260711",
+  "review_id": "literature-novelty-final-20260711",
   "reviewer_role": "independent literature and novelty auditor",
   "reviewed_at_utc": "2026-07-11T08:24:00Z",
-  "verdict": "conditional",
+  "verdict": "approved",
   "findings": [
-    {"severity": "critical", "status": "accepted", "summary": "Broad novelty for joint routing/budget/adaptation is contradicted by current prior art."},
-    {"severity": "major", "status": "open", "summary": "Search has not yet completed two saturation passes or >=40 verified retained references."},
-    {"severity": "major", "status": "open", "summary": "Scientific red team must challenge the full matrix before contribution freeze."}
+    {"severity": "critical", "status": "resolved", "summary": "Broad novelty for joint routing/budget/adaptation is contradicted by current prior art; algorithmic novelty was removed."},
+    {"severity": "major", "status": "resolved", "summary": "Final corpus has 51 verified retained references, 46 peer-reviewed, 21 search families, and four no-material-change saturation passes."},
+    {"severity": "major", "status": "resolved", "summary": "Fresh scientific red team approved the narrowed formulation/systems/measurement contribution boundary for progression to Phase C."}
   ],
   "closest_prior_work": [
     "Khan 2026 Token Budgets, arXiv:2606.04056",
@@ -16,7 +16,7 @@
     "Li and Li 2026 StageRoute, ICLR 2026",
     "Wang et al. 2025 MixLLM, NAACL 2025"
   ],
-  "provisional_nucleus": "Predictable tenant risk allocation over the concurrent outstanding monetary-liability set, coupled to joint eligible-model/reservation choice and an atomic delayed reserve-dispatch-settle ledger.",
+  "provisional_nucleus": "Problem formulation, fault-tolerant systems realization, and measurement of concurrent unresolved estimated-cost liabilities under delayed/faulty settlement and hard eligibility; no algorithmic risk-allocation novelty is claimed.",
   "falsifier": "At matched empirical risk, adaptive quantile or Khan-style locked runtime reservation matches GOV-AR utilization, quality and budget outcomes, or drift prevents valid coverage without earlier fallback.",
   "forbidden_claims": [
     "first cost-aware or budget-constrained LLM router",

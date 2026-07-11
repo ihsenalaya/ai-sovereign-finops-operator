@@ -1,0 +1,22 @@
+{
+  "review_id": "bibliography-verification-20260711",
+  "reviewer_role": "independent primary-source bibliography verifier",
+  "reviewed_at_utc": "2026-07-11T08:41:00Z",
+  "verdict": "conditional",
+  "verified_candidate_count": 57,
+  "categories": {
+    "llm_routing_budget_model_selection": 21,
+    "delayed_feedback_bandits_budgets": 10,
+    "quantiles_conformal_chance_constraints": 9,
+    "transactions_compensation_streams": 7,
+    "output_length_serving_multitenancy_controller_reliability": 10
+  },
+  "findings": [
+    {"severity": "major", "status": "open", "summary": "Cross-check every final BibTeX key and retained CSV record after references.bib is generated."},
+    {"severity": "major", "status": "open", "summary": "Use the official NeurIPS 2025 proceedings record for Efficient Training-Free Online Routing, not only protected OpenReview metadata."},
+    {"severity": "major", "status": "open", "summary": "Keep RouterBench as workshop/non-main-track, Token Budgets and ParetoBandit as unreviewed preprints, and ACL SRW as workshop evidence."},
+    {"severity": "major", "status": "open", "summary": "Use version-of-record metadata for FrugalGPT (TMLR 2024), Learn then Test (AOAS 2025), HAT (PVLDB 2013), Acto (SOSP 2023), and Sieve (OSDI 2022)."}
+  ],
+  "novelty_conclusion": "No individual novelty for joint model/output-budget routing, contextual budget policy, conformal routing, output-length prediction, escrow, compensation, or idempotence. The plausible gap is the fault-tolerant multi-tenant composition under delayed/duplicated/missing/reordered monetary telemetry and hard eligibility.",
+  "primary_ledger_note": "The verifier returned exact source URLs and metadata for 57 candidates; the parent cross-checks them against the generated screening, matrix and BibTeX files."
+}

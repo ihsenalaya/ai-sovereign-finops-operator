@@ -1,0 +1,267 @@
+{
+  "bibtex_entries": 51,
+  "issues": [],
+  "live_checked": 51,
+  "live_results": [
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2025.acl-long.761/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2025.acl-long.761/"
+    },
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2025.emnlp-main.331/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2025.emnlp-main.331/"
+    },
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2025.findings-emnlp.1301/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2025.findings-emnlp.1301/"
+    },
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2025.naacl-long.545/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2025.naacl-long.545/"
+    },
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2026.acl-srw.70/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2026.acl-srw.70/"
+    },
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2026.findings-acl.1881/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2026.findings-acl.1881/"
+    },
+    {
+      "detail": "HTTP 206 https://aclanthology.org/2026.findings-acl.1946/",
+      "reachable": true,
+      "url": "https://aclanthology.org/2026.findings-acl.1946/"
+    },
+    {
+      "detail": "HTTP 206 https://arxiv.org/abs/2601.19402",
+      "reachable": true,
+      "url": "https://arxiv.org/abs/2601.19402"
+    },
+    {
+      "detail": "HTTP 206 https://arxiv.org/abs/2604.00136",
+      "reachable": true,
+      "url": "https://arxiv.org/abs/2604.00136"
+    },
+    {
+      "detail": "HTTP 206 https://arxiv.org/abs/2604.00499",
+      "reachable": true,
+      "url": "https://arxiv.org/abs/2604.00499"
+    },
+    {
+      "detail": "HTTP 206 https://arxiv.org/abs/2606.04056",
+      "reachable": true,
+      "url": "https://arxiv.org/abs/2606.04056"
+    },
+    {
+      "detail": "HTTP 200 https://link.springer.com/article/10.1007/s00778-023-00814-z?error=cookies_not_supported&code=3e82f9d2-b91f-429a-a888-d1738d63edde",
+      "reachable": true,
+      "url": "https://doi.org/10.1007/s00778-023-00814-z"
+    },
+    {
+      "detail": "HTTPError: HTTP Error 403: Forbidden",
+      "reachable": false,
+      "url": "https://doi.org/10.1080/00207179.2017.1323351"
+    },
+    {
+      "detail": "HTTP 202 https://ieeexplore.ieee.org/document/6686162/",
+      "reachable": true,
+      "url": "https://doi.org/10.1109/FOCS.2013.36"
+    },
+    {
+      "detail": "HTTPError: HTTP Error 403: Forbidden",
+      "reachable": false,
+      "url": "https://doi.org/10.1145/3600006.3613161"
+    },
+    {
+      "detail": "HTTPError: HTTP Error 403: Forbidden",
+      "reachable": false,
+      "url": "https://doi.org/10.1145/3600006.3613165"
+    },
+    {
+      "detail": "HTTPError: HTTP Error 403: Forbidden",
+      "reachable": false,
+      "url": "https://doi.org/10.1145/7239.7265"
+    },
+    {
+      "detail": "HTTP 200 https://projecteuclid.org/journals/annals-of-applied-statistics/volume-19/issue-2/Learn-then-test--Calibrating-predictive-algorithms-to-achieve-risk/10.1214/24-AOAS1998.full",
+      "reachable": true,
+      "url": "https://doi.org/10.1214/24-AOAS1998"
+    },
+    {
+      "detail": "HTTP 206 https://jmlr.org/papers/v25/22-1218.html",
+      "reachable": true,
+      "url": "https://jmlr.org/papers/v25/22-1218.html"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DIVXmV8Uxwh",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=IVXmV8Uxwh"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DJJ3cwtUxzo",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=JJ3cwtUxzo"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DKDcwXKr0NU",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=KDcwXKr0NU"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DS3m1tSp8F4",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=S3m1tSp8F4"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DU6C7odo5SX",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=U6C7odo5SX"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DauEvgVBpSF",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=auEvgVBpSF"
+    },
+    {
+      "detail": "HTTP 200 https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DcSimKw5p6R",
+      "reachable": true,
+      "url": "https://openreview.net/forum?id=cSimKw5p6R"
+    },
+    {
+      "detail": "HTTP 200 https://papers.neurips.cc/paper_files/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html",
+      "reachable": true,
+      "url": "https://papers.neurips.cc/paper_files/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.iclr.cc/paper_files/paper/2024/file/f3549ef9b5ff520a7e41ff3cc306ab2b-Paper-Conference.pdf",
+      "reachable": true,
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2024/file/f3549ef9b5ff520a7e41ff3cc306ab2b-Paper-Conference.pdf"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.iclr.cc/paper_files/paper/2024/hash/11f5520daf9132775e8604e89f53925a-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2024/hash/11f5520daf9132775e8604e89f53925a-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.iclr.cc/paper_files/paper/2024/hash/b47d93c99fa22ac0b377578af0a1f63a-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2024/hash/b47d93c99fa22ac0b377578af0a1f63a-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.iclr.cc/paper_files/paper/2025/file/9eb8b5ccb0de594a16548f7c058fdadf-Paper-Conference.pdf",
+      "reachable": true,
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2025/file/9eb8b5ccb0de594a16548f7c058fdadf-Paper-Conference.pdf"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.iclr.cc/paper_files/paper/2025/hash/5503a7c69d48a2f86fc00b3dc09de686-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2025/hash/5503a7c69d48a2f86fc00b3dc09de686-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v195/fikioris23a.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v195/fikioris23a.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v235/duan24a.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v235/duan24a.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v244/drago24a.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v244/drago24a.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v267/chuang25b.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v267/chuang25b.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v267/dekoninck25a.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v267/dekoninck25a.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v267/ding25d.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v267/ding25d.html"
+    },
+    {
+      "detail": "HTTP 206 https://proceedings.mlr.press/v49/agrawal16.html",
+      "reachable": true,
+      "url": "https://proceedings.mlr.press/v49/agrawal16.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.neurips.cc/paper/2019/hash/56cb94cb34617aeadff1e79b53f38354-Abstract.html",
+      "reachable": true,
+      "url": "https://proceedings.neurips.cc/paper/2019/hash/56cb94cb34617aeadff1e79b53f38354-Abstract.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.neurips.cc/paper_files/paper/2022/hash/4cd1d0d9892e4136fe86c97b89f77c6b-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/4cd1d0d9892e4136fe86c97b89f77c6b-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.neurips.cc/paper_files/paper/2023/hash/3a13be0c5dae69e0f08065f113fb10b8-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/3a13be0c5dae69e0f08065f113fb10b8-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.neurips.cc/paper_files/paper/2023/hash/ce7ff3405c782f761fac7f849b41ae9a-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/ce7ff3405c782f761fac7f849b41ae9a-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.neurips.cc/paper_files/paper/2024/hash/a6deba3b2408af45b3f9994c2152b862-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/a6deba3b2408af45b3f9994c2152b862-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://proceedings.neurips.cc/paper_files/paper/2025/hash/c878e34a1b2095ae8177961ba24d642d-Abstract-Conference.html",
+      "reachable": true,
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/c878e34a1b2095ae8177961ba24d642d-Abstract-Conference.html"
+    },
+    {
+      "detail": "HTTP 200 https://www.usenix.org/conference/nsdi11/dominant-resource-fairness-fair-allocation-multiple-resource-types",
+      "reachable": true,
+      "url": "https://www.usenix.org/conference/nsdi11/dominant-resource-fairness-fair-allocation-multiple-resource-types"
+    },
+    {
+      "detail": "HTTP 200 https://www.usenix.org/conference/osdi22/presentation/sun",
+      "reachable": true,
+      "url": "https://www.usenix.org/conference/osdi22/presentation/sun"
+    },
+    {
+      "detail": "HTTP 200 https://www.usenix.org/conference/osdi24/presentation/agrawal",
+      "reachable": true,
+      "url": "https://www.usenix.org/conference/osdi24/presentation/agrawal"
+    },
+    {
+      "detail": "HTTP 200 https://www.usenix.org/conference/osdi24/presentation/sheng",
+      "reachable": true,
+      "url": "https://www.usenix.org/conference/osdi24/presentation/sheng"
+    },
+    {
+      "detail": "HTTP 200 https://www.usenix.org/conference/osdi24/presentation/sun-biao",
+      "reachable": true,
+      "url": "https://www.usenix.org/conference/osdi24/presentation/sun-biao"
+    },
+    {
+      "detail": "HTTP 206 https://www.vldb.org/pvldb/vol7/p181-bailis.pdf",
+      "reachable": true,
+      "url": "https://www.vldb.org/pvldb/vol7/p181-bailis.pdf"
+    }
+  ],
+  "passed": true,
+  "peer_reviewed": 46,
+  "saturation_passes": 2,
+  "search_families": 21,
+  "verified_relevant": 51
+}

@@ -73,7 +73,7 @@ phase_a() {
   python3 article3/tools/recompute_prior_audit.py
   python3 article3/tools/operator_inventory.py
 }
-phase_b() { python3 article3/tools/validate_literature.py; }
+phase_b() { python3 article3/tools/validate_literature.py --live; }
 phase_c() { bash article3/formal/check.sh; }
 phase_d() { bash article3/tools/run_test_matrix.sh; }
 phase_e() { bash article3/infra/kind/validate_release.sh; }
