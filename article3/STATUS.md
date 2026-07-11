@@ -1,7 +1,7 @@
 # Status
 
 - Date de demarrage : 2026-07-10
-- Etat : execution article3 en cours
+- Etat : execution article3 en cours, audit strict du prompt en cours
 - Branche de travail : article3-gov-ar
 - Commit de base : 07cdd3baad26abfa7248dd69cdd507aab4be8177
 - Worktree : `/mnt/c/Users/Ihsen/Documents/kubebuilder/ai-sovereign-finops-operator-article3`
@@ -52,9 +52,11 @@
 - le manuscrit Overleaf a ete durci pour refleter les ajouts bibliographiques et l'integration operateur actuelle, puis recompile avec succes
 - la passe de verification du 2026-07-11 a revalide les tests operator GOV-AR cibles, `go vet`, `helm lint` et la compilation LaTeX
 - les livrables finaux nommes par le prompt ont ete materialises sous `article3/artifacts/`
+- un audit ligne par ligne du prompt a ete ajoute dans `article3/reports/PROMPT_LINE_BY_LINE_AUDIT.md` et confirme que l'etat courant reste loin d'une completion stricte du prompt et d'un article Q1 pret a soumettre
 
 ## Prochaines etapes
 
+- corriger les ecarts majeurs identifies par l'audit strict du prompt
 - completer la revue bibliographique primaire
 - etendre le branchement proxy actuel vers une integration Envoy native ou equivalente
 - finaliser la derniere passe de polish de soumission

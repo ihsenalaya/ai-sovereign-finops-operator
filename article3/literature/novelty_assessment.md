@@ -44,6 +44,13 @@ What is not yet evidenced by the initial pass is a single method combining:
   which is important for long-horizon interaction. Even there, the focus
   remains trajectory-level routing efficiency rather than atomic budget
   reservation and delayed settlement in a governed gateway.
+- `RouteLMT` adds another peer-reviewed 2026 budget-allocation router, but it
+  remains a hybrid translation deployment method rather than a governed
+  multi-tenant admission controller with explicit liability tracking.
+- `Libra` is important from the systems side because it addresses unknown
+  response lengths and scheduling under strict SLOs on real serving traces.
+  Even so, it focuses on data-plane serving efficiency rather than financial
+  reservation, delayed settlement, or governance isolation per tenant.
 
 ## Caution
 

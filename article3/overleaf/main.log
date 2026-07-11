@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2026.5.18)  11 JUL 2026 07:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2026.5.18)  11 JUL 2026 07:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -531,17 +531,17 @@ ng,
 
 
 ]
-LaTeX Font Info:    Calculating math sizes for size <9.53561> on input line 123
+LaTeX Font Info:    Calculating math sizes for size <9.53561> on input line 124
 .
 
-Underfull \hbox (badness 2088) in paragraph at lines 176--188
+Underfull \hbox (badness 2088) in paragraph at lines 177--189
 \T1/ppl/m/n/9.53561 and \T1/pcr/m/n/9.53561 AIProvider\T1/ppl/m/n/9.53561 , ex-
 poses \T1/pcr/m/n/9.53561 /v1/admit\T1/ppl/m/n/9.53561 , \T1/pcr/m/n/9.53561 /v
 1/settle\T1/ppl/m/n/9.53561 ,
  []
 
 
-Underfull \hbox (badness 2818) in paragraph at lines 220--229
+Underfull \hbox (badness 2818) in paragraph at lines 221--230
 \T1/ppl/m/n/9.53561 de-ploy-ments: \T1/pcr/m/n/9.53561 gpt-france-mini \T1/ppl/
 m/n/9.53561 in \T1/pcr/m/n/9.53561 francecentral\T1/ppl/m/n/9.53561 ,
  []
@@ -551,10 +551,10 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: CFC0BB2CECE62300E73DA0B92DB1B953;2060.
  ) 
 Here is how much of TeX's memory you used:
- 11430 strings out of 480247
- 178369 string characters out of 5896151
- 474913 words of memory out of 5000000
- 29155 multiletter control sequences out of 15000+600000
+ 11434 strings out of 480247
+ 178439 string characters out of 5896151
+ 475987 words of memory out of 5000000
+ 29157 multiletter control sequences out of 15000+600000
  559922 words of font info for 164 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  60i,6n,63p,354b,452s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -569,10 +569,10 @@ fb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/sha
 re/texlive/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/share/texlive/t
 exmf-dist/fonts/type1/urw/palatino/uplri8a.pfb></usr/share/texlive/texmf-dist/f
 onts/type1/urw/zapfding/uzdr.pfb>
-Output written on main.pdf (3 pages, 144644 bytes).
+Output written on main.pdf (3 pages, 145755 bytes).
 PDF statistics:
- 182 PDF objects out of 1000 (max. 8388607)
- 153 compressed objects within 2 object streams
- 40 named destinations out of 1000 (max. 500000)
+ 186 PDF objects out of 1000 (max. 8388607)
+ 157 compressed objects within 2 object streams
+ 42 named destinations out of 1000 (max. 500000)
  121 words of extra memory for PDF output out of 10000 (max. 10000000)
 

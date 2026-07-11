@@ -1,0 +1,5 @@
+scenario,request_count,requests_per_sec
+budget_delay,50,213481.80281112838
+budget_delay,250,343525.0340433309
+multitenant,500,282522.5876808851
+multitenant,1000,160513.82401232232

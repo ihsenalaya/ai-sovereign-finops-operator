@@ -42,6 +42,12 @@ D.~Ding, A.~Mallick, C.~Wang, R.~Sim, S.~Mukherjee, V.~Ruhle, L.~V.~S.
   query routing,'' in \emph{The Twelfth International Conference on Learning
   Representations}, 2024.
 
+\bibitem{luo2026routelmt}
+Y.~Luo, H.~Liu, D.~Lin, K.~Chang, C.~Wang, B.~Li, Q.~Du, T.~Xiao, and J.~Zhu,
+  ``Routelmt: Learned sample routing for hybrid llm translation deployment,''
+  in \emph{Proceedings of the 64th Annual Meeting of the Association for
+  Computational Linguistics (Volume 6: Industry Track)}, 2026, pp. 1886--1897.
+
 \bibitem{uddin2026conformal}
 I.~Uddin and A.~Bauer, ``Conformal llm routing with distribution-free safety
   guarantees,'' in \emph{Proceedings of the 64th Annual Meeting of the
@@ -94,5 +100,11 @@ H.~Qiu \emph{et~al.}, ``Efficient interactive llm serving with proxy
 H.~Xie, Y.~Chen, L.~Wang, L.~Hu, and D.~Wang, ``Predicting llm output length
   via entropy-guided representations,'' \emph{arXiv preprint arXiv:2602.11812},
   2026.
+
+\bibitem{ruan2026libra}
+C.~Ruan, Y.~Chen, D.~Tian, Y.~Shi, Y.~Wu, J.~Li, and C.~Li, ``Libra: Flexible
+  request partitioning and scheduling for serving unbalanced and dynamic llm
+  workloads,'' in \emph{23rd USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI 26)}, 2026, pp. 1243--1258.
 
 \end{thebibliography}

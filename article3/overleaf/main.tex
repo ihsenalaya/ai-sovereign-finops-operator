@@ -98,7 +98,8 @@ state of implementation:
 Adaptive LLM routing under budget constraints has been studied in recent work
 such as Adaptive LLM Routing under Budget Constraints~\cite{panda2025adaptive}.
 Cost-aware cascades and routers such as FrugalGPT~\cite{chen2023frugalgpt},
-RouteLLM~\cite{ong2024routellm}, and HYBRID LLM~\cite{ding2024hybrid} show
+RouteLLM~\cite{ong2024routellm}, HYBRID LLM~\cite{ding2024hybrid}, and
+RouteLMT~\cite{luo2026routelmt} show
 that query-dependent model selection can materially improve cost-quality
 trade-offs. Recent conformal routing work~\cite{uddin2026conformal} adds
 distribution-free safety guarantees to the routing decision itself.
@@ -110,8 +111,8 @@ Delayed feedback and online resource-constrained decision-making also have
 deeper theoretical roots in online learning under delayed feedback
 ~\cite{joulani2013delayed} and contextual bandits with knapsack-style resource
 constraints~\cite{badanidiyuru2014resourceful,han2023cbwk}. Output-length-aware
-serving further motivates prediction-based reservation
-~\cite{qiu2024ssjf,xie2026forelen}. The gap targeted here is their combination
+serving further motivates prediction-based reservation and unknown-length-aware
+scheduling~\cite{qiu2024ssjf,xie2026forelen,ruan2026libra}. The gap targeted here is their combination
 with tenant-isolated budget liability, explicit queueing and abstention
 decisions, hard governance filtering, and a Kubernetes-native control-plane
 execution context. None of the verified primary sources above combines delayed

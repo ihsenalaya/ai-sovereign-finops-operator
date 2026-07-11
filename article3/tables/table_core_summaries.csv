@@ -1,0 +1,5 @@
+artifact,admitted_count,queued_count,settled_total,slack_total,overshoot_total
+E1_quantile,2,0,12,2,0
+E1_mean_std,1,1,7,1,0
+E2_quantile,3,1,15,0.5,0.5
+E2_mean_std,3,1,15,1.5,0

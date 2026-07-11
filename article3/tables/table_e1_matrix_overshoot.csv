@@ -1,0 +1,7 @@
+primary_budget,variant,mean_overshoot
+14,quantile,1.5
+14,mean_std,1.5666666666666667
+16,quantile,0.5666666666666668
+16,mean_std,0.7666666666666666
+18,quantile,2.5333333333333337
+18,mean_std,0.8000000000000002

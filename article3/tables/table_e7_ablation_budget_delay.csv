@@ -1,0 +1,5 @@
+variant,overshoot_total,slack_total
+quantile,1.2000000000000002,3
+mean_std,0,5
+min_reservation,1,0
+no_queue,1.2000000000000002,3

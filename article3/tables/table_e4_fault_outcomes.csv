@@ -1,0 +1,5 @@
+check,value
+duplicate_settlement_first_accepted,1
+duplicate_settlement_second_distinct_rejected,1
+reservation_expired,1
+telemetry_fault_abstained,1

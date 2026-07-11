@@ -12,3 +12,5 @@ timestamp,source,query,filters,results_count,notes
 2026-07-11,web search,InferenceDynamics RouteMix official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue and budget-aware routing claims from ACL 2026 PDF
 2026-07-11,web search,FLARE length-aware routing official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue and length-aware resource routing claims from ACL 2026 PDF
 2026-07-11,web search,MTRouter official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue and multi-turn cost-aware routing claims from ACL 2026 PDF
+2026-07-11,web search,RouteLMT official ACL 2026 paper,ACL Anthology primary source,1,Verified title authors venue DOI and budget-allocation framing from ACL Anthology
+2026-07-11,web search,Libra official NSDI 2026 paper,USENIX primary source,1,Verified title authors venue pages and unknown-length serving claims from USENIX page

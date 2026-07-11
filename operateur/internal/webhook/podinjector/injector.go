@@ -21,6 +21,13 @@ const (
 	ApplicationKey       = "aiops.imperium.io/application"
 	TargetHostsKey       = "aiops.imperium.io/target-hosts"
 	InjectedProxyKey     = "aiops.imperium.io/sidecar-injected"
+	GOVAREnabledKey      = "aiops.imperium.io/govar-enabled"
+	GOVAREndpointKey     = "aiops.imperium.io/govar-endpoint"
+	GOVARTenantKey       = "aiops.imperium.io/govar-tenant"
+	GOVARBudgetPolicyKey = "aiops.imperium.io/govar-budget-policy"
+	GOVARRoutingKey      = "aiops.imperium.io/govar-routing-policy"
+	GOVARZonesKey        = "aiops.imperium.io/govar-allowed-zones"
+	GOVARSensitiveKey    = "aiops.imperium.io/govar-sensitive-data"
 	SidecarContainerName = "greenops-header-proxy"
 	ProxyURL             = "http://127.0.0.1:15088"
 )
@@ -159,7 +166,8 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 			}
 			app := resolveApplication(mutated)
 			targetHosts := parseCSV(mutated.Annotations[TargetHostsKey])
-			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts))
+			govarCfg := resolveGOVARConfig(mutated)
+			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts, govarCfg))
 			for i := range mutated.Spec.Containers {
 				if mutated.Spec.Containers[i].Name == SidecarContainerName {
 					continue
@@ -199,7 +207,17 @@ func (h *Handler) shouldInject(ctx context.Context, namespace string, pod *corev
 	return isEnabled(ns.Labels[InjectKey]), nil
 }
 
-func sidecarContainer(image, app string, targetHosts []string) corev1.Container {
+type govarConfig struct {
+	Enabled          bool
+	Endpoint         string
+	TenantID         string
+	BudgetPolicyName string
+	RoutingPolicy    string
+	AllowedZones     []string
+	SensitiveData    bool
+}
+
+func sidecarContainer(image, app string, targetHosts []string, govarCfg govarConfig) corev1.Container {
 	env := []corev1.EnvVar{
 		{
 			Name: "GREENOPS_NAMESPACE",
@@ -211,6 +229,26 @@ func sidecarContainer(image, app string, targetHosts []string) corev1.Container 
 	}
 	if len(targetHosts) > 0 {
 		env = append(env, corev1.EnvVar{Name: "GREENOPS_TARGET_HOSTS", Value: strings.Join(targetHosts, ",")})
+	}
+	if govarCfg.Enabled {
+		if govarCfg.Endpoint != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_ENDPOINT", Value: govarCfg.Endpoint})
+		}
+		if govarCfg.TenantID != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_TENANT_ID", Value: govarCfg.TenantID})
+		}
+		if govarCfg.BudgetPolicyName != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_BUDGET_POLICY", Value: govarCfg.BudgetPolicyName})
+		}
+		if govarCfg.RoutingPolicy != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_ROUTING_POLICY", Value: govarCfg.RoutingPolicy})
+		}
+		if len(govarCfg.AllowedZones) > 0 {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_ALLOWED_ZONES", Value: strings.Join(govarCfg.AllowedZones, ",")})
+		}
+		if govarCfg.SensitiveData {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_SENSITIVE_DATA", Value: "true"})
+		}
 	}
 	return corev1.Container{
 		Name:            SidecarContainerName,
@@ -284,6 +322,33 @@ func parseCSV(v string) []string {
 		}
 	}
 	return out
+}
+
+func resolveGOVARConfig(pod *corev1.Pod) govarConfig {
+	if pod == nil || pod.Annotations == nil {
+		return govarConfig{}
+	}
+
+	cfg := govarConfig{
+		Enabled:          isEnabled(pod.Annotations[GOVAREnabledKey]),
+		Endpoint:         strings.TrimSpace(pod.Annotations[GOVAREndpointKey]),
+		TenantID:         strings.TrimSpace(pod.Annotations[GOVARTenantKey]),
+		BudgetPolicyName: strings.TrimSpace(pod.Annotations[GOVARBudgetPolicyKey]),
+		RoutingPolicy:    strings.TrimSpace(pod.Annotations[GOVARRoutingKey]),
+		AllowedZones:     parseCSV(pod.Annotations[GOVARZonesKey]),
+		SensitiveData:    isEnabled(pod.Annotations[GOVARSensitiveKey]),
+	}
+	if !cfg.Enabled {
+		return govarConfig{}
+	}
+	if cfg.TenantID == "" {
+		if team := strings.TrimSpace(pod.Labels["aiops.imperium.io/team"]); team != "" {
+			cfg.TenantID = team
+		} else if app := strings.TrimSpace(resolveApplication(pod)); app != "" {
+			cfg.TenantID = app
+		}
+	}
+	return cfg
 }
 
 func hasContainer(pod *corev1.Pod, name string) bool {

@@ -1,0 +1,5 @@
+artifact,variant,overshoot_total,slack_total
+summary,quantile,0,2
+summary,mean_std,0,1
+campaign_mean,quantile,2.16,1.8
+campaign_mean,mean_std,0.9800000000000001,3.4

@@ -79,6 +79,82 @@ func TestInjectsFromNamespaceLabel(t *testing.T) {
 	}
 }
 
+func TestInjectsGOVAREnvWhenAnnotated(t *testing.T) {
+	scheme := newScheme(t)
+	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))
+
+	original := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "finance-agent",
+			Namespace: "finance",
+			Labels: map[string]string{
+				"app":                    "finance-agent",
+				"aiops.imperium.io/team": "team-finance",
+			},
+			Annotations: map[string]string{
+				InjectKey:            "true",
+				GOVAREnabledKey:      "true",
+				GOVAREndpointKey:     "http://gov-ar-admission.finance.svc.cluster.local:8084",
+				GOVARBudgetPolicyKey: "finance-budget",
+				GOVARRoutingKey:      "finance-routing",
+				GOVARZonesKey:        "francecentral,westeurope",
+				GOVARSensitiveKey:    "true",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "app", Image: "curlimages/curl:latest"}},
+		},
+	}
+
+	mutated := runMutation(t, h, original)
+	sidecar := findContainer(t, mutated, SidecarContainerName)
+	if got := envValue(sidecar.Env, "GOVAR_ENDPOINT"); got != "http://gov-ar-admission.finance.svc.cluster.local:8084" {
+		t.Fatalf("GOVAR_ENDPOINT = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_TENANT_ID"); got != "team-finance" {
+		t.Fatalf("GOVAR_TENANT_ID = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_BUDGET_POLICY"); got != "finance-budget" {
+		t.Fatalf("GOVAR_BUDGET_POLICY = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_ROUTING_POLICY"); got != "finance-routing" {
+		t.Fatalf("GOVAR_ROUTING_POLICY = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_ALLOWED_ZONES"); got != "francecentral,westeurope" {
+		t.Fatalf("GOVAR_ALLOWED_ZONES = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_SENSITIVE_DATA"); got != "true" {
+		t.Fatalf("GOVAR_SENSITIVE_DATA = %q", got)
+	}
+}
+
+func TestGOVARTenantFallsBackToApplication(t *testing.T) {
+	scheme := newScheme(t)
+	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))
+
+	original := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "support-bot",
+			Namespace: "support",
+			Labels:    map[string]string{"app": "support-bot"},
+			Annotations: map[string]string{
+				InjectKey:        "true",
+				GOVAREnabledKey:  "true",
+				GOVAREndpointKey: "http://gov-ar-admission.support.svc.cluster.local:8084",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "app", Image: "busybox"}},
+		},
+	}
+
+	mutated := runMutation(t, h, original)
+	sidecar := findContainer(t, mutated, SidecarContainerName)
+	if got := envValue(sidecar.Env, "GOVAR_TENANT_ID"); got != "support-bot" {
+		t.Fatalf("GOVAR_TENANT_ID fallback = %q", got)
+	}
+}
+
 func TestSkipsWhenNotEnabled(t *testing.T) {
 	scheme := newScheme(t)
 	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))
