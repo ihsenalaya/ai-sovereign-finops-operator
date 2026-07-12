@@ -1,13 +1,13 @@
 {
-  "review_id": "phase-c-theory-review-20260712-v1",
+  "review_id": "phase-c-theory-review-20260712-v2",
   "reviewer_role": "independent Phase C theory and bounded-state-machine reviewer",
-  "reviewed_at_utc": "2026-07-12T07:17:44Z",
+  "reviewed_at_utc": "2026-07-12T08:53:27Z",
   "verdict": "approved",
   "branch": "article3-q1-recovery-20260711",
-  "worktree_base_head": "5f9cc43667202e9f1d8c249bdedc2609228bc1e9",
+  "worktree_base_head": "6d328649132596d95636f920bcb4aba104af5da9",
   "scope": "Phase C formulation, theorem assumptions, ledger state machine, and bounded formal checker only; this approval does not certify the Phase D implementation or experimental evidence.",
   "source_sha256": {
-    "article3/DECISIONS.md": "38dd6f4ea49faaf322ffe822a93aec92e625a8cbdae0473eaaaf2c8e95cd5e83",
+    "article3/DECISIONS.md": "3b51504d48fd73da4a0afba23f375906deb047002fb9e42206b94e7520a0a174",
     "article3/analysis/statistical_plan.md": "b1cbddf8ad64a260f4e4f44036dfaa1c5e303e9641c76194aaf6f1a4c81e4db2",
     "article3/design/gov_ar_algorithm.md": "1e3d78cdf349f8302bbdfb7429c89d815bf177ffe9f5ead5d8943cec3a92c8e0",
     "article3/design/invariants.md": "02fae1755dc6b9b95eb405a0b729172842015ebcd30a388facfed1f358bec9b1",
@@ -22,7 +22,7 @@
     "command": "bash article3/formal/check.sh",
     "exit_code": 0,
     "model_sha256": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
-    "executed_at_utc": "2026-07-12T07:17:20.232486+00:00",
+    "executed_at_utc": "2026-07-12T08:52:57.968381+00:00",
     "schema_version": 4,
     "states_checked": 2910,
     "transitions_checked": 42826,
@@ -83,6 +83,12 @@
       "severity": "major",
       "status": "resolved",
       "summary": "The formal checker binds results to the model hash, requires the semantic invariants and transition coverage, and executes explicit long traces omitted by the depth-six symmetry-reduced exploration."
+    },
+    {
+      "id": "TH-M7",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "D011 adds implementation-boundary assumptions for integer accounting, authenticated workload identity, synchronous Envoy enforcement, and production fail-closed configuration. It is consistent with D008-D010, explicitly disclaims novelty, and neither changes nor broadens the conditional strict-ledger result, fixed-opportunity-cohort union bound, or two-contribution ceiling."
     }
   ],
   "unresolved_critical_or_major_findings": []

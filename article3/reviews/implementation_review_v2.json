@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "review_id": "phase-d-implementation-review-20260712-v2",
+  "reviewer_role": "fresh independent Phase D implementation auditor",
+  "reviewed_at_utc": "2026-07-12T08:56:58Z",
+  "verdict": "failed",
+  "branch": "article3-q1-recovery-20260711",
+  "reviewed_head": "6d328649132596d95636f920bcb4aba104af5da9",
+  "reviewed_tree": "d195231efe17efaa657d69b3c19596942791e381",
+  "scope": "Read-only source and bounded execution audit of the committed Phase D implementation. The reviewer did not edit implementation source and did not use archived Article 3 measurements. Concurrent uncommitted changes to article3/formal/results.json and article3/reviews/theory_review.json were outside this review; every implementation and design file below was hashed from reviewed_head with git show.",
+  "summary": {
+    "critical_count": 4,
+    "major_count": 13,
+    "minor_count": 3,
+    "approval_condition_met": false,
+    "reason": "Authoritative usage can still be forged by a workload principal, tenant binding is derived from caller-controlled Pod metadata, governed traffic can bypass injection/proxy classification, and the Envoy example does not actuate the deployment selected by admission. Thirteen required production/research mechanisms also remain absent."
+  },
+  "prior_finding_reassessment": [
+    {
+      "id": "POSTFIX-C1",
+      "status": "partially_resolved_but_critical_bypass_remains",
+      "evidence": "validateGOVARConfig now rejects incomplete enabled annotations and the proxy returns 503 for recognized governed paths when runtime configuration is incomplete. However injector.go:206-217 lets a Pod annotation aiops.imperium.io/sidecar-injection=false override namespace enablement; validation only executes inside the enabled branch at injector.go:162-180. No NetworkPolicy or other direct-egress enforcement exists in charts/config."
+    },
+    {
+      "id": "POSTFIX-C2",
+      "status": "partially_resolved_but_real_selected_route_not_implemented",
+      "evidence": "An official ext_proc gRPC server and mTLS Envoy example now exist and the rendered configuration validates with Envoy v1.31. Nevertheless server.go:265-270 mutates only x-ai-eg-model, while the request JSON model remains unchanged and the example routes every request to one fixed llm_backend cluster at gov-ar-envoy-example-configmap.yaml:42-43,86-96. The lifecycle test asserts only the header mutation. Therefore selected deployment/provider actuation is not demonstrated."
+    },
+    {
+      "id": "POSTFIX-C3",
+      "status": "unresolved",
+      "evidence": "Namespace-bound HMAC derivation, TokenReview Pod UID checks, live Pod lookup, and public authoritative_unbilled denial were added. But trustedWorkloadFromPod at main.go:529-540 treats Pod-authored tenant/team/application/budget/routing annotations as authority. More critically, handleSettle at main.go:304-334 allows any authenticated workload bearer to provide actual_input_tokens, actual_output_tokens, usage_version and final=true; only nonzero actual_cost_micros is forbidden. A governed Pod possessing its projected token can race a zero-token final settlement for its real request and release the residual hold without provider-authoritative usage. In addition, ext_proc authorizes the gateway certificate but resolves downstream identity solely from the stream-supplied XFCC at server.go:65-71,231-250; a direct client holding the allowed gateway identity can select any registered workload URI."
+    },
+    {
+      "id": "POSTFIX-C4",
+      "status": "partially_resolved_but_bypass_remains",
+      "evidence": "Recognized OpenAI-style LLM paths ignore the Pod target filter and all governed CONNECT requests fail closed. But isGOVARRequest at proxy.go:340-344 is a path substring heuristic that omits common governed shapes such as /v1/messages and generateContent. Combined with Pod-controlled target hosts and injection opt-out, such calls are forwarded without admission."
+    },
+    {
+      "id": "POSTFIX-M1",
+      "status": "unresolved",
+      "evidence": "Only tenant/cohort_id/cohort_index uniqueness exists (postgres_engine.go:144-145 and engine.go:308-313). There is no pre-outcome cohort registry fixing membership, opportunity identities/features, N, weights, alpha_K, source/config hash, or freeze time. Cohort size/risk remain routing annotations and cohort identity/index remain request fields."
+    },
+    {
+      "id": "POSTFIX-M2",
+      "status": "unresolved",
+      "evidence": "routing.Spec.Canary.Enabled always returns REQUIRE_APPROVAL at engine.go:285-287 and postgres_engine.go:230-232. AdmitRequest has no approval reference and the service does not read or consume an approved AIChangeRequest, bind its version, prevent replay, or allow the approved request to re-enter."
+    },
+    {
+      "id": "POSTFIX-M3",
+      "status": "unresolved",
+      "evidence": "Budget identity changes still fail closed when any exposure exists (engine.go:698-705; postgres_engine.go:275-287). MIGRATIONS.md explicitly states automated rollover and carry allocation are not implemented. There are no origin/current window fields, rollover guards, debt payoff, or historical audit-credit records."
+    },
+    {
+      "id": "POSTFIX-M4",
+      "status": "unresolved",
+      "evidence": "VerifiedOutputCap is still a model annotation assertion (snapshot.go:14-18,92-99), and the immutable ledger price snapshot includes only input/output token prices. Cached input, hidden reasoning, tools, media, cancellation, retry/fallback and other provider billable categories/cap semantics are neither typed nor introspected."
+    },
+    {
+      "id": "POSTFIX-M5",
+      "status": "unresolved",
+      "evidence": "Adaptive tokens, support, drift and cohort parameters are read directly from AIRoutingPolicy annotations (admission_policy.go:14-22,173-187). No calibration store, selected-feedback updater, detector, immutable calibration artifact, conservative-mode status producer, or revalidation controller exists."
+    },
+    {
+      "id": "POSTFIX-M6",
+      "status": "unresolved",
+      "evidence": "AIModel, AIProvider and AIRoutingPolicy APIs contain no typed GOV-AR routability, pricing version/freshness, verified cap, latency, calibration, drift, cohort or risk-allocation fields. Safety-critical values remain mutable unvalidated annotations. Generated CRD schemas therefore cannot validate these controls."
+    },
+    {
+      "id": "POSTFIX-M7",
+      "status": "unresolved",
+      "evidence": "govar_outbox and CAS transitions exist, but repository search finds no outbox dispatch worker, expiry compare/cancel worker, unresolved resolver, correction/finality reconciler, or rollover worker. Ext_proc performs synchronous calls and discards dispatch/settlement/cancel errors at server.go:91-107. Downward post-final correction is discarded rather than recorded as immutable origin-window audit credit (engine.go:539-541)."
+    },
+    {
+      "id": "POSTFIX-M8",
+      "status": "unresolved",
+      "evidence": "The service exposes the default Prometheus handler at main.go:158, but no GOV-AR counters, histograms, gauges, trace propagation, OpenTelemetry spans, or immutable structured transition audit are registered or emitted."
+    },
+    {
+      "id": "POSTFIX-M9",
+      "status": "unresolved",
+      "evidence": "Both paths buffer full bodies. sidecarproxy uses unbounded io.ReadAll for request and response bodies (proxy.go:195,350), while ext_proc appends all request/response chunks without an application bound (server.go:77,100). The example forces BUFFERED request and response modes; SSE/streaming usage, disconnect, cancellation and terminal settlement semantics are absent."
+    },
+    {
+      "id": "POSTFIX-M10",
+      "status": "unresolved",
+      "evidence": "article3/infra/postgres/init.sql still creates the legacy DOUBLE PRECISION schema, whereas service startup rejects nonempty legacy rows. MIGRATIONS.md documents manual fail-closed handling but provides no conversion tool, reconciliation proof, versioned API compatibility, or tested database upgrade/rollback path."
+    },
+    {
+      "id": "POSTFIX-M11",
+      "status": "unresolved",
+      "evidence": "The parent reported an independently run stable Kind result of 1/1 pass, but no source-hash-bound result/log was present for this reviewer. More importantly, test/e2e/e2e_test.go:79-143 only builds, installs and checks the controller-manager Pod; it does not deploy PostgreSQL or gov-ar-admission, run Envoy ext_proc, reserve, dispatch to the selected backend, extract usage, settle, or verify a ledger. It is not the required GOV-AR Kind path."
+    }
+  ],
+  "new_findings": [
+    {
+      "id": "V2-C1-AUTHORITATIVE-USAGE",
+      "severity": "critical",
+      "summary": "A workload principal can forge final provider usage and release a live hold.",
+      "counterexample": "After the legitimate gateway claims/delivers request R for the Pod, code running in that same Pod reads the projected GOV-AR token and POSTs /v1/settle for R with actual_input_tokens=0, actual_output_tokens=0, usage_version=1, final=true. TokenReview authenticates the Pod, handleSettle accepts zero cost and caller-supplied token counts, and applySettlement finalizes and releases the residual reservation. No provider or reconciler authority distinguishes this forged event.",
+      "required_repair": "Use role-separated authentication/authorization. Workload identities may request admission but must never post authoritative usage/finality. Accept usage only from an authenticated gateway/provider adapter or reconciler identity, bind it to the immutable provider attempt, and add a regression test for the exact forged zero-token settlement."
+    },
+    {
+      "id": "V2-C2-TENANT-BINDING",
+      "severity": "critical",
+      "summary": "TokenReview proves the Pod but not its tenant/governance assignment.",
+      "counterexample": "A principal permitted to create its Pod chooses govar-tenant, team, application, budget-policy, routing-policy, sensitivity and zones annotations. The webhook copies them and the admission server later calls the live Pod metadata authoritative. The Pod can therefore target another tenant/budget unless a separate admission/RBAC policy outside this implementation happens to forbid those annotations.",
+      "required_repair": "Resolve tenant and governance policy from operator-owned, immutable or admission-validated Namespace/workload registry state that Pod creators cannot select. Bind Pod UID/resourceVersion to that record and test cross-tenant Pod-annotation claims."
+    },
+    {
+      "id": "V2-C3-ROUTE-ACTUATION",
+      "severity": "critical",
+      "summary": "The native Envoy path does not dispatch to the deployment selected by admission.",
+      "counterexample": "The client sends model=original. Admission returns model-eu. ext_proc adds only x-ai-eg-model=model-eu, then Envoy routes to the same fixed llm_backend and forwards the unchanged JSON body. A normal OpenAI/Azure provider therefore receives original or a fixed deployment rather than the selected route.",
+      "required_repair": "Implement and test actual route/backend and provider-deployment actuation compatible with the target gateway (including deployment URL/body semantics), and verify the selected deployment received the request in a real Envoy/PostgreSQL/backend E2E test."
+    },
+    {
+      "id": "V2-C4-BYPASS",
+      "severity": "critical",
+      "summary": "Governed workloads can bypass the measured admission path.",
+      "counterexample": "A Pod overrides namespace injection with sidecar-injection=false, unsets proxy environment variables, opens a direct socket, or calls an omitted provider path such as /v1/messages while excluding the host from target-hosts. No chart NetworkPolicy forces LLM egress through the gateway.",
+      "required_repair": "Make governance assignment non-overridable by Pods, force governed egress through the authenticated gateway within the declared trust boundary, and classify/routably bind providers rather than relying on path substrings. Add bypass-negative E2E tests."
+    },
+    {
+      "id": "V2-M12-EXT-PROC-IDENTITY",
+      "severity": "major",
+      "summary": "The allowed gateway mTLS identity is not cryptographically bound to the downstream XFCC identity.",
+      "evidence": "authorizeGatewayTransport validates only the ext_proc client certificate URI. resolvePrincipal separately trusts x-forwarded-client-cert supplied on the gRPC stream. Tests reject no certificate and an unapproved gateway certificate, but do not send a forged registered XFCC using the approved gateway certificate. SANITIZE_SET is a correct deployment control in the example, but the ext_proc service itself cannot distinguish compliant Envoy from a direct holder of that credential.",
+      "required_repair": "Use a channel/metadata binding that the allowed gateway cannot arbitrarily author, narrow credential possession and authorization, or explicitly scope this as trusted-gateway behavior with a conformance control and exact approved-certificate spoof regression."
+    },
+    {
+      "id": "V2-M13-DOCKER-PINNING",
+      "severity": "major",
+      "summary": "The GOV-AR Dockerfile builds but its source-stage image references are mutable tags.",
+      "evidence": "Dockerfile.gov-ar-admission uses golang:1.21 and gcr.io/distroless/static:nonroot rather than immutable source digests. This review's local build resolved concrete digests, but later clean builds need not resolve the same bytes.",
+      "required_repair": "Pin build and runtime images by digest, record build platform/toolchain, and verify the image digest in the clean release build."
+    }
+  ],
+  "minor_findings": [
+    {
+      "id": "V2-m1",
+      "summary": "Policy and quality freshness checks accept timestamps arbitrarily far in the future because time.Since is checked without a corresponding future bound; pricing/latency do include a one-minute future guard."
+    },
+    {
+      "id": "V2-m2",
+      "summary": "HTTP authentication reads at most 1 MiB but does not explicitly reject an over-limit body; a complete JSON prefix can be authenticated while trailing bytes are silently unread."
+    },
+    {
+      "id": "V2-m3",
+      "summary": "The Helm Envoy example validates but emits Envoy's warning that internal_address_config is unspecified. This is not the reason for the failed verdict."
+    }
+  ],
+  "bounded_reproduction": [
+    {
+      "command": "go test -count=1 ./internal/govar ./internal/govarextproc ./internal/sidecarproxy ./internal/webhook/podinjector ./cmd/gov-ar-admission ./cmd/header-proxy",
+      "result": "passed"
+    },
+    {
+      "command": "go test -race -count=1 ./internal/govar ./internal/govarextproc ./internal/sidecarproxy",
+      "result": "passed"
+    },
+    {
+      "command": "go vet ./internal/govar ./internal/govarextproc ./internal/sidecarproxy ./internal/webhook/podinjector ./cmd/gov-ar-admission ./cmd/header-proxy",
+      "result": "passed"
+    },
+    {
+      "command": "fresh postgres:16-alpine plus GOVAR_TEST_DATABASE_URL go test -count=1 -v ./internal/govar",
+      "result": "passed; legacy rejection and PostgreSQL lifecycle tests executed; synthetic container removed"
+    },
+    {
+      "command": "helm lint and dev/production templates, invalid production and multi-replica in-memory negative renders, kubectl client dry-run",
+      "result": "passed; both invalid configurations failed closed as expected"
+    },
+    {
+      "command": "envoyproxy/envoy:v1.31-latest --mode validate against the rendered production Envoy example with synthetic local certificates",
+      "result": "passed with one non-fatal internal_address_config warning"
+    },
+    {
+      "command": "docker build --progress=plain -f Dockerfile.gov-ar-admission -t govar-review-v2:6d328649 .",
+      "result": "passed; local image amd64, user 65532:65532, entrypoint /gov-ar-admission; local image ID sha256:efe8471e76f42a5ecc8a81bdf162168b90e608ce4c77f56cd4bf605872214ca4"
+    },
+    {
+      "command": "Kind E2E",
+      "result": "not rerun by this reviewer per bounded-review instruction; parent-reported 1/1 controller smoke pass is acknowledged but is not a GOV-AR path test and lacked a source-bound evidence artifact at review time"
+    }
+  ],
+  "source_hash_algorithm": "SHA-256 of the exact blob bytes returned by git show reviewed_head:path",
+  "reviewed_source_hashes": {
+    "AGENTS.md": "f1899faedeb51ed6ea4d973c787a3d673fc321c85c99766114ec4cff1ecf16f1",
+    "article3/Q1_GATE_CONTRACT.md": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+    "article3/design/problem_formulation.md": "47ce90df6c7dbe66cfa6c366e88b522c978940318b9fc261c22525a1c76ea330",
+    "article3/design/gov_ar_algorithm.md": "1e3d78cdf349f8302bbdfb7429c89d815bf177ffe9f5ead5d8943cec3a92c8e0",
+    "article3/design/invariants.md": "02fae1755dc6b9b95eb405a0b729172842015ebcd30a388facfed1f358bec9b1",
+    "article3/design/state_machine.md": "66a549527b04b5ac9fca64bd56fed60dd42d80b9423176d75f8db8e5f3a79fae",
+    "article3/design/threat_model.md": "44a4f29bfb30ee42907d4df4b19f757abcdf653605bee1bb12dc66a4a33d1650",
+    "article3/infra/postgres/init.sql": "70c49bfa7967544422d8fbeac4d369f3f862e5219326325f1096b891ba2e542c",
+    "article3/tools/run_test_matrix.sh": "75459e2d883cf8892fbe4b7e121e677d4bc0d9ca03448aef1bfde74a43eddbca",
+    "article3/tools/test_matrix_evidence.py": "afc86e844ca7120f67ddeb1652779c25a943f371b2f2fee8633971a99894ba32",
+    "operateur/api/v1alpha1/aimodel_types.go": "b5f692f43c0b54d66f2a9eaa86a74f09ea28ba2feb594eaf4ab80e3649b13821",
+    "operateur/api/v1alpha1/aiprovider_types.go": "48a1b563fccf156f2b230ea6ec7e6b3db7650eee787505ca2ebc60ef6d5870ab",
+    "operateur/api/v1alpha1/airoutingpolicy_types.go": "d8903ee4b89a16b8b1fe864ada31158375d4c3b947472b80103e12d7d80b7c30",
+    "operateur/api/v1alpha1/aibudgetpolicy_types.go": "943e1234ad3fea68b9da9a5e6f1620a4a7cf1f0a28acfcc6da5694b5cedecf",
+    "operateur/cmd/gov-ar-admission/main.go": "e978bd6a76f5bdabf2e5613656bd6a66c0122ccae3fd1271ff36d244c0529d34",
+    "operateur/cmd/gov-ar-admission/main_test.go": "516eb2415ec2a4111f494df9e521a2f9b73be9deef21261f7ab0739bcf4f3484",
+    "operateur/cmd/header-proxy/main.go": "859458228b6b8a3530c5e8b3f2d506c5bf74aa529a74886bbbb0cd725fffae41",
+    "operateur/internal/govar/MIGRATIONS.md": "e060b11f674a55c48117f34cb5168495a7cfd936cc70a096c70396a2323901f8",
+    "operateur/internal/govar/admission_policy.go": "113aa87a8248cefc1d63ea6a273a980cdb3b1bb986fdeca29053f31133a15bee",
+    "operateur/internal/govar/admission_policy_test.go": "c023dc88a1262a7a8d97ccec16a23d4129ae4475fb9572109d00d334acd884c2",
+    "operateur/internal/govar/engine.go": "dd14435b614e76316a382f1c102215db979f77928739f0b11a21ef429a42bec3",
+    "operateur/internal/govar/engine_test.go": "2a39e3b9d325245ca3db9fd2f1b8c76d7aab1965a437a2cc6c5fa59e9bf8cc61",
+    "operateur/internal/govar/money.go": "5b9aa54c0a28c52c8712fea5d982575206fbc119847ea41f25605ee638387b03",
+    "operateur/internal/govar/money_test.go": "5b71b62cea2b33d456aaf085ddb163558266719127d1135df3cc5204f9dac3c5",
+    "operateur/internal/govar/postgres_engine.go": "a48432c5cef8a6f5950872167ab3c417ad9475659098be667780948e2a957684",
+    "operateur/internal/govar/postgres_engine_test.go": "730592d4129a23f8291d7d31a25e54609a5e463640b395928676ff1da74e5e21",
+    "operateur/internal/govar/snapshot.go": "b614ca1c62500d3692d2dabf68db784216908638ee700a189507e6394b88fc32",
+    "operateur/internal/govar/snapshot_test.go": "9ab038e4073a5ddc1fdab5c39823cd5c570a593a1f571cb418db321b55560c6c",
+    "operateur/internal/govarextproc/server.go": "d249619e3775f6392ecf60a7af6709c4bed2a439b20a601364b98c4b2195004a",
+    "operateur/internal/govarextproc/server_test.go": "598277aa7045abc950719b66288926b6ddd3345ad1fa7b62f6d43593a4e3052e",
+    "operateur/internal/sidecarproxy/proxy.go": "6b65bccb7dcf32684bc5905beec5901823ddad95555884735917b8144fced633",
+    "operateur/internal/sidecarproxy/proxy_test.go": "1bcc1d167b08c4e24f4e30af1dc6f4f8be7a7f7a7cdf0943cf38530906affc21",
+    "operateur/internal/webhook/podinjector/injector.go": "f897c4c98dd723039625827852eb723d2b714b2845d5911a05024cd9aa77fa9e",
+    "operateur/internal/webhook/podinjector/injector_test.go": "cfb97c39fe9246b29ca5514d6d93b212f8f1e409efe5b72003e05f7e2a208e2c",
+    "operateur/test/e2e/e2e_test.go": "6bfe25014b33732e403b9144f2ca18ebc3a988b5fd7eea2a8c399d99f9f076ea",
+    "operateur/charts/ai-sovereign-finops-operator/Chart.yaml": "480326d6453c6dd2fd001f556b99791ae6f64d80dbb86d8807ae6fcaf51ce7c9",
+    "operateur/charts/ai-sovereign-finops-operator/values.yaml": "6adfa5c7a027f43bf7b354f599a15e03f3d2aa1ea68b56c6d382e9d6c2707449",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-admission-deployment.yaml": "54753a6baa1a5b6eec05c647263211142618357f513e5ba79693d6d860e756bb",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-admission-service.yaml": "cc76e0ef3dd313a3360205adf2c4d689261f43b39f370b1887bbe1882ccf655d",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-envoy-example-configmap.yaml": "f733542e6a295b939fcd3969932869764fdb753c056d09e1c8c595c7f915f09a",
+    "operateur/charts/ai-sovereign-finops-operator/templates/rbac.yaml": "a680869375ee91f4ee679d21cc4b0a427bf718ed86030c007dd373231fc51c37",
+    "operateur/Dockerfile.gov-ar-admission": "f5126fbe9bacf4f2e1be690a934e7760de7e320bf19e3f3772115364cf170650",
+    "operateur/go.mod": "ad0c5f172a0929257aa2ef1d51062561f47daafff08234faba6bbbecdc9ce728",
+    "operateur/go.sum": "f97c89b0e302baa813db8ecf8b83cc4292fa3965096f6bee718bc49cba545165"
+  },
+  "unresolved_critical_or_major_findings": [
+    "V2-C1-AUTHORITATIVE-USAGE",
+    "V2-C2-TENANT-BINDING",
+    "V2-C3-ROUTE-ACTUATION",
+    "V2-C4-BYPASS",
+    "POSTFIX-M1",
+    "POSTFIX-M2",
+    "POSTFIX-M3",
+    "POSTFIX-M4",
+    "POSTFIX-M5",
+    "POSTFIX-M6",
+    "POSTFIX-M7",
+    "POSTFIX-M8",
+    "POSTFIX-M9",
+    "POSTFIX-M10",
+    "POSTFIX-M11",
+    "V2-M12-EXT-PROC-IDENTITY",
+    "V2-M13-DOCKER-PINNING"
+  ],
+  "repair_priority": [
+    "Separate workload admission identity from gateway/provider usage/finality authority and close the zero-token final-settlement counterexample.",
+    "Replace Pod-authored tenant/governance authority with operator-owned binding and prevent direct/bypass egress.",
+    "Actuate the selected deployment/provider on the real Envoy path and add a PostgreSQL-backed backend-observed E2E test.",
+    "Implement the frozen cohort registry, versioned consumable approvals, and full rollover/carry/audit-credit state machine.",
+    "Add typed cap/pricing/billable-category and calibration/drift APIs plus producers, durable workers, metrics/traces, streaming bounds, and a real migration path.",
+    "Run a source-bound clean Kind/Helm lifecycle and GOV-AR full-path campaign only after the measured-path criticals are fixed."
+  ],
+  "reviewer_changes": "Added only article3/reviews/implementation_review_v2.json. No implementation, design, test, chart, protocol, or prior review file was edited by this reviewer."
+}
