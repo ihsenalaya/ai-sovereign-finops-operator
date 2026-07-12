@@ -34,6 +34,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{- define "operator.govArAdmissionServiceAccountName" -}}
+{{- if .Values.govArAdmission.serviceAccount.create -}}
+{{- default (printf "%s-gov-ar-admission" (include "operator.fullname" .)) .Values.govArAdmission.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- required "govArAdmission.serviceAccount.name is required when serviceAccount.create=false" .Values.govArAdmission.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "operator.image" -}}
 {{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
 {{- printf "%s:%s" .Values.image.repository $tag -}}

@@ -9,6 +9,21 @@ POSTGRES_IMAGE="postgres:16@sha256:be01cf82fc7dbba824acf0a82e150b4b360f3ff93c663
 
 internal_kind_env() {
   [[ -n "${KIND_CLUSTER:-}" ]] || { echo "KIND_CLUSTER must name an existing Kind cluster" >&2; return 2; }
+  local profile
+  case "$KIND_CLUSTER" in
+    article3-dev) profile=dev ;;
+    article3-validation) profile=validation ;;
+    article3-performance) profile=performance ;;
+    *) echo "refusing unscoped Kind cluster: $KIND_CLUSTER" >&2; return 2 ;;
+  esac
+  (
+    PROFILE="$profile" CLUSTER_NAME="$KIND_CLUSTER"
+    # shellcheck source=../infra/kind/common.sh
+    source "$ROOT/article3/infra/kind/common.sh"
+    resolve_profile
+    prepare_state_dir
+    verify_owned
+  )
   kind get clusters | grep -Fxq "$KIND_CLUSTER" || { echo "Kind cluster not found: $KIND_CLUSTER" >&2; return 2; }
   local kubeconfig="$1"
   kind get kubeconfig --name "$KIND_CLUSTER" >"$kubeconfig"
@@ -51,11 +66,13 @@ fi
 
 if [[ "${1:-}" == "--internal-gateway-e2e" ]]; then
   tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT INT TERM
-  internal_kind_env "$tmp/kubeconfig"
+  internal_kind_env "$tmp/kubeconfig" || exit $?
   cp -a "$OPERATOR" "$tmp/operateur"
   cd "$tmp/operateur"
   go test -count=1 ./internal/sidecarproxy ./internal/govarextproc ./cmd/gov-ar-admission
-  KIND_CLUSTER="$KIND_CLUSTER" go test -count=1 ./test/e2e/ -v -ginkgo.v
+  GOVAR_REAL_ENVOY=1 go test -count=1 -v \
+    -run '^TestRealEnvoyRoutesOnlyToAdmissionSelectedBackend$' ./internal/govarextproc
+  ARTICLE3_RUN_KIND_E2E=1 KIND_CLUSTER="$KIND_CLUSTER" go test -count=1 ./test/e2e/ -v -ginkgo.v
   exit $?
 fi
 
@@ -72,6 +89,8 @@ if [[ "${1:-}" == "--internal-helm-lint" ]]; then
     --set govArAdmission.identity.masterExistingSecret=govar-master \
     --set govArAdmission.postgres.enabled=true \
     --set govArAdmission.postgres.existingSecret=govar-db \
+    --set govArAdmission.enforcement.networkPolicy.enabled=true \
+    --set govArAdmission.enforcement.networkPolicy.governedNamespace=article3-workloads \
     --set govArAdmission.extProc.tls.serverExistingSecret=govar-ext-proc-server \
     --set govArAdmission.extProc.tls.clientCAExistingSecret=govar-ext-proc-client-ca \
     --set govArAdmission.extProc.gatewaySPIFFEID=spiffe://govar.local/gateway/envoy >/dev/null
@@ -83,7 +102,7 @@ fi
 if [[ "${1:-}" == --internal-helm-* ]]; then
   action="${1#--internal-helm-}"
   tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT INT TERM
-  internal_kind_env "$tmp/kubeconfig"
+  internal_kind_env "$tmp/kubeconfig" || exit $?
   release="article3-phase-d"; namespace="article3-phase-d"; chart="$OPERATOR/charts/ai-sovereign-finops-operator"
   tag="${ARTICLE3_SOURCE_SHA256:0:12}"; repository="article3-phase-d-controller"; image="$repository:$tag"
   case "$action" in

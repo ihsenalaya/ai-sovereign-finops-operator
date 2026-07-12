@@ -33,7 +33,18 @@ Repair, validate, and release Article 3 under `Q1_GATE_CONTRACT.md`. The target 
 
 ## Current checkpoint
 
-Phase D implementation. Replace the exploratory float ledger with the reviewed integer-money state machine and transactional outbox/inbox path; add provisional settlement, correction finality, workload identity, gateway dispatch semantics, and adversarial transaction tests. Implementation cannot be its own only reviewer.
+Phase D implementation remains open. The first source-bound implementation
+review and ledger review are preserved as failed reviews; their findings cannot
+be converted into approvals. Active repairs cover trusted workload/policy
+binding, role-separated usage authority, immutable route actuation, integer
+reserve/settle accounting, real UTC rollover, correction lineage, schema and
+aggregate validation, one-use request approval, and namespace-wide egress
+enforcement. A newly identified route time-of-check/time-of-use defect requires
+the admitted model/provider/route snapshot to be persisted with the reservation
+and actuated without re-reading mutable catalog state. Phase E cannot begin
+until stable-tree PostgreSQL race tests, real Envoy contract tests, a combined
+PostgreSQL/Envoy Kind E0 path, and fresh independent source-bound reviews have
+no unresolved critical or major finding.
 
 ## Recovery commands
 

@@ -234,12 +234,26 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AIRoutingPolicy")
 		os.Exit(1)
 	}
+	if err = (&controller.AIWorkloadBindingReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIWorkloadBinding")
+		os.Exit(1)
+	}
 	if err = (&controller.AIChangeRequestReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("aichangerequest-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AIChangeRequest")
+		os.Exit(1)
+	}
+	if err = (&controller.AIAdmissionApprovalReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AIAdmissionApproval")
 		os.Exit(1)
 	}
 	if envBool("AIOPS_ENABLE_LEGACY_EVIDENCE_RECONCILER", false) {

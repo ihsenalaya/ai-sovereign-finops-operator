@@ -18,10 +18,13 @@ import (
 )
 
 const (
-	HeaderNamespace = "x-greenops-namespace"
-	HeaderApp       = "x-greenops-app"
-	HeaderRequestID = "x-govar-request-id"
+	HeaderNamespace         = "x-greenops-namespace"
+	HeaderApp               = "x-greenops-app"
+	HeaderRequestID         = "x-govar-request-id"
+	maxProxyBodyBytes int64 = 1 << 20
 )
+
+var errProxyBodyTooLarge = errors.New("proxy body exceeds 1 MiB")
 
 // Config defines how the sidecar proxy enriches outbound HTTP requests.
 type Config struct {
@@ -110,8 +113,31 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.handleConnect(w, r)
 		return
 	}
-	if p.govarEnabled && isGOVARRequest(r) && !p.govarReady() {
-		http.Error(w, "gov-ar identity or policy configuration incomplete", http.StatusServiceUnavailable)
+	requestBody, err := readProxyBody(r.Body)
+	if err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, errProxyBodyTooLarge) {
+			status = http.StatusRequestEntityTooLarge
+		}
+		http.Error(w, err.Error(), status)
+		return
+	}
+	r.Body = io.NopCloser(bytes.NewReader(requestBody))
+	if p.govarEnabled {
+		if !isSupportedGovernedShape(r.URL.Path) {
+			http.Error(w, "unknown governed outbound shape denied; use a configured native gateway route", http.StatusForbidden)
+			return
+		}
+		var payload map[string]any
+		if len(requestBody) != 0 && json.Unmarshal(requestBody, &payload) != nil {
+			http.Error(w, "malformed governed request body", http.StatusBadRequest)
+			return
+		}
+		if streaming, _ := payload["stream"].(bool); streaming {
+			http.Error(w, "stream=true is unsupported until authoritative streaming settlement is implemented", http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "governed direct-proxy dispatch denied: send the request through the authenticated native Envoy gateway", http.StatusMisdirectedRequest)
 		return
 	}
 
@@ -192,7 +218,7 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_ = p.callDispatch(r.Context(), requestID, providerAttemptID, "delivered", "DELIVERED")
 	}
 
-	bodyBytes, readErr := io.ReadAll(resp.Body)
+	bodyBytes, readErr := readProxyBody(resp.Body)
 	if readErr != nil {
 		if requestID != "" && p.shouldCallGOVAR(r) {
 			_ = p.callCancel(r.Context(), requestID, "upstream_body_read_error")
@@ -217,6 +243,20 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	copyHeader(w.Header(), resp.Header)
 	w.WriteHeader(resp.StatusCode)
 	_, _ = w.Write(bodyBytes)
+}
+
+func readProxyBody(body io.Reader) ([]byte, error) {
+	if body == nil {
+		return nil, nil
+	}
+	value, err := io.ReadAll(io.LimitReader(body, maxProxyBodyBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(value)) > maxProxyBodyBytes {
+		return nil, errProxyBodyTooLarge
+	}
+	return value, nil
 }
 
 func (p *proxy) handleConnect(w http.ResponseWriter, r *http.Request) {
@@ -338,9 +378,17 @@ func (p *proxy) govarReady() bool {
 }
 
 func isGOVARRequest(r *http.Request) bool {
-	path := strings.ToLower(r.URL.Path)
-	return strings.Contains(path, "/chat/completions") || strings.Contains(path, "/responses") ||
-		strings.Contains(path, "/completions") || strings.Contains(path, "/embeddings") || strings.Contains(path, "/rerank")
+	return isSupportedGovernedShape(r.URL.Path)
+}
+
+func isSupportedGovernedShape(rawPath string) bool {
+	path := strings.ToLower(strings.TrimSuffix(strings.TrimSpace(rawPath), "/"))
+	switch path {
+	case "/v1/chat/completions", "/v1/responses", "/v1/completions", "/v1/embeddings", "/v1/rerank", "/v1/messages":
+		return true
+	}
+	return strings.HasSuffix(path, "/chat/completions") && strings.Contains(path, "/openai/deployments/") ||
+		strings.HasSuffix(path, ":generatecontent")
 }
 
 func (p *proxy) extractReservationIntent(r *http.Request) reservationIntent {

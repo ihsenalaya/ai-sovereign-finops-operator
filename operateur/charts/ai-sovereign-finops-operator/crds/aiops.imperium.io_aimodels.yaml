@@ -64,6 +64,63 @@ spec:
                 - medium
                 - high
                 type: string
+              govar:
+                description: |-
+                  GOVAR contains typed hard-feasibility and route-actuation inputs. When
+                  absent, admission must not infer these values from annotations.
+                properties:
+                  routable:
+                    description: Routable explicitly allows this model to enter the
+                      hard-feasibility set.
+                    type: boolean
+                  route:
+                    description: Route is deprecated decode compatibility only. GOV-AR
+                      ignores it.
+                    properties:
+                      authority:
+                        description: Authority is the upstream HTTP authority expected
+                          by the provider adapter.
+                        minLength: 1
+                        pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]*$
+                        type: string
+                      cluster:
+                        description: Cluster is the exact Envoy cluster key configured
+                          for this route.
+                        minLength: 1
+                        pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]*$
+                        type: string
+                      pathMode:
+                        description: PathMode selects the explicit provider request
+                          adapter.
+                        enum:
+                        - openai-body
+                        - azure-deployment-path
+                        - anthropic-body
+                        - google-generate-path
+                        type: string
+                      providerDeployment:
+                        description: ProviderDeployment is the provider-side deployment
+                          or model identifier.
+                        minLength: 1
+                        pattern: ^[A-Za-z0-9][A-Za-z0-9._:/-]*$
+                        type: string
+                    required:
+                    - authority
+                    - cluster
+                    - pathMode
+                    - providerDeployment
+                    type: object
+                  routeBindingRef:
+                    description: RouteBindingRef selects a binding owned by spec.providerRef.
+                    pattern: ^[A-Za-z0-9][A-Za-z0-9._-]*$
+                    type: string
+                required:
+                - routable
+                type: object
+                x-kubernetes-validations:
+                - message: routeBindingRef is required when routable is true
+                  rule: '!self.routable || (has(self.routeBindingRef) && self.routeBindingRef
+                    != ”)'
               modelName:
                 description: ModelName is the provider-side model identifier (e.g.
                   gpt-4o, mistral-small).
@@ -174,6 +231,84 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              govar:
+                description: GOVAR contains observed, controller-owned cap and latency
+                  evidence.
+                properties:
+                  latency:
+                    description: Latency is absent until a typed observation is available.
+                    properties:
+                      meanMillis:
+                        description: MeanMillis is the observed arithmetic mean in
+                          milliseconds.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      observedAt:
+                        description: ObservedAt is the end of the observation window.
+                        format: date-time
+                        type: string
+                      p95Millis:
+                        description: P95Millis is the observed 95th percentile in
+                          milliseconds.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      p99Millis:
+                        description: P99Millis is the observed 99th percentile in
+                          milliseconds.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      sampleCount:
+                        description: SampleCount is the number of observations in
+                          the summary.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                    required:
+                    - meanMillis
+                    - observedAt
+                    - p95Millis
+                    - p99Millis
+                    - sampleCount
+                    type: object
+                    x-kubernetes-validations:
+                    - message: latency quantiles must be ordered p95 <= p99
+                      rule: self.p99Millis >= self.p95Millis
+                  verifiedOutputCap:
+                    description: VerifiedOutputCap is absent until capability verification
+                      has run.
+                    properties:
+                      maxOutputTokens:
+                        description: MaxOutputTokens is the verified provider-enforced
+                          maximum.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      observedAt:
+                        description: ObservedAt is when the capability was verified.
+                        format: date-time
+                        type: string
+                      sourceVersion:
+                        description: SourceVersion identifies the immutable provider/model
+                          capability source.
+                        minLength: 1
+                        type: string
+                      verified:
+                        description: Verified states that the provider enforces this
+                          cap for the observed version.
+                        type: boolean
+                    required:
+                    - maxOutputTokens
+                    - observedAt
+                    - sourceVersion
+                    - verified
+                    type: object
+                    x-kubernetes-validations:
+                    - message: maxOutputTokens must be positive when verified is true
+                      rule: '!self.verified || self.maxOutputTokens > 0'
+                type: object
               lastEvaluatedAt:
                 description: LastEvaluatedAt is the time of the latest AIQualityGate
                   score update for this model.

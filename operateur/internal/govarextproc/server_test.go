@@ -15,6 +15,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,6 +25,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
+
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govar"
 )
 
 func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
@@ -39,7 +42,8 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 			if body["tenant_id"] != "tenant-a" || body["workload_uid"] != "uid-a" {
 				t.Fatalf("untrusted request headers selected identity: %+v", body)
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"Decision": "ADMIT", "ReasonCode": "highest_utility_feasible", "SelectedDeployment": "model-eu", "ProviderAttemptID": "attempt-1"})
+			snapshot := extProcTestSnapshot("model-eu", "provider-model-eu", "backend-eu", "eu.provider.test")
+			_ = json.NewEncoder(w).Encode(map[string]any{"decision": "ADMIT", "reason_code": "highest_utility_feasible", "selected_deployment": "model-eu", "provider_attempt_id": "attempt-1", "pricing_version": snapshot.PricingVersion, "route_snapshot": snapshot})
 		default:
 			_ = json.NewEncoder(w).Encode(map[string]any{"reason_code": "ok"})
 		}
@@ -66,7 +70,7 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 	}
 
 	headers := &corev3.HeaderMap{Headers: []*corev3.HeaderValue{
-		{Key: "x-request-id", Value: "request-1"}, {Key: "x-forwarded-client-cert", Value: "By=spiffe://gateway;Hash=abc;URI=" + identity},
+		{Key: ":path", Value: "/v1/chat/completions?api-version=2026-01-01"}, {Key: "x-request-id", Value: "request-1"}, {Key: "x-forwarded-client-cert", Value: "By=spiffe://govar.local/gateway/envoy;Hash=" + strings.Repeat("ab", 32) + ";URI=" + identity},
 		{Key: "x-govar-namespace", Value: "victim-ns"}, {Key: "x-govar-tenant-id", Value: "victim"},
 		{Key: "x-govar-workload-uid", Value: "victim-uid"}, {Key: "x-govar-budget-policy", Value: "victim-budget"},
 	}}
@@ -85,8 +89,13 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 		t.Fatal(err)
 	}
 	mutation := bodyResponse.GetRequestBody().GetResponse().GetHeaderMutation()
-	if mutation == nil || mutation.SetHeaders[0].Header.Value != "model-eu" {
+	if mutation == nil || headerMutationValue(mutation, "x-ai-eg-model") != "model-eu" || headerMutationValue(mutation, "x-govar-upstream-cluster") != "backend-eu" ||
+		headerMutationValue(mutation, "x-govar-upstream-authority") != "eu.provider.test" || headerMutationValue(mutation, ":path") != "/v1/chat/completions?api-version=2026-01-01" {
 		t.Fatalf("route mutation=%+v", mutation)
+	}
+	var mutatedBody map[string]any
+	if err := json.Unmarshal(bodyResponse.GetRequestBody().GetResponse().GetBodyMutation().GetBody(), &mutatedBody); err != nil || mutatedBody["model"] != "provider-model-eu" {
+		t.Fatalf("body mutation=%+v err=%v", mutatedBody, err)
 	}
 	if err := stream.Send(&extprocv3.ProcessingRequest{Request: &extprocv3.ProcessingRequest_ResponseHeaders{ResponseHeaders: &extprocv3.HttpHeaders{Headers: &corev3.HeaderMap{}}}}); err != nil {
 		t.Fatal(err)
@@ -104,6 +113,110 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 	if want := []string{"/v1/admit", "/v1/dispatch", "/v1/dispatch", "/v1/settle"}; !reflect.DeepEqual(calls, want) {
 		t.Fatalf("calls=%v want=%v", calls, want)
 	}
+}
+
+func extProcTestSnapshot(model, deployment, cluster, authority string) govar.RouteSnapshot {
+	snapshot := govar.RouteSnapshot{Namespace: "finance", ModelName: model, ModelUID: "model-uid-1", ModelGeneration: 1, ModelResourceVersion: "model-rv-1",
+		ProviderName: "provider", ProviderUID: "provider-uid-1", ProviderGeneration: 1, ProviderResourceVersion: "provider-rv-1",
+		PricingVersion: "pricing-v1", PricingComplianceHash: strings.Repeat("a", 64), RouteBindingName: "primary",
+		ProviderDeployment: deployment, Cluster: cluster, Authority: authority, PathMode: "openai-body"}
+	snapshot.SnapshotHash = govar.RouteSnapshotHash(snapshot)
+	return snapshot
+}
+
+func TestRouteAdaptersRewriteBodyAndPathFailClosed(t *testing.T) {
+	tests := []struct {
+		name, originalPath, mode, deployment, wantPath string
+		wantModel                                      any
+	}{
+		{name: "openai responses", originalPath: "/v1/responses?trace=1", mode: "openai-body", deployment: "gpt-4.1", wantPath: "/v1/responses?trace=1", wantModel: "gpt-4.1"},
+		{name: "azure deployment path", originalPath: "/openai/deployments/client-choice/responses?api-version=2026-01-01", mode: "azure-deployment-path", deployment: "approved-deployment", wantPath: "/openai/deployments/approved-deployment/responses?api-version=2026-01-01", wantModel: nil},
+		{name: "google generate path", originalPath: "/v1beta/models/client-choice:generateContent?key=public", mode: "google-generate-path", deployment: "gemini-approved", wantPath: "/v1beta/models/gemini-approved:generateContent?key=public", wantModel: nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			target := RouteTarget{SelectedModel: "catalog-model", ProviderDeployment: test.deployment, Cluster: "approved-cluster", Authority: "provider.test", PathMode: test.mode}
+			body, err := rewriteRequestForRoute([]byte(`{"model":"client-choice","messages":[]}`), test.originalPath, target)
+			if err != nil {
+				t.Fatal(err)
+			}
+			path, err := routePath(test.originalPath, target)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(body, &payload); err != nil {
+				t.Fatal(err)
+			}
+			if path != test.wantPath || payload["model"] != test.wantModel {
+				t.Fatalf("path=%q payload=%+v", path, payload)
+			}
+		})
+	}
+	if _, err := rewriteRequestForRoute([]byte(`{"model":"x"}`), "/v1/chat/completions", RouteTarget{PathMode: "caller-selected"}); err == nil {
+		t.Fatal("unknown provider adapter was inferred instead of rejected")
+	}
+}
+
+func TestAdmissionRouteSnapshotTamperingFailsBeforeClaim(t *testing.T) {
+	base := extProcTestSnapshot("model-eu", "provider-model-eu", "backend-eu", "eu.provider.test")
+	tests := []struct {
+		name   string
+		mutate func(map[string]any)
+	}{
+		{name: "missing snapshot", mutate: func(value map[string]any) { delete(value, "route_snapshot") }},
+		{name: "route field changed", mutate: func(value map[string]any) { value["route_snapshot"].(map[string]any)["cluster"] = "attacker" }},
+		{name: "snapshot hash changed", mutate: func(value map[string]any) {
+			value["route_snapshot"].(map[string]any)["snapshot_hash"] = strings.Repeat("f", 64)
+		}},
+		{name: "model cross field", mutate: func(value map[string]any) { value["selected_deployment"] = "other" }},
+		{name: "pricing cross field", mutate: func(value map[string]any) { value["pricing_version"] = "other" }},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var calls []string
+			admission := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls = append(calls, r.URL.Path)
+				raw, _ := json.Marshal(base)
+				var snapshot map[string]any
+				_ = json.Unmarshal(raw, &snapshot)
+				value := map[string]any{"decision": "ADMIT", "reason_code": "highest_utility_feasible", "selected_deployment": base.ModelName, "provider_attempt_id": "attempt", "pricing_version": base.PricingVersion, "route_snapshot": snapshot}
+				test.mutate(value)
+				_ = json.NewEncoder(w).Encode(value)
+			}))
+			defer admission.Close()
+			server := &Server{AdmissionURL: admission.URL, MasterSecret: []byte("0123456789abcdef0123456789abcdef")}
+			state := &streamState{headers: map[string]string{"x-request-id": "tamper", ":path": "/v1/chat/completions"}, requestBody: []byte(`{"model":"client","max_tokens":10}`), binding: RouteBinding{Namespace: "finance", TenantID: "tenant", WorkloadUID: "uid"}}
+			if _, err := server.admitAndClaim(context.Background(), state); err == nil {
+				t.Fatal("tampered snapshot reached claim")
+			}
+			if !reflect.DeepEqual(calls, []string{"/v1/admit"}) {
+				t.Fatalf("calls=%v", calls)
+			}
+		})
+	}
+}
+
+func TestXFCCMustConformToAuthenticatedGatewaySANITIZESet(t *testing.T) {
+	server := &Server{PrincipalRegistry: map[string]RouteBinding{"spiffe://govar.local/ns/finance/pod/uid-a": {Namespace: "finance", TenantID: "tenant-a", WorkloadUID: "uid-a", BudgetPolicy: "budget", RoutingPolicy: "routing"}}}
+	for _, forged := range []string{
+		"URI=spiffe://govar.local/ns/finance/pod/uid-a",
+		"By=spiffe://govar.local/gateway/other;Hash=" + strings.Repeat("ab", 32) + ";URI=spiffe://govar.local/ns/finance/pod/uid-a",
+		"By=spiffe://govar.local/gateway/envoy;Hash=not-a-sha256;URI=spiffe://govar.local/ns/finance/pod/uid-a",
+	} {
+		if _, err := server.resolvePrincipal(context.Background(), "spiffe://govar.local/gateway/envoy", forged); err == nil {
+			t.Fatalf("forged/nonconforming XFCC accepted: %s", forged)
+		}
+	}
+}
+
+func headerMutationValue(mutation *extprocv3.HeaderMutation, key string) string {
+	for _, option := range mutation.SetHeaders {
+		if option.Header != nil && option.Header.Key == key {
+			return first(option.Header.Value, string(option.Header.RawValue))
+		}
+	}
+	return ""
 }
 
 func TestExtProcRejectsUnauthenticatedDirectGRPC(t *testing.T) {

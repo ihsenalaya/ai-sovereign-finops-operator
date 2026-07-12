@@ -1,30 +1,33 @@
-CREATE TABLE IF NOT EXISTS govar_tenants (
-  tenant_id TEXT PRIMARY KEY,
-  budget_eur DOUBLE PRECISION NOT NULL DEFAULT 0,
-  settled_eur DOUBLE PRECISION NOT NULL DEFAULT 0,
-  reserved_eur DOUBLE PRECISION NOT NULL DEFAULT 0,
-  active_reservations INTEGER NOT NULL DEFAULT 0,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS govar_reservations (
-  request_id TEXT PRIMARY KEY,
-  tenant_id TEXT NOT NULL,
-  selected_deployment TEXT NOT NULL,
-  reserved_cost DOUBLE PRECISION NOT NULL,
-  actual_cost DOUBLE PRECISION NOT NULL DEFAULT 0,
-  policy_version TEXT NOT NULL,
-  pricing_version TEXT NOT NULL,
-  reservation_mode TEXT NOT NULL,
-  risk_level TEXT NOT NULL,
-  expiry TIMESTAMPTZ NOT NULL,
-  settled BOOLEAN NOT NULL DEFAULT FALSE,
-  canceled BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS govar_settlements (
-  settlement_id TEXT PRIMARY KEY,
-  request_id TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TABLE govar_schema_migrations(version INTEGER PRIMARY KEY,applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE govar_schema_metadata(version INTEGER PRIMARY KEY,layout_id TEXT NOT NULL);
+CREATE TABLE govar_tenants(
+ tenant_id TEXT PRIMARY KEY,budget_micros BIGINT NOT NULL DEFAULT 0 CHECK(budget_micros>=0),
+ settled_micros BIGINT NOT NULL DEFAULT 0 CHECK(settled_micros>=0),reserved_micros BIGINT NOT NULL DEFAULT 0 CHECK(reserved_micros>=0),
+ carried_adjustment_micros BIGINT NOT NULL DEFAULT 0 CHECK(carried_adjustment_micros>=0),active_reservations INTEGER NOT NULL DEFAULT 0 CHECK(active_reservations>=0),
+ budget_identity TEXT NOT NULL,current_window_id TEXT NOT NULL DEFAULT '',window_period TEXT NOT NULL DEFAULT '',historical_credit_micros BIGINT NOT NULL DEFAULT 0 CHECK(historical_credit_micros>=0),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE govar_reservations(
+ request_id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,workload_uid TEXT NOT NULL,selected_deployment TEXT NOT NULL,
+ provider_attempt_id TEXT NOT NULL UNIQUE,outbox_id TEXT NOT NULL UNIQUE,outbox_state TEXT NOT NULL,state TEXT NOT NULL,
+ reserved_cost_micros BIGINT NOT NULL CHECK(reserved_cost_micros>=0),provisional_cost_micros BIGINT NOT NULL DEFAULT 0 CHECK(provisional_cost_micros>=0),
+ base_actual_micros BIGINT NOT NULL DEFAULT 0 CHECK(base_actual_micros>=0),settled_effect_micros BIGINT NOT NULL DEFAULT 0 CHECK(settled_effect_micros>=0),residual_hold_micros BIGINT NOT NULL CHECK(residual_hold_micros>=0),usage_version BIGINT NOT NULL DEFAULT 0 CHECK(usage_version>=0),finalized BOOLEAN NOT NULL DEFAULT FALSE,
+ policy_version TEXT NOT NULL,pricing_version TEXT NOT NULL,reservation_mode TEXT NOT NULL,risk_level TEXT NOT NULL,allocated_risk_ppb BIGINT NOT NULL DEFAULT 0 CHECK(allocated_risk_ppb>=0),
+ input_price_micros_per_million BIGINT NOT NULL DEFAULT 0,output_price_micros_per_million BIGINT NOT NULL DEFAULT 0,admission_fingerprint TEXT NOT NULL,candidate_snapshot_version TEXT NOT NULL,
+ cohort_id TEXT NOT NULL DEFAULT '',cohort_index BIGINT NOT NULL DEFAULT 0,cohort_registry_digest TEXT NOT NULL DEFAULT '',origin_window_id TEXT NOT NULL DEFAULT '',enforcement_window_id TEXT NOT NULL DEFAULT '',
+ rollover_guard_micros BIGINT NOT NULL DEFAULT 0 CHECK(rollover_guard_micros>=0),carry_effect_micros BIGINT NOT NULL DEFAULT 0 CHECK(carry_effect_micros>=0),historical_credit_micros BIGINT NOT NULL DEFAULT 0 CHECK(historical_credit_micros>=0),carried BOOLEAN NOT NULL DEFAULT FALSE,last_usage_event_id TEXT NOT NULL DEFAULT '',provider_retry_policy TEXT NOT NULL DEFAULT 'NO_PROVIDER_RETRY',last_reason_code TEXT NOT NULL DEFAULT '',last_transition_event_id TEXT NOT NULL DEFAULT '',
+ route_namespace TEXT NOT NULL,selected_model_uid TEXT NOT NULL,selected_model_generation BIGINT NOT NULL CONSTRAINT govar_model_generation_positive CHECK(selected_model_generation>0),selected_model_resource_version TEXT NOT NULL,
+ selected_provider_name TEXT NOT NULL,selected_provider_uid TEXT NOT NULL,selected_provider_generation BIGINT NOT NULL CONSTRAINT govar_provider_generation_positive CHECK(selected_provider_generation>0),selected_provider_resource_version TEXT NOT NULL,
+ pricing_compliance_hash TEXT NOT NULL CONSTRAINT govar_pricing_compliance_hash_shape CHECK(pricing_compliance_hash ~ '^[0-9a-f]{64}$'),route_binding_name TEXT NOT NULL,route_provider_deployment TEXT NOT NULL,route_cluster TEXT NOT NULL,route_authority TEXT NOT NULL,
+ route_path_mode TEXT NOT NULL CONSTRAINT govar_route_path_mode_closed CHECK(route_path_mode IN('openai-body','azure-deployment-path','anthropic-body','google-generate-path')),route_snapshot_hash TEXT NOT NULL CONSTRAINT govar_route_snapshot_hash_shape CHECK(route_snapshot_hash ~ '^[0-9a-f]{64}$'),
+ expiry TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),CONSTRAINT govar_reservation_tenant_fk FOREIGN KEY(tenant_id) REFERENCES govar_tenants(tenant_id) ON DELETE RESTRICT);
+CREATE UNIQUE INDEX govar_reservations_cohort_opportunity_idx ON govar_reservations(tenant_id,cohort_id,cohort_index) WHERE cohort_id<>'';
+CREATE TABLE govar_outbox(outbox_id TEXT PRIMARY KEY,request_id TEXT NOT NULL UNIQUE,tenant_id TEXT NOT NULL,workload_uid TEXT NOT NULL,provider_attempt_id TEXT NOT NULL UNIQUE,state TEXT NOT NULL,version BIGINT NOT NULL DEFAULT 1,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),CONSTRAINT govar_outbox_request_fk FOREIGN KEY(request_id) REFERENCES govar_reservations(request_id) ON DELETE RESTRICT);
+CREATE TABLE govar_inbox(event_id TEXT PRIMARY KEY,request_id TEXT NOT NULL,event_kind TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),CONSTRAINT govar_inbox_request_fk FOREIGN KEY(request_id) REFERENCES govar_reservations(request_id) ON DELETE RESTRICT);
+CREATE TABLE govar_budget_adjustments(adjustment_id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,window_id TEXT NOT NULL,new_budget_micros BIGINT NOT NULL CHECK(new_budget_micros>=0),debt_payment_micros BIGINT NOT NULL CHECK(debt_payment_micros>=0),authorized_by TEXT NOT NULL,reason TEXT NOT NULL,payload_hash TEXT NOT NULL,authority_key_id TEXT NOT NULL,authority_proof TEXT NOT NULL,approved_at TIMESTAMPTZ NOT NULL,expires_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),CONSTRAINT govar_adjustment_tenant_fk FOREIGN KEY(tenant_id) REFERENCES govar_tenants(tenant_id) ON DELETE RESTRICT);
+CREATE TABLE govar_reconciliation_tasks(task_id TEXT PRIMARY KEY,request_id TEXT NOT NULL,reason_code TEXT NOT NULL,state TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),completed_at TIMESTAMPTZ,CONSTRAINT govar_reconciliation_request_fk FOREIGN KEY(request_id) REFERENCES govar_reservations(request_id) ON DELETE RESTRICT);
+CREATE TABLE govar_frozen_cohorts(tenant_id TEXT NOT NULL,cohort_id TEXT NOT NULL,size BIGINT NOT NULL CHECK(size>0),tenant_risk_ppb BIGINT NOT NULL CHECK(tenant_risk_ppb BETWEEN 0 AND 1000000000),data_hash TEXT NOT NULL,config_hash TEXT NOT NULL,protocol_hash TEXT NOT NULL,frozen_at TIMESTAMPTZ NOT NULL,registered_at TIMESTAMPTZ NOT NULL,registry_digest TEXT NOT NULL UNIQUE,authority_key_id TEXT NOT NULL,authority_proof TEXT NOT NULL,ledger_layout_id TEXT NOT NULL,route_snapshot_schema TEXT NOT NULL,software_hash TEXT NOT NULL,PRIMARY KEY(tenant_id,cohort_id));
+CREATE TABLE govar_frozen_cohort_slots(tenant_id TEXT NOT NULL,cohort_id TEXT NOT NULL,slot_index BIGINT NOT NULL,request_id TEXT NOT NULL,opportunity_digest TEXT NOT NULL,weight_ppb BIGINT NOT NULL CHECK(weight_ppb>=0),PRIMARY KEY(tenant_id,cohort_id,slot_index),UNIQUE(tenant_id,cohort_id,request_id),FOREIGN KEY(tenant_id,cohort_id) REFERENCES govar_frozen_cohorts(tenant_id,cohort_id) ON DELETE RESTRICT);
+INSERT INTO govar_schema_migrations(version) VALUES(4);
+INSERT INTO govar_schema_metadata(version,layout_id) VALUES(4,'govar-v4-route-snapshot-20260712');
+COMMIT;

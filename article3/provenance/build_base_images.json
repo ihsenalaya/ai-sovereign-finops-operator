@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scope": "operateur/Dockerfile.gov-ar-admission",
+  "resolved_on": "2026-07-12",
+  "recorded_at": "2026-07-12T14:36:33+01:00",
+  "resolution_note": "The resolution date is recorded without inventing a wall-clock timestamp; recorded_at is when this evidence document was checked.",
+  "toolchain_source": {
+    "official_latest_version_url": "https://go.dev/VERSION?m=text",
+    "official_release_policy_url": "https://go.dev/doc/devel/release",
+    "verified_latest_version": "go1.26.5",
+    "verified_release_date": "2026-07-07",
+    "retrieved_on": "2026-07-12"
+  },
+  "tooling": {
+    "docker_client": "28.3.2",
+    "docker_buildx": "github.com/docker/buildx v0.25.0-desktop.1 2cf9a0c0277eb26cabe7b3f77e2069437c4e33e0",
+    "host_go": "go version go1.26.4 linux/amd64",
+    "tool_versions_output_sha256": "ced272844c5c5f79ed5d9afd44bbea6c9d0e7d685d30f3a42f2c26e369b35beb"
+  },
+  "base_images": [
+    {
+      "stage": "builder",
+      "source_tag": "docker.io/library/golang:1.26.5",
+      "pinned_ref": "docker.io/library/golang:1.26.5@sha256:079e59808d2d252516e27e3f3a9c003740dee7f75e55aa71528766d52bcfc16a",
+      "index_media_type": "application/vnd.oci.image.index.v1+json",
+      "index_digest": "sha256:079e59808d2d252516e27e3f3a9c003740dee7f75e55aa71528766d52bcfc16a",
+      "index_raw_output_sha256": "079e59808d2d252516e27e3f3a9c003740dee7f75e55aa71528766d52bcfc16a",
+      "inspect_text_output_sha256": "8589611dd92785a22b1b875f48fdee09945aab49c722e933fbb8bfc3a1056c6c",
+      "platform": "linux/amd64",
+      "platform_manifest_media_type": "application/vnd.oci.image.manifest.v1+json",
+      "platform_manifest_digest": "sha256:bf0bf2dd9146b6d1a79ddc35ebcd7cca2f49d47091accefe3a12b8483a3c9ed6",
+      "platform_manifest_size_bytes": 2317,
+      "declared_toolchain": "go1.26.5 linux/amd64",
+      "executed_toolchain_check": "go version go1.26.5 linux/amd64",
+      "resolution_command": "DOCKER_CONFIG=<empty-temporary-directory> docker buildx imagetools inspect [--raw] docker.io/library/golang:1.26.5"
+    },
+    {
+      "stage": "runtime",
+      "source_tag": "gcr.io/distroless/static:nonroot",
+      "pinned_ref": "gcr.io/distroless/static:nonroot@sha256:d29e660cc75a5b6b1334e03c5c81ccf9bc0884a002c6000dbf0fb96034814478",
+      "index_media_type": "application/vnd.oci.image.index.v1+json",
+      "index_digest": "sha256:d29e660cc75a5b6b1334e03c5c81ccf9bc0884a002c6000dbf0fb96034814478",
+      "index_raw_output_sha256": "d29e660cc75a5b6b1334e03c5c81ccf9bc0884a002c6000dbf0fb96034814478",
+      "inspect_text_output_sha256": "568d987088095bd6471133d35c1de2c6bc39f0bcdc75a13805c8dc26252dac99",
+      "platform": "linux/amd64",
+      "platform_manifest_media_type": "application/vnd.oci.image.manifest.v1+json",
+      "platform_manifest_digest": "sha256:0c93c98c642502923095a650bbcda2199be101a80c7b6a898473fdf5dc9aa2af",
+      "platform_manifest_size_bytes": 2863,
+      "resolution_command": "DOCKER_CONFIG=<empty-temporary-directory> docker buildx imagetools inspect [--raw] gcr.io/distroless/static:nonroot"
+    }
+  ],
+  "build_contract": {
+    "module_go_directive": "1.21",
+    "builder_toolchain": "go1.26.5",
+    "default_build_platform": "linux/amd64",
+    "build_args": {
+      "TARGETOS": "linux",
+      "TARGETARCH": "amd64"
+    },
+    "cgo_enabled": false,
+    "go_build_flags": [
+      "-trimpath",
+      "-buildvcs=false",
+      "-ldflags=-s -w -buildid="
+    ],
+    "bit_reproducibility_claimed": false
+  },
+  "focused_build_verification": {
+    "status": "pending stable-tree rebuild",
+    "reason": "The supported Go 1.26.5 builder supersedes the earlier Go 1.21.13 moving-tree build; no image/build success is inferred from base-image resolution.",
+    "final_release_rebuild_required": true
+  }
+}

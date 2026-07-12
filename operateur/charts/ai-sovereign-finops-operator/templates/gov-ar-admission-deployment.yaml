@@ -17,6 +17,9 @@ spec:
   {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.extProc.tls.serverExistingSecret) (not .Values.govArAdmission.extProc.tls.clientCAExistingSecret) (not .Values.govArAdmission.extProc.gatewaySPIFFEID)) }}
   {{- fail "production GOV-AR ext_proc requires tls.serverExistingSecret, tls.clientCAExistingSecret, and gatewaySPIFFEID" }}
   {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.enforcement.networkPolicy.enabled) (not .Values.govArAdmission.enforcement.networkPolicy.governedNamespace)) }}
+  {{- fail "production GOV-AR requires enforcement.networkPolicy.enabled=true and a dedicated governedNamespace" }}
+  {{- end }}
   replicas: {{ .Values.govArAdmission.replicaCount }}
   selector:
     matchLabels:
@@ -30,7 +33,7 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/component: gov-ar-admission
     spec:
-      serviceAccountName: {{ include "operator.serviceAccountName" . }}
+      serviceAccountName: {{ include "operator.govArAdmissionServiceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

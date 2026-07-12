@@ -1,6 +1,6 @@
 # Formal ledger model
 
-`ledger_model.py` performs depth-six bounded exhaustive exploration of a symmetry-reduced two-tenant action alphabet plus explicit longer traces. It covers reserve, transactional outbox claim/cancel/delivery, unambiguous unbilled failure, timeout/expiry, unresolved rollover, provisional/late settlement, semantic duplicates, monotone corrections, authoritative finality, wrong tenant/workload UID, and same-tenant concurrent records.
+`ledger_model.py` performs depth-six bounded exhaustive exploration of a symmetry-reduced two-tenant action alphabet plus explicit longer traces. The catalog contains separate immutable `AIModelObject` and `AIProviderObject` values; a model names a provider and a binding is resolved only inside that provider's binding list. It covers reserve, transactional outbox claim/cancel/delivery, unambiguous unbilled failure, timeout/expiry, unresolved rollover, provisional/late settlement, semantic duplicates, monotone corrections, authoritative finality, wrong tenant/workload UID, same-tenant concurrent records, model/provider delete-recreate between reserve and dispatch, cross-provider binding injection, and deprecated model-owned route injection.
 
 It recomputes these conditional ledger properties:
 
@@ -12,7 +12,11 @@ It recomputes these conditional ledger properties:
 - provisional settlement retains `R-C` correction exposure; after rollover a temporary guard keeps total exposure at `R` until finality, while historical credits remain audit-only;
 - one effective base settlement, monotone correction delta, and finality effect despite duplicates;
 - wrong-tenant/wrong-workload/rejected transitions are atomic no-ops;
-- record/aggregate equality and tenant/workload isolation.
+- record/aggregate equality and tenant/workload isolation;
+- provider-owned route identity and route-snapshot digest integrity at reserve;
+- claims and delivery use the immutable reserved route even after same-name catalog recreation;
+- duplicate Admit returns the exact persisted full route-snapshot response bytes, while a conflicting duplicate is rejected atomically;
+- twelve negative validation checks require nonempty object identities, resource versions, binding and route fields, positive generations, the closed path-mode enum, and valid 64-hex pricing/snapshot digests.
 
 Run:
 

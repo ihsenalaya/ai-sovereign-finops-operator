@@ -26,8 +26,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -62,11 +67,23 @@ type admissionBackend interface {
 }
 
 type authenticatedPrincipal struct {
-	tenantID    string
-	workloadUID string
-	namespace   string
-	podName     string
+	tenantID       string
+	workloadUID    string
+	namespace      string
+	podName        string
+	serviceAccount string
+	role           principalRole
 }
+
+type principalRole string
+
+const (
+	roleAdmissionOnly         principalRole = "ADMISSION_ONLY"
+	roleGateway               principalRole = "GATEWAY"
+	maxAuthenticatedBodyBytes int64         = 1 << 20
+)
+
+var errAuthenticatedBodyTooLarge = errors.New("authenticated request body exceeds 1 MiB")
 
 type identityAuthenticator struct {
 	masterSecret []byte
@@ -209,14 +226,18 @@ func (s *server) handleAdmit(w http.ResponseWriter, r *http.Request) {
 
 	principal, body, err := s.auth.authenticate(r)
 	if err != nil {
-		writeAPIError(w, http.StatusUnauthorized, govar.ReasonPrincipalMismatch, err)
+		writeAuthenticationError(w, err)
 		return
 	}
-	var req govar.AdmitRequest
-	if err := decodeStrictJSON(body, &req); err != nil {
+	var apiRequest struct {
+		govar.AdmitRequest
+		ApprovalRef string `json:"approval_ref,omitempty"`
+	}
+	if err := decodeStrictJSON(body, &apiRequest); err != nil {
 		writeAPIError(w, http.StatusBadRequest, govar.ReasonInvalidTransition, err)
 		return
 	}
+	req := apiRequest.AdmitRequest
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	trusted, err := s.resolveTrustedWorkload(ctx, principal)
@@ -264,12 +285,168 @@ func (s *server) handleAdmit(w http.ResponseWriter, r *http.Request) {
 		SensitiveData: req.SensitiveData,
 		AllowedZones:  req.AllowedZones,
 	}, modelList.Items, providers)
-	resp, err := s.engine.Admit(req, budget, routing, candidates)
+	routingForAdmission := routing
+	if routing.Spec.Canary.Enabled {
+		if strings.TrimSpace(apiRequest.ApprovalRef) == "" {
+			approval, err := s.ensurePendingAdmissionApproval(ctx, req, budget, routing, candidates)
+			if err != nil {
+				writeAPIError(w, http.StatusConflict, govar.ReasonApprovalRequired, err)
+				return
+			}
+			writeJSON(w, map[string]any{"decision": govar.DecisionRequireApproval, "reason_code": govar.ReasonApprovalRequired,
+				"trace_id": req.RequestID, "approval_ref": approval.Name, "approval_expires_at": approval.Spec.Request.ExpiresAt})
+			return
+		}
+		approvedCandidate, err := s.validateAndConsumeAdmissionApproval(ctx, apiRequest.ApprovalRef, req, budget, routing, candidates)
+		if err != nil {
+			status := http.StatusForbidden
+			if errors.Is(err, errApprovalReplayed) {
+				status = http.StatusConflict
+			}
+			if errors.Is(err, errApprovalExpired) {
+				status = http.StatusGone
+			}
+			writeAPIError(w, status, govar.ReasonApprovalRequired, err)
+			return
+		}
+		candidates = []govar.Candidate{approvedCandidate}
+		routingForAdmission = *routing.DeepCopy()
+		routingForAdmission.Spec.Canary.Enabled = false
+	}
+	resp, err := s.engine.Admit(req, budget, routingForAdmission, candidates)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, govar.ReasonInvalidTransition, err)
 		return
 	}
 	writeJSON(w, resp)
+}
+
+const admissionApprovalTTL = 15 * time.Minute
+
+var (
+	errApprovalReplayed = errors.New("request-level approval was already consumed")
+	errApprovalExpired  = errors.New("request-level approval expired")
+)
+
+func (s *server) ensurePendingAdmissionApproval(ctx context.Context, req govar.AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidates []govar.Candidate) (*aiopsv1alpha1.AIAdmissionApproval, error) {
+	candidate, err := selectApprovalCandidate(candidates)
+	if err != nil {
+		return nil, err
+	}
+	expires := metav1.NewTime(s.currentTime().Add(admissionApprovalTTL))
+	request := admissionApprovalRequest(req, budget, routing, candidate, expires)
+	name := admissionApprovalName(req)
+	proposal := &aiopsv1alpha1.AIAdmissionApproval{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace,
+		Labels: map[string]string{"aiops.imperium.io/request-approval": "true"}}, Spec: aiopsv1alpha1.AIAdmissionApprovalSpec{Request: request}}
+	if err := s.k8s.Create(ctx, proposal); err == nil {
+		return proposal, nil
+	} else if !apierrors.IsAlreadyExists(err) {
+		return nil, fmt.Errorf("create immutable request approval proposal: %w", err)
+	}
+	var existing aiopsv1alpha1.AIAdmissionApproval
+	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: name}, &existing); err != nil {
+		return nil, err
+	}
+	if existing.Spec.Request.RequestDigest != request.RequestDigest || existing.Spec.Request.ComputeDigest() != request.RequestDigest {
+		return nil, errors.New("deterministic approval name exists with conflicting immutable request")
+	}
+	return &existing, nil
+}
+
+func (s *server) validateAndConsumeAdmissionApproval(ctx context.Context, approvalRef string, req govar.AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidates []govar.Candidate) (govar.Candidate, error) {
+	if approvalRef != admissionApprovalName(req) {
+		return govar.Candidate{}, errors.New("approval reference is not bound to this request principal")
+	}
+	var proposal aiopsv1alpha1.AIAdmissionApproval
+	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: approvalRef}, &proposal); err != nil {
+		return govar.Candidate{}, fmt.Errorf("approved AIAdmissionApproval lookup failed: %w", err)
+	}
+	approval := proposal.Spec.Request
+	if proposal.UID == "" || proposal.Status.Phase != aiopsv1alpha1.AIAdmissionApprovalPhaseApproved ||
+		proposal.Status.ObservedGeneration != proposal.Generation || proposal.Status.ConsumedAt != nil ||
+		proposal.Status.RequestDigest != approval.RequestDigest || proposal.Status.DecisionResourceUID == "" ||
+		proposal.Status.DecisionResourceGeneration < 1 || proposal.Status.ApprovedAt == nil {
+		return govar.Candidate{}, errors.New("AIAdmissionApproval lacks current unconsumed controller-owned approval evidence")
+	}
+	if !s.currentTime().Before(approval.ExpiresAt.Time) {
+		return govar.Candidate{}, errApprovalExpired
+	}
+	if approval.Namespace != req.Namespace || approval.RequestID != req.RequestID || approval.TenantID != req.TenantID || approval.WorkloadUID != req.WorkloadUID {
+		return govar.Candidate{}, errors.New("approval tenant/workload/request binding mismatch")
+	}
+	candidate, ok := candidateByModelRef(candidates, approval.CandidateModelRef)
+	if !ok {
+		return govar.Candidate{}, errors.New("approved candidate is no longer feasible")
+	}
+	expected := admissionApprovalRequest(req, budget, routing, candidate, approval.ExpiresAt)
+	if approval.RequestDigest != expected.RequestDigest || approval.RequestDigest != approval.ComputeDigest() {
+		return govar.Candidate{}, errors.New("approval does not match current request, policy, reservation inputs, candidate, or route")
+	}
+	leaseName := aiopsv1alpha1.AdmissionApprovalConsumptionName(proposal.UID)
+	holder := approval.RequestDigest
+	now := metav1.NewMicroTime(s.currentTime())
+	transitions := int32(1)
+	lease := &coordinationv1.Lease{ObjectMeta: metav1.ObjectMeta{Name: leaseName, Namespace: proposal.Namespace,
+		Labels: map[string]string{"aiops.imperium.io/request-approval": proposal.Name}, OwnerReferences: []metav1.OwnerReference{{APIVersion: aiopsv1alpha1.GroupVersion.String(), Kind: "AIAdmissionApproval", Name: proposal.Name, UID: proposal.UID}}},
+		Spec: coordinationv1.LeaseSpec{HolderIdentity: &holder, AcquireTime: &now, LeaseTransitions: &transitions}}
+	if err := s.k8s.Create(ctx, lease); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return govar.Candidate{}, errApprovalReplayed
+		}
+		return govar.Candidate{}, fmt.Errorf("atomically consume request approval: %w", err)
+	}
+	return candidate, nil
+}
+
+func admissionApprovalRequest(req govar.AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidate govar.Candidate, expires metav1.Time) aiopsv1alpha1.AIAdmissionApprovalRequest {
+	value := aiopsv1alpha1.AIAdmissionApprovalRequest{RequestID: req.RequestID, Namespace: req.Namespace, TenantID: req.TenantID, WorkloadUID: req.WorkloadUID,
+		Team: req.Team, Application: req.Application, BudgetPolicy: aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: budget.Name, UID: budget.UID, Generation: budget.Generation},
+		RoutingPolicy:     aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: routing.Name, UID: routing.UID, Generation: routing.Generation},
+		CandidateModelRef: candidate.ModelRef, CandidateSnapshotVersion: candidate.SnapshotVersion,
+		RouteSnapshot: candidate.RouteSnapshot,
+		InputTokens:   req.InputTokens, InputTokensExact: req.InputTokensExact, MaxOutputTokens: req.MaxOutputTokens, SensitiveData: req.SensitiveData,
+		AllowedZones: sortedCopy(req.AllowedZones), CohortID: req.CohortID, CohortIndex: req.CohortIndex, ExpiresAt: expires}
+	value.RequestDigest = value.ComputeDigest()
+	return value
+}
+
+func selectApprovalCandidate(candidates []govar.Candidate) (govar.Candidate, error) {
+	var selected *govar.Candidate
+	for i := range candidates {
+		candidate := candidates[i]
+		if !candidate.Feasible || govar.ValidateRouteSnapshot(candidate.RouteSnapshot) != nil {
+			continue
+		}
+		if selected == nil || candidate.ModelRef < selected.ModelRef {
+			copy := candidate
+			selected = &copy
+		}
+	}
+	if selected == nil {
+		return govar.Candidate{}, errors.New("no feasible typed candidate exists for approval")
+	}
+	return *selected, nil
+}
+
+func candidateByModelRef(candidates []govar.Candidate, modelRef string) (govar.Candidate, bool) {
+	for _, candidate := range candidates {
+		if candidate.Feasible && candidate.ModelRef == modelRef {
+			return candidate, true
+		}
+	}
+	return govar.Candidate{}, false
+}
+
+func admissionApprovalName(req govar.AdmitRequest) string {
+	digest := sha256.Sum256([]byte(req.Namespace + "\x00" + req.TenantID + "\x00" + req.WorkloadUID + "\x00" + req.RequestID))
+	return "govar-approval-" + fmt.Sprintf("%x", digest[:12])
+}
+
+func (s *server) currentTime() time.Time {
+	if s.auth.now != nil {
+		return s.auth.now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 func (s *server) handleDispatch(w http.ResponseWriter, r *http.Request) {
@@ -279,7 +456,11 @@ func (s *server) handleDispatch(w http.ResponseWriter, r *http.Request) {
 	}
 	principal, body, err := s.auth.authenticate(r)
 	if err != nil {
-		writeAPIError(w, http.StatusUnauthorized, govar.ReasonPrincipalMismatch, err)
+		writeAuthenticationError(w, err)
+		return
+	}
+	if principal.role != roleGateway {
+		writeAPIError(w, http.StatusForbidden, govar.ReasonPrincipalMismatch, errors.New("projected workload identity is admission-only"))
 		return
 	}
 	var req govar.DispatchRequest
@@ -308,7 +489,11 @@ func (s *server) handleSettle(w http.ResponseWriter, r *http.Request) {
 	}
 	principal, body, err := s.auth.authenticate(r)
 	if err != nil {
-		writeAPIError(w, http.StatusUnauthorized, govar.ReasonPrincipalMismatch, err)
+		writeAuthenticationError(w, err)
+		return
+	}
+	if principal.role != roleGateway {
+		writeAPIError(w, http.StatusForbidden, govar.ReasonPrincipalMismatch, errors.New("projected workload identity cannot submit authoritative usage or finality"))
 		return
 	}
 	var req govar.SettleRequest
@@ -341,7 +526,11 @@ func (s *server) handleCancel(w http.ResponseWriter, r *http.Request) {
 	}
 	principal, body, err := s.auth.authenticate(r)
 	if err != nil {
-		writeAPIError(w, http.StatusUnauthorized, govar.ReasonPrincipalMismatch, err)
+		writeAuthenticationError(w, err)
+		return
+	}
+	if principal.role != roleGateway {
+		writeAPIError(w, http.StatusForbidden, govar.ReasonPrincipalMismatch, errors.New("projected workload identity cannot submit delivery or cancellation transitions"))
 		return
 	}
 	var req govar.CancelRequest
@@ -379,7 +568,7 @@ func (s *server) handleLiability(w http.ResponseWriter, r *http.Request) {
 	}
 	principal, _, err := s.auth.authenticate(r)
 	if err != nil {
-		writeAPIError(w, http.StatusUnauthorized, govar.ReasonPrincipalMismatch, err)
+		writeAuthenticationError(w, err)
 		return
 	}
 	trusted, err := s.resolveTrustedWorkload(r.Context(), principal)
@@ -419,7 +608,7 @@ func (a identityAuthenticator) authenticate(r *http.Request) (authenticatedPrinc
 		if err != nil {
 			return authenticatedPrincipal{}, nil, err
 		}
-		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+		body, err := readAuthenticatedBody(r.Body)
 		return principal, body, err
 	}
 	if len(a.masterSecret) < 32 {
@@ -444,7 +633,7 @@ func (a identityAuthenticator) authenticate(r *http.Request) (authenticatedPrinc
 	if delta := now.Sub(time.Unix(unixSeconds, 0)); delta < -2*time.Minute || delta > 2*time.Minute {
 		return authenticatedPrincipal{}, nil, errors.New("GOV-AR identity signature is outside the replay window")
 	}
-	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	body, err := readAuthenticatedBody(r.Body)
 	if err != nil {
 		return authenticatedPrincipal{}, nil, errors.New("read authenticated body")
 	}
@@ -457,7 +646,29 @@ func (a identityAuthenticator) authenticate(r *http.Request) (authenticatedPrinc
 	if !hmac.Equal([]byte(strings.ToLower(signature)), []byte(want)) {
 		return authenticatedPrincipal{}, nil, errors.New("invalid GOV-AR identity signature")
 	}
-	return authenticatedPrincipal{tenantID: tenantID, workloadUID: workloadUID, namespace: namespace}, body, nil
+	return authenticatedPrincipal{tenantID: tenantID, workloadUID: workloadUID, namespace: namespace, role: roleGateway}, body, nil
+}
+
+func readAuthenticatedBody(body io.Reader) ([]byte, error) {
+	if body == nil {
+		return nil, nil
+	}
+	value, err := io.ReadAll(io.LimitReader(body, maxAuthenticatedBodyBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(value)) > maxAuthenticatedBodyBytes {
+		return nil, errAuthenticatedBodyTooLarge
+	}
+	return value, nil
+}
+
+func writeAuthenticationError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errAuthenticatedBodyTooLarge) {
+		writeAPIError(w, http.StatusRequestEntityTooLarge, govar.ReasonInvalidTransition, err)
+		return
+	}
+	writeAPIError(w, http.StatusUnauthorized, govar.ReasonPrincipalMismatch, err)
 }
 
 func tokenReviewFunc(k8s client.Client) func(context.Context, string) (authenticatedPrincipal, error) {
@@ -484,7 +695,7 @@ func tokenReviewFunc(k8s client.Client) func(context.Context, string) (authentic
 		if len(podNames) != 1 || strings.TrimSpace(podNames[0]) == "" {
 			return authenticatedPrincipal{}, errors.New("TokenReview lacks bound Pod name")
 		}
-		return authenticatedPrincipal{namespace: parts[2], workloadUID: strings.TrimSpace(uidValues[0]), podName: strings.TrimSpace(podNames[0])}, nil
+		return authenticatedPrincipal{namespace: parts[2], workloadUID: strings.TrimSpace(uidValues[0]), podName: strings.TrimSpace(podNames[0]), serviceAccount: parts[3], role: roleAdmissionOnly}, nil
 	}
 }
 
@@ -496,8 +707,10 @@ func deriveSignerKey(master []byte, namespace, tenantID, workloadUID string) []b
 
 type trustedWorkload struct {
 	namespace, tenant, team, application, budgetPolicy, routingPolicy string
+	serviceAccount                                                    string
 	uid, resourceVersion                                              string
 	sensitive                                                         bool
+	requireGateway                                                    bool
 	zones                                                             []string
 }
 
@@ -510,7 +723,7 @@ func (s *server) resolveTrustedWorkload(ctx context.Context, principal authentic
 		if string(pod.UID) != principal.workloadUID {
 			return trustedWorkload{}, errors.New("TokenReview Pod UID no longer matches bound Pod")
 		}
-		return trustedWorkloadFromPod(&pod), nil
+		return s.trustedWorkloadFromPod(ctx, &pod, principal)
 	}
 	var pods corev1.PodList
 	if err := s.k8s.List(ctx, &pods, client.InNamespace(principal.namespace)); err != nil {
@@ -521,23 +734,84 @@ func (s *server) resolveTrustedWorkload(ctx context.Context, principal authentic
 		if string(pod.UID) != principal.workloadUID {
 			continue
 		}
-		return trustedWorkloadFromPod(pod), nil
+		return s.trustedWorkloadFromPod(ctx, pod, principal)
 	}
 	return trustedWorkload{}, errors.New("signed workload UID does not exist in signed namespace")
 }
 
-func trustedWorkloadFromPod(pod *corev1.Pod) trustedWorkload {
+func (s *server) trustedWorkloadFromPod(ctx context.Context, pod *corev1.Pod, principal authenticatedPrincipal) (trustedWorkload, error) {
+	serviceAccount := strings.TrimSpace(pod.Spec.ServiceAccountName)
+	if serviceAccount == "" {
+		serviceAccount = "default"
+	}
+	if principal.serviceAccount != "" && principal.serviceAccount != serviceAccount {
+		return trustedWorkload{}, errors.New("TokenReview service account no longer matches live Pod")
+	}
+	var binding aiopsv1alpha1.AIWorkloadBinding
+	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: serviceAccount}, &binding); err != nil {
+		return trustedWorkload{}, fmt.Errorf("operator-owned AIWorkloadBinding lookup failed: %w", err)
+	}
+	if binding.Name != binding.Spec.ServiceAccountName || binding.Spec.ServiceAccountName != serviceAccount ||
+		binding.UID == "" || !binding.Spec.RequireGateway || binding.Status.ObservedGeneration != binding.Generation || !apimeta.IsStatusConditionTrue(binding.Status.Conditions, aiopsv1alpha1.ConditionReady) {
+		return trustedWorkload{}, errors.New("AIWorkloadBinding is not observed and Ready for the live Pod service account")
+	}
+	var serviceAccountObject corev1.ServiceAccount
+	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: serviceAccount}, &serviceAccountObject); err != nil ||
+		serviceAccountObject.UID == "" || serviceAccountObject.UID != binding.Status.ResolvedServiceAccountUID {
+		return trustedWorkload{}, errors.New("AIWorkloadBinding ServiceAccount UID evidence is stale or missing")
+	}
+	var budget aiopsv1alpha1.AIBudgetPolicy
+	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: binding.Spec.BudgetPolicyRef}, &budget); err != nil ||
+		!resolvedReferenceMatches(binding.Status.ResolvedBudgetPolicy, budget.Name, budget.UID, budget.Generation) ||
+		budget.Status.ObservedGeneration != budget.Generation || !apimeta.IsStatusConditionTrue(budget.Status.Conditions, aiopsv1alpha1.ConditionReady) {
+		return trustedWorkload{}, errors.New("AIWorkloadBinding budget policy identity/readiness evidence is stale or missing")
+	}
+	var routing aiopsv1alpha1.AIRoutingPolicy
+	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: binding.Spec.RoutingPolicyRef}, &routing); err != nil ||
+		!resolvedReferenceMatches(binding.Status.ResolvedRoutingPolicy, routing.Name, routing.UID, routing.Generation) ||
+		routing.Status.ObservedGeneration != routing.Generation || !apimeta.IsStatusConditionTrue(routing.Status.Conditions, aiopsv1alpha1.ConditionReady) {
+		return trustedWorkload{}, errors.New("AIWorkloadBinding routing policy identity/readiness evidence is stale or missing")
+	}
+	trusted := trustedWorkload{namespace: pod.Namespace, uid: string(pod.UID), resourceVersion: pod.ResourceVersion + "|" + string(binding.UID) + "|" + strconv.FormatInt(binding.Generation, 10) + "|" + binding.ResourceVersion,
+		serviceAccount: serviceAccount, tenant: binding.Spec.TenantID, team: binding.Spec.Team, application: binding.Spec.Application,
+		budgetPolicy: binding.Spec.BudgetPolicyRef, routingPolicy: binding.Spec.RoutingPolicyRef,
+		sensitive: binding.Spec.Sensitivity != aiopsv1alpha1.TierLow, zones: sortedCopy(binding.Spec.AllowedZones), requireGateway: binding.Spec.RequireGateway}
+	if err := rejectConflictingPodGovernanceMetadata(pod, trusted); err != nil {
+		return trustedWorkload{}, err
+	}
+	return trusted, nil
+}
+
+func resolvedReferenceMatches(reference *aiopsv1alpha1.AIWorkloadBindingResolvedReference, name string, uid types.UID, generation int64) bool {
+	return reference != nil && reference.Name == name && reference.UID == uid && reference.Generation == generation
+}
+
+func rejectConflictingPodGovernanceMetadata(pod *corev1.Pod, trusted trustedWorkload) error {
 	annotations, labels := pod.Annotations, pod.Labels
-	application := strings.TrimSpace(annotations[podinjector.ApplicationKey])
-	if application == "" {
-		application = firstNonEmpty(labels["app.kubernetes.io/name"], labels["app"], labels["k8s-app"], pod.Name)
+	claims := []struct{ name, actual, expected string }{
+		{podinjector.GOVARTenantKey, annotations[podinjector.GOVARTenantKey], trusted.tenant},
+		{podinjector.GOVARBudgetPolicyKey, annotations[podinjector.GOVARBudgetPolicyKey], trusted.budgetPolicy},
+		{podinjector.GOVARRoutingKey, annotations[podinjector.GOVARRoutingKey], trusted.routingPolicy},
+		{podinjector.ApplicationKey, annotations[podinjector.ApplicationKey], trusted.application},
+		{"aiops.imperium.io/team", labels["aiops.imperium.io/team"], trusted.team},
 	}
-	team := strings.TrimSpace(labels["aiops.imperium.io/team"])
-	tenant := strings.TrimSpace(annotations[podinjector.GOVARTenantKey])
-	if tenant == "" {
-		tenant = firstNonEmpty(team, application)
+	for _, claim := range claims {
+		if actual := strings.TrimSpace(claim.actual); actual != "" && actual != claim.expected {
+			return fmt.Errorf("Pod-authored %s conflicts with operator-owned AIWorkloadBinding", claim.name)
+		}
 	}
-	return trustedWorkload{namespace: pod.Namespace, uid: string(pod.UID), resourceVersion: pod.ResourceVersion, tenant: tenant, team: team, application: application, budgetPolicy: strings.TrimSpace(annotations[podinjector.GOVARBudgetPolicyKey]), routingPolicy: strings.TrimSpace(annotations[podinjector.GOVARRoutingKey]), sensitive: strings.EqualFold(strings.TrimSpace(annotations[podinjector.GOVARSensitiveKey]), "true"), zones: splitAndNormalize(annotations[podinjector.GOVARZonesKey])}
+	if value := strings.TrimSpace(annotations[podinjector.GOVARSensitiveKey]); value != "" && enabledValue(value) != trusted.sensitive {
+		return errors.New("Pod-authored sensitivity conflicts with operator-owned AIWorkloadBinding")
+	}
+	if value := strings.TrimSpace(annotations[podinjector.GOVARZonesKey]); value != "" && !slices.Equal(splitAndNormalize(value), sortedCopy(trusted.zones)) {
+		return errors.New("Pod-authored allowed zones conflict with operator-owned AIWorkloadBinding")
+	}
+	return nil
+}
+
+func enabledValue(value string) bool {
+	value = strings.ToLower(strings.TrimSpace(value))
+	return value == "true" || value == "enabled" || value == "1" || value == "yes"
 }
 
 func bindTrustedAdmitRequest(req *govar.AdmitRequest, trusted trustedWorkload) error {

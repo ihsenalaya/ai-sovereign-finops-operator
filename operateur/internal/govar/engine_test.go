@@ -37,19 +37,23 @@ func TestEngineReserveDispatchSettleCorrectAndFinalize(t *testing.T) {
 	}
 	assertLiability(t, engine.Liability(testTenant), 2_000, 1_600, 99_996_400, 1)
 
-	res, code, err = engine.Settle(settleRequest("r1", "s2", 2_500, 2, false, testTenant, testWorkload))
+	next := settleRequest("r1", "s2", 2_500, 2, false, testTenant, testWorkload)
+	next.PredecessorEventID = "s1"
+	res, code, err = engine.Settle(next)
 	if err != nil || code != ReasonCorrection || res.ResidualHoldMicros != 1_100 {
 		t.Fatalf("correction = (%+v,%s,%v)", res, code, err)
 	}
 	assertLiability(t, engine.Liability(testTenant), 2_500, 1_100, 99_996_400, 1)
 
-	res, code, err = engine.Settle(settleRequest("r1", "s3", 2_500, 2, true, testTenant, testWorkload))
+	finalReq := settleRequest("r1", "s3", 2_500, 2, true, testTenant, testWorkload)
+	finalReq.PredecessorEventID = "s2"
+	res, code, err = engine.Settle(finalReq)
 	if err != nil || code != ReasonFinalized || !res.Finalized || res.ResidualHoldMicros != 0 {
 		t.Fatalf("finality = (%+v,%s,%v)", res, code, err)
 	}
 	assertLiability(t, engine.Liability(testTenant), 2_500, 0, 99_997_500, 0)
 
-	_, code, err = engine.Settle(settleRequest("r1", "s3", 2_500, 2, true, testTenant, testWorkload))
+	_, code, err = engine.Settle(finalReq)
 	if err != nil || code != ReasonSettlementDuplicate {
 		t.Fatalf("duplicate settlement = (%s,%v)", code, err)
 	}
@@ -148,7 +152,7 @@ func TestEngineRejectsStaleAndConflictingCorrections(t *testing.T) {
 	if _, _, err := engine.Dispatch(dispatchRequest("versions", "versions-claim", admit.ProviderAttemptID, DispatchClaimed, testTenant, testWorkload)); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := engine.Settle(settleRequest("versions", "s1", 2_000, 2, false, testTenant, testWorkload)); err != nil {
+	if _, _, err := engine.Settle(settleRequest("versions", "s1", 2_000, 1, false, testTenant, testWorkload)); err != nil {
 		t.Fatal(err)
 	}
 	if _, code, err := engine.Settle(settleRequest("versions", "stale", 1_900, 1, false, testTenant, testWorkload)); err == nil || code != ReasonInvalidTransition {
@@ -180,8 +184,10 @@ func TestEnginePostFinalityCorrectionBecomesVisibleCarriedDebt(t *testing.T) {
 	if _, _, err := engine.Settle(settleRequest("debt", "final", 2_000, 1, true, testTenant, testWorkload)); err != nil {
 		t.Fatal(err)
 	}
-	res, code, err := engine.Settle(settleRequest("debt", "late-correction", 2_700, 2, true, testTenant, testWorkload))
-	if err != nil || code != ReasonReservationExceeded || res.ProvisionalCostMicros != 2_700 {
+	correction := settleRequest("debt", "late-correction", 2_700, 2, true, testTenant, testWorkload)
+	correction.PredecessorEventID = "final"
+	res, code, err := engine.Settle(correction)
+	if err != nil || code != ReasonCorrection || res.ProvisionalCostMicros != 2_700 {
 		t.Fatalf("post-final correction=(%+v,%s,%v)", res, code, err)
 	}
 	got := engine.Liability(testTenant)
@@ -199,7 +205,9 @@ func TestEnginePostFinalityDownwardCorrectionDoesNotMintCredit(t *testing.T) {
 	if _, _, err := engine.Settle(settleRequest("no-credit", "final", 2_000, 1, true, testTenant, testWorkload)); err != nil {
 		t.Fatal(err)
 	}
-	if _, code, err := engine.Settle(settleRequest("no-credit", "down", 1_000, 2, true, testTenant, testWorkload)); err != nil || code != ReasonCorrection {
+	down := settleRequest("no-credit", "down", 1_000, 2, true, testTenant, testWorkload)
+	down.PredecessorEventID = "final"
+	if _, code, err := engine.Settle(down); err != nil || code != ReasonCorrection {
 		t.Fatalf("downward correction=(%s,%v)", code, err)
 	}
 	got := engine.Liability(testTenant)
@@ -227,8 +235,8 @@ func TestEngineDuplicateAdmissionFingerprint(t *testing.T) {
 func TestEngineDeterministicCandidateTieBreak(t *testing.T) {
 	engine := NewEngine()
 	candidates := []Candidate{
-		{ModelRef: "z-deployment", InputPriceMicrosPerMillion: 400_000, OutputPriceMicrosPerMillion: 1_600_000, PricingVersion: "v1", ContextWindow: 100_000, QualityScore: 1, VerifiedOutputCap: true, Feasible: true},
-		{ModelRef: "a-deployment", InputPriceMicrosPerMillion: 400_000, OutputPriceMicrosPerMillion: 1_600_000, PricingVersion: "v1", ContextWindow: 100_000, QualityScore: 1, VerifiedOutputCap: true, Feasible: true},
+		candidateForTest("z-deployment", "v1"),
+		candidateForTest("a-deployment", "v1"),
 	}
 	resp := mustAdmit(t, engine, "tie", testTenant, testWorkload, candidates)
 	if resp.SelectedDeployment != "a-deployment" {
@@ -297,24 +305,41 @@ func admitRequest(requestID, tenant, workload string) AdmitRequest {
 
 func dispatchRequest(requestID, eventID, attemptID string, status DispatchStatus, tenant, workload string) DispatchRequest {
 	return DispatchRequest{RequestID: requestID, EventID: eventID, TenantID: tenant, WorkloadUID: workload,
-		ProviderAttemptID: attemptID, Status: status, AuthenticatedTenantID: tenant, AuthenticatedWorkloadUID: workload}
+		ProviderAttemptID: attemptID, RouteSnapshotHash: testRouteSnapshot("gpt-fr", "test-pricing-v1").SnapshotHash,
+		Status: status, AuthenticatedTenantID: tenant, AuthenticatedWorkloadUID: workload}
 }
 
 func settleRequest(requestID, eventID string, cost MoneyMicros, version int64, final bool, tenant, workload string) SettleRequest {
 	return SettleRequest{RequestID: requestID, SettlementID: eventID, TenantID: tenant, WorkloadUID: workload,
-		ActualCostMicros: cost, UsageVersion: version, Final: final,
+		ProviderAttemptID: requestID + ":attempt:1",
+		ActualCostMicros:  cost, UsageVersion: version, Final: final,
 		AuthenticatedTenantID: tenant, AuthenticatedWorkloadUID: workload}
 }
 
 func cancelRequest(requestID, eventID string, authoritative bool, tenant, workload string) CancelRequest {
 	return CancelRequest{RequestID: requestID, EventID: eventID, TenantID: tenant, WorkloadUID: workload,
+		ProviderAttemptID:     requestID + ":attempt:1",
 		AuthoritativeUnbilled: authoritative, AuthenticatedTenantID: tenant, AuthenticatedWorkloadUID: workload}
 }
 
 func defaultCandidates() []Candidate {
-	return []Candidate{{ModelRef: "gpt-fr", InputPriceMicrosPerMillion: 400_000, OutputPriceMicrosPerMillion: 1_600_000,
-		PricingVersion: "test-pricing-v1", SnapshotVersion: "test-snapshot-v1", ContextWindow: 128_000,
-		QualityScore: 0.95, VerifiedOutputCap: true, Feasible: true}}
+	return []Candidate{candidateForTest("gpt-fr", "test-pricing-v1")}
+}
+
+func candidateForTest(model, pricing string) Candidate {
+	snapshot := testRouteSnapshot(model, pricing)
+	return Candidate{ModelRef: model, ProviderRef: "provider-test", ProviderType: "openai", InputPriceMicrosPerMillion: 400_000, OutputPriceMicrosPerMillion: 1_600_000,
+		PricingVersion: pricing, SnapshotVersion: snapshot.SnapshotHash, RouteSnapshot: snapshot, ContextWindow: 128_000,
+		QualityScore: 0.95, VerifiedOutputCap: true, Feasible: true}
+}
+
+func testRouteSnapshot(model, pricing string) RouteSnapshot {
+	snapshot := RouteSnapshot{Namespace: "finance", ModelName: model, ModelUID: "model-uid-1", ModelGeneration: 1, ModelResourceVersion: "model-rv-1",
+		ProviderName: "provider-test", ProviderUID: "provider-uid-1", ProviderGeneration: 1, ProviderResourceVersion: "provider-rv-1",
+		PricingVersion: pricing, PricingComplianceHash: eventPayloadHash("pricing-compliance-test"), RouteBindingName: "primary",
+		ProviderDeployment: "provider-model", Cluster: "backend", Authority: "backend.example", PathMode: "openai-body"}
+	snapshot.SnapshotHash = RouteSnapshotHash(snapshot)
+	return snapshot
 }
 
 func defaultBudget() aiopsv1alpha1.AIBudgetPolicy {

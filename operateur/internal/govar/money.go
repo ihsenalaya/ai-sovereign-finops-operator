@@ -22,6 +22,23 @@ func quantityToMicros(q resource.Quantity) (MoneyMicros, error) {
 	return MoneyMicros(quotient.Int64()), nil
 }
 
+func quantityToExactMicros(q resource.Quantity) (MoneyMicros, error) {
+	rat, ok := new(big.Rat).SetString(q.AsDec().String())
+	if !ok || rat.Sign() < 0 {
+		return 0, errors.New("money quantity must be a non-negative decimal")
+	}
+	rat.Mul(rat, big.NewRat(microsPerCurrencyUnit, 1))
+	quotient, remainder := new(big.Int), new(big.Int)
+	quotient.QuoRem(rat.Num(), rat.Denom(), remainder)
+	if remainder.Sign() != 0 {
+		return 0, errors.New("money quantity is not exactly representable in integer micro-units")
+	}
+	if !quotient.IsInt64() {
+		return 0, errors.New("money quantity exceeds int64 micro-unit range")
+	}
+	return MoneyMicros(quotient.Int64()), nil
+}
+
 func expectedCostMicros(c Candidate, inputTokens, maxOutputTokens int64) (MoneyMicros, error) {
 	return costFromPriceMicros(c.InputPriceMicrosPerMillion, c.OutputPriceMicrosPerMillion, inputTokens, maxOutputTokens)
 }

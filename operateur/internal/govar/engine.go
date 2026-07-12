@@ -72,20 +72,25 @@ const (
 	ReasonInsufficientCalibration  ReasonCode = "insufficient_calibration"
 	ReasonReservationMethodUnknown ReasonCode = "reservation_method_unknown"
 	ReasonBudgetWindowConflict     ReasonCode = "budget_window_conflict"
+	ReasonRetriesDisabled          ReasonCode = "provider_retries_disabled_unreserved"
+	ReasonExpiredUndispatched      ReasonCode = "expired_undispatched"
 )
 
 type ReservationState string
 
 const (
-	StateReserved             ReservationState = "RESERVED"
-	StateDispatchPending      ReservationState = "DISPATCH_PENDING"
-	StateDispatched           ReservationState = "DISPATCHED"
-	StateUnresolved           ReservationState = "UNRESOLVED"
-	StateSettledProvisional   ReservationState = "SETTLED_PROVISIONAL"
-	StateCorrectedProvisional ReservationState = "CORRECTED_PROVISIONAL"
-	StateFinalized            ReservationState = "FINALIZED"
-	StateCanceledUnbilled     ReservationState = "CANCELED_UNBILLED"
-	StateFailedUnbilled       ReservationState = "FAILED_UNBILLED"
+	StateReserved               ReservationState = "RESERVED"
+	StateDispatchPending        ReservationState = "DISPATCH_PENDING"
+	StateDispatched             ReservationState = "DISPATCHED"
+	StateUnresolved             ReservationState = "UNRESOLVED"
+	StateSettledProvisional     ReservationState = "SETTLED_PROVISIONAL"
+	StateLateSettledProvisional ReservationState = "LATE_SETTLED_PROVISIONAL"
+	StateCorrectedProvisional   ReservationState = "CORRECTED_PROVISIONAL"
+	StateFinalized              ReservationState = "FINALIZED"
+	StateLateFinalized          ReservationState = "LATE_FINALIZED"
+	StateCanceledUnbilled       ReservationState = "CANCELED_UNBILLED"
+	StateFailedUnbilled         ReservationState = "FAILED_UNBILLED"
+	StateExpiredUndispatched    ReservationState = "EXPIRED_UNDISPATCHED"
 )
 
 type OutboxState string
@@ -132,19 +137,21 @@ type AdmitRequest struct {
 }
 
 type AdmitResponse struct {
-	Decision           Decision    `json:"decision"`
-	ReasonCode         ReasonCode  `json:"reason_code"`
-	SelectedDeployment string      `json:"selected_deployment,omitempty"`
-	ReservationID      string      `json:"reservation_id,omitempty"`
-	ProviderAttemptID  string      `json:"provider_attempt_id,omitempty"`
-	ReservedCostMicros MoneyMicros `json:"reserved_cost_micros,omitempty"`
-	ReservationMode    string      `json:"reservation_method,omitempty"`
-	AllocatedRiskPPB   int64       `json:"allocated_risk_ppb,omitempty"`
-	RiskLevel          string      `json:"risk_level,omitempty"`
-	PolicyVersion      string      `json:"policy_version,omitempty"`
-	PricingVersion     string      `json:"pricing_version,omitempty"`
-	Expiry             string      `json:"expiry,omitempty"`
-	TraceID            string      `json:"trace_id,omitempty"`
+	Decision            Decision       `json:"decision"`
+	ReasonCode          ReasonCode     `json:"reason_code"`
+	SelectedDeployment  string         `json:"selected_deployment,omitempty"`
+	ReservationID       string         `json:"reservation_id,omitempty"`
+	ProviderAttemptID   string         `json:"provider_attempt_id,omitempty"`
+	ProviderRetryPolicy string         `json:"provider_retry_policy,omitempty"`
+	ReservedCostMicros  MoneyMicros    `json:"reserved_cost_micros,omitempty"`
+	ReservationMode     string         `json:"reservation_method,omitempty"`
+	AllocatedRiskPPB    int64          `json:"allocated_risk_ppb,omitempty"`
+	RiskLevel           string         `json:"risk_level,omitempty"`
+	PolicyVersion       string         `json:"policy_version,omitempty"`
+	PricingVersion      string         `json:"pricing_version,omitempty"`
+	Expiry              string         `json:"expiry,omitempty"`
+	TraceID             string         `json:"trace_id,omitempty"`
+	RouteSnapshot       *RouteSnapshot `json:"route_snapshot,omitempty"`
 }
 
 type DispatchRequest struct {
@@ -153,6 +160,7 @@ type DispatchRequest struct {
 	TenantID                 string         `json:"tenant_id"`
 	WorkloadUID              string         `json:"workload_uid"`
 	ProviderAttemptID        string         `json:"provider_attempt_id"`
+	RouteSnapshotHash        string         `json:"route_snapshot_hash"`
 	Status                   DispatchStatus `json:"status"`
 	AuthenticatedTenantID    string         `json:"-"`
 	AuthenticatedWorkloadUID string         `json:"-"`
@@ -161,6 +169,7 @@ type DispatchRequest struct {
 type SettleRequest struct {
 	RequestID                string          `json:"request_id"`
 	SettlementID             string          `json:"settlement_id"`
+	ProviderAttemptID        string          `json:"provider_attempt_id"`
 	TenantID                 string          `json:"tenant_id"`
 	WorkloadUID              string          `json:"workload_uid"`
 	ActualCostMicros         MoneyMicros     `json:"actual_cost_micros"`
@@ -168,6 +177,7 @@ type SettleRequest struct {
 	ActualInput              int64           `json:"actual_input_tokens,omitempty"`
 	ActualOutput             int64           `json:"actual_output_tokens,omitempty"`
 	UsageVersion             int64           `json:"usage_version"`
+	PredecessorEventID       string          `json:"predecessor_event_id,omitempty"`
 	Final                    bool            `json:"final"`
 	ErrorStatus              string          `json:"error_status,omitempty"`
 	AuthenticatedTenantID    string          `json:"-"`
@@ -177,6 +187,7 @@ type SettleRequest struct {
 type CancelRequest struct {
 	RequestID                string `json:"request_id"`
 	EventID                  string `json:"event_id"`
+	ProviderAttemptID        string `json:"provider_attempt_id"`
 	TenantID                 string `json:"tenant_id"`
 	WorkloadUID              string `json:"workload_uid"`
 	Reason                   string `json:"reason,omitempty"`
@@ -186,12 +197,14 @@ type CancelRequest struct {
 }
 
 type LiabilityResponse struct {
-	TenantID                   string      `json:"tenant_id"`
-	SettledSpendMicros         MoneyMicros `json:"settled_spend_micros"`
-	OutstandingLiabilityMicros MoneyMicros `json:"outstanding_liability_micros"`
-	CarriedAdjustmentMicros    MoneyMicros `json:"carried_adjustment_micros"`
-	AvailableBudgetMicros      MoneyMicros `json:"available_budget_micros"`
-	ActiveReservations         int         `json:"active_reservations"`
+	TenantID                    string      `json:"tenant_id"`
+	SettledSpendMicros          MoneyMicros `json:"settled_spend_micros"`
+	OutstandingLiabilityMicros  MoneyMicros `json:"outstanding_liability_micros"`
+	CarriedAdjustmentMicros     MoneyMicros `json:"carried_adjustment_micros"`
+	AvailableBudgetMicros       MoneyMicros `json:"available_budget_micros"`
+	ActiveReservations          int         `json:"active_reservations"`
+	CurrentWindowID             string      `json:"current_window_id,omitempty"`
+	HistoricalAuditCreditMicros MoneyMicros `json:"historical_audit_credit_micros"`
 }
 
 type Reservation struct {
@@ -205,6 +218,8 @@ type Reservation struct {
 	State                       ReservationState
 	ReservedCostMicros          MoneyMicros
 	ProvisionalCostMicros       MoneyMicros
+	BaseActualMicros            MoneyMicros
+	SettledEffectMicros         MoneyMicros
 	ResidualHoldMicros          MoneyMicros
 	UsageVersion                int64
 	Finalized                   bool
@@ -217,8 +232,20 @@ type Reservation struct {
 	OutputPriceMicrosPerMillion int64
 	AdmissionFingerprint        string
 	CandidateSnapshotVersion    string
+	RouteSnapshot               RouteSnapshot
 	CohortID                    string
 	CohortIndex                 int64
+	CohortRegistryDigest        string
+	OriginWindowID              string
+	EnforcementWindowID         string
+	RolloverGuardMicros         MoneyMicros
+	CarryEffectMicros           MoneyMicros
+	HistoricalCreditMicros      MoneyMicros
+	Carried                     bool
+	LastUsageEventID            string
+	ProviderRetryPolicy         string
+	LastReasonCode              ReasonCode
+	LastTransitionEventID       string
 	Expiry                      time.Time
 }
 
@@ -236,14 +263,22 @@ type tenantLedger struct {
 	ActiveReservations      int
 	Requests                map[string]struct{}
 	BudgetIdentity          string
+	CurrentWindowID         string
+	HistoricalCreditMicros  MoneyMicros
+	WindowPeriod            string
 }
 
 type Engine struct {
-	mu           sync.Mutex
-	reservations map[string]Reservation
-	inbox        map[string]inboxEvent
-	tenants      map[string]*tenantLedger
-	now          func() time.Time
+	mu                 sync.Mutex
+	reservations       map[string]Reservation
+	inbox              map[string]inboxEvent
+	tenants            map[string]*tenantLedger
+	cohorts            map[string]FrozenCohort
+	adjustments        map[string]string
+	authorityKeyID     string
+	authorityKey       []byte
+	cohortSoftwareHash string
+	now                func() time.Time
 }
 
 func NewEngine() *Engine {
@@ -251,6 +286,8 @@ func NewEngine() *Engine {
 		reservations: map[string]Reservation{},
 		inbox:        map[string]inboxEvent{},
 		tenants:      map[string]*tenantLedger{},
+		cohorts:      map[string]FrozenCohort{},
+		adjustments:  map[string]string{},
 		now:          time.Now,
 	}
 }
@@ -261,20 +298,25 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 	if err := validateAdmitRequest(req); err != nil {
 		return AdmitResponse{}, err
 	}
+	candidates = validatedCandidates(candidates)
 	snapshot := BuildPolicySnapshot(budget, routing)
+	candidates = rankedCandidates(candidates, req.InputTokens, req.MaxOutputTokens, snapshot.Objective)
 	fingerprint := admissionFingerprint(req, budget, routing, candidates)
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	if existing, exists := e.reservations[req.RequestID]; exists {
+		if err := validateReservationRoute(existing); err != nil {
+			return AdmitResponse{}, err
+		}
 		if err := matchPrincipal(existing, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID); err != nil {
 			return AdmitResponse{}, err
 		}
 		if existing.AdmissionFingerprint != fingerprint {
 			return AdmitResponse{}, errors.New("duplicate request_id has conflicting immutable admission payload")
 		}
-		if existing.State == StateCanceledUnbilled || existing.State == StateFailedUnbilled || existing.State == StateFinalized {
+		if !reservationIsActive(existing.State) {
 			return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition, TraceID: req.RequestID}, nil
 		}
 		return responseForReservation(existing, ReasonDuplicateRequest), nil
@@ -289,9 +331,26 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 	if err != nil {
 		return AdmitResponse{}, fmt.Errorf("budget conversion: %w", err)
 	}
-	tenant, err := e.bindTenantBudget(req.AuthenticatedTenantID, budgetMicros, budgetIdentity(budget))
+	windowID, err := budgetWindowID(budget, e.now())
+	if err != nil {
+		return AdmitResponse{}, err
+	}
+	tenant, err := e.bindTenantBudget(req.AuthenticatedTenantID, budgetMicros, budgetPolicyIdentity(budget), windowID, budget.Spec.Period)
 	if err != nil {
 		return decisionResponse(req.RequestID, DecisionReject, ReasonBudgetWindowConflict, budget, routing), nil
+	}
+	cohortDigest := ""
+	allocatedRiskOverride := int64(-1)
+	if strings.TrimSpace(routing.Annotations[AnnotationReservationMethod]) == "govar_fixed_cohort" {
+		cohort, ok := e.cohorts[cohortKey(req.AuthenticatedTenantID, req.CohortID)]
+		if !ok {
+			return decisionResponse(req.RequestID, DecisionAbstain, ReasonInsufficientCalibration, budget, routing), nil
+		}
+		allocatedRiskOverride, err = validateCohortAdmission(req, routing, cohort, e.now())
+		if err != nil {
+			return decisionResponse(req.RequestID, DecisionAbstain, ReasonInsufficientCalibration, budget, routing), nil
+		}
+		cohortDigest = cohort.RegistryDigest
 	}
 	choice, infeasibleReason, err := chooseAdmission(req, routing, candidates, tenant.available())
 	if err != nil {
@@ -305,6 +364,11 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 		return decisionResponse(req.RequestID, decision, infeasibleReason, budget, routing), nil
 	}
 	best, reservedCost := choice.Candidate, choice.Reservation
+	if allocatedRiskOverride >= 0 && choice.Method == "govar_fixed_cohort" {
+		choice.AllocatedRiskPPB = allocatedRiskOverride
+	} else if choice.Method != "govar_fixed_cohort" {
+		choice.AllocatedRiskPPB = 0
+	}
 	if choice.Method == "govar_fixed_cohort" {
 		for _, existing := range e.reservations {
 			if existing.TenantID == req.AuthenticatedTenantID && existing.CohortID == req.CohortID && existing.CohortIndex == req.CohortIndex {
@@ -325,8 +389,13 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 		OutputPriceMicrosPerMillion: best.OutputPriceMicrosPerMillion,
 		AdmissionFingerprint:        fingerprint,
 		CandidateSnapshotVersion:    best.SnapshotVersion,
+		RouteSnapshot:               best.RouteSnapshot,
 		CohortID:                    req.CohortID,
 		CohortIndex:                 req.CohortIndex,
+		CohortRegistryDigest:        cohortDigest,
+		OriginWindowID:              tenant.CurrentWindowID,
+		EnforcementWindowID:         tenant.CurrentWindowID,
+		ProviderRetryPolicy:         "NO_PROVIDER_RETRY",
 	}
 	tenant.ReservedMicros += reservedCost
 	tenant.Requests[req.RequestID] = struct{}{}
@@ -340,7 +409,7 @@ func (e *Engine) Dispatch(req DispatchRequest) (Reservation, ReasonCode, error) 
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	payloadHash := eventPayloadHash("dispatch", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, string(req.Status))
+	payloadHash := eventPayloadHash("dispatch", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, req.RouteSnapshotHash, string(req.Status))
 	if prior, ok := e.inbox[req.EventID]; ok {
 		if prior.RequestID != req.RequestID {
 			return Reservation{}, ReasonDuplicateEvent, errors.New("event_id is already bound to another request")
@@ -355,6 +424,9 @@ func (e *Engine) Dispatch(req DispatchRequest) (Reservation, ReasonCode, error) 
 		if err := matchPrincipal(res, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID); err != nil {
 			return Reservation{}, ReasonPrincipalMismatch, err
 		}
+		if err := validateReservationRoute(res); err != nil {
+			return res, ReasonInvalidTransition, err
+		}
 		return res, ReasonDuplicateEvent, nil
 	}
 	res, ok := e.reservations[req.RequestID]
@@ -367,10 +439,17 @@ func (e *Engine) Dispatch(req DispatchRequest) (Reservation, ReasonCode, error) 
 	if req.ProviderAttemptID != res.ProviderAttemptID {
 		return res, ReasonInvalidTransition, errors.New("provider_attempt_id does not match the reserved attempt")
 	}
+	if err := validateReservationRoute(res); err != nil || req.RouteSnapshotHash != res.RouteSnapshot.SnapshotHash {
+		return res, ReasonInvalidTransition, errors.New("dispatch route snapshot does not match reservation")
+	}
+	if err := e.advanceTenantWindowLocked(res.TenantID, e.now()); err != nil {
+		return res, ReasonBudgetWindowConflict, err
+	}
 	code, err := applyDispatch(&res, req.Status)
 	if err != nil {
 		return res, code, err
 	}
+	res.LastReasonCode, res.LastTransitionEventID = code, req.EventID
 	e.reservations[req.RequestID] = res
 	e.inbox[req.EventID] = inboxEvent{RequestID: req.RequestID, Kind: "dispatch", PayloadHash: payloadHash}
 	return res, code, nil
@@ -382,7 +461,7 @@ func (e *Engine) Settle(req SettleRequest) (Reservation, ReasonCode, error) {
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	payloadHash := eventPayloadHash("settlement", req.RequestID, req.TenantID, req.WorkloadUID, fmt.Sprint(req.ActualCostMicros), fmt.Sprint(req.ActualInput), fmt.Sprint(req.ActualOutput), fmt.Sprint(req.UsageVersion), fmt.Sprint(req.Final))
+	payloadHash := eventPayloadHash("settlement", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, fmt.Sprint(req.ActualCostMicros), fmt.Sprint(req.ActualInput), fmt.Sprint(req.ActualOutput), fmt.Sprint(req.UsageVersion), req.PredecessorEventID, fmt.Sprint(req.Final), req.ErrorStatus)
 	if prior, ok := e.inbox[req.SettlementID]; ok {
 		if prior.RequestID != req.RequestID {
 			return Reservation{}, ReasonDuplicateEvent, errors.New("settlement_id is already bound to another request")
@@ -397,6 +476,9 @@ func (e *Engine) Settle(req SettleRequest) (Reservation, ReasonCode, error) {
 		if err := matchPrincipal(res, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID); err != nil {
 			return Reservation{}, ReasonPrincipalMismatch, err
 		}
+		if err := validateReservationRoute(res); err != nil {
+			return res, ReasonInvalidTransition, err
+		}
 		return res, ReasonSettlementDuplicate, nil
 	}
 	res, ok := e.reservations[req.RequestID]
@@ -406,14 +488,24 @@ func (e *Engine) Settle(req SettleRequest) (Reservation, ReasonCode, error) {
 	if err := matchPrincipal(res, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID); err != nil {
 		return Reservation{}, ReasonPrincipalMismatch, err
 	}
+	if req.ProviderAttemptID != res.ProviderAttemptID {
+		return res, ReasonInvalidTransition, errors.New("provider_attempt_id does not match the reserved attempt")
+	}
+	if err := validateReservationRoute(res); err != nil {
+		return res, ReasonInvalidTransition, err
+	}
+	if err := e.advanceTenantWindowLocked(res.TenantID, e.now()); err != nil {
+		return res, ReasonBudgetWindowConflict, err
+	}
 	tenant := e.ensureTenant(res.TenantID, 0)
 	code, err := applySettlement(&res, tenant, req)
 	if err != nil {
 		return res, code, err
 	}
+	res.LastReasonCode, res.LastTransitionEventID = code, req.SettlementID
 	e.reservations[req.RequestID] = res
 	e.inbox[req.SettlementID] = inboxEvent{RequestID: req.RequestID, Kind: "settlement", PayloadHash: payloadHash}
-	if res.State == StateFinalized {
+	if !reservationIsActive(res.State) {
 		delete(tenant.Requests, req.RequestID)
 	}
 	return res, code, nil
@@ -425,7 +517,10 @@ func (e *Engine) Cancel(req CancelRequest) (Reservation, ReasonCode, error) {
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	payloadHash := eventPayloadHash("cancel", req.RequestID, req.TenantID, req.WorkloadUID, req.Reason, fmt.Sprint(req.AuthoritativeUnbilled))
+	if strings.TrimSpace(req.ProviderAttemptID) == "" {
+		return Reservation{}, ReasonInvalidTransition, errors.New("provider_attempt_id is required")
+	}
+	payloadHash := eventPayloadHash("cancel", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, req.Reason, fmt.Sprint(req.AuthoritativeUnbilled))
 	if prior, ok := e.inbox[req.EventID]; ok {
 		if prior.RequestID != req.RequestID {
 			return Reservation{}, ReasonDuplicateEvent, errors.New("event_id is already bound to another request")
@@ -440,6 +535,9 @@ func (e *Engine) Cancel(req CancelRequest) (Reservation, ReasonCode, error) {
 		if err := matchPrincipal(res, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID); err != nil {
 			return Reservation{}, ReasonPrincipalMismatch, err
 		}
+		if err := validateReservationRoute(res); err != nil {
+			return res, ReasonInvalidTransition, err
+		}
 		return res, ReasonDuplicateEvent, nil
 	}
 	res, ok := e.reservations[req.RequestID]
@@ -449,11 +547,21 @@ func (e *Engine) Cancel(req CancelRequest) (Reservation, ReasonCode, error) {
 	if err := matchPrincipal(res, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID); err != nil {
 		return Reservation{}, ReasonPrincipalMismatch, err
 	}
+	if req.ProviderAttemptID != res.ProviderAttemptID {
+		return res, ReasonInvalidTransition, errors.New("provider_attempt_id does not match the reserved attempt")
+	}
+	if err := validateReservationRoute(res); err != nil {
+		return res, ReasonInvalidTransition, err
+	}
+	if err := e.advanceTenantWindowLocked(res.TenantID, e.now()); err != nil {
+		return res, ReasonBudgetWindowConflict, err
+	}
 	tenant := e.ensureTenant(res.TenantID, 0)
 	code, err := applyCancel(&res, tenant, req.AuthoritativeUnbilled)
 	if err != nil {
 		return res, code, err
 	}
+	res.LastReasonCode, res.LastTransitionEventID = code, req.EventID
 	e.reservations[req.RequestID] = res
 	e.inbox[req.EventID] = inboxEvent{RequestID: req.RequestID, Kind: "cancel", PayloadHash: payloadHash}
 	if res.State == StateCanceledUnbilled || res.State == StateFailedUnbilled {
@@ -466,16 +574,23 @@ func (e *Engine) Liability(tenantID string) LiabilityResponse {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	tenant := e.ensureTenant(tenantID, 0)
+	_ = e.advanceTenantWindowLocked(tenantID, e.now())
+	tenant = e.ensureTenant(tenantID, 0)
 	return LiabilityResponse{
 		TenantID: tenantID, SettledSpendMicros: tenant.SettledMicros,
 		OutstandingLiabilityMicros: tenant.ReservedMicros,
 		CarriedAdjustmentMicros:    tenant.CarriedAdjustmentMicros,
 		AvailableBudgetMicros:      tenant.available(), ActiveReservations: len(tenant.Requests),
+		CurrentWindowID: tenant.CurrentWindowID, HistoricalAuditCreditMicros: tenant.HistoricalCreditMicros,
 	}
 }
 
 func (e *Engine) LiabilityWithError(tenantID string) (LiabilityResponse, error) {
 	return e.Liability(tenantID), nil
+}
+
+func (e *Engine) ReserveRetry(context.Context, string) (ReasonCode, error) {
+	return ReasonRetriesDisabled, errors.New("provider retry/fallback/hedge is disabled unless a separately reserved attempt API is implemented")
 }
 
 func applyDispatch(res *Reservation, status DispatchStatus) (ReasonCode, error) {
@@ -523,26 +638,48 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 		return ReasonInvalidTransition, errors.New("settlement requires a previously claimed provider attempt")
 	}
 	if res.Finalized {
-		if req.UsageVersion <= res.UsageVersion && req.ActualCostMicros == res.ProvisionalCostMicros {
-			return ReasonSettlementDuplicate, nil
-		}
-		if req.UsageVersion <= res.UsageVersion {
-			return ReasonInvalidTransition, errors.New("post-finality correction version is not monotone")
+		if req.UsageVersion != res.UsageVersion+1 || req.PredecessorEventID != res.LastUsageEventID {
+			return ReasonInvalidTransition, errors.New("post-finality correction requires exact next version and predecessor event")
 		}
 		delta := req.ActualCostMicros - res.ProvisionalCostMicros
 		res.UsageVersion = req.UsageVersion
 		if delta > 0 {
-			tenant.CarriedAdjustmentMicros += delta
+			if req.ActualCostMicros > res.BaseActualMicros {
+				targetDebt := req.ActualCostMicros - res.BaseActualMicros
+				tenant.CarriedAdjustmentMicros += targetDebt - res.CarryEffectMicros
+				res.CarryEffectMicros = targetDebt
+			}
+			desiredCredit := res.BaseActualMicros - req.ActualCostMicros
+			if desiredCredit < 0 {
+				desiredCredit = 0
+			}
+			tenant.HistoricalCreditMicros += desiredCredit - res.HistoricalCreditMicros
+			res.HistoricalCreditMicros = desiredCredit
 			res.ProvisionalCostMicros = req.ActualCostMicros
-			return ReasonReservationExceeded, nil
+			res.LastUsageEventID = req.SettlementID
+			if req.ActualCostMicros > res.ReservedCostMicros {
+				return ReasonReservationExceeded, nil
+			}
+			return ReasonCorrection, nil
 		}
 		// Downward post-final corrections are audit-only. They cannot mint an
 		// availability credit after the authoritative hold has been released.
+		desiredCredit := res.BaseActualMicros - req.ActualCostMicros
+		if desiredCredit < 0 {
+			desiredCredit = 0
+		}
+		tenant.HistoricalCreditMicros += desiredCredit - res.HistoricalCreditMicros
+		res.HistoricalCreditMicros = desiredCredit
+		res.ProvisionalCostMicros = req.ActualCostMicros
+		res.LastUsageEventID = req.SettlementID
 		return ReasonCorrection, nil
 	}
 	// Authoritative usage is evidence that the provider attempt was delivered,
 	// even when its acknowledgement raced or was lost.
 	res.OutboxState = OutboxDelivered
+	if res.UsageVersion == 0 && (req.UsageVersion != 1 || req.PredecessorEventID != "") {
+		return ReasonInvalidTransition, errors.New("first usage requires version 1 and no predecessor")
+	}
 	if req.UsageVersion < res.UsageVersion {
 		return ReasonInvalidTransition, errors.New("usage_version is stale")
 	}
@@ -553,7 +690,13 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 		if !req.Final {
 			return ReasonSettlementDuplicate, nil
 		}
+		if req.PredecessorEventID != res.LastUsageEventID {
+			return ReasonInvalidTransition, errors.New("finality requires predecessor event")
+		}
 	} else {
+		if res.UsageVersion > 0 && (req.UsageVersion != res.UsageVersion+1 || req.PredecessorEventID != res.LastUsageEventID) {
+			return ReasonInvalidTransition, errors.New("correction requires exact next version and predecessor event")
+		}
 		previous := res.ProvisionalCostMicros
 		delta := req.ActualCostMicros - previous
 		newResidual := res.ReservedCostMicros - req.ActualCostMicros
@@ -561,23 +704,85 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 			newResidual = 0
 		}
 		oldHold := res.ResidualHoldMicros
-		tenant.SettledMicros += delta
-		tenant.ReservedMicros += newResidual - oldHold
+		first := res.UsageVersion == 0
+		if first {
+			res.BaseActualMicros = req.ActualCostMicros
+		}
+		late := res.State == StateUnresolved || tenant.CurrentWindowID != res.OriginWindowID
+		rolledProvisional := !res.Carried && res.EnforcementWindowID != "" && res.EnforcementWindowID != tenant.CurrentWindowID
+		if first && late {
+			tenant.CarriedAdjustmentMicros += req.ActualCostMicros
+			tenant.ReservedMicros += newResidual - oldHold
+			res.Carried = true
+			res.CarryEffectMicros = req.ActualCostMicros
+			res.EnforcementWindowID = tenant.CurrentWindowID
+		} else if res.Carried {
+			if req.ActualCostMicros > res.CarryEffectMicros {
+				enforcementDelta := req.ActualCostMicros - res.CarryEffectMicros
+				tenant.CarriedAdjustmentMicros += enforcementDelta
+				targetResidual := res.ReservedCostMicros - req.ActualCostMicros
+				if targetResidual < 0 {
+					targetResidual = 0
+				}
+				tenant.ReservedMicros += targetResidual - oldHold
+				newResidual = targetResidual
+				res.CarryEffectMicros = req.ActualCostMicros
+				desiredCredit := res.BaseActualMicros - req.ActualCostMicros
+				if desiredCredit < 0 {
+					desiredCredit = 0
+				}
+				tenant.HistoricalCreditMicros += desiredCredit - res.HistoricalCreditMicros
+				res.HistoricalCreditMicros = desiredCredit
+			} else if req.ActualCostMicros < res.CarryEffectMicros {
+				// A downward historical correction is audit-only. Preserve current
+				// debt and hold exposure; never mint availability.
+				desiredCredit := res.BaseActualMicros - req.ActualCostMicros
+				if desiredCredit < 0 {
+					desiredCredit = 0
+				}
+				tenant.HistoricalCreditMicros += desiredCredit - res.HistoricalCreditMicros
+				res.HistoricalCreditMicros = desiredCredit
+				newResidual = oldHold
+			}
+		} else if rolledProvisional {
+			desiredCredit := res.BaseActualMicros - req.ActualCostMicros
+			if desiredCredit < 0 {
+				desiredCredit = 0
+			}
+			tenant.HistoricalCreditMicros += desiredCredit - res.HistoricalCreditMicros
+			res.HistoricalCreditMicros = desiredCredit
+			// residual and guard move oppositely, so current exposure stays R.
+			res.RolloverGuardMicros += delta
+			tenant.ReservedMicros += (newResidual - oldHold) + delta
+		} else {
+			tenant.SettledMicros += delta
+			tenant.ReservedMicros += newResidual - oldHold
+			res.SettledEffectMicros = req.ActualCostMicros
+		}
 		res.ProvisionalCostMicros = req.ActualCostMicros
 		res.ResidualHoldMicros = newResidual
 		res.UsageVersion = req.UsageVersion
+		res.LastUsageEventID = req.SettlementID
 	}
 
-	late := res.State == StateUnresolved || time.Now().UTC().After(res.Expiry)
+	late := res.Carried || res.State == StateUnresolved || tenant.CurrentWindowID != res.OriginWindowID
 	if req.Final {
-		tenant.ReservedMicros -= res.ResidualHoldMicros
+		tenant.ReservedMicros -= res.ResidualHoldMicros + res.RolloverGuardMicros
 		res.ResidualHoldMicros = 0
+		res.RolloverGuardMicros = 0
 		res.Finalized = true
-		res.State = StateFinalized
+		res.LastUsageEventID = req.SettlementID
+		finalCode := ReasonFinalized
+		if res.Carried {
+			res.State = StateLateFinalized
+			finalCode = ReasonLateSettlement
+		} else {
+			res.State = StateFinalized
+		}
 		if req.ActualCostMicros > res.ReservedCostMicros {
 			return ReasonReservationExceeded, nil
 		}
-		return ReasonFinalized, nil
+		return finalCode, nil
 	}
 	if req.ActualCostMicros > res.ReservedCostMicros {
 		res.State = StateCorrectedProvisional
@@ -587,7 +792,11 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 		res.State = StateCorrectedProvisional
 		return ReasonCorrection, nil
 	}
-	res.State = StateSettledProvisional
+	if late {
+		res.State = StateLateSettledProvisional
+	} else {
+		res.State = StateSettledProvisional
+	}
 	if late {
 		return ReasonLateSettlement, nil
 	}
@@ -602,8 +811,9 @@ func applyCancel(res *Reservation, tenant *tenantLedger, authoritative bool) (Re
 		}
 		res.OutboxState = OutboxCanceled
 		res.State = StateCanceledUnbilled
-		tenant.ReservedMicros -= res.ResidualHoldMicros
+		tenant.ReservedMicros -= res.ResidualHoldMicros + res.RolloverGuardMicros
 		res.ResidualHoldMicros = 0
+		res.RolloverGuardMicros = 0
 		return ReasonCanceled, nil
 	case StateDispatchPending, StateDispatched, StateUnresolved:
 		if !authoritative {
@@ -612,10 +822,11 @@ func applyCancel(res *Reservation, tenant *tenantLedger, authoritative bool) (Re
 		}
 		res.OutboxState = OutboxCanceled
 		res.State = StateFailedUnbilled
-		tenant.ReservedMicros -= res.ResidualHoldMicros
+		tenant.ReservedMicros -= res.ResidualHoldMicros + res.RolloverGuardMicros
 		res.ResidualHoldMicros = 0
+		res.RolloverGuardMicros = 0
 		return ReasonCanceled, nil
-	case StateSettledProvisional, StateCorrectedProvisional, StateFinalized:
+	case StateSettledProvisional, StateLateSettledProvisional, StateCorrectedProvisional, StateFinalized, StateLateFinalized:
 		return ReasonInvalidTransition, errors.New("settled request cannot be canceled")
 	case StateCanceledUnbilled, StateFailedUnbilled:
 		return ReasonDuplicateEvent, nil
@@ -640,6 +851,9 @@ func validateAdmitRequest(req AdmitRequest) error {
 func validateSettleRequest(req SettleRequest) error {
 	if strings.TrimSpace(req.SettlementID) == "" {
 		return errors.New("settlement_id is required")
+	}
+	if strings.TrimSpace(req.ProviderAttemptID) == "" {
+		return errors.New("provider_attempt_id is required")
 	}
 	if legacy := strings.TrimSpace(string(req.LegacyActualCost)); legacy != "" && legacy != "0" && legacy != "0.0" {
 		return errors.New("actual_cost is deprecated; send integer actual_cost_micros")
@@ -672,6 +886,7 @@ func matchPrincipal(res Reservation, tenantID, workloadUID string) error {
 }
 
 func responseForReservation(res Reservation, reason ReasonCode) AdmitResponse {
+	route := res.RouteSnapshot
 	return AdmitResponse{
 		Decision: DecisionAdmit, ReasonCode: reason, SelectedDeployment: res.SelectedDeployment,
 		ReservationID: res.RequestID, ProviderAttemptID: res.ProviderAttemptID,
@@ -679,7 +894,32 @@ func responseForReservation(res Reservation, reason ReasonCode) AdmitResponse {
 		AllocatedRiskPPB: res.AllocatedRiskPPB, RiskLevel: res.RiskLevel,
 		PolicyVersion: res.PolicyVersion, PricingVersion: res.PricingVersion,
 		Expiry: res.Expiry.UTC().Format(time.RFC3339), TraceID: res.RequestID,
+		ProviderRetryPolicy: res.ProviderRetryPolicy,
+		RouteSnapshot:       &route,
 	}
+}
+
+func validatedCandidates(candidates []Candidate) []Candidate {
+	out := append([]Candidate(nil), candidates...)
+	for i := range out {
+		if out[i].Feasible {
+			if err := validateCandidateSnapshot(out[i]); err != nil {
+				out[i].Feasible = false
+				out[i].InfeasibleReason = ReasonNotRoutable
+			}
+		}
+	}
+	return out
+}
+
+func validateReservationRoute(res Reservation) error {
+	if err := ValidateRouteSnapshot(res.RouteSnapshot); err != nil {
+		return err
+	}
+	if res.SelectedDeployment != res.RouteSnapshot.ModelName || res.PricingVersion != res.RouteSnapshot.PricingVersion || res.CandidateSnapshotVersion != res.RouteSnapshot.SnapshotHash {
+		return errors.New("reservation route snapshot identity mismatch")
+	}
+	return nil
 }
 
 func decisionResponse(trace string, decision Decision, reason ReasonCode, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy) AdmitResponse {
@@ -695,12 +935,30 @@ func (e *Engine) ensureTenant(tenantID string, budget MoneyMicros) *tenantLedger
 	return tenant
 }
 
-func (e *Engine) bindTenantBudget(tenantID string, budget MoneyMicros, identity string) (*tenantLedger, error) {
+func (e *Engine) bindTenantBudget(tenantID string, budget MoneyMicros, identity, windowID, period string) (*tenantLedger, error) {
 	tenant := e.ensureTenant(tenantID, budget)
-	if tenant.BudgetIdentity != "" && tenant.BudgetIdentity != identity && (tenant.ReservedMicros != 0 || tenant.SettledMicros != 0 || tenant.CarriedAdjustmentMicros != 0) {
+	if tenant.BudgetIdentity != "" && tenant.CurrentWindowID == windowID && tenant.BudgetIdentity != identity {
 		return nil, errBudgetWindowChanged
 	}
+	if tenant.CurrentWindowID != "" && tenant.CurrentWindowID == windowID && tenant.BudgetMicros != budget {
+		return nil, errBudgetWindowChanged
+	}
+	if tenant.CurrentWindowID != "" && tenant.CurrentWindowID != windowID {
+		if !windowStartsAfter(windowID, tenant.CurrentWindowID) {
+			return nil, errBudgetWindowChanged
+		}
+		for id, r := range e.reservations {
+			if r.TenantID == tenantID && (r.State == StateSettledProvisional || r.State == StateCorrectedProvisional) && !r.Carried && r.EnforcementWindowID == tenant.CurrentWindowID {
+				r.RolloverGuardMicros += r.ProvisionalCostMicros
+				tenant.ReservedMicros += r.ProvisionalCostMicros
+				e.reservations[id] = r
+			}
+		}
+		tenant.SettledMicros = 0
+	}
 	tenant.BudgetIdentity = identity
+	tenant.CurrentWindowID = windowID
+	tenant.WindowPeriod = strings.ToLower(period)
 	tenant.BudgetMicros = budget
 	return tenant, nil
 }

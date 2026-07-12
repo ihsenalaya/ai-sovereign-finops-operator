@@ -1,6 +1,7 @@
 package sidecarproxy
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -85,7 +86,9 @@ func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 	}))
 	defer govar.Close()
 
+	upstreamCalled := false
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamCalled = true
 		if got := r.Header.Get("x-ai-eg-model"); got != "gpt-fr" {
 			t.Fatalf("x-ai-eg-model = %q, want gpt-fr", got)
 		}
@@ -128,17 +131,11 @@ func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 		t.Fatalf("client do: %v", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status = %d, want 200", resp.StatusCode)
+	if resp.StatusCode != http.StatusMisdirectedRequest {
+		t.Fatalf("status = %d, want native-gateway-required 421", resp.StatusCode)
 	}
-	if gotAdmit["tenant_id"] != "tenant-finance" {
-		t.Fatalf("admit tenant_id = %#v", gotAdmit["tenant_id"])
-	}
-	if gotAdmit["workload_uid"] != "pod-uid-finance" || len(dispatchStatuses) != 2 || dispatchStatuses[0] != "CLAIMED" || dispatchStatuses[1] != "DELIVERED" {
-		t.Fatalf("admit/dispatch path: admit=%#v statuses=%#v", gotAdmit, dispatchStatuses)
-	}
-	if gotSettle["actual_input_tokens"] != float64(10) || gotSettle["actual_output_tokens"] != float64(20) {
-		t.Fatalf("settle payload = %#v", gotSettle)
+	if upstreamCalled || len(gotAdmit) != 0 || len(gotSettle) != 0 || len(dispatchStatuses) != 0 {
+		t.Fatalf("admission-only sidecar performed authoritative/direct work: upstream=%v admit=%v settle=%v dispatch=%v", upstreamCalled, gotAdmit, gotSettle, dispatchStatuses)
 	}
 }
 
@@ -202,11 +199,8 @@ func TestProxyCancelsOnUpstreamFailure(t *testing.T) {
 		t.Fatalf("client do: %v", err)
 	}
 	defer resp.Body.Close()
-	if !cancelCalled {
-		t.Fatal("expected cancel to be called")
-	}
-	if len(dispatchStatuses) != 2 || dispatchStatuses[0] != "CLAIMED" || dispatchStatuses[1] != "DELIVERED" {
-		t.Fatalf("dispatch statuses=%#v, want claimed then delivered", dispatchStatuses)
+	if resp.StatusCode != http.StatusMisdirectedRequest || cancelCalled || len(dispatchStatuses) != 0 {
+		t.Fatalf("status=%d cancel=%v dispatch=%v", resp.StatusCode, cancelCalled, dispatchStatuses)
 	}
 }
 
@@ -267,7 +261,7 @@ func TestEnabledIncompleteConfigFailsClosedForAllGovernedShapes(t *testing.T) {
 		handler := New(Config{GOVAREnabled: true, Targets: []string{"different.example.test"}})
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://provider.example"+path, strings.NewReader(`{}`)))
-		if recorder.Code != http.StatusServiceUnavailable {
+		if recorder.Code != http.StatusMisdirectedRequest {
 			t.Fatalf("path=%s status=%d", path, recorder.Code)
 		}
 	}
@@ -289,7 +283,7 @@ func TestEnabledModeIgnoresPodTargetExclusionForLLMAdmission(t *testing.T) {
 	handler := New(cfg)
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://provider.example/v1/chat/completions", strings.NewReader(`{"max_tokens":8}`)))
-	if !admitCalled || recorder.Code != http.StatusConflict {
+	if admitCalled || recorder.Code != http.StatusMisdirectedRequest {
 		t.Fatalf("admit=%v status=%d", admitCalled, recorder.Code)
 	}
 }
@@ -322,7 +316,7 @@ func TestDuplicateAdmissionStopsBeforeProviderDispatch(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, upstream.URL+"/v1/chat/completions", strings.NewReader(`{"max_tokens":8}`))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, req)
-	if recorder.Code != http.StatusConflict || providerCalled {
+	if recorder.Code != http.StatusMisdirectedRequest || providerCalled {
 		t.Fatalf("duplicate response=%d providerCalled=%v", recorder.Code, providerCalled)
 	}
 }
@@ -360,8 +354,27 @@ func TestMissingUsageMarksDeliveredRequestUnresolvedWithoutSettle(t *testing.T) 
 	req := httptest.NewRequest(http.MethodPost, upstream.URL+"/v1/chat/completions", strings.NewReader(`{"max_tokens":8}`))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, req)
-	if !cancelCalled || settleCalled {
+	if recorder.Code != http.StatusMisdirectedRequest || cancelCalled || settleCalled {
 		t.Fatalf("missing usage cancel=%v settle=%v", cancelCalled, settleCalled)
+	}
+}
+
+func TestGovernedSidecarRejectsStreamingAndOversizeBodies(t *testing.T) {
+	handler := New(readyGOVARConfig("http://gov-ar.invalid"))
+	stream := httptest.NewRecorder()
+	handler.ServeHTTP(stream, httptest.NewRequest(http.MethodPost, "http://provider.example/v1/messages", strings.NewReader(`{"stream":true}`)))
+	if stream.Code != http.StatusBadRequest || !strings.Contains(stream.Body.String(), "stream=true") {
+		t.Fatalf("stream response=%d %s", stream.Code, stream.Body.String())
+	}
+	oversize := httptest.NewRecorder()
+	handler.ServeHTTP(oversize, httptest.NewRequest(http.MethodPost, "http://provider.example/v1/chat/completions", bytes.NewReader(bytes.Repeat([]byte("x"), int(maxProxyBodyBytes)+1))))
+	if oversize.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("oversize response=%d", oversize.Code)
+	}
+	unknown := httptest.NewRecorder()
+	handler.ServeHTTP(unknown, httptest.NewRequest(http.MethodPost, "http://provider.example/custom/generate", strings.NewReader(`{}`)))
+	if unknown.Code != http.StatusForbidden {
+		t.Fatalf("unknown shape response=%d", unknown.Code)
 	}
 }
 

@@ -43,3 +43,32 @@ This decision tightens D009 after an independent theory counterexample. The theo
 ## 2026-07-12 — D011 — Integer ledger and authenticated synchronous enforcement boundary
 
 The measured implementation uses integer micro-currency, PostgreSQL serializable reserve transactions, immutable request fingerprints, an inbox/outbox dispatch protocol, versioned provisional/final usage, and retained residual liability. Unreconciled exploratory floating-point rows fail startup; they are never silently converted. Injected Pods authenticate with a dedicated-audience Pod-bound projected service-account token. The service verifies it through Kubernetes TokenReview, binds the result to the live Pod name and UID, and derives tenant and governance metadata from that Pod rather than request headers. Native Envoy traffic uses the official synchronous `ext_proc` protocol: downstream mTLS with `SANITIZE_SET` supplies the workload certificate identity, while the Envoy-to-ext-proc hop independently requires TLS 1.3 mutual authentication and an allowlisted gateway SPIFFE URI. Production Helm rendering fails without PostgreSQL, the server certificate, client CA, gateway SPIFFE identity, and the server-only internal signing secret. Development-only insecure ext-proc binds loopback and is not exposed by a Service. This is an enforcement and experimental architecture decision, not a novelty claim.
+
+## 2026-07-12 — D012 — Immutable governance and admission-to-dispatch binding
+
+This decision tightens D011. Pod annotations are compatibility assertions only;
+tenant, budget, routing, sensitivity, and residency authority comes from an
+update-immutable `AIWorkloadBinding` keyed by the authenticated ServiceAccount
+and resolved to exact ServiceAccount/policy UIDs and generations. Workload
+tokens are admission-only. Gateway dispatch, settlement, and authoritative
+finality use a separate internal role, and `gov-ar-admission` runs under its own
+least-privilege ServiceAccount rather than the controller-manager role.
+
+Every admitted request now stores a v4 route snapshot atomically with its
+reservation: exact model/provider UIDs, generations and resource versions; the
+canonical pricing/compliance digest; and a provider-owned route binding. Envoy
+actuates that returned snapshot directly and never re-reads mutable catalog
+state after reservation. Dispatch events echo the snapshot hash. Runtime startup
+never migrates v3 implicitly; the explicit migration accepts only the exact
+empty v3 layout and refuses any reservation or frozen cohort that cannot be
+backfilled without invention. New theorem-bearing cohorts use the v2 registry
+domain bound to the v4 layout, route-snapshot schema, and software hash.
+
+Request approval uses separate immutable proposal and independently authorized
+human-decision resources with controller-produced evidence and one-use Lease
+consumption. The admission identity cannot create a decision or write approval
+status. Provider retries remain disabled unless a later implementation reserves
+a distinct billable attempt, and unsupported Bedrock routing fails closed. These
+controls close enforcement and reproducibility defects; they are not claimed as
+novel, and they do not close the still-open complete billable-category,
+calibration/drift-producer, worker, observability, or combined Kind E0 gates.

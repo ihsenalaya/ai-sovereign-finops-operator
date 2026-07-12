@@ -14,7 +14,7 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 	ready := []metav1.Condition{{Type: aiopsv1alpha1.ConditionReady, Status: metav1.ConditionTrue}}
 	models := []aiopsv1alpha1.AIModel{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "gpt-fr", Generation: 1, ResourceVersion: "m1", Annotations: map[string]string{AnnotationRoutable: "true", AnnotationOutputCapVerified: "true"}},
+			ObjectMeta: metav1.ObjectMeta{Namespace: "finance", Name: "gpt-fr", UID: "model-fr-uid", Generation: 1, ResourceVersion: "m1"},
 			Spec: aiopsv1alpha1.AIModelSpec{
 				ProviderRef:          "azure-fr",
 				ModelName:            "gpt-4.1-mini",
@@ -24,11 +24,13 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 				SensitiveDataAllowed: true,
 				ServesNamespace:      "finance",
 				ServesApplication:    "copilot",
+				GOVAR:                &aiopsv1alpha1.AIModelGOVARSpec{Routable: true, RouteBindingRef: "primary"},
 			},
-			Status: aiopsv1alpha1.AIModelStatus{ObservedGeneration: 1, LastQualityScore: 0.9, LastEvaluatedAt: &now, Conditions: ready},
+			Status: aiopsv1alpha1.AIModelStatus{ObservedGeneration: 1, LastQualityScore: 0.9, LastEvaluatedAt: &now, Conditions: ready,
+				GOVAR: &aiopsv1alpha1.AIModelGOVARStatus{VerifiedOutputCap: &aiopsv1alpha1.AIModelVerifiedOutputCapStatus{Verified: true, MaxOutputTokens: 4096, ObservedAt: now, SourceVersion: "cap-v1"}}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "gpt-us", Generation: 1, ResourceVersion: "m2", Annotations: map[string]string{AnnotationRoutable: "true", AnnotationOutputCapVerified: "true"}},
+			ObjectMeta: metav1.ObjectMeta{Namespace: "finance", Name: "gpt-us", UID: "model-us-uid", Generation: 1, ResourceVersion: "m2"},
 			Spec: aiopsv1alpha1.AIModelSpec{
 				ProviderRef:          "azure-us",
 				ModelName:            "gpt-4.1-mini",
@@ -36,13 +38,15 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 				SensitiveDataAllowed: false,
 				ServesNamespace:      "finance",
 				ServesApplication:    "copilot",
+				GOVAR:                &aiopsv1alpha1.AIModelGOVARSpec{Routable: true, RouteBindingRef: "primary"},
 			},
-			Status: aiopsv1alpha1.AIModelStatus{ObservedGeneration: 1, LastQualityScore: 0.9, LastEvaluatedAt: &now, Conditions: ready},
+			Status: aiopsv1alpha1.AIModelStatus{ObservedGeneration: 1, LastQualityScore: 0.9, LastEvaluatedAt: &now, Conditions: ready,
+				GOVAR: &aiopsv1alpha1.AIModelGOVARStatus{VerifiedOutputCap: &aiopsv1alpha1.AIModelVerifiedOutputCapStatus{Verified: true, MaxOutputTokens: 4096, ObservedAt: now, SourceVersion: "cap-v1"}}},
 		},
 	}
 	providers := map[string]aiopsv1alpha1.AIProvider{
 		"azure-fr": {
-			ObjectMeta: metav1.ObjectMeta{Name: "azure-fr", Generation: 1, ResourceVersion: "p1", Annotations: map[string]string{AnnotationPricingVersion: "prices-v1", AnnotationPricingObservedAt: time.Now().UTC().Format(time.RFC3339)}},
+			ObjectMeta: metav1.ObjectMeta{Namespace: "finance", Name: "azure-fr", UID: "provider-fr-uid", Generation: 1, ResourceVersion: "p1"},
 			Spec: aiopsv1alpha1.AIProviderSpec{
 				Type:          "azure-openai",
 				Region:        "francecentral",
@@ -52,15 +56,17 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 					Currency:                   "EUR",
 					InputTokenPricePerMillion:  resource.MustParse("0.4"),
 					OutputTokenPricePerMillion: resource.MustParse("1.6"),
+					Version:                    "prices-v1", ObservedAt: &now, Completeness: aiopsv1alpha1.ProviderPricingComplete,
 				},
 				Compliance: aiopsv1alpha1.ProviderCompliance{
 					AllowedForSensitiveData: true,
 				},
+				GOVAR: &aiopsv1alpha1.AIProviderGOVARSpec{GatewayRoutes: []aiopsv1alpha1.AIProviderGatewayRouteBinding{{Name: "primary", ProviderDeployment: "gpt-fr-deployment", Cluster: "azure-fr", Authority: "fr.example", PathMode: aiopsv1alpha1.GOVARRouteAzureDeploymentPath}}},
 			},
 			Status: aiopsv1alpha1.AIProviderStatus{ObservedGeneration: 1, Conditions: ready},
 		},
 		"azure-us": {
-			ObjectMeta: metav1.ObjectMeta{Name: "azure-us", Generation: 1, ResourceVersion: "p2", Annotations: map[string]string{AnnotationPricingVersion: "prices-v1", AnnotationPricingObservedAt: time.Now().UTC().Format(time.RFC3339)}},
+			ObjectMeta: metav1.ObjectMeta{Namespace: "finance", Name: "azure-us", UID: "provider-us-uid", Generation: 1, ResourceVersion: "p2"},
 			Spec: aiopsv1alpha1.AIProviderSpec{
 				Type:          "azure-openai",
 				Region:        "eastus",
@@ -70,7 +76,9 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 					Currency:                   "EUR",
 					InputTokenPricePerMillion:  resource.MustParse("0.2"),
 					OutputTokenPricePerMillion: resource.MustParse("0.8"),
+					Version:                    "prices-v1", ObservedAt: &now, Completeness: aiopsv1alpha1.ProviderPricingComplete,
 				},
+				GOVAR: &aiopsv1alpha1.AIProviderGOVARSpec{GatewayRoutes: []aiopsv1alpha1.AIProviderGatewayRouteBinding{{Name: "primary", ProviderDeployment: "gpt-us-deployment", Cluster: "azure-us", Authority: "us.example", PathMode: aiopsv1alpha1.GOVARRouteAzureDeploymentPath}}},
 			},
 			Status: aiopsv1alpha1.AIProviderStatus{ObservedGeneration: 1, Conditions: ready},
 		},
@@ -98,7 +106,39 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 	if feasible[0].InputPriceMicrosPerMillion != 400_000 || feasible[0].OutputPriceMicrosPerMillion != 1_600_000 {
 		t.Fatalf("unexpected pricing snapshot: %+v", feasible[0])
 	}
+	if err := ValidateRouteSnapshot(feasible[0].RouteSnapshot); err != nil || feasible[0].SnapshotVersion != feasible[0].RouteSnapshot.SnapshotHash {
+		t.Fatalf("invalid route snapshot: %+v err=%v", feasible[0].RouteSnapshot, err)
+	}
 }
+
+func TestBuildCandidatesRejectsFutureQualityTimestamp(t *testing.T) {
+	future := metav1.NewTime(time.Now().Add(5 * time.Minute))
+	model := aiopsv1alpha1.AIModel{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "future", UID: "future-uid", Generation: 1, ResourceVersion: "m1"}, Spec: aiopsv1alpha1.AIModelSpec{
+		ProviderRef: "provider", ModelName: "future", ContextWindow: 1024,
+		GOVAR: &aiopsv1alpha1.AIModelGOVARSpec{Routable: true, RouteBindingRef: "primary"},
+	}, Status: aiopsv1alpha1.AIModelStatus{ObservedGeneration: 1, LastQualityScore: 1, LastEvaluatedAt: &future, Conditions: []metav1.Condition{{Type: aiopsv1alpha1.ConditionReady, Status: metav1.ConditionTrue}}}}
+	provider := aiopsv1alpha1.AIProvider{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "provider", UID: "provider-uid", Generation: 1, ResourceVersion: "p1"}, Spec: aiopsv1alpha1.AIProviderSpec{Type: "openai", Pricing: aiopsv1alpha1.ProviderPricing{
+		Currency: "EUR", InputTokenPricePerMillion: resource.MustParse("1"), OutputTokenPricePerMillion: resource.MustParse("1"), Version: "v1", ObservedAt: ptrTime(metav1.Now()), Completeness: aiopsv1alpha1.ProviderPricingComplete,
+	}, GOVAR: &aiopsv1alpha1.AIProviderGOVARSpec{GatewayRoutes: []aiopsv1alpha1.AIProviderGatewayRouteBinding{{Name: "primary", ProviderDeployment: "future", Cluster: "provider", Authority: "provider.example", PathMode: aiopsv1alpha1.GOVARRouteOpenAIBody}}}}, Status: aiopsv1alpha1.AIProviderStatus{ObservedGeneration: 1, Conditions: []metav1.Condition{{Type: aiopsv1alpha1.ConditionReady, Status: metav1.ConditionTrue}}}}
+	got := BuildCandidates(RequestContext{}, []aiopsv1alpha1.AIModel{model}, map[string]aiopsv1alpha1.AIProvider{"provider": provider})
+	if len(got) != 1 || got[0].InfeasibleReason != ReasonQualityStale {
+		t.Fatalf("candidates=%+v", got)
+	}
+}
+
+func TestProviderPathCompatibilityFailsBedrockClosed(t *testing.T) {
+	if providerPathCompatible("bedrock", string(aiopsv1alpha1.GOVARRouteAnthropicBody)) {
+		t.Fatal("Bedrock was incorrectly authorized through the Anthropic API adapter")
+	}
+	if !providerPathCompatible("custom", string(aiopsv1alpha1.GOVARRouteOpenAIBody)) {
+		t.Fatal("documented custom OpenAI-compatible adapter was rejected")
+	}
+	if providerPathCompatible("custom", string(aiopsv1alpha1.GOVARRouteAnthropicBody)) {
+		t.Fatal("custom provider bypassed the explicit OpenAI-compatible adapter restriction")
+	}
+}
+
+func ptrTime(value metav1.Time) *metav1.Time { return &value }
 
 func TestBuildPolicySnapshotCarriesBudgetAndRoutingGuardrails(t *testing.T) {
 	budget := aiopsv1alpha1.AIBudgetPolicy{

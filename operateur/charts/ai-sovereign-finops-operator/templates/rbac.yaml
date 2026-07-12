@@ -12,7 +12,7 @@ rules:
   resources: ["configmaps"]
   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
-  resources: ["namespaces", "pods"]
+  resources: ["namespaces", "pods", "serviceaccounts"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["events"]
@@ -45,6 +45,9 @@ rules:
   - aisovereigntypolicies
   - attestationevidences
   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["aiadmissionapprovals", "aiadmissionapprovaldecisions", "aiworkloadbindings"]
+  verbs: ["get", "list", "watch"]
 - apiGroups: ["aiops.imperium.io"]
   resources:
   - aibreakevenanalyses/finalizers
@@ -84,6 +87,9 @@ rules:
   - attestationevidences/status
   verbs: ["get", "patch", "update"]
 - apiGroups: ["aiops.imperium.io"]
+  resources: ["aiadmissionapprovals/status", "aiworkloadbindings/status"]
+  verbs: ["get", "patch", "update"]
+- apiGroups: ["aiops.imperium.io"]
   resources: ["confidentialinferencepolicies"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["aigateway.envoyproxy.io"]
@@ -92,6 +98,9 @@ rules:
 - apiGroups: ["authentication.k8s.io"]
   resources: ["tokenreviews"]
   verbs: ["create"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "list", "watch"]
 {{- if .Values.leaderElection.enabled }}
 - apiGroups: ["coordination.k8s.io"]
   resources: ["leases"]
@@ -112,4 +121,73 @@ subjects:
 - kind: ServiceAccount
   name: {{ include "operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- if and .Values.govArAdmission.enabled .Values.govArAdmission.rbac.create }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-admission
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-admission
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get"]
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["create", "get"]
+- apiGroups: ["aiops.imperium.io"]
+  resources:
+  - aibudgetpolicies
+  - aimodels
+  - aiproviders
+  - airoutingpolicies
+  - aiworkloadbindings
+  verbs: ["get", "list"]
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["aiadmissionapprovals"]
+  verbs: ["create", "get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-admission
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-admission
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "operator.fullname" . }}-gov-ar-admission
+subjects:
+- kind: ServiceAccount
+  name: {{ include "operator.govArAdmissionServiceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- if .Values.rbac.create }}
+---
+# This role is intentionally not bound by the chart. A cluster administrator
+# may bind it to the independently authenticated human-reviewer identity.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-approval-reviewer
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-approval-reviewer
+rules:
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["aiadmissionapprovals"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["aiops.imperium.io"]
+  resources: ["aiadmissionapprovaldecisions"]
+  verbs: ["create", "get", "list", "watch"]
 {{- end }}

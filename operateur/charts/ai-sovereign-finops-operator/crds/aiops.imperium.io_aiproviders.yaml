@@ -74,6 +74,53 @@ spec:
                 description: DataResidency is the country/zone where data is processed
                   (e.g. france, eu, us).
                 type: string
+              govar:
+                description: GOVAR contains provider-administrator-owned route bindings.
+                properties:
+                  gatewayRoutes:
+                    items:
+                      description: AIProviderGatewayRouteBinding is a complete provider-owned
+                        gateway target.
+                      properties:
+                        authority:
+                          minLength: 1
+                          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]*$
+                          type: string
+                        cluster:
+                          minLength: 1
+                          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]*$
+                          type: string
+                        name:
+                          minLength: 1
+                          pattern: ^[A-Za-z0-9][A-Za-z0-9._-]*$
+                          type: string
+                        pathMode:
+                          description: |-
+                            GOVARRoutePathMode identifies the provider adapter that must actuate a
+                            selected route. It is deliberately closed: an unknown adapter is not safe to
+                            infer from a URL or model name.
+                          enum:
+                          - openai-body
+                          - azure-deployment-path
+                          - anthropic-body
+                          - google-generate-path
+                          type: string
+                        providerDeployment:
+                          minLength: 1
+                          pattern: ^[A-Za-z0-9][A-Za-z0-9._:/-]*$
+                          type: string
+                      required:
+                      - authority
+                      - cluster
+                      - name
+                      - pathMode
+                      - providerDeployment
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                type: object
               managed:
                 description: Managed distinguishes a managed API provider (true) from
                   self-hosted GPU (false).
@@ -81,6 +128,55 @@ spec:
               pricing:
                 description: Pricing holds the unit economics for cost calculations.
                 properties:
+                  billableCategories:
+                    description: |-
+                      BillableCategories lists additional charges not represented by the base
+                      input/output token prices. Names are unique map keys.
+                    items:
+                      description: |-
+                        ProviderBillableCategory is a versioned non-base charge that must be included
+                        in liability calculation when applicable (for example cached input, reasoning,
+                        tool, media, request, time, cancellation, or retry charges).
+                      properties:
+                        name:
+                          description: Name is a stable lower-case category key.
+                          minLength: 1
+                          pattern: ^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$
+                          type: string
+                        price:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Price is the decimal price in Pricing.Currency
+                            for one Unit.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        unit:
+                          description: Unit specifies the price denominator.
+                          enum:
+                          - per-million-tokens
+                          - per-request
+                          - per-second
+                          - per-unit
+                          type: string
+                      required:
+                      - name
+                      - price
+                      - unit
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  completeness:
+                    default: unknown
+                    description: Completeness states whether all possible billable
+                      categories are represented.
+                    enum:
+                    - unknown
+                    - partial
+                    - complete
+                    type: string
                   currency:
                     default: EUR
                     description: Currency is the ISO 4217 code for all prices below.
@@ -102,6 +198,11 @@ spec:
                       input tokens.
                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                     x-kubernetes-int-or-string: true
+                  observedAt:
+                    description: ObservedAt is when this price snapshot was verified
+                      against its source.
+                    format: date-time
+                    type: string
                   outputTokenPricePerMillion:
                     anyOf:
                     - type: integer
@@ -110,6 +211,12 @@ spec:
                       output tokens.
                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                     x-kubernetes-int-or-string: true
+                  version:
+                    description: |-
+                      Version is the immutable identifier of this provider price snapshot.
+                      Historical objects remain readable when it is absent, but GOV-AR must not
+                      treat an absent version as complete pricing evidence.
+                    type: string
                 required:
                 - currency
                 - inputTokenPricePerMillion

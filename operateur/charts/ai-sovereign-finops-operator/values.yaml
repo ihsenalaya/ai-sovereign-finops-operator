@@ -77,6 +77,14 @@ govArAdmission:
   # Development-only single-process ledger. Production must keep this false and configure PostgreSQL.
   devInMemory: false
   replicaCount: 1
+  # Admission uses a dedicated least-privilege identity; it must never inherit
+  # the controller-manager's write-capable ClusterRole.
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+  rbac:
+    create: true
   image:
     repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-admission
     tag: ""
@@ -119,3 +127,16 @@ govArAdmission:
     enabled: false
     existingSecret: ""
     secretKey: DATABASE_URL
+  enforcement:
+    # Required outside explicit single-replica development mode. Governed Pods
+    # receive the selector label from the injector and may egress only to DNS
+    # and the authenticated gateway selected here.
+    networkPolicy:
+      enabled: false
+      # Dedicated measured workload namespace. Namespace-wide default-deny
+      # egress is intentional; do not place the operator/database here.
+      governedNamespace: ""
+      gatewayPort: 8443
+      gatewayNamespaceSelector: {}
+      gatewayPodSelector:
+        aiops.imperium.io/govar-gateway: "true"

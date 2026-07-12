@@ -21,6 +21,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// ProviderPricingCompleteness records whether the versioned price snapshot
+// covers every category the provider may bill for.
+// +kubebuilder:validation:Enum=unknown;partial;complete
+type ProviderPricingCompleteness string
+
+const (
+	ProviderPricingUnknown  ProviderPricingCompleteness = "unknown"
+	ProviderPricingPartial  ProviderPricingCompleteness = "partial"
+	ProviderPricingComplete ProviderPricingCompleteness = "complete"
+)
+
+// ProviderBillableUnit defines the denominator for an additional charge.
+// +kubebuilder:validation:Enum=per-million-tokens;per-request;per-second;per-unit
+type ProviderBillableUnit string
+
+// ProviderBillableCategory is a versioned non-base charge that must be included
+// in liability calculation when applicable (for example cached input, reasoning,
+// tool, media, request, time, cancellation, or retry charges).
+type ProviderBillableCategory struct {
+	// Name is a stable lower-case category key.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$`
+	Name string `json:"name"`
+
+	// Unit specifies the price denominator.
+	Unit ProviderBillableUnit `json:"unit"`
+
+	// Price is the decimal price in Pricing.Currency for one Unit.
+	Price resource.Quantity `json:"price"`
+}
+
 // ProviderPricing captures the unit economics of a provider. Monetary values use
 // resource.Quantity so decimal amounts (e.g. "2.5") are stored exactly and are
 // idiomatic to the Kubernetes API (no IEEE-754 floats in the schema).
@@ -39,6 +70,28 @@ type ProviderPricing struct {
 	// reserved capacity, ...). Used by the break-even engine.
 	// +optional
 	FixedMonthlyCost *resource.Quantity `json:"fixedMonthlyCost,omitempty"`
+
+	// Version is the immutable identifier of this provider price snapshot.
+	// Historical objects remain readable when it is absent, but GOV-AR must not
+	// treat an absent version as complete pricing evidence.
+	// +optional
+	Version string `json:"version,omitempty"`
+
+	// ObservedAt is when this price snapshot was verified against its source.
+	// +optional
+	ObservedAt *metav1.Time `json:"observedAt,omitempty"`
+
+	// Completeness states whether all possible billable categories are represented.
+	// +optional
+	// +kubebuilder:default=unknown
+	Completeness ProviderPricingCompleteness `json:"completeness,omitempty"`
+
+	// BillableCategories lists additional charges not represented by the base
+	// input/output token prices. Names are unique map keys.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	BillableCategories []ProviderBillableCategory `json:"billableCategories,omitempty"`
 }
 
 // ProviderCompliance describes sovereignty/compliance attributes of a provider.
@@ -50,6 +103,30 @@ type ProviderCompliance struct {
 	// AllowedCountries lists ISO country/zone codes (e.g. FR, EU) this provider serves from.
 	// +optional
 	AllowedCountries []string `json:"allowedCountries,omitempty"`
+}
+
+// AIProviderGatewayRouteBinding is a complete provider-owned gateway target.
+type AIProviderGatewayRouteBinding struct {
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._-]*$`
+	Name string `json:"name"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._:/-]*$`
+	ProviderDeployment string `json:"providerDeployment"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._:-]*$`
+	Cluster string `json:"cluster"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._:-]*$`
+	Authority string             `json:"authority"`
+	PathMode  GOVARRoutePathMode `json:"pathMode"`
+}
+
+type AIProviderGOVARSpec struct {
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	GatewayRoutes []AIProviderGatewayRouteBinding `json:"gatewayRoutes,omitempty"`
 }
 
 // AIProviderSpec defines the desired state of AIProvider.
@@ -76,6 +153,10 @@ type AIProviderSpec struct {
 	// Compliance describes sovereignty attributes.
 	// +optional
 	Compliance ProviderCompliance `json:"compliance,omitempty"`
+
+	// GOVAR contains provider-administrator-owned route bindings.
+	// +optional
+	GOVAR *AIProviderGOVARSpec `json:"govar,omitempty"`
 }
 
 // AIProviderStatus defines the observed state of AIProvider.

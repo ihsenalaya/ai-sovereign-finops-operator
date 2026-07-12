@@ -1,0 +1,169 @@
+{
+  "review_id": "phase-d-ledger-review-20260712-v1",
+  "reviewer_role": "independent ledger, cohort, rollover, correction, and PostgreSQL migration auditor",
+  "reviewed_at_utc": "2026-07-12T09:39:10Z",
+  "verdict": "failed",
+  "branch": "article3-q1-recovery-20260711",
+  "worktree_base_head": "a355b339c785442abce4406a4318effc9f5f815f",
+  "snapshot_status": "uncommitted source snapshot above the recorded base HEAD",
+  "scope": "D009-D011 and the current memory/PostgreSQL ledger implementation, fixed-cohort registry, window rollover and adjustment extensions, migration/init assets, tests, and their correspondence with the Phase C design and bounded formal model. Archived evidence was not read or used.",
+  "source_sha256": {
+    "article3/DECISIONS.md": "3b51504d48fd73da4a0afba23f375906deb047002fb9e42206b94e7520a0a174",
+    "article3/design/gov_ar_algorithm.md": "1e3d78cdf349f8302bbdfb7429c89d815bf177ffe9f5ead5d8943cec3a92c8e0",
+    "article3/design/invariants.md": "02fae1755dc6b9b95eb405a0b729172842015ebcd30a388facfed1f358bec9b1",
+    "article3/design/problem_formulation.md": "47ce90df6c7dbe66cfa6c366e88b522c978940318b9fc261c22525a1c76ea330",
+    "article3/design/state_machine.md": "66a549527b04b5ac9fca64bd56fed60dd42d80b9423176d75f8db8e5f3a79fae",
+    "article3/design/threat_model.md": "44a4f29bfb30ee42907d4df4b19f757abcdf653605bee1bb12dc66a4a33d1650",
+    "article3/formal/README.md": "dcfc59efca96246c3b76eff79f71d69b43143d0e29054ade97677d57c9371537",
+    "article3/formal/check.sh": "0ebb1af5d08aefb51dfe7cacbe084c8aaf694ad3bfc68aaf0d16b5d6348c3db7",
+    "article3/formal/ledger_model.py": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
+    "article3/formal/results.json": "65d7164c6372ddc97831f1442bac3118be5768ba07be7af0c81b57dceb31ad49",
+    "operateur/internal/govar/engine.go": "233e2c76cdd4c3d47f71c316c963e0fda8a91c3031a838e26b3c9edeb6ab8575",
+    "operateur/internal/govar/postgres_engine.go": "be0e0b743f81fc244ba429f8ed1eb1098f6975797c54cfd5a77a111ba1117367",
+    "operateur/internal/govar/ledger_extensions.go": "433e1e2932d57628784f2f448af5b41c801dc406e0af8b90a37a5427c46b45a4",
+    "operateur/internal/govar/ledger_extensions_postgres.go": "cce934c6644951f7a80e5df15434d814396254c402087c9794968ee3507a2982",
+    "operateur/internal/govar/money.go": "5b9aa54c0a28c52c8712fea5d982575206fbc119847ea41f25605ee638387b03",
+    "operateur/internal/govar/snapshot.go": "8345f195192da69e8303e4e5717aca6518096ac1293cd7e79933a878a0ac7c89",
+    "operateur/internal/govar/admission_policy.go": "be3d1d998227c685bd7d5245c3ac912b44c80e3fa5e18630a94eff580902ce51",
+    "operateur/internal/govar/engine_test.go": "0fe5259f33c023a928a9eb9eb4fd8491c807c7776aa1f65a0d5bdcfaa2e16d3f",
+    "operateur/internal/govar/postgres_engine_test.go": "188b2e84c4285319808f01f19c5076a35252e5b2f6c4c52bd6443100e6e1a970",
+    "operateur/internal/govar/ledger_extensions_test.go": "1b2292715a782504f12d79215da6142655917d0366c168d552d6705fe45119a2",
+    "operateur/internal/govar/money_test.go": "5b71b62cea2b33d456aaf085ddb163558266719127d1135df3cc5204f9dac3c5",
+    "operateur/internal/govar/snapshot_test.go": "1eb10095209843c19e3bba9f7b42fd7981192ab29874044c75856cc02ed452ca",
+    "operateur/internal/govar/admission_policy_test.go": "c023dc88a1262a7a8d97ccec16a23d4129ae4475fb9572109d00d334acd884c2",
+    "operateur/internal/govar/MIGRATIONS.md": "6a22cffe20b32a4c1c6077f938bf58b7b21a11073186a3f2f352998ab09f2c6e",
+    "article3/infra/postgres/init.sql": "ee17790b3a782f5e0dd0581579f20f533c2623e044777264a62f755b94fe664d",
+    "article3/infra/postgres/clean_migrate_v3.sh": "cea916263f528ff08cd5fa71f1a7ffeefa176a56d4d818fa3b313916306ed3a3",
+    "article3/infra/postgres/README.md": "4bfecee24d5402f1c5efc7f2ba6b4dc3fd7fe9c10b4338a3d004c7ece77986fd",
+    "article3/infra/postgres/docker-compose.yaml": "8d09715ab5ff607dfc3d79470f3a536c60ded704e4cf32dcb6903e6556206ed0"
+  },
+  "positive_controls_recomputed": [
+    "All reviewed monetary state is represented by integer micro-units in the fresh v3 schema and engine fields.",
+    "Request, workload principal, provider_attempt_id, outbox ID, and immutable event payload hashes are checked on dispatch, settlement, and cancellation.",
+    "Memory mutations are mutex-serialized; PostgreSQL reserve and event mutations use serializable transactions and row locks, and outbox transitions use affected-row compare-and-swap.",
+    "Potentially billable claimed/delivered expiry becomes UNRESOLVED without releasing its hold; only an unclaimed pending outbox is atomically canceled and released.",
+    "Provisional rollover guard arithmetic and non-reusable historical credit work for the tested ordering where rollover is triggered before late settlement.",
+    "Exact event replay and differently keyed same-version semantic settlement duplicates do not post monetary effects twice in the tested cases.",
+    "A fresh init.sql install records schema version 3, contains no floating monetary columns, and the bounded formal checker passes its stated model scope."
+  ],
+  "findings": [
+    {
+      "id": "LEDGER-C1",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "Budget rollover and late-settlement classification are order-dependent at the real UTC window boundary.",
+      "evidence": "budgetWindowID is evaluated only by Admit. Settle/applySettlement decides lateness from tenant.CurrentWindowID and res.OriginWindowID and never compares the server clock with the policy period. Liability also reports the lazily stored window without rolling it. Minimal counterexample: reserve and claim R in daily window W0; advance the injected server clock to W1; settle/finalize before any W1 admission; the engine posts the amount to W0 settled state and releases the residual; the next admission then resets settled to zero and creates no carried debt. Reversing only the two operations (admit/rollover first, settle second) creates carried debt. Thus reordered events crossing the same objective boundary produce different enforcement exposure, contradicting D009-D010 and the documented rule that late usage becomes carried debt. Existing rollover tests exercise only rollover-before-settlement and do not falsify this sequence."
+    },
+    {
+      "id": "LEDGER-M1",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Fixed-cohort drift fallback continues to advertise the cohort risk allocation.",
+      "evidence": "Admit validates the frozen cohort and computes allocatedRiskOverride before chooseAdmission. reservationTokens returns strict_provider_cap when calibration support is insufficient or drift=true, but Admit then unconditionally overwrites choice.AllocatedRiskPPB with the cohort allocation. The response/record can therefore say reservation_method=strict_provider_cap while exposing a nonzero calibrated cohort risk. This violates the design requirement to stop advertising calibrated risk when support or drift invalidates calibration and can misclassify frozen experiment rows."
+    },
+    {
+      "id": "LEDGER-M2",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Debt repayment and budget replacement use caller self-attestation instead of a separately authenticated adjustment authority.",
+      "evidence": "BudgetAdjustment authorization is only an Authorized boolean plus arbitrary AuthorizedBy and Reason strings. Both memory and PostgreSQL methods accept those fields directly, reduce carried debt, and replace the active budget; no signature, actor identity supplied by a trusted boundary, policy/resource version, or reconciler-only capability is checked. The operation is not currently exposed by the HTTP service, but the ledger API itself does not establish the D010 requirement that debt changes only through a separately authorized, window-bound adjustment."
+    },
+    {
+      "id": "LEDGER-M3",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Usage corrections do not enforce the documented authoritative predecessor chain, and post-finality reason codes confuse an upward correction with reservation exceedance.",
+      "evidence": "applySettlement accepts any UsageVersion greater than the current version; version gaps are not rejected. The existing test even accepts first usage version 2, while the state-machine text requires the next authoritative correction version and the formal correct transition requires version == previous+1. Separately, every post-finality increase above BaseActualMicros returns reservation_exceeded even when the corrected cost remains below ReservedCostMicros (the checked test uses 2700 against a 3600 reservation). Missing predecessors impair immutable correction lineage, and the false exceedance reason corrupts fault/result classification."
+    },
+    {
+      "id": "LEDGER-M4",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The ledger represents only one provider attempt and has no safe separately reserved retry/fallback transition.",
+      "evidence": "Admission deterministically creates request_id:attempt:1 and one outbox; all later operations must match that attempt, and no API creates attempt 2 with another hold. The current ext_proc rejects duplicate_request and the example Envoy route has no retry policy, which protects the demonstrated single-attempt path, but any enabled upstream retry, hedge, fallback, or ambiguous resend cannot satisfy D007's separately reserved billable-attempt rule. No verified provider-idempotency attribute is bound to the reservation either."
+    },
+    {
+      "id": "LEDGER-M5",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Expiry and outbox reconciliation are scan/list helpers rather than a durable, reason-coded reconciliation protocol.",
+      "evidence": "PendingReconciliation only lists pending/claimed/unresolved records; no worker claims reconciliation work, renews leases, resolves ambiguity, or records an immutable transition event/reason. ReconcileExpired has no event ID/inbox record and maps pending expiry to CANCELED_UNBILLED rather than the documented EXPIRED_UNDISPATCHED state, which does not exist in the Go enum. PostgreSQL processes a multi-record scan in one transaction without its normal bounded serialization/deadlock retry. This leaves required crash recovery and exact fault diagnostics incomplete even though the monetary pending-cancel CAS itself is conservative."
+    },
+    {
+      "id": "LEDGER-M6",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Runtime schema initialization does not provide a coherent, restart-safe compatibility migration.",
+      "evidence": "initSchema labels the current layout version 3 while also using ADD COLUMN IF NOT EXISTS to mutate older layouts without a new migration version. A preexisting version-3 row with a nonempty admission fingerprint can receive default origin/base/guard/cohort fields without the pre-v3 refusal. Conversely, the tested empty floating legacy auto-conversion deliberately leaves budget_eur/reserved_cost/actual_cost columns in place. Once the service inserts an integer row, the next restart sees the legacy column plus a nonempty table and refuses startup, so the accepted conversion is self-incompatible. clean_migrate_v3.sh avoids this by dropping an empty schema, but NewPostgresEngine does not use that path."
+    },
+    {
+      "id": "LEDGER-M7",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Startup trusts aggregate rows and cross-table relations instead of recomputing ledger invariants.",
+      "evidence": "initSchema validates selected legacy/version conditions but never recomputes tenant reserved/settled/debt/active aggregates from reservation records, verifies rollover guard plus residual relationships, or checks reservation/outbox identity equality. The exact fresh init.sql schema has zero foreign keys from reservations, outbox, or inbox to the corresponding tenant/request records. A syntactically valid v3 database with a tampered or crash-restored aggregate can therefore pass readiness and drive admission from inconsistent availability, contrary to the evidence rule and record/aggregate invariant."
+    },
+    {
+      "id": "LEDGER-M8",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Concurrent exact duplicate admission can surface a PostgreSQL uniqueness error instead of idempotent replay.",
+      "evidence": "Two admit transactions can both complete the initial no-row precheck and race to insert the same request_id/provider_attempt_id/outbox_id (or the same frozen cohort slot). PostgreSQL can return SQLSTATE 23505 to the loser, but PostgresEngine.Admit retries only 40001 and 40P01; unlike frozen-cohort registration, it does not retry uniqueness conflicts and reload/compare the immutable fingerprint. Monetary double reservation is prevented by constraints/rollback, but safe replay semantics and deterministic reason codes are not guaranteed under the required concurrency."
+    },
+    {
+      "id": "LEDGER-M9",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Frozen-cohort hashes and pre-freeze claims are structurally well-formed but not bound to authoritative artifacts.",
+      "evidence": "Registration atomically freezes all slots before their service admissions and validates exact weights, request IDs, opportunity digests, and a server registration time, which is useful. However DataHash, ConfigHash, ProtocolHash, and FrozenAt are caller-supplied values checked only for SHA-256 shape/time ordering; the server does not resolve them against immutable protocol/data/config artifacts or an authorized registry signer. Registry presence therefore cannot itself be cited as proof that G was fixed before frozen-test outcomes. That provenance/authority must be implemented and independently verified before theorem-bearing final runs."
+    },
+    {
+      "id": "LEDGER-m1",
+      "severity": "minor",
+      "status": "unresolved",
+      "summary": "Memory and PostgreSQL diagnostic/idempotence behavior is not fully equivalent.",
+      "evidence": "The memory ReconcileExpired appends every expired reservation, including already terminal records, while PostgreSQL returns only pending/dispatch states changed in the current scan. Memory fingerprints candidate input order; PostgreSQL ranks candidates before fingerprinting. These differences can change duplicate acceptance and reconciliation counts between development and measured PostgreSQL modes even when monetary arithmetic is unchanged."
+    }
+  ],
+  "formal_model_gap": {
+    "observed_result": "PASS: 2910 states, 42826 transitions, 9 scenario traces, 10 stated invariants, model SHA-256 37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
+    "interpretation": "The pass is valid only for the bounded Python model. That model has explicit rollover actions and contiguous provisional correction versions, assumes actual cost does not exceed the reservation, and does not model wall-clock/lazy rollover, provider_attempt_id/retry creation, fixed-cohort registration, budget adjustments, SQL migrations, aggregate corruption, or concurrent SQL uniqueness outcomes. It therefore does not resolve the implementation findings above.",
+    "artifact_handling": "The checker was executed read-only for review purposes; its generated timestamp change in article3/formal/results.json was restored exactly so the auditor did not alter the formal evidence artifact."
+  },
+  "test_evidence": [
+    {
+      "command": "GOVAR_TEST_DATABASE_URL=<synthetic local PostgreSQL 16 URL> go test -count=1 -race ./internal/govar",
+      "exit_code": 0,
+      "result": "passed in 3.767 seconds, including the opt-in PostgreSQL tests"
+    },
+    {
+      "command": "go vet ./internal/govar",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "bash article3/formal/check.sh",
+      "exit_code": 0,
+      "result": "bounded model passed with the scope limitations recorded above"
+    },
+    {
+      "command": "apply article3/infra/postgres/init.sql to a fresh synthetic PostgreSQL 16 database and query schema facts",
+      "exit_code": 0,
+      "result": "schema version=3; floating/real/numeric columns=0; foreign keys from reservations/outbox/inbox=0"
+    }
+  ],
+  "unresolved_critical_or_major_findings": [
+    "LEDGER-C1",
+    "LEDGER-M1",
+    "LEDGER-M2",
+    "LEDGER-M3",
+    "LEDGER-M4",
+    "LEDGER-M5",
+    "LEDGER-M6",
+    "LEDGER-M7",
+    "LEDGER-M8",
+    "LEDGER-M9"
+  ],
+  "approval_condition": "Not approved. Repair every critical and major finding, add matched memory/PostgreSQL counterexample tests (including both window-boundary event orders), bind adjustment/cohort authority, and obtain a fresh independent hash-bound review. Passing the existing race, PostgreSQL, or bounded formal suites is insufficient.",
+  "reviewer_changes": "No implementation, test, design, gate, prior review, or formal result was changed. The reviewer added only this failed ledger review record and used a disposable synthetic PostgreSQL container."
+}

@@ -179,12 +179,12 @@ func reservationTokens(method string, req AdmitRequest, routing aiopsv1alpha1.AI
 		if method == "adaptive_quantile" {
 			return clamp(adaptive), 0, method, ""
 		}
-		cohort, okCohort := value(AnnotationCohortSize)
-		risk, okRisk := value(AnnotationTenantRiskPPB)
-		if !okCohort || cohort <= 0 || !okRisk || risk > 1_000_000_000 || req.CohortID == "" || req.CohortIndex < 0 || req.CohortIndex >= cohort {
+		if req.CohortID == "" || req.CohortIndex < 0 {
 			return 0, 0, method, ReasonInsufficientCalibration
 		}
-		return clamp(adaptive), risk / cohort, method, ""
+		// N, alpha, and the slot weight come only from the immutable server-side
+		// FrozenCohort registry and are applied by Engine/PostgresEngine.
+		return clamp(adaptive), 0, method, ""
 	default:
 		return 0, 0, method, ReasonReservationMethodUnknown
 	}

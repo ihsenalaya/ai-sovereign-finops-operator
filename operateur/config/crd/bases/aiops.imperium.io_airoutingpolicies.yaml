@@ -76,6 +76,204 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
+              govar:
+                description: |-
+                  GOVAR is the typed reserve/calibrate/drift/risk policy. Historical
+                  annotations remain readable for compatibility but are not authoritative.
+                properties:
+                  calibration:
+                    description: Calibration is required for adaptive methods.
+                    properties:
+                      artifactRef:
+                        description: ArtifactRef is an immutable calibration artifact
+                          identifier or digest.
+                        minLength: 1
+                        type: string
+                      maxAgeSeconds:
+                        description: MaxAgeSeconds is the maximum acceptable calibration
+                          age.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      minimumSupport:
+                        description: MinimumSupport is the required number of eligible
+                          observations.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      version:
+                        description: Version is the calibration protocol/model version.
+                        minLength: 1
+                        type: string
+                    required:
+                    - artifactRef
+                    - maxAgeSeconds
+                    - minimumSupport
+                    - version
+                    type: object
+                  cohort:
+                    description: Cohort is required for govar_fixed_cohort.
+                    properties:
+                      frozenAt:
+                        description: FrozenAt is when membership, features, and weights
+                          became immutable.
+                        format: date-time
+                        type: string
+                      opportunitySetHash:
+                        description: OpportunitySetHash is a lower-case SHA-256 digest
+                          of fixed opportunity identities/features.
+                        pattern: ^[a-f0-9]{64}$
+                        type: string
+                      registryRef:
+                        description: RegistryRef identifies the operator-owned cohort
+                          registry snapshot.
+                        minLength: 1
+                        type: string
+                      size:
+                        description: Size is the fixed number of arrival opportunities.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      weightsHash:
+                        description: WeightsHash is a lower-case SHA-256 digest of
+                          the non-negative fixed weights.
+                        pattern: ^[a-f0-9]{64}$
+                        type: string
+                    required:
+                    - frozenAt
+                    - opportunitySetHash
+                    - registryRef
+                    - size
+                    - weightsHash
+                    type: object
+                  drift:
+                    description: GOVARDriftPolicy freezes drift detection and revalidation
+                      thresholds.
+                    properties:
+                      detector:
+                        description: GOVARDriftDetector identifies a predeclared detector.
+                        enum:
+                        - coverage-gap
+                        - psi
+                        - ks
+                        - adwin
+                        type: string
+                      fallback:
+                        description: GOVARConservativeFallback is the visible behavior
+                          after invalid calibration.
+                        enum:
+                        - strict_provider_cap
+                        - queue
+                        - reject
+                        - abstain
+                        - require_approval
+                        type: string
+                      revalidationMinimumSupport:
+                        description: RevalidationMinimumSupport is required before
+                          calibrated claims resume.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      thresholdPPB:
+                        description: ThresholdPPB is a detector-specific threshold
+                          represented without floats.
+                        format: int64
+                        maximum: 1000000000
+                        minimum: 0
+                        type: integer
+                    required:
+                    - detector
+                    - fallback
+                    - revalidationMinimumSupport
+                    - thresholdPPB
+                    type: object
+                  reservation:
+                    description: |-
+                      GOVARReservationPolicy contains typed token reservations. Pointer token values
+                      distinguish a configured zero from a missing method parameter.
+                    properties:
+                      adaptiveQuantileOutputTokens:
+                        description: AdaptiveQuantileOutputTokens is the last controller-validated
+                          estimate.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      fixedQuantileOutputTokens:
+                        description: FixedQuantileOutputTokens is the frozen offline
+                          quantile estimate.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      marginOutputTokens:
+                        description: MarginOutputTokens is added to the mean for fixed_margin.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      meanOutputTokens:
+                        description: MeanOutputTokens is the development-only mean
+                          estimate.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      method:
+                        description: GOVARReservationMethod identifies an executable
+                          reservation policy.
+                        enum:
+                        - strict_provider_cap
+                        - mean
+                        - fixed_margin
+                        - fixed_quantile
+                        - adaptive_quantile
+                        - govar_fixed_cohort
+                        type: string
+                    required:
+                    - method
+                    type: object
+                    x-kubernetes-validations:
+                    - message: meanOutputTokens is required for mean reservation
+                      rule: self.method != 'mean' || has(self.meanOutputTokens)
+                    - message: meanOutputTokens and marginOutputTokens are required
+                        for fixed_margin reservation
+                      rule: self.method != 'fixed_margin' || (has(self.meanOutputTokens)
+                        && has(self.marginOutputTokens))
+                    - message: fixedQuantileOutputTokens is required for fixed_quantile
+                        reservation
+                      rule: self.method != 'fixed_quantile' || has(self.fixedQuantileOutputTokens)
+                    - message: adaptiveQuantileOutputTokens is required for adaptive
+                        reservation
+                      rule: '!(self.method in [''adaptive_quantile'', ''govar_fixed_cohort''])
+                        || has(self.adaptiveQuantileOutputTokens)'
+                  risk:
+                    description: Risk is required for govar_fixed_cohort.
+                    properties:
+                      allocation:
+                        description: Allocation selects uniform or registry-fixed
+                          weights.
+                        enum:
+                        - uniform
+                        - fixed-weights
+                        type: string
+                      tenantRiskPPB:
+                        description: TenantRiskPPB is alpha_K in parts per billion.
+                        format: int64
+                        maximum: 1000000000
+                        minimum: 0
+                        type: integer
+                    required:
+                    - allocation
+                    - tenantRiskPPB
+                    type: object
+                required:
+                - drift
+                - reservation
+                type: object
+                x-kubernetes-validations:
+                - message: calibration is required for adaptive reservation
+                  rule: '!(self.reservation.method in [''adaptive_quantile'', ''govar_fixed_cohort''])
+                    || has(self.calibration)'
+                - message: cohort and risk are required for govar_fixed_cohort
+                  rule: self.reservation.method != 'govar_fixed_cohort' || (has(self.cohort)
+                    && has(self.risk))
               guardrails:
                 description: Guardrails defines the minimum bar that any candidate
                   must clear.
@@ -175,6 +373,70 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              govar:
+                description: GOVAR is controller-produced safety evidence for typed
+                  policy inputs.
+                properties:
+                  calibration:
+                    description: Calibration is absent until the configured artifact
+                      has been evaluated.
+                    properties:
+                      adaptiveOutputTokens:
+                        description: AdaptiveOutputTokens is the validated upper reservation
+                          estimate.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      artifactRef:
+                        type: string
+                      observedAt:
+                        format: date-time
+                        type: string
+                      support:
+                        description: Support is the number of eligible observations.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      valid:
+                        type: boolean
+                      version:
+                        type: string
+                    required:
+                    - adaptiveOutputTokens
+                    - artifactRef
+                    - observedAt
+                    - support
+                    - valid
+                    - version
+                    type: object
+                  drift:
+                    description: Drift is absent until the configured detector has
+                      evaluated a window.
+                    properties:
+                      conservativeMode:
+                        type: boolean
+                      detected:
+                        type: boolean
+                      detector:
+                        description: GOVARDriftDetector identifies a predeclared detector.
+                        enum:
+                        - coverage-gap
+                        - psi
+                        - ks
+                        - adwin
+                        type: string
+                      observedAt:
+                        format: date-time
+                        type: string
+                      reason:
+                        type: string
+                    required:
+                    - conservativeMode
+                    - detected
+                    - detector
+                    - observedAt
+                    type: object
+                type: object
               lastEvaluatedAt:
                 description: LastEvaluatedAt is when the routing engine last ran.
                 format: date-time

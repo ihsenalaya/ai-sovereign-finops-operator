@@ -11,6 +11,7 @@ import (
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,22 +19,24 @@ import (
 )
 
 const (
-	InjectKey            = "aiops.imperium.io/sidecar-injection"
-	ApplicationKey       = "aiops.imperium.io/application"
-	TargetHostsKey       = "aiops.imperium.io/target-hosts"
-	InjectedProxyKey     = "aiops.imperium.io/sidecar-injected"
-	GOVAREnabledKey      = "aiops.imperium.io/govar-enabled"
-	GOVAREndpointKey     = "aiops.imperium.io/govar-endpoint"
-	GOVARTenantKey       = "aiops.imperium.io/govar-tenant"
-	GOVARBudgetPolicyKey = "aiops.imperium.io/govar-budget-policy"
-	GOVARRoutingKey      = "aiops.imperium.io/govar-routing-policy"
-	GOVARZonesKey        = "aiops.imperium.io/govar-allowed-zones"
-	GOVARSensitiveKey    = "aiops.imperium.io/govar-sensitive-data"
-	SidecarContainerName = "greenops-header-proxy"
-	ProxyURL             = "http://127.0.0.1:15088"
-	GOVARTokenVolumeName = "govar-bound-token"
-	GOVARTokenMountPath  = "/var/run/secrets/govar"
-	GOVARTokenAudience   = "gov-ar-admission"
+	InjectKey                     = "aiops.imperium.io/sidecar-injection"
+	ApplicationKey                = "aiops.imperium.io/application"
+	TargetHostsKey                = "aiops.imperium.io/target-hosts"
+	InjectedProxyKey              = "aiops.imperium.io/sidecar-injected"
+	GOVAREnabledKey               = "aiops.imperium.io/govar-enabled"
+	GOVAREndpointKey              = "aiops.imperium.io/govar-endpoint"
+	GOVARTenantKey                = "aiops.imperium.io/govar-tenant"
+	GOVARBudgetPolicyKey          = "aiops.imperium.io/govar-budget-policy"
+	GOVARRoutingKey               = "aiops.imperium.io/govar-routing-policy"
+	GOVARZonesKey                 = "aiops.imperium.io/govar-allowed-zones"
+	GOVARSensitiveKey             = "aiops.imperium.io/govar-sensitive-data"
+	GOVAREgressRestrictedLabel    = "aiops.imperium.io/govar-egress-restricted"
+	GOVARNativeGatewayRequiredKey = "aiops.imperium.io/govar-native-gateway-required"
+	SidecarContainerName          = "greenops-header-proxy"
+	ProxyURL                      = "http://127.0.0.1:15088"
+	GOVARTokenVolumeName          = "govar-bound-token"
+	GOVARTokenMountPath           = "/var/run/secrets/govar"
+	GOVARTokenAudience            = "gov-ar-admission"
 )
 
 // ImageResolver resolves the image used for the injected sidecar.
@@ -134,6 +137,10 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 	if err != nil {
 		return admission.Errored(500, err)
 	}
+	govarRequired, err := h.namespaceRequiresGOVAR(ctx, namespace)
+	if err != nil {
+		return admission.Errored(500, err)
+	}
 
 	mutated := pod.DeepCopy()
 	changed := false
@@ -159,7 +166,19 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 		applySimulatedRuntimeMetric(namespace, confidentialMutation.policy.Name, confidentialMutation.appliedRuntime, confidentialMutation.simulated)
 	}
 
-	if enabled {
+	if govarRequired {
+		if mutated.Labels == nil {
+			mutated.Labels = map[string]string{}
+		}
+		if mutated.Annotations == nil {
+			mutated.Annotations = map[string]string{}
+		}
+		mutated.Labels[GOVAREgressRestrictedLabel] = "true"
+		mutated.Annotations[GOVARNativeGatewayRequiredKey] = "true"
+		changed = true
+	}
+
+	if enabled && !govarRequired {
 		if !hasContainer(mutated, SidecarContainerName) {
 			if h.imageResolver == nil {
 				return admission.Errored(500, fmt.Errorf("no sidecar image resolver configured"))
@@ -176,6 +195,10 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 			}
 			if govarCfg.Enabled {
 				ensureGOVARTokenVolume(mutated)
+				if mutated.Labels == nil {
+					mutated.Labels = map[string]string{}
+				}
+				mutated.Labels[GOVAREgressRestrictedLabel] = "true"
 			}
 			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts, govarCfg))
 			for i := range mutated.Spec.Containers {
@@ -205,7 +228,10 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 
 func (h *Handler) shouldInject(ctx context.Context, namespace string, pod *corev1.Pod) (bool, error) {
 	if v, ok := pod.Annotations[InjectKey]; ok {
-		return isEnabled(v), nil
+		if isEnabled(v) {
+			return true, nil
+		}
+		// An explicit Pod opt-out cannot override namespace-required injection.
 	}
 	if h.client == nil || namespace == "" {
 		return false, nil
@@ -214,7 +240,21 @@ func (h *Handler) shouldInject(ctx context.Context, namespace string, pod *corev
 	if err := h.client.Get(ctx, types.NamespacedName{Name: namespace}, &ns); err != nil {
 		return false, fmt.Errorf("read namespace %q for sidecar injection: %w", namespace, err)
 	}
-	return isEnabled(ns.Labels[InjectKey]), nil
+	return isEnabled(ns.Labels[InjectKey]) || isEnabled(ns.Labels[GOVAREnabledKey]) || isEnabled(ns.Annotations[GOVAREnabledKey]), nil
+}
+
+func (h *Handler) namespaceRequiresGOVAR(ctx context.Context, namespace string) (bool, error) {
+	if h.client == nil || namespace == "" {
+		return false, nil
+	}
+	var ns corev1.Namespace
+	if err := h.client.Get(ctx, types.NamespacedName{Name: namespace}, &ns); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("read namespace %q for GOV-AR enforcement: %w", namespace, err)
+	}
+	return isEnabled(ns.Labels[GOVAREnabledKey]) || isEnabled(ns.Annotations[GOVAREnabledKey]), nil
 }
 
 type govarConfig struct {

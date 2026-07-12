@@ -91,6 +91,24 @@ func TestInjectsFromNamespaceLabel(t *testing.T) {
 	}
 }
 
+func TestNamespaceRequiredGOVARCannotBeOptedOutAndUsesNativeGateway(t *testing.T) {
+	scheme := newScheme(t)
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "measured", Labels: map[string]string{GOVAREnabledKey: "true"}}}
+	h := New(fakeClient(t, scheme, ns), scheme, StaticImageResolver("controller:test"))
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "worker", Namespace: "measured", Annotations: map[string]string{InjectKey: "false", GOVAREnabledKey: "false"}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "app", Image: "busybox"}}}}
+	mutated := runMutation(t, h, pod)
+	if hasContainer(mutated, SidecarContainerName) {
+		t.Fatal("namespace-governed Pod received legacy direct-provider sidecar")
+	}
+	if got := envValue(mutated.Spec.Containers[0].Env, "HTTP_PROXY"); got != "" {
+		t.Fatalf("namespace-governed Pod was forced through legacy proxy: %q", got)
+	}
+	if mutated.Labels[GOVAREgressRestrictedLabel] != "true" || mutated.Annotations[GOVARNativeGatewayRequiredKey] != "true" {
+		t.Fatalf("native gateway enforcement markers missing: labels=%v annotations=%v", mutated.Labels, mutated.Annotations)
+	}
+}
+
 func TestInjectsGOVAREnvWhenAnnotated(t *testing.T) {
 	scheme := newScheme(t)
 	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))

@@ -5,11 +5,13 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +21,8 @@ import (
 	typev3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
+
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govar"
 )
 
 // Server is the synchronous Envoy ext_proc trust boundary. Envoy terminates
@@ -41,15 +45,30 @@ type RouteBinding struct {
 	AllowedZones                                        []string
 }
 
+type RouteTarget struct {
+	SelectedModel      string
+	ProviderDeployment string
+	Cluster            string
+	Authority          string
+	PathMode           string
+	Path               string
+	SnapshotHash       string
+}
+
 type streamState struct {
 	headers                   map[string]string
 	requestBody, responseBody []byte
 	requestID, attemptID      string
 	binding                   RouteBinding
+	route                     RouteTarget
+	routeSnapshotHash         string
 }
 
+const maxExtProcBodyBytes = 1 << 20
+
 func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error {
-	if err := s.authorizeGatewayTransport(stream.Context()); err != nil {
+	gatewayURI, err := s.authorizeGatewayTransport(stream.Context())
+	if err != nil {
 		return err
 	}
 	state := streamState{headers: map[string]string{}}
@@ -64,7 +83,7 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 		switch {
 		case request.GetRequestHeaders() != nil:
 			state.headers = headerMap(request.GetRequestHeaders().GetHeaders())
-			binding, err := s.resolvePrincipal(stream.Context(), state.headers["x-forwarded-client-cert"])
+			binding, err := s.resolvePrincipal(stream.Context(), gatewayURI, state.headers["x-forwarded-client-cert"])
 			if err != nil {
 				return stream.Send(immediate(http.StatusForbidden, err.Error()))
 			}
@@ -74,36 +93,48 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 			}
 		case request.GetRequestBody() != nil:
 			body := request.GetRequestBody()
+			if len(state.requestBody)+len(body.GetBody()) > maxExtProcBodyBytes {
+				return stream.Send(immediate(http.StatusRequestEntityTooLarge, "governed request body exceeds 1 MiB"))
+			}
 			state.requestBody = append(state.requestBody, body.GetBody()...)
 			if !body.GetEndOfStream() {
-				if err := stream.Send(bodyContinue(true, "")); err != nil {
+				if err := stream.Send(bodyContinue(true, RouteTarget{}, nil)); err != nil {
 					return err
 				}
 				continue
 			}
-			admit, err := s.admitAndClaim(stream.Context(), &state)
+			_, err := s.admitAndClaim(stream.Context(), &state)
 			if err != nil {
 				return stream.Send(immediate(http.StatusForbidden, err.Error()))
 			}
-			if err := stream.Send(bodyContinue(true, admit.SelectedDeployment)); err != nil {
+			if err := stream.Send(bodyContinue(true, state.route, state.requestBody)); err != nil {
 				return err
 			}
 		case request.GetResponseHeaders() != nil:
 			if state.requestID != "" {
-				_ = s.dispatch(stream.Context(), state, "delivered", "DELIVERED")
+				if err := s.dispatch(stream.Context(), state, "delivered", "DELIVERED"); err != nil {
+					return err
+				}
 			}
 			if err := stream.Send(responseHeaderContinue()); err != nil {
 				return err
 			}
 		case request.GetResponseBody() != nil:
 			body := request.GetResponseBody()
+			if len(state.responseBody)+len(body.GetBody()) > maxExtProcBodyBytes {
+				return errors.New("provider response body exceeds 1 MiB; liability remains unresolved")
+			}
 			state.responseBody = append(state.responseBody, body.GetBody()...)
 			if body.GetEndOfStream() && state.requestID != "" {
 				usage, ok := parseUsage(state.responseBody)
 				if ok {
-					_ = s.settle(stream.Context(), state, usage)
+					if err := s.settle(stream.Context(), state, usage); err != nil {
+						return err
+					}
 				} else {
-					_ = s.cancel(stream.Context(), state, "missing_or_invalid_usage")
+					if err := s.cancel(stream.Context(), state, "missing_or_invalid_usage"); err != nil {
+						return err
+					}
 				}
 			}
 			if err := stream.Send(responseBodyContinue()); err != nil {
@@ -115,32 +146,43 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 	}
 }
 
-func (s *Server) authorizeGatewayTransport(ctx context.Context) error {
+func (s *Server) authorizeGatewayTransport(ctx context.Context) (string, error) {
 	if s.AllowInsecureDev {
-		return nil
+		return "insecure-dev", nil
 	}
 	remote, ok := peer.FromContext(ctx)
 	if !ok {
-		return errors.New("authenticated Envoy mTLS transport is required")
+		return "", errors.New("authenticated Envoy mTLS transport is required")
 	}
 	tlsInfo, ok := remote.AuthInfo.(credentials.TLSInfo)
 	if !ok || len(tlsInfo.State.PeerCertificates) == 0 || len(tlsInfo.State.VerifiedChains) == 0 {
-		return errors.New("verified Envoy client certificate is required")
+		return "", errors.New("verified Envoy client certificate is required")
 	}
 	for _, uri := range tlsInfo.State.PeerCertificates[0].URIs {
 		if _, allowed := s.AllowedGatewayURIs[uri.String()]; allowed {
-			return nil
+			return uri.String(), nil
 		}
 	}
-	return errors.New("Envoy client certificate SPIFFE identity is not allowed")
+	return "", errors.New("Envoy client certificate SPIFFE identity is not allowed")
 }
 
-type admitResult struct{ Decision, ReasonCode, SelectedDeployment, ProviderAttemptID string }
+type admitResult struct {
+	Decision           string               `json:"decision"`
+	ReasonCode         string               `json:"reason_code"`
+	SelectedDeployment string               `json:"selected_deployment"`
+	ProviderAttemptID  string               `json:"provider_attempt_id"`
+	ApprovalRef        string               `json:"approval_ref,omitempty"`
+	PricingVersion     string               `json:"pricing_version"`
+	RouteSnapshot      *govar.RouteSnapshot `json:"route_snapshot"`
+}
 
 func (s *Server) admitAndClaim(ctx context.Context, state *streamState) (admitResult, error) {
 	var payload map[string]any
 	if err := json.Unmarshal(state.requestBody, &payload); err != nil {
 		return admitResult{}, errors.New("malformed LLM request body")
+	}
+	if streaming, _ := payload["stream"].(bool); streaming {
+		return admitResult{}, errors.New("stream=true is unsupported until authoritative streaming settlement is implemented")
 	}
 	maxOutput := int64Value(payload["max_tokens"])
 	if maxOutput == 0 {
@@ -156,32 +198,119 @@ func (s *Server) admitAndClaim(ctx context.Context, state *streamState) (admitRe
 		"budget_policy_name": binding.BudgetPolicy, "routing_policy_name": binding.RoutingPolicy,
 		"sensitive_data": binding.Sensitive, "allowed_zones": binding.AllowedZones,
 		"input_tokens": int64(0), "input_tokens_exact": false, "max_output_tokens": maxOutput}
+	if approvalRef := strings.TrimSpace(state.headers["x-govar-approval-ref"]); approvalRef != "" {
+		request["approval_ref"] = approvalRef
+	}
 	var result admitResult
 	if err := s.post(ctx, *state, "/v1/admit", request, &result); err != nil {
 		return result, err
 	}
 	if result.Decision != "ADMIT" || result.ReasonCode == "duplicate_request" {
-		return result, fmt.Errorf("admission decision=%s reason=%s", result.Decision, result.ReasonCode)
+		return result, fmt.Errorf("admission decision=%s reason=%s approval_ref=%s", result.Decision, result.ReasonCode, result.ApprovalRef)
 	}
 	state.attemptID = result.ProviderAttemptID
+	if result.RouteSnapshot == nil || result.SelectedDeployment != result.RouteSnapshot.ModelName || result.PricingVersion != result.RouteSnapshot.PricingVersion {
+		return result, errors.New("admission response route snapshot conflicts with top-level identity")
+	}
+	if err := govar.ValidateRouteSnapshot(*result.RouteSnapshot); err != nil {
+		return result, err
+	}
+	route := RouteTarget{SelectedModel: result.RouteSnapshot.ModelName, ProviderDeployment: result.RouteSnapshot.ProviderDeployment,
+		Cluster: result.RouteSnapshot.Cluster, Authority: result.RouteSnapshot.Authority, PathMode: result.RouteSnapshot.PathMode,
+		SnapshotHash: result.RouteSnapshot.SnapshotHash}
+	state.routeSnapshotHash = result.RouteSnapshot.SnapshotHash
+	rewritten, err := rewriteRequestForRoute(state.requestBody, state.headers[":path"], route)
+	if err != nil {
+		return result, err
+	}
+	route.Path, err = routePath(state.headers[":path"], route)
+	if err != nil {
+		return result, err
+	}
+	state.route, state.requestBody = route, rewritten
 	if err := s.dispatch(ctx, *state, "claim", "CLAIMED"); err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
+func rewriteRequestForRoute(body []byte, originalPath string, target RouteTarget) ([]byte, error) {
+	var payload map[string]any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, errors.New("malformed LLM request body")
+	}
+	switch target.PathMode {
+	case "openai-body", "anthropic-body":
+		payload["model"] = target.ProviderDeployment
+	case "azure-deployment-path":
+		delete(payload, "model")
+	case "google-generate-path":
+		delete(payload, "model")
+	default:
+		return nil, fmt.Errorf("unsupported route path mode %q", target.PathMode)
+	}
+	return json.Marshal(payload)
+}
+
+func routePath(original string, target RouteTarget) (string, error) {
+	path, query, _ := strings.Cut(first(original, "/v1/chat/completions"), "?")
+	lowerPath := strings.ToLower(strings.TrimSuffix(path, "/"))
+	switch target.PathMode {
+	case "openai-body":
+		if !isOpenAIPath(lowerPath) {
+			return "", fmt.Errorf("OpenAI body adapter does not support request path %q", path)
+		}
+		// Preserve the API shape; only the provider model in the body changes.
+	case "anthropic-body":
+		if lowerPath != "/v1/messages" {
+			return "", fmt.Errorf("Anthropic body adapter does not support request path %q", path)
+		}
+	case "azure-deployment-path":
+		suffix := ""
+		for _, candidate := range []string{"/chat/completions", "/responses", "/completions", "/embeddings"} {
+			if strings.HasSuffix(lowerPath, candidate) {
+				suffix = candidate
+				break
+			}
+		}
+		if suffix == "" {
+			return "", fmt.Errorf("Azure deployment adapter does not support request path %q", path)
+		}
+		path = "/openai/deployments/" + url.PathEscape(target.ProviderDeployment) + suffix
+	case "google-generate-path":
+		if !strings.HasSuffix(lowerPath, ":generatecontent") {
+			return "", fmt.Errorf("Google generate adapter does not support request path %q", path)
+		}
+		path = "/v1beta/models/" + url.PathEscape(target.ProviderDeployment) + ":generateContent"
+	default:
+		return "", fmt.Errorf("unsupported route path mode %q", target.PathMode)
+	}
+	if query != "" {
+		path += "?" + query
+	}
+	return path, nil
+}
+
+func isOpenAIPath(path string) bool {
+	switch path {
+	case "/v1/chat/completions", "/v1/responses", "/v1/completions", "/v1/embeddings", "/v1/rerank":
+		return true
+	}
+	return false
+}
+
 func (s *Server) dispatch(ctx context.Context, state streamState, suffix, status string) error {
 	return s.post(ctx, state, "/v1/dispatch", map[string]any{"request_id": state.requestID, "event_id": state.requestID + ":extproc:" + suffix,
-		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "provider_attempt_id": state.attemptID, "status": status}, nil)
+		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "provider_attempt_id": state.attemptID, "route_snapshot_hash": state.routeSnapshotHash, "status": status}, nil)
 }
 func (s *Server) settle(ctx context.Context, state streamState, usage usageSummary) error {
 	return s.post(ctx, state, "/v1/settle", map[string]any{"request_id": state.requestID, "settlement_id": state.requestID + ":extproc:settle",
-		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "actual_cost_micros": 0,
+		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "provider_attempt_id": state.attemptID, "actual_cost_micros": 0,
 		"actual_input_tokens": usage.Input, "actual_output_tokens": usage.Output, "usage_version": 1, "final": true}, nil)
 }
 func (s *Server) cancel(ctx context.Context, state streamState, reason string) error {
 	return s.post(ctx, state, "/v1/cancel", map[string]any{"request_id": state.requestID, "event_id": state.requestID + ":extproc:cancel:" + reason,
-		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "reason": reason}, nil)
+		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "provider_attempt_id": state.attemptID, "reason": reason}, nil)
 }
 
 func (s *Server) post(ctx context.Context, state streamState, path string, payload any, out any) error {
@@ -228,17 +357,26 @@ func deriveKey(master []byte, namespace, tenant, workload string) []byte {
 	_, _ = mac.Write([]byte("govar-identity-v2\x00" + namespace + "\x00" + tenant + "\x00" + workload))
 	return []byte(fmt.Sprintf("%x", mac.Sum(nil)))
 }
-func (s *Server) resolvePrincipal(ctx context.Context, xfcc string) (RouteBinding, error) {
-	uri := ""
+func (s *Server) resolvePrincipal(ctx context.Context, gatewayURI, xfcc string) (RouteBinding, error) {
+	fields := map[string]string{}
 	for _, part := range strings.FieldsFunc(xfcc, func(r rune) bool { return r == ';' || r == ',' }) {
 		part = strings.TrimSpace(part)
-		if strings.HasPrefix(part, "URI=") {
-			uri = strings.Trim(strings.TrimPrefix(part, "URI="), `"`)
-			break
+		key, value, ok := strings.Cut(part, "=")
+		if !ok || fields[key] != "" {
+			return RouteBinding{}, errors.New("XFCC is not a single SANITIZE_SET client certificate record")
 		}
+		fields[key] = strings.Trim(value, `"`)
 	}
+	uri := fields["URI"]
 	if uri == "" {
 		return RouteBinding{}, errors.New("sanitized downstream mTLS URI identity is required")
+	}
+	if gatewayURI != "insecure-dev" && fields["By"] != gatewayURI {
+		return RouteBinding{}, errors.New("XFCC By identity does not match the authenticated Envoy certificate")
+	}
+	hash, hashErr := hex.DecodeString(fields["Hash"])
+	if hashErr != nil || len(hash) != sha256.Size {
+		return RouteBinding{}, errors.New("XFCC client certificate hash is not a SHA-256 SANITIZE_SET value")
 	}
 	if s.ResolvePrincipal != nil {
 		return s.ResolvePrincipal(ctx, uri)
@@ -262,10 +400,18 @@ func headerMap(m *corev3.HeaderMap) map[string]string {
 func headerContinue(clear bool) *extprocv3.ProcessingResponse {
 	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_RequestHeaders{RequestHeaders: &extprocv3.HeadersResponse{Response: &extprocv3.CommonResponse{Status: extprocv3.CommonResponse_CONTINUE, ClearRouteCache: clear}}}}
 }
-func bodyContinue(clear bool, model string) *extprocv3.ProcessingResponse {
+func bodyContinue(clear bool, route RouteTarget, body []byte) *extprocv3.ProcessingResponse {
 	common := &extprocv3.CommonResponse{Status: extprocv3.CommonResponse_CONTINUE, ClearRouteCache: clear}
-	if model != "" {
-		common.HeaderMutation = &extprocv3.HeaderMutation{SetHeaders: []*corev3.HeaderValueOption{{Header: &corev3.HeaderValue{Key: "x-ai-eg-model", Value: model}}}}
+	if route.SelectedModel != "" {
+		set := func(key, value string) *corev3.HeaderValueOption {
+			return &corev3.HeaderValueOption{Header: &corev3.HeaderValue{Key: key, RawValue: []byte(value)}, AppendAction: corev3.HeaderValueOption_OVERWRITE_IF_EXISTS_OR_ADD}
+		}
+		common.HeaderMutation = &extprocv3.HeaderMutation{SetHeaders: []*corev3.HeaderValueOption{
+			set("x-ai-eg-model", route.SelectedModel), set("x-govar-upstream-cluster", route.Cluster), set("x-govar-upstream-authority", route.Authority), set(":path", route.Path),
+			set("x-govar-route-snapshot-hash", route.SnapshotHash),
+			set("content-length", strconv.Itoa(len(body))),
+		}}
+		common.BodyMutation = &extprocv3.BodyMutation{Mutation: &extprocv3.BodyMutation_Body{Body: body}}
 	}
 	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_RequestBody{RequestBody: &extprocv3.BodyResponse{Response: common}}}
 }

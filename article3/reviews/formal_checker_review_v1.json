@@ -1,0 +1,155 @@
+{
+  "review_id": "formal-checker-review-20260712-v1",
+  "reviewer_role": "independent formal-checker evidence-integrity verifier",
+  "reviewed_at_utc": "2026-07-12T14:06:51Z",
+  "verdict": "approved",
+  "branch": "article3-q1-recovery-20260711",
+  "worktree_base_head": "a355b339c785442abce4406a4318effc9f5f815f",
+  "scope": "Read-only review of article3/formal/check.sh and its interaction with the unchanged ledger_model.py, recorded results.json, q1_gate.py, and immutable Q1_GATE_CONTRACT.md. This review does not approve the Phase D implementation or broaden the bounded model's claims.",
+  "change_classification": "additive evidence-integrity hardening",
+  "source_sha256": {
+    "article3/formal/check.sh": "8d5f2d5008b9220775afb452cd817ca33a3a1f89d83e7cccc17e4cb260d45444",
+    "article3/formal/ledger_model.py": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
+    "article3/formal/results.json": "65d7164c6372ddc97831f1442bac3118be5768ba07be7af0c81b57dceb31ad49",
+    "article3/tools/q1_gate.py": "66346676dccdf15903656ebde48cc50c0c23d26b51028c1b64b63bb05e88892c",
+    "article3/Q1_GATE_CONTRACT.md": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+    "article3/reviews/theory_review.json": "4aa5002d344e14df428a55678bbeea64b57ef35b134a5a8010897096f636596c"
+  },
+  "baseline_checker_sha256": "0ebb1af5d08aefb51dfe7cacbe084c8aaf694ad3bfc68aaf0d16b5d6348c3db7",
+  "formal_result_semantic_canonical_sha256": "f79a09c83ce79b6ed80602d441bbed0519624eb297a6c118e4fcc1004e68561a",
+  "formal_result_semantic_keys": [
+    "assumptions",
+    "depth",
+    "exit_code",
+    "failures",
+    "invariants",
+    "invariants_checked",
+    "model",
+    "model_sha256",
+    "scenario_traces_checked",
+    "schema_version",
+    "states_checked",
+    "transition_coverage",
+    "transitions_checked"
+  ],
+  "formal_result": {
+    "schema_version": 4,
+    "model_sha256": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
+    "states_checked": 2910,
+    "transitions_checked": 42826,
+    "scenario_traces_checked": 9,
+    "invariants_checked": 10,
+    "failures": [],
+    "exit_code": 0
+  },
+  "verification": {
+    "normal_recomputation": {
+      "command": "bash article3/formal/check.sh",
+      "exit_code": 0,
+      "observed_terminal_line": "formal_check=PASS model_sha256=37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273 states=2910 transitions=42826 recorded_result_unchanged=true",
+      "pre_run_manifest_sha256": "f6ef945aca770142057be2689a8933a587ccc513170458bab47d1c692f825a7a",
+      "post_run_manifest_sha256": "f6ef945aca770142057be2689a8933a587ccc513170458bab47d1c692f825a7a",
+      "tracked_evidence_mutations": 0
+    },
+    "adversarial_temporary_copy_tests": [
+      {
+        "case": "timestamp_only",
+        "mutation": "replace only recorded checked_at_utc",
+        "expected": "accepted",
+        "observed_exit_code": 0,
+        "result": "passed"
+      },
+      {
+        "case": "states_count",
+        "mutation": "increment recorded states_checked",
+        "expected": "rejected",
+        "observed_exit_code": 1,
+        "observed_assertion": "recorded formal result differs at states_checked",
+        "result": "passed"
+      },
+      {
+        "case": "assumptions",
+        "mutation": "replace one recorded semantic assumption",
+        "expected": "rejected",
+        "observed_exit_code": 1,
+        "observed_assertion": "recorded formal result differs at assumptions",
+        "result": "passed"
+      },
+      {
+        "case": "extra_semantic_key",
+        "mutation": "add fabricated_evidence=true to the recorded result",
+        "expected": "rejected",
+        "observed_exit_code": 1,
+        "observed_assertion": "recorded formal result differs at fabricated_evidence",
+        "result": "passed"
+      },
+      {
+        "case": "model_source",
+        "mutation": "append a no-op comment to the model source without regenerating recorded evidence",
+        "expected": "rejected",
+        "observed_exit_code": 1,
+        "observed_assertion": "unnamed assertion during recorded-model-hash validation",
+        "result": "passed"
+      }
+    ],
+    "adversarial_summary": {
+      "intended_timestamp_exclusions_accepted": 1,
+      "semantic_or_source_tampers_rejected": 4,
+      "temporary_model_or_result_mutations_caused_by_checker": 0
+    },
+    "q1_gate_interaction": {
+      "command": "python3 article3/tools/q1_gate.py",
+      "overall_exit_code": 1,
+      "formal_invariant_check": "passed",
+      "source_bound_phase_c_theory_review": "failed because its recorded check.sh hash is the superseded baseline hash",
+      "interpretation": "The gate correctly accepts the freshly recomputed formal evidence and independently rejects the stale source-bound theory review; the checker change does not bypass review staleness.",
+      "pre_run_manifest_sha256": "0b894568c96c0a85931537b6b115597b40aa1bc1751e86f3332afc61f85bdc4a",
+      "post_run_manifest_sha256": "0b894568c96c0a85931537b6b115597b40aa1bc1751e86f3332afc61f85bdc4a",
+      "tracked_evidence_mutations": 0
+    }
+  },
+  "contract_assessment": {
+    "contract_modified": false,
+    "gate_modified": false,
+    "requirement_removed_relaxed_or_bypassed": false,
+    "assessment": "The new checker strengthens recomputation integrity by preventing the check itself from rewriting recorded evidence and by requiring complete semantic equality. It retains all required model-hash, invariant, scenario, nonzero-state, nonzero-transition, empty-failure, and zero-exit checks. The immutable contract and q1_gate.py are byte-unchanged."
+  },
+  "findings": [
+    {
+      "id": "FC-C1",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "The checker executes a copied ledger_model.py in a fresh mktemp directory and removes that directory on exit, so recomputation no longer rewrites tracked results.json. Byte-hash manifests were identical before and after both direct and gate-driven execution."
+    },
+    {
+      "id": "FC-M1",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Both recomputed and recorded documents independently satisfy schema, exit, failure, model-hash, invariant, state, transition, and scenario minimums; the union of every result key is then compared exactly, excluding only checked_at_utc."
+    },
+    {
+      "id": "FC-M2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Tampering with a count, an assumption, an added semantic key, or the model source was rejected in isolated copies, while timestamp-only variation was accepted as intended. No temporary test run mutated its input model or recorded result."
+    },
+    {
+      "id": "FC-M3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The current q1_gate.py executes the hardened checker and passes the formal check, while its independent source-hash check correctly rejects the prior theory review because that review names the superseded checker hash. A fresh independent theory source-binding remains required before the Phase C review gate can pass."
+    },
+    {
+      "id": "FC-M4",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The model source hash, bounded state count, transition count, nine required scenario traces, ten declared invariants, empty failure list, and zero model exit code are unchanged; this checker-only change neither alters the formal semantics nor expands the theorem scope."
+    }
+  ],
+  "limitations": [
+    "Approval establishes checker integrity for the exact hashed sources, not correctness of later edits.",
+    "The bounded model remains conditional and symmetry-reduced; this review does not convert it into a proof of provider billing, calibration, production implementation, or population-level performance.",
+    "The stale Phase C theory review must be independently refreshed against the new checker hash; this review is intentionally a separate artifact and is not a substitute for that theory review."
+  ],
+  "unresolved_critical_major": []
+}

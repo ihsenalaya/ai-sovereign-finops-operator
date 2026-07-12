@@ -30,6 +30,123 @@ const (
 	TierHigh   Tier = "high"
 )
 
+// GOVARRoutePathMode identifies the provider adapter that must actuate a
+// selected route. It is deliberately closed: an unknown adapter is not safe to
+// infer from a URL or model name.
+// +kubebuilder:validation:Enum=openai-body;azure-deployment-path;anthropic-body;google-generate-path
+type GOVARRoutePathMode string
+
+const (
+	GOVARRouteOpenAIBody          GOVARRoutePathMode = "openai-body"
+	GOVARRouteAzureDeploymentPath GOVARRoutePathMode = "azure-deployment-path"
+	GOVARRouteAnthropicBody       GOVARRoutePathMode = "anthropic-body"
+	GOVARRouteGoogleGeneratePath  GOVARRoutePathMode = "google-generate-path"
+)
+
+// Deprecated compatibility aliases. AIModel route fields are never safety
+// authority; provider-owned gateway route bindings are authoritative.
+type AIModelRoutePathMode = GOVARRoutePathMode
+
+const (
+	AIModelRouteOpenAIBody          = GOVARRouteOpenAIBody
+	AIModelRouteAzureDeploymentPath = GOVARRouteAzureDeploymentPath
+	AIModelRouteAnthropicBody       = GOVARRouteAnthropicBody
+	AIModelRouteGoogleGeneratePath  = GOVARRouteGoogleGeneratePath
+)
+
+// AIModelRouteSpec is the complete server-owned route selected by admission.
+// The gateway uses the cluster and authority while the adapter uses the
+// provider deployment to rewrite the protocol-specific model or path.
+type AIModelRouteSpec struct {
+	// ProviderDeployment is the provider-side deployment or model identifier.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._:/-]*$`
+	ProviderDeployment string `json:"providerDeployment"`
+
+	// Cluster is the exact Envoy cluster key configured for this route.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._:-]*$`
+	Cluster string `json:"cluster"`
+
+	// Authority is the upstream HTTP authority expected by the provider adapter.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._:-]*$`
+	Authority string `json:"authority"`
+
+	// PathMode selects the explicit provider request adapter.
+	PathMode AIModelRoutePathMode `json:"pathMode"`
+}
+
+// +kubebuilder:validation:XValidation:rule="!self.routable || (has(self.routeBindingRef) && self.routeBindingRef != ”)",message="routeBindingRef is required when routable is true"
+// AIModelGOVARSpec contains safety-critical routing inputs. These typed fields
+// supersede, but do not reinterpret, historical annotations.
+type AIModelGOVARSpec struct {
+	// Routable explicitly allows this model to enter the hard-feasibility set.
+	Routable bool `json:"routable"`
+
+	// RouteBindingRef selects a binding owned by spec.providerRef.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9][A-Za-z0-9._-]*$`
+	RouteBindingRef string `json:"routeBindingRef,omitempty"`
+
+	// Route is deprecated decode compatibility only. GOV-AR ignores it.
+	// +optional
+	// +deprecated
+	Route *AIModelRouteSpec `json:"route,omitempty"`
+}
+
+// AIModelVerifiedOutputCapStatus is an observed provider-capability assertion.
+// +kubebuilder:validation:XValidation:rule="!self.verified || self.maxOutputTokens > 0",message="maxOutputTokens must be positive when verified is true"
+type AIModelVerifiedOutputCapStatus struct {
+	// Verified states that the provider enforces this cap for the observed version.
+	Verified bool `json:"verified"`
+
+	// MaxOutputTokens is the verified provider-enforced maximum.
+	// +kubebuilder:validation:Minimum=0
+	MaxOutputTokens int64 `json:"maxOutputTokens"`
+
+	// ObservedAt is when the capability was verified.
+	ObservedAt metav1.Time `json:"observedAt"`
+
+	// SourceVersion identifies the immutable provider/model capability source.
+	// +kubebuilder:validation:MinLength=1
+	SourceVersion string `json:"sourceVersion"`
+}
+
+// AIModelLatencyObservation is a typed, timestamped latency sample summary.
+// +kubebuilder:validation:XValidation:rule="self.p99Millis >= self.p95Millis",message="latency quantiles must be ordered p95 <= p99"
+type AIModelLatencyObservation struct {
+	// MeanMillis is the observed arithmetic mean in milliseconds.
+	// +kubebuilder:validation:Minimum=0
+	MeanMillis int64 `json:"meanMillis"`
+
+	// P95Millis is the observed 95th percentile in milliseconds.
+	// +kubebuilder:validation:Minimum=0
+	P95Millis int64 `json:"p95Millis"`
+
+	// P99Millis is the observed 99th percentile in milliseconds.
+	// +kubebuilder:validation:Minimum=0
+	P99Millis int64 `json:"p99Millis"`
+
+	// SampleCount is the number of observations in the summary.
+	// +kubebuilder:validation:Minimum=1
+	SampleCount int64 `json:"sampleCount"`
+
+	// ObservedAt is the end of the observation window.
+	ObservedAt metav1.Time `json:"observedAt"`
+}
+
+// AIModelGOVARStatus contains controller-produced safety observations.
+type AIModelGOVARStatus struct {
+	// VerifiedOutputCap is absent until capability verification has run.
+	// +optional
+	VerifiedOutputCap *AIModelVerifiedOutputCapStatus `json:"verifiedOutputCap,omitempty"`
+
+	// Latency is absent until a typed observation is available.
+	// +optional
+	Latency *AIModelLatencyObservation `json:"latency,omitempty"`
+}
+
 // AIModelSpec defines the desired state of AIModel.
 type AIModelSpec struct {
 	// ProviderRef is the name of the AIProvider serving this model (same namespace).
@@ -71,6 +188,11 @@ type AIModelSpec struct {
 	ServesApplication string `json:"servesApplication,omitempty"`
 	// +optional
 	ServesTeam string `json:"servesTeam,omitempty"`
+
+	// GOVAR contains typed hard-feasibility and route-actuation inputs. When
+	// absent, admission must not infer these values from annotations.
+	// +optional
+	GOVAR *AIModelGOVARSpec `json:"govar,omitempty"`
 }
 
 // AIModelStatus defines the observed state of AIModel.
@@ -98,6 +220,10 @@ type AIModelStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
+	// GOVAR contains observed, controller-owned cap and latency evidence.
+	// +optional
+	GOVAR *AIModelGOVARStatus `json:"govar,omitempty"`
 }
 
 //+kubebuilder:object:root=true

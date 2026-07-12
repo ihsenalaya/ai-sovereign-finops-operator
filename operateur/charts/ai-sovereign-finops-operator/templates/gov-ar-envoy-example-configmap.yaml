@@ -31,6 +31,7 @@ data:
                   typed_config:
                     "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                     stat_prefix: gov_ar_gateway
+                    internal_address_config: {}
                     forward_client_cert_details: SANITIZE_SET
                     set_current_client_cert_details: { uri: true }
                     route_config:
@@ -40,12 +41,18 @@ data:
                           domains: ["*"]
                           routes:
                             - match: { prefix: "/" }
-                              route: { cluster: llm_backend }
+                              route:
+                                cluster_header: x-govar-upstream-cluster
+                                host_rewrite_header: x-govar-upstream-authority
                     http_filters:
                       - name: envoy.filters.http.ext_proc
                         typed_config:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExternalProcessor
                           failure_mode_allow: false
+                          mutation_rules:
+                            allow_expression:
+                              regex: "^(:path|content-length|x-ai-eg-model|x-govar-upstream-cluster|x-govar-upstream-authority)$"
+                            disallow_is_error: true
                           grpc_service:
                             envoy_grpc: { cluster_name: gov_ar_ext_proc }
                           processing_mode:

@@ -18,6 +18,8 @@ package e2e
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -26,6 +28,13 @@ import (
 
 // Run e2e tests using the Ginkgo runner.
 func TestE2E(t *testing.T) {
+	if os.Getenv("ARTICLE3_RUN_KIND_E2E") != "1" {
+		t.Skip("Kind E2E requires the explicit Article 3 isolated-cluster gate")
+	}
+	cluster := os.Getenv("KIND_CLUSTER")
+	if !strings.HasPrefix(cluster, "article3-") || os.Getenv("KUBECONFIG") == "" {
+		t.Fatal("Kind E2E requires an exact article3-* cluster and isolated KUBECONFIG")
+	}
 	RegisterFailHandler(Fail)
 	fmt.Fprintf(GinkgoWriter, "Starting ai-sovereign-finops-operator suite\n")
 	RunSpecs(t, "e2e suite")

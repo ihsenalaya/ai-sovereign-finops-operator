@@ -11,7 +11,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -30,6 +30,8 @@ REQUEST_CATALOG = {
     "req-a-refill": ("tenant-a", "uid-a2", 5),
     "req-a-over": ("tenant-a", "uid-a2", 6),
 }
+REQUEST_MODEL = {request_id: ("model-a" if tenant == "tenant-a" else "model-b")
+                 for request_id, (tenant, _uid, _amount) in REQUEST_CATALOG.items()}
 # Exhaustive exploration uses one request per tenant; explicit scenario traces
 # below cover same-tenant concurrency, a second semantic event, and correction
 # version ordering without multiplying symmetric states.
@@ -40,6 +42,174 @@ ACTIVE = {"reserved", "dispatch_pending", "dispatched", "unresolved"}
 PROVISIONAL = {"settled_provisional", "late_settled_provisional", "corrected_provisional"}
 FINAL = {"finalized", "late_finalized"}
 UNBILLED = {"expired_undispatched", "canceled_unbilled", "failed_unbilled"}
+
+
+HEX_A = "a" * 64
+HEX_B = "b" * 64
+PATH_MODES = {"openai-body", "azure-deployment-path", "anthropic-body", "google-generate-path"}
+
+
+@dataclass(frozen=True)
+class RouteBinding:
+    name: str
+    provider_deployment: str
+    cluster: str
+    authority: str
+    path_mode: str
+
+
+@dataclass(frozen=True)
+class AIModelObject:
+    name: str
+    uid: str
+    generation: int
+    resource_version: str
+    provider_ref: str
+    route_binding_ref: str
+    # This represents the deprecated model-owned route surface. Snapshot
+    # construction never reads it.
+    untrusted_route_hint: RouteBinding | None = None
+
+
+@dataclass(frozen=True)
+class AIProviderObject:
+    name: str
+    uid: str
+    generation: int
+    resource_version: str
+    pricing_version: str
+    pricing_compliance_hash: str
+    route_bindings: tuple[RouteBinding, ...]
+
+
+def model_defaults() -> dict[str, AIModelObject]:
+    return {
+        "model-a": AIModelObject("model-a", "model-a-u1", 1, "m-a-rv1", "provider-a", "primary"),
+        "model-b": AIModelObject("model-b", "model-b-u1", 1, "m-b-rv1", "provider-b", "primary"),
+    }
+
+
+def provider_defaults() -> dict[str, AIProviderObject]:
+    return {
+        "provider-a": AIProviderObject("provider-a", "provider-a-u1", 1, "p-a-rv1",
+                                       "pricing-a-v1", HEX_A,
+                                       (RouteBinding("primary", "deployment-a", "cluster-a",
+                                                     "a.example", "openai-body"),)),
+        "provider-b": AIProviderObject("provider-b", "provider-b-u1", 1, "p-b-rv1",
+                                       "pricing-b-v1", HEX_B,
+                                       (RouteBinding("primary", "deployment-b", "cluster-b",
+                                                     "b.example", "openai-body"),
+                                        RouteBinding("provider-b-only", "deployment-b2", "cluster-b2",
+                                                     "b2.example", "openai-body"))),
+    }
+
+
+@dataclass(frozen=True)
+class RouteSnapshot:
+    namespace: str
+    model_name: str
+    model_uid: str
+    model_generation: int
+    model_resource_version: str
+    provider_name: str
+    provider_uid: str
+    provider_generation: int
+    provider_resource_version: str
+    pricing_version: str
+    pricing_compliance_hash: str
+    route_binding_name: str
+    provider_deployment: str
+    cluster: str
+    authority: str
+    path_mode: str
+    snapshot_hash: str
+
+
+def fixed_hash(domain: str, values: tuple[object, ...]) -> str:
+    payload = [domain, *values]
+    return hashlib.sha256(json.dumps(payload, separators=(",", ":")).encode()).hexdigest()
+
+
+def snapshot_fields(snapshot: RouteSnapshot) -> tuple[object, ...]:
+    return (snapshot.namespace, snapshot.model_name, snapshot.model_uid, snapshot.model_generation,
+            snapshot.model_resource_version, snapshot.provider_name, snapshot.provider_uid,
+            snapshot.provider_generation, snapshot.provider_resource_version,
+            snapshot.pricing_version, snapshot.pricing_compliance_hash,
+            snapshot.route_binding_name, snapshot.provider_deployment, snapshot.cluster,
+            snapshot.authority, snapshot.path_mode)
+
+
+def rehash_snapshot(snapshot: RouteSnapshot) -> RouteSnapshot:
+    return replace(snapshot, snapshot_hash=fixed_hash("govar-route-snapshot-v1",
+                                                     snapshot_fields(snapshot)))
+
+
+def provider_binding(provider: AIProviderObject, name: str) -> RouteBinding | None:
+    matches = [binding for binding in provider.route_bindings if binding.name == name]
+    return matches[0] if len(matches) == 1 else None
+
+
+def snapshot_from_catalog(models: dict[str, AIModelObject], providers: dict[str, AIProviderObject],
+                          model_name: str) -> tuple[RouteSnapshot, AIModelObject, AIProviderObject] | None:
+    model = models.get(model_name)
+    if model is None or not model.provider_ref or not model.route_binding_ref:
+        return None
+    provider = providers.get(model.provider_ref)
+    if provider is None:
+        return None
+    binding = provider_binding(provider, model.route_binding_ref)
+    if binding is None:
+        return None
+    fields = ("finance", model.name, model.uid, model.generation, model.resource_version,
+              provider.name, provider.uid, provider.generation, provider.resource_version,
+              provider.pricing_version, provider.pricing_compliance_hash, binding.name,
+              binding.provider_deployment, binding.cluster, binding.authority, binding.path_mode)
+    snapshot = RouteSnapshot(*fields, fixed_hash("govar-route-snapshot-v1", fields))
+    return snapshot, model, provider
+
+
+def valid_snapshot(snapshot: RouteSnapshot) -> bool:
+    fields = snapshot_fields(snapshot)
+    required_strings = (snapshot.namespace, snapshot.model_name, snapshot.model_uid,
+                        snapshot.model_resource_version, snapshot.provider_name,
+                        snapshot.provider_uid, snapshot.provider_resource_version,
+                        snapshot.pricing_version, snapshot.route_binding_name,
+                        snapshot.provider_deployment, snapshot.cluster, snapshot.authority)
+    is_hex = lambda value: len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+    return (all(required_strings) and snapshot.model_generation > 0 and snapshot.provider_generation > 0
+            and snapshot.path_mode in PATH_MODES and is_hex(snapshot.pricing_compliance_hash)
+            and is_hex(snapshot.snapshot_hash)
+            and snapshot.snapshot_hash == fixed_hash("govar-route-snapshot-v1", fields))
+
+
+def validate_snapshot_abstraction() -> None:
+    resolved = snapshot_from_catalog(model_defaults(), provider_defaults(), "model-a")
+    assert resolved is not None
+    valid = resolved[0]
+    assert valid_snapshot(valid)
+    malformed = [
+        replace(valid, model_uid=""), replace(valid, model_resource_version=""),
+        replace(valid, provider_uid=""), replace(valid, provider_resource_version=""),
+        replace(valid, route_binding_name=""), replace(valid, provider_deployment=""),
+        replace(valid, cluster=""), replace(valid, authority=""),
+        replace(valid, path_mode="unknown-adapter"),
+        replace(valid, pricing_compliance_hash="a" * 63),
+        replace(valid, pricing_compliance_hash="g" * 64),
+    ]
+    for value in malformed:
+        assert not valid_snapshot(rehash_snapshot(value))
+    assert not valid_snapshot(replace(valid, snapshot_hash="f" * 64))
+
+
+def snapshot_route(snapshot: RouteSnapshot) -> tuple[str, str, str, str]:
+    return (snapshot.provider_deployment, snapshot.cluster, snapshot.authority, snapshot.path_mode)
+
+
+def response_bytes(record: "Record") -> str:
+    payload = {"selected_deployment": record.route_snapshot.model_name,
+               "pricing_version": record.route_snapshot.pricing_version,
+               "route_snapshot": asdict(record.route_snapshot)}
+    return json.dumps(payload, separators=(",", ":"), sort_keys=False)
 
 
 @dataclass(frozen=True)
@@ -60,6 +230,12 @@ class Record:
     reserved_ceiling: int
     residual_hold: int
     origin_window: int
+    route_snapshot: RouteSnapshot
+    reserved_model: AIModelObject
+    reserved_provider: AIProviderObject
+    persisted_response_bytes: str
+    replay_response_bytes: str = ""
+    dispatch_target: tuple[str, str, str, str] = ()
     status: str = "reserved"
     outbox: str = "pending"
     actual: int = 0
@@ -81,6 +257,9 @@ class Record:
 class State:
     tenants: dict[str, Tenant] = field(default_factory=lambda: {"tenant-a": Tenant(), "tenant-b": Tenant()})
     records: dict[str, Record] = field(default_factory=dict)
+    models: dict[str, AIModelObject] = field(default_factory=model_defaults)
+    providers: dict[str, AIProviderObject] = field(default_factory=provider_defaults)
+    catalog_variant: str = "base"
     inbox: dict[str, str] = field(default_factory=dict)  # event ID -> immutable payload identity
     transition_coverage: set[str] = field(default_factory=set)
 
@@ -88,12 +267,13 @@ class State:
         return copy.deepcopy(self)
 
     def fingerprint(self) -> str:
-        payload = {
-            "tenants": {k: asdict(v) for k, v in sorted(self.tenants.items())},
-            "records": {k: asdict(v) for k, v in sorted(self.records.items())},
-            "inbox": dict(sorted(self.inbox.items())),
-        }
-        return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+        # All leaves are frozen dataclasses, integers, strings, and tuples.
+        # Their ordered repr is deterministic and materially faster than a
+        # recursive asdict/JSON conversion at every explored transition.
+        payload = (tuple(sorted(self.tenants.items())), tuple(sorted(self.records.items())),
+                   tuple(sorted(self.models.items())), tuple(sorted(self.providers.items())),
+                   self.catalog_variant, tuple(sorted(self.inbox.items())))
+        return hashlib.sha256(repr(payload).encode()).hexdigest()
 
 
 def replace_tenant(state: State, tenant_id: str, **kwargs: int) -> None:
@@ -103,10 +283,7 @@ def replace_tenant(state: State, tenant_id: str, **kwargs: int) -> None:
 
 
 def replace_record(state: State, request_id: str, **kwargs: object) -> None:
-    values = asdict(state.records[request_id])
-    values["correction_events"] = tuple(values["correction_events"])
-    values.update(kwargs)
-    state.records[request_id] = Record(**values)
+    state.records[request_id] = replace(state.records[request_id], **kwargs)
 
 
 def authorized(record: Record, tenant_id: str, workload_uid: str) -> bool:
@@ -118,13 +295,19 @@ def reserve(state: State, request_id: str, tenant_id: str, workload_uid: str) ->
     if expected is None or expected[:2] != (tenant_id, workload_uid) or request_id in state.records:
         return False
     amount = expected[2]
+    resolved = snapshot_from_catalog(state.models, state.providers, REQUEST_MODEL[request_id])
+    if resolved is None:
+        return False
+    snapshot, model, provider = resolved
+    if not valid_snapshot(snapshot):
+        return False
     tenant = state.tenants[tenant_id]
     if tenant.settled + tenant.reserved + tenant.carried_debt + amount > tenant.budget:
         return False
     replace_tenant(state, tenant_id, reserved=tenant.reserved + amount)
-    state.records[request_id] = Record(
-        request_id, tenant_id, workload_uid, amount, amount, tenant.current_window
-    )
+    record = Record(request_id, tenant_id, workload_uid, amount, amount,
+                    tenant.current_window, snapshot, model, provider, "")
+    state.records[request_id] = replace(record, persisted_response_bytes=response_bytes(record))
     state.transition_coverage.add("atomic_reserve_and_pending_outbox")
     return True
 
@@ -135,7 +318,8 @@ def claim_outbox(state: State, request_id: str, tenant_id: str, workload_uid: st
         return False
     if record.status != "reserved" or record.outbox != "pending":
         return False
-    replace_record(state, request_id, status="dispatch_pending", outbox="claimed")
+    replace_record(state, request_id, status="dispatch_pending", outbox="claimed",
+                   dispatch_target=snapshot_route(record.route_snapshot))
     state.transition_coverage.add("outbox_claim")
     return True
 
@@ -146,9 +330,102 @@ def mark_dispatched(state: State, request_id: str, tenant_id: str, workload_uid:
         return False
     if record.status != "dispatch_pending" or record.outbox != "claimed":
         return False
-    replace_record(state, request_id, status="dispatched", outbox="delivered")
+    replace_record(state, request_id, status="dispatched", outbox="delivered",
+                   dispatch_target=snapshot_route(record.route_snapshot))
     state.transition_coverage.add("provider_delivery")
     return True
+
+
+def catalog_action_allowed(state: State, variant: str) -> bool:
+    if state.catalog_variant != "base":
+        return False
+    # Symmetry reduction: mutating model-a while the state contains only
+    # model-b records cannot affect a route snapshot or dispatch target. Keep
+    # the empty-state mutation (mutation before reserve) and every state that
+    # already contains a model-a reservation (mutation at each later boundary).
+    if variant in {"cross-provider-binding", "model-owned-route-only"}:
+        if state.records:
+            return False
+    elif not any(REQUEST_MODEL[r.request_id] == "model-a" for r in state.records.values()):
+        return False
+    state.catalog_variant = variant
+    return True
+
+
+def recreate_model(state: State) -> bool:
+    if not catalog_action_allowed(state, "model-recreated"):
+        return False
+    model = state.models["model-a"]
+    state.models["model-a"] = replace(model, uid="model-a-u2", generation=2,
+                                      resource_version="m-a-rv2")
+    state.transition_coverage.add("model_same_name_delete_recreate")
+    return True
+
+
+def recreate_provider_and_route(state: State) -> bool:
+    if not catalog_action_allowed(state, "provider-recreated"):
+        return False
+    provider = state.providers["provider-a"]
+    state.providers["provider-a"] = replace(
+        provider, uid="provider-a-u2", generation=2, resource_version="p-a-rv2",
+        pricing_version="pricing-a-v2", pricing_compliance_hash="c" * 64,
+        route_bindings=(RouteBinding("primary", "deployment-a2", "cluster-a2",
+                                     "a2.example", "openai-body"),))
+    state.transition_coverage.add("provider_route_price_same_name_delete_recreate")
+    return True
+
+
+def inject_cross_provider_binding(state: State) -> bool:
+    if not catalog_action_allowed(state, "cross-provider-binding"):
+        return False
+    model = state.models["model-a"]
+    # provider-b-only exists under provider-b, but model-a still references
+    # provider-a. Resolution must not search globally by binding name.
+    state.models["model-a"] = replace(model, route_binding_ref="provider-b-only")
+    state.transition_coverage.add("cross_provider_binding_injection")
+    return True
+
+
+def inject_model_owned_route_only(state: State) -> bool:
+    if not catalog_action_allowed(state, "model-owned-route-only"):
+        return False
+    model = state.models["model-a"]
+    state.models["model-a"] = replace(
+        model, route_binding_ref="",
+        untrusted_route_hint=RouteBinding("attacker", "deployment-b", "cluster-b",
+                                          "b.example", "openai-body"))
+    state.transition_coverage.add("model_owned_route_injection")
+    return True
+
+
+def duplicate_admit(state: State, request_id: str, tenant_id: str, workload_uid: str) -> bool:
+    record = state.records.get(request_id)
+    if record is None or not authorized(record, tenant_id, workload_uid):
+        return False
+    replay = response_bytes(record)
+    if replay != record.persisted_response_bytes:
+        return False
+    if record.replay_response_bytes and record.replay_response_bytes != replay:
+        return False
+    replace_record(state, request_id, replay_response_bytes=replay)
+    state.transition_coverage.add("duplicate_admit_byte_stable_route_response")
+    return True
+
+
+def conflicting_duplicate_admit(state: State, request_id: str, tenant_id: str,
+                                 workload_uid: str) -> bool:
+    record = state.records.get(request_id)
+    if record is None or not authorized(record, tenant_id, workload_uid):
+        return False
+    resolved = snapshot_from_catalog(state.models, state.providers, REQUEST_MODEL[request_id])
+    # This action represents a duplicate Admit carrying the live, conflicting
+    # catalog snapshot rather than the persisted admission fingerprint. It must
+    # be rejected atomically; it never replaces the record or response.
+    if resolved is None or resolved[0] == record.route_snapshot:
+        return False
+    # The live proposal conflicts with the persisted snapshot. Rejection is an
+    # atomic no-op by construction and is asserted by the required scenario.
+    return False
 
 
 def timeout_or_expire(state: State, request_id: str, tenant_id: str, workload_uid: str) -> bool:
@@ -408,6 +685,43 @@ def inv_provisional_rollover_guard(state: State) -> bool:
     return True
 
 
+def inv_provider_route_ownership(state: State) -> bool:
+    for record in state.records.values():
+        snapshot, model, provider = record.route_snapshot, record.reserved_model, record.reserved_provider
+        binding = provider_binding(provider, model.route_binding_ref)
+        if (binding is None or model.provider_ref != provider.name
+                or snapshot.model_name != model.name or snapshot.model_uid != model.uid
+                or snapshot.model_generation != model.generation
+                or snapshot.model_resource_version != model.resource_version
+                or snapshot.provider_name != provider.name or snapshot.provider_uid != provider.uid
+                or snapshot.provider_generation != provider.generation
+                or snapshot.provider_resource_version != provider.resource_version
+                or snapshot.pricing_version != provider.pricing_version
+                or snapshot.pricing_compliance_hash != provider.pricing_compliance_hash
+                or snapshot.route_binding_name != binding.name
+                or snapshot_route(snapshot) != (binding.provider_deployment, binding.cluster,
+                                                binding.authority, binding.path_mode)):
+            return False
+    return True
+
+
+def inv_route_snapshot_integrity(state: State) -> bool:
+    return all(valid_snapshot(record.route_snapshot) for record in state.records.values())
+
+
+def inv_dispatch_uses_reserved_snapshot(state: State) -> bool:
+    return all((r.dispatch_target == snapshot_route(r.route_snapshot)
+                if r.outbox in {"claimed", "delivered"} else
+                (not r.dispatch_target or r.dispatch_target == snapshot_route(r.route_snapshot)))
+               for r in state.records.values())
+
+
+def inv_replay_stable_route(state: State) -> bool:
+    return all(r.persisted_response_bytes == response_bytes(r)
+               and (not r.replay_response_bytes or r.replay_response_bytes == r.persisted_response_bytes)
+               for r in state.records.values())
+
+
 INVARIANTS: dict[str, Callable[[State], bool]] = {
     "non_negative_integer_ledger": inv_non_negative,
     "conditional_strict_ledger_feasibility": inv_conditional_strict_feasibility,
@@ -417,6 +731,10 @@ INVARIANTS: dict[str, Callable[[State], bool]] = {
     "tenant_and_workload_uid_isolation": inv_identity_isolation,
     "residual_correction_exposure_retained": inv_residual_correction_exposure,
     "provisional_rollover_guard_prevents_credit_reuse": inv_provisional_rollover_guard,
+    "provider_route_ownership": inv_provider_route_ownership,
+    "route_snapshot_integrity": inv_route_snapshot_integrity,
+    "dispatch_uses_reserved_snapshot": inv_dispatch_uses_reserved_snapshot,
+    "duplicate_admit_byte_stable_route_response": inv_replay_stable_route,
 }
 
 
@@ -456,6 +774,8 @@ def enabled_actions() -> list[tuple[str, tuple]]:
 
     request_id = "req-a1"
     tenant, uid, amount = REQUEST_CATALOG[request_id]
+    actions.append(("duplicate_admit", (request_id, tenant, uid)))
+    actions.append(("conflicting_duplicate_admit", (request_id, tenant, uid)))
     for actor_tenant, actor_uid in (("tenant-b", uid), (tenant, "uid-a2")):
         actions.extend([
             ("reserve", (request_id, actor_tenant, actor_uid)),
@@ -470,6 +790,12 @@ def enabled_actions() -> list[tuple[str, tuple]]:
     for target in state_tenants():
         for actor_tenant, actor_uid in PRINCIPALS:
             actions.append(("rollover", (target, actor_tenant, actor_uid)))
+    actions.extend([
+        ("model_recreate", ()),
+        ("provider_recreate", ()),
+        ("cross_provider_binding", ()),
+        ("model_owned_route_only", ()),
+    ])
     return actions
 
 
@@ -490,6 +816,12 @@ def apply_action(state: State, name: str, args: tuple) -> tuple[State, bool]:
         "correct": correct,
         "finalize": finalize,
         "rollover": rollover,
+        "duplicate_admit": duplicate_admit,
+        "conflicting_duplicate_admit": conflicting_duplicate_admit,
+        "model_recreate": recreate_model,
+        "provider_recreate": recreate_provider_and_route,
+        "cross_provider_binding": inject_cross_provider_binding,
+        "model_owned_route_only": inject_model_owned_route_only,
     }
     ok = functions[name](next_state, *args)
     if not ok and next_state.fingerprint() != before:
@@ -561,6 +893,31 @@ def required_scenarios() -> dict[str, list[tuple[str, tuple]]]:
             ("correct", ("req-a1", *a, "corr-v2", 2, 2)),
             ("correct", ("req-a1", *a, "corr-v1", 1, 2)),
         ],
+        "provider_mutation_then_duplicate_admit_and_dispatch_use_persisted_snapshot": [
+            ("reserve", ("req-a1", *a)),
+            ("provider_recreate", ()),
+            ("duplicate_admit", ("req-a1", *a)),
+            ("claim", ("req-a1", *a)),
+            ("dispatch", ("req-a1", *a)),
+        ],
+        "model_same_name_recreate_then_replay_is_byte_stable": [
+            ("reserve", ("req-a1", *a)),
+            ("model_recreate", ()),
+            ("duplicate_admit", ("req-a1", *a)),
+        ],
+        "conflicting_duplicate_after_provider_mutation_is_rejected": [
+            ("reserve", ("req-a1", *a)),
+            ("provider_recreate", ()),
+            ("conflicting_duplicate_admit", ("req-a1", *a)),
+        ],
+        "cross_provider_binding_name_is_rejected": [
+            ("cross_provider_binding", ()),
+            ("reserve", ("req-a1", *a)),
+        ],
+        "model_owned_route_without_provider_binding_is_rejected": [
+            ("model_owned_route_only", ()),
+            ("reserve", ("req-a1", *a)),
+        ],
     }
 
 
@@ -575,6 +932,9 @@ def run_required_scenarios() -> tuple[list[str], list[dict[str, object]], set[st
         ("stale_correction_version_rejected", 4),
         ("historical_credit_cannot_expand_future_windows", 6),
         ("historical_credit_cannot_expand_future_windows", 8),
+        ("cross_provider_binding_name_is_rejected", 1),
+        ("model_owned_route_without_provider_binding_is_rejected", 1),
+        ("conflicting_duplicate_after_provider_mutation_is_rejected", 2),
     }
     for scenario, actions in required_scenarios().items():
         state = State()
@@ -596,6 +956,10 @@ def run_required_scenarios() -> tuple[list[str], list[dict[str, object]], set[st
 
 def main() -> int:
     failures: list[dict[str, object]] = []
+    try:
+        validate_snapshot_abstraction()
+    except AssertionError as exc:
+        failures.append({"invariant": "route_snapshot_validation_abstraction", "error": str(exc)})
     visited: set[tuple[str, int]] = set()
     states_checked = 0
     transitions_checked = 0
@@ -642,6 +1006,9 @@ def main() -> int:
         "semantic_duplicate_no_effect", "monotone_correction_with_residual_hold",
         "exact_correction_replay_no_effect",
         "authoritative_finality_releases_residual", "rollover_preserves_holds_and_adjustments",
+        "model_same_name_delete_recreate", "provider_route_price_same_name_delete_recreate",
+        "cross_provider_binding_injection", "model_owned_route_injection",
+        "duplicate_admit_byte_stable_route_response",
     }
     missing_coverage = sorted(required_coverage - coverage)
     if missing_coverage:
@@ -669,6 +1036,7 @@ def main() -> int:
         "scenario_traces_checked": scenario_names,
         "transition_coverage": sorted(coverage),
         "invariants_checked": len(INVARIANTS) + 2,
+        "route_snapshot_negative_checks": 12,
         "invariants": sorted([*INVARIANTS, "rejected_transition_atomic_noop", "required_transition_coverage"]),
         "failures": failures[:20],
         "exit_code": 0 if not failures else 1,
