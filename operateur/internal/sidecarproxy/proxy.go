@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,6 +25,7 @@ const (
 
 // Config defines how the sidecar proxy enriches outbound HTTP requests.
 type Config struct {
+	GOVAREnabled      bool
 	Namespace         string
 	Application       string
 	Targets           []string
@@ -30,6 +33,9 @@ type Config struct {
 	DialContext       func(context.Context, string, string) (net.Conn, error)
 	GOVAREndpoint     string
 	TenantID          string
+	WorkloadUID       string
+	TokenFile         string
+	BearerToken       string
 	BudgetPolicyName  string
 	RoutingPolicyName string
 	AllowedZones      []string
@@ -57,6 +63,7 @@ func New(cfg Config) http.Handler {
 		dialContext = dialer.DialContext
 	}
 	return &proxy{
+		govarEnabled:      cfg.GOVAREnabled,
 		namespace:         cfg.Namespace,
 		application:       cfg.Application,
 		targets:           normalizedTargets,
@@ -64,6 +71,9 @@ func New(cfg Config) http.Handler {
 		dialContext:       dialContext,
 		govarEndpoint:     strings.TrimRight(strings.TrimSpace(cfg.GOVAREndpoint), "/"),
 		tenantID:          strings.TrimSpace(cfg.TenantID),
+		workloadUID:       strings.TrimSpace(cfg.WorkloadUID),
+		tokenFile:         strings.TrimSpace(cfg.TokenFile),
+		bearerToken:       strings.TrimSpace(cfg.BearerToken),
 		budgetPolicyName:  strings.TrimSpace(cfg.BudgetPolicyName),
 		routingPolicyName: strings.TrimSpace(cfg.RoutingPolicyName),
 		allowedZones:      cfg.AllowedZones,
@@ -73,6 +83,7 @@ func New(cfg Config) http.Handler {
 }
 
 type proxy struct {
+	govarEnabled      bool
 	namespace         string
 	application       string
 	targets           []string
@@ -80,6 +91,9 @@ type proxy struct {
 	dialContext       func(context.Context, string, string) (net.Conn, error)
 	govarEndpoint     string
 	tenantID          string
+	workloadUID       string
+	tokenFile         string
+	bearerToken       string
 	budgetPolicyName  string
 	routingPolicyName string
 	allowedZones      []string
@@ -89,7 +103,15 @@ type proxy struct {
 
 func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
+		if p.govarEnabled {
+			http.Error(w, "governed HTTPS CONNECT is denied: use the native synchronous gateway path for HTTPS LLM traffic", http.StatusForbidden)
+			return
+		}
 		p.handleConnect(w, r)
+		return
+	}
+	if p.govarEnabled && isGOVARRequest(r) && !p.govarReady() {
+		http.Error(w, "gov-ar identity or policy configuration incomplete", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -112,8 +134,9 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	outReq.Header.Del("Connection")
 
 	var requestID string
+	var providerAttemptID string
 	var reserve reservationIntent
-	if p.shouldInject(outReq.URL.Hostname()) {
+	if p.shouldInject(outReq.URL.Hostname()) || (p.govarEnabled && isGOVARRequest(r)) {
 		requestID = requestIDFor(r)
 		outReq.Header.Set(HeaderRequestID, requestID)
 		reserve = p.extractReservationIntent(r)
@@ -131,8 +154,18 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("gov-ar decision=%s reason=%s", admitResp.Decision, admitResp.ReasonCode), httpStatusForDecision(admitResp.Decision))
 				return
 			}
+			if admitResp.ReasonCode == "duplicate_request" {
+				http.Error(w, "duplicate active request acknowledged without provider redispatch", http.StatusConflict)
+				return
+			}
 			if admitResp.SelectedDeployment != "" {
 				outReq.Header.Set("x-ai-eg-model", admitResp.SelectedDeployment)
+			}
+			providerAttemptID = admitResp.ProviderAttemptID
+			if err := p.callDispatch(r.Context(), requestID, admitResp.ProviderAttemptID, "claim", "CLAIMED"); err != nil {
+				_ = p.callCancel(r.Context(), requestID, "dispatch_claim_failed")
+				http.Error(w, fmt.Sprintf("gov-ar dispatch claim error: %v", err), http.StatusBadGateway)
+				return
 			}
 		}
 	}
@@ -148,12 +181,16 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := p.transport.RoundTrip(outReq)
 	if err != nil {
 		if requestID != "" && p.shouldCallGOVAR(r) {
+			_ = p.callDispatch(r.Context(), requestID, providerAttemptID, "ambiguous", "AMBIGUOUS")
 			_ = p.callCancel(r.Context(), requestID, "upstream_transport_error")
 		}
 		http.Error(w, fmt.Sprintf("proxy upstream error: %v", err), http.StatusBadGateway)
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if requestID != "" && p.shouldCallGOVAR(r) {
+		_ = p.callDispatch(r.Context(), requestID, providerAttemptID, "delivered", "DELIVERED")
+	}
 
 	bodyBytes, readErr := io.ReadAll(resp.Body)
 	if readErr != nil {
@@ -166,11 +203,12 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if requestID != "" && p.shouldCallGOVAR(r) {
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			usage := parseUsage(bodyBytes)
-			if usage.MaxOutputTokens == 0 {
-				usage.MaxOutputTokens = reserve.MaxOutputTokens
+			usage, valid := parseUsage(bodyBytes)
+			if !valid {
+				_ = p.callCancel(r.Context(), requestID, "missing_or_invalid_usage")
+			} else {
+				_ = p.callSettle(r.Context(), requestID, usage, "")
 			}
-			_ = p.callSettle(r.Context(), requestID, usage, "")
 		} else {
 			_ = p.callCancel(r.Context(), requestID, "upstream_http_error")
 		}
@@ -266,12 +304,12 @@ type admitResponse struct {
 	Decision           string `json:"decision"`
 	ReasonCode         string `json:"reason_code"`
 	SelectedDeployment string `json:"selected_deployment"`
+	ProviderAttemptID  string `json:"provider_attempt_id"`
 }
 
 type usageSummary struct {
 	PromptTokens     int64
 	CompletionTokens int64
-	MaxOutputTokens  int64
 }
 
 func orDefaultClient(c *http.Client) *http.Client {
@@ -292,8 +330,17 @@ func requestIDFor(r *http.Request) string {
 }
 
 func (p *proxy) shouldCallGOVAR(r *http.Request) bool {
-	return p.govarEndpoint != "" && p.tenantID != "" && p.budgetPolicyName != "" && p.routingPolicyName != "" &&
-		(strings.Contains(r.URL.Path, "/chat/completions") || strings.Contains(r.URL.Path, "/responses"))
+	return p.govarEnabled && p.govarReady() && isGOVARRequest(r)
+}
+
+func (p *proxy) govarReady() bool {
+	return p.govarEndpoint != "" && p.tenantID != "" && p.workloadUID != "" && (p.bearerToken != "" || p.tokenFile != "") && p.budgetPolicyName != "" && p.routingPolicyName != ""
+}
+
+func isGOVARRequest(r *http.Request) bool {
+	path := strings.ToLower(r.URL.Path)
+	return strings.Contains(path, "/chat/completions") || strings.Contains(path, "/responses") ||
+		strings.Contains(path, "/completions") || strings.Contains(path, "/embeddings") || strings.Contains(path, "/rerank")
 }
 
 func (p *proxy) extractReservationIntent(r *http.Request) reservationIntent {
@@ -344,31 +391,30 @@ func anyToInt64(v any) int64 {
 	}
 }
 
-func parseUsage(body []byte) usageSummary {
+func parseUsage(body []byte) (usageSummary, bool) {
 	var payload struct {
-		Usage struct {
-			PromptTokens     int64 `json:"prompt_tokens"`
-			InputTokens      int64 `json:"input_tokens"`
-			CompletionTokens int64 `json:"completion_tokens"`
-			OutputTokens     int64 `json:"output_tokens"`
+		Usage *struct {
+			PromptTokens     *int64 `json:"prompt_tokens"`
+			InputTokens      *int64 `json:"input_tokens"`
+			CompletionTokens *int64 `json:"completion_tokens"`
+			OutputTokens     *int64 `json:"output_tokens"`
 		} `json:"usage"`
 	}
-	if err := json.Unmarshal(body, &payload); err != nil {
-		return usageSummary{}
+	if err := json.Unmarshal(body, &payload); err != nil || payload.Usage == nil {
+		return usageSummary{}, false
 	}
 	prompt := payload.Usage.PromptTokens
-	if prompt == 0 {
+	if prompt == nil {
 		prompt = payload.Usage.InputTokens
 	}
 	completion := payload.Usage.CompletionTokens
-	if completion == 0 {
+	if completion == nil {
 		completion = payload.Usage.OutputTokens
 	}
-	return usageSummary{
-		PromptTokens:     prompt,
-		CompletionTokens: completion,
-		MaxOutputTokens:  completion,
+	if prompt == nil || completion == nil || *prompt < 0 || *completion < 0 {
+		return usageSummary{}, false
 	}
+	return usageSummary{PromptTokens: *prompt, CompletionTokens: *completion}, true
 }
 
 func (p *proxy) callAdmit(ctx context.Context, requestID string, intent reservationIntent) (admitResponse, error) {
@@ -376,10 +422,12 @@ func (p *proxy) callAdmit(ctx context.Context, requestID string, intent reservat
 		"request_id":          requestID,
 		"namespace":           p.namespace,
 		"tenant_id":           p.tenantID,
+		"workload_uid":        p.workloadUID,
 		"application":         p.application,
 		"budget_policy_name":  p.budgetPolicyName,
 		"routing_policy_name": p.routingPolicyName,
 		"input_tokens":        intent.InputTokens,
+		"input_tokens_exact":  false,
 		"max_output_tokens":   intent.MaxOutputTokens,
 		"sensitive_data":      p.sensitiveData,
 		"allowed_zones":       p.allowedZones,
@@ -391,21 +439,45 @@ func (p *proxy) callAdmit(ctx context.Context, requestID string, intent reservat
 	return resp, nil
 }
 
+func (p *proxy) callDispatch(ctx context.Context, requestID, attemptID, eventSuffix, status string) error {
+	if attemptID == "" {
+		attemptID = requestID + ":attempt:1"
+	}
+	var response struct {
+		ReasonCode string `json:"reason_code"`
+	}
+	if err := p.postJSON(ctx, p.govarEndpoint+"/v1/dispatch", map[string]any{
+		"request_id": requestID, "event_id": requestID + ":dispatch:" + eventSuffix,
+		"tenant_id": p.tenantID, "workload_uid": p.workloadUID,
+		"provider_attempt_id": attemptID, "status": status,
+	}, &response); err != nil {
+		return err
+	}
+	if response.ReasonCode == "duplicate_event" || response.ReasonCode == "duplicate_settlement" {
+		return errors.New("duplicate dispatch event is not provider authorization")
+	}
+	return nil
+}
+
 func (p *proxy) callSettle(ctx context.Context, requestID string, usage usageSummary, errorStatus string) error {
 	return p.postJSON(ctx, p.govarEndpoint+"/v1/settle", map[string]any{
 		"request_id":           requestID,
 		"settlement_id":        requestID + "-settlement",
+		"tenant_id":            p.tenantID,
+		"workload_uid":         p.workloadUID,
 		"actual_input_tokens":  usage.PromptTokens,
 		"actual_output_tokens": usage.CompletionTokens,
-		"actual_cost":          0,
+		"actual_cost_micros":   0,
+		"usage_version":        1,
+		"final":                true,
 		"error_status":         errorStatus,
 	}, nil)
 }
 
 func (p *proxy) callCancel(ctx context.Context, requestID, reason string) error {
 	return p.postJSON(ctx, p.govarEndpoint+"/v1/cancel", map[string]any{
-		"request_id": requestID,
-		"reason":     reason,
+		"request_id": requestID, "event_id": requestID + ":cancel:" + reason,
+		"tenant_id": p.tenantID, "workload_uid": p.workloadUID, "reason": reason,
 	}, nil)
 }
 
@@ -419,6 +491,9 @@ func (p *proxy) postJSON(ctx context.Context, endpoint string, payload any, out 
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if err := p.authenticateRequest(req); err != nil {
+		return err
+	}
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -432,6 +507,23 @@ func (p *proxy) postJSON(ctx context.Context, endpoint string, payload any, out 
 		return json.NewDecoder(resp.Body).Decode(out)
 	}
 	_, _ = io.Copy(io.Discard, resp.Body)
+	return nil
+}
+
+func (p *proxy) authenticateRequest(req *http.Request) error {
+	token := p.bearerToken
+	if token == "" {
+		raw, err := os.ReadFile(p.tokenFile)
+		if err != nil {
+			return fmt.Errorf("read projected GOV-AR token: %w", err)
+		}
+		token = strings.TrimSpace(string(raw))
+	}
+	if token == "" {
+		return errors.New("projected GOV-AR token is empty")
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-GOVAR-Tenant-ID", p.tenantID)
 	return nil
 }
 

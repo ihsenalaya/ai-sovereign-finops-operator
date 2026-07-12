@@ -89,6 +89,9 @@ rules:
 - apiGroups: ["aigateway.envoyproxy.io"]
   resources: ["aigatewayroutelists", "aigatewayroutes"]
   verbs: ["get", "list", "watch", "update", "patch"]
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]
 {{- if .Values.leaderElection.enabled }}
 - apiGroups: ["coordination.k8s.io"]
   resources: ["leases"]

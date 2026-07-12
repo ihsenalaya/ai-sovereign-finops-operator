@@ -1,0 +1,97 @@
+{{- if and .Values.govArAdmission.enabled .Values.govArAdmission.extProc.envoyExample.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-envoy-example
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-envoy-example
+data:
+  envoy.yaml: |
+    static_resources:
+      listeners:
+        - name: gov_ar_mtls_listener
+          address:
+            socket_address: { address: 0.0.0.0, port_value: {{ .Values.govArAdmission.extProc.envoyExample.listenerPort }} }
+          filter_chains:
+            - transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  require_client_certificate: true
+                  common_tls_context:
+                    tls_certificates:
+                      - certificate_chain: { filename: {{ .Values.govArAdmission.extProc.envoyExample.downstreamTLSCertPath | quote }} }
+                        private_key: { filename: {{ .Values.govArAdmission.extProc.envoyExample.downstreamTLSKeyPath | quote }} }
+                    validation_context:
+                      trusted_ca: { filename: {{ .Values.govArAdmission.extProc.envoyExample.downstreamClientCAPath | quote }} }
+              filters:
+                - name: envoy.filters.network.http_connection_manager
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                    stat_prefix: gov_ar_gateway
+                    forward_client_cert_details: SANITIZE_SET
+                    set_current_client_cert_details: { uri: true }
+                    route_config:
+                      name: llm_routes
+                      virtual_hosts:
+                        - name: llm
+                          domains: ["*"]
+                          routes:
+                            - match: { prefix: "/" }
+                              route: { cluster: llm_backend }
+                    http_filters:
+                      - name: envoy.filters.http.ext_proc
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExternalProcessor
+                          failure_mode_allow: false
+                          grpc_service:
+                            envoy_grpc: { cluster_name: gov_ar_ext_proc }
+                          processing_mode:
+                            request_header_mode: SEND
+                            response_header_mode: SEND
+                            request_body_mode: BUFFERED
+                            response_body_mode: BUFFERED
+                      - name: envoy.filters.http.router
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+      clusters:
+        - name: gov_ar_ext_proc
+          type: STRICT_DNS
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              sni: {{ include "operator.fullname" . }}-gov-ar-admission.{{ .Release.Namespace }}.svc.cluster.local
+              common_tls_context:
+                tls_certificates:
+                  - certificate_chain: { filename: {{ .Values.govArAdmission.extProc.envoyExample.upstreamClientCertPath | quote }} }
+                    private_key: { filename: {{ .Values.govArAdmission.extProc.envoyExample.upstreamClientKeyPath | quote }} }
+                validation_context:
+                  trusted_ca: { filename: {{ .Values.govArAdmission.extProc.envoyExample.upstreamServerCAPath | quote }} }
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config: { http2_protocol_options: {} }
+          load_assignment:
+            cluster_name: gov_ar_ext_proc
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: {{ include "operator.fullname" . }}-gov-ar-admission.{{ .Release.Namespace }}.svc.cluster.local
+                          port_value: {{ .Values.govArAdmission.extProc.port }}
+        - name: llm_backend
+          type: STRICT_DNS
+          load_assignment:
+            cluster_name: llm_backend
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: {{ .Values.govArAdmission.extProc.envoyExample.backendAddress }}
+                          port_value: {{ .Values.govArAdmission.extProc.envoyExample.backendPort }}
+{{- end }}

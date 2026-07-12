@@ -15,7 +15,9 @@ spec:
           capabilities:
             drop:
             - "ALL"
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+        # The former gcr.io/kubebuilder tag was removed. Pin the verified
+        # multi-architecture Quay index so clean Kind installs are immutable.
+        image: quay.io/brancz/kube-rbac-proxy@sha256:2c7b120590cbe9f634f5099f2cbb91d0b668569023a81505ca124a5c437e7663
         args:
         - "--secure-listen-address=0.0.0.0:8443"
         - "--upstream=http://127.0.0.1:8080/"

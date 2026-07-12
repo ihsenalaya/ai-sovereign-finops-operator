@@ -1,0 +1,199 @@
+{
+  "review_id": "phase-d-implementation-review-20260712-v1",
+  "reviewer_role": "independent Phase D post-fix implementation reviewer",
+  "reviewed_at_utc": "2026-07-12T08:14:00Z",
+  "verdict": "failed",
+  "branch": "article3-q1-recovery-20260711",
+  "reviewed_base_head": "49d3e123ce52209a4d94ab960c96078ebb882902",
+  "scope": "Fresh review of the first post-fix uncommitted Phase D tree above the recorded base HEAD. A second implementation batch began after the reviewer reported the findings below. This artifact does not review or approve that later moving tree.",
+  "hash_binding": {
+    "base_head": "49d3e123ce52209a4d94ab960c96078ebb882902",
+    "dirty_worktree_hashes_captured": false,
+    "status": "incomplete_due_to_concurrent_mutation_after_review",
+    "explanation": "The reviewer was instructed to stop when a new implementation batch began, before exact hashes of the reviewed dirty files had been captured. No hashes are invented. This missing dirty-snapshot binding independently prevents approval and requires a fresh hash-bound review after edits stop."
+  },
+  "reviewed_paths": [
+    "operateur/cmd/gov-ar-admission/main.go",
+    "operateur/cmd/header-proxy/main.go",
+    "operateur/internal/govar/admission_policy.go",
+    "operateur/internal/govar/engine.go",
+    "operateur/internal/govar/money.go",
+    "operateur/internal/govar/postgres_engine.go",
+    "operateur/internal/govar/snapshot.go",
+    "operateur/internal/sidecarproxy/proxy.go",
+    "operateur/internal/webhook/podinjector/injector.go",
+    "operateur/charts/ai-sovereign-finops-operator/",
+    "operateur/config/default/manager_auth_proxy_patch.yaml",
+    "operateur/test/e2e/e2e_test.go",
+    "article3/infra/postgres/init.sql",
+    "article3/design/"
+  ],
+  "resolved_prior_counterexamples_in_reviewed_snapshot": [
+    "Missing or invalid usage no longer settled at zero; the delivered liability was retained as unresolved.",
+    "Duplicate active admission and duplicate dispatch claim no longer authorized provider redispatch.",
+    "Unreconciled legacy floating-point ledger rows failed startup instead of being silently zeroed.",
+    "Downward post-finality correction no longer increased admission availability.",
+    "Settlement before dispatch claim was rejected.",
+    "PostgreSQL outbox compare-and-swap checked the affected-row count.",
+    "PostgreSQL readiness and liability query failures were surfaced.",
+    "Production Helm rendering required PostgreSQL and development in-memory mode required one replica.",
+    "Six reservation modes and rough-input strict context-window fallback executed in unit tests.",
+    "The replacement Quay kube-rbac-proxy manifest-list digest resolved and included linux/amd64."
+  ],
+  "findings": [
+    {
+      "id": "POSTFIX-C1",
+      "severity": "critical",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "An enabled but incomplete GOV-AR sidecar configuration failed open.",
+      "evidence": "The injector represented GOV-AR enablement only through optional annotations, but the header-proxy Config had no explicit enabled bit. With govar-enabled=true and all endpoint/principal/signer/policy fields absent, govarConfigured() was false, so HTTP LLM requests and HTTPS CONNECT were forwarded without admission."
+    },
+    {
+      "id": "POSTFIX-C2",
+      "severity": "critical",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "No synchronous native Envoy-compatible TLS gateway path existed.",
+      "evidence": "Configured governed HTTPS CONNECT was denied rather than admitted, routed and settled. Repository search found no ext_authz, ext_proc or equivalent synchronous Envoy integration invoking /v1/admit and /v1/settle. The required real Azure HTTPS path therefore could not execute through the implementation."
+    },
+    {
+      "id": "POSTFIX-C3",
+      "severity": "critical",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Signer identity was not bound to authoritative workload and governance state.",
+      "evidence": "The per-principal signer derivation omitted namespace and there was no server-side workload registry. A valid signer could choose namespace, Team, Application, SensitiveData, AllowedZones, budget policy and routing policy in the signed request. The same signer authorized usage settlement and authoritative_unbilled cancellation. Derived signer provisioning for a newly assigned Pod UID also had no controller or exchange path."
+    },
+    {
+      "id": "POSTFIX-C4",
+      "severity": "critical",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Pod-controlled target filtering could bypass governed traffic.",
+      "evidence": "The provider target list came from a Pod annotation and both HTTP admission and governed CONNECT denial were conditioned on shouldInject(host). A workload could exclude its actual provider hostname and pass traffic through without GOV-AR."
+    },
+    {
+      "id": "POSTFIX-M1",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "The theorem-bearing fixed cohort was not preregistered or frozen.",
+      "evidence": "The database enforced only uniqueness of tenant/cohort_id/cohort_index. No registry fixed cohort membership, opportunity identities/features, size, weights or risk target before outcomes, so caller-selected cohort slots did not establish the Phase C common pre-outcome cohort assumption."
+    },
+    {
+      "id": "POSTFIX-M2",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Approval was required but could not be consumed.",
+      "evidence": "Canary-enabled routing returned REQUIRE_APPROVAL, but no versioned approval reference or AIChangeRequest approval state could re-enter and pass admission. Approval-governed workloads dead-ended."
+    },
+    {
+      "id": "POSTFIX-M3",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Budget-window renewal, rollover guards and carry allocation were absent.",
+      "evidence": "Budget identity changes failed closed whenever settled, reserved or carried exposure existed. This was safe locally but did not implement origin/current windows, provisional rollover guard, renewal, carried-debt payoff or historical correction attribution required by the state machine."
+    },
+    {
+      "id": "POSTFIX-M4",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Strict-cap evidence and billable-category completeness were annotation assertions rather than verified provider controls.",
+      "evidence": "Output-cap verification, pricing version and freshness were mutable string annotations. The ledger represented only input/output token prices and did not introspect provider caps or cover cached input, reasoning, tools, media, retries and fallbacks. The conditional strict guarantee therefore lacked executable cap evidence."
+    },
+    {
+      "id": "POSTFIX-M5",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Adaptive calibration and drift response had no online producer.",
+      "evidence": "Mean, margin, quantile, support, drift and cohort parameters were routing annotations. No calibration store, selected-feedback update, drift detector, revalidation workflow or immutable calibration artifact produced them. The real sidecar always marked rough input inexact, forcing non-strict methods to the strict context-window fallback."
+    },
+    {
+      "id": "POSTFIX-M6",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Safety-critical configuration lacked typed validated API fields.",
+      "evidence": "Routability, pricing version/freshness, cap verification, latency, calibration, drift and risk allocation were unvalidated annotations rather than typed CRD fields with admission validation and status producers."
+    },
+    {
+      "id": "POSTFIX-M7",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Durable lifecycle execution and reporting were incomplete.",
+      "evidence": "The transactional outbox table existed, but no durable outbox worker, expiry compare/cancel worker, unresolved resolver or rollover worker existed. Downward post-final corrections were made non-reusable by discarding their cost change rather than recording immutable audit credit and corrected origin-window reporting."
+    },
+    {
+      "id": "POSTFIX-M8",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "GOV-AR metrics, traces and structured transition audit remained absent.",
+      "evidence": "The service exposed the default Prometheus registry but no decision, hold, settlement, correction, unresolved, retry, fault or latency metrics and no trace propagation or immutable transition log suitable for E0-E7 evidence."
+    },
+    {
+      "id": "POSTFIX-M9",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Streaming provider responses were unsupported.",
+      "evidence": "The proxy buffered the complete response and parsed one JSON object. Streaming/SSE behavior, usage extraction, cancellation and settlement semantics were not implemented and the response read was unbounded."
+    },
+    {
+      "id": "POSTFIX-M10",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "API and database compatibility remained fail-closed rather than migrated.",
+      "evidence": "The service correctly rejected nonempty legacy floating ledgers, but article3/infra/postgres/init.sql remained the old floating schema and /v1 cost fields were breaking. No reconciled conversion tool, versioned API compatibility path or tested upgrade/rollback procedure existed."
+    },
+    {
+      "id": "POSTFIX-M11",
+      "severity": "major",
+      "status": "unresolved_in_reviewed_snapshot",
+      "summary": "Full Kind verification was not completed for the reviewed snapshot.",
+      "evidence": "The Quay proxy digest resolved and the corrected e2e source was inspected. The clean Kind e2e run was interrupted at the parent request when a new implementation batch began; cleanup nodes completed. No e2e pass is claimed for this snapshot."
+    }
+  ],
+  "test_evidence": [
+    {
+      "command": "go test -count=1 ./internal/govar ./internal/sidecarproxy ./internal/webhook/podinjector ./cmd/gov-ar-admission",
+      "result": "passed"
+    },
+    {
+      "command": "go test -race -count=1 ./internal/govar",
+      "result": "passed"
+    },
+    {
+      "command": "go vet ./...",
+      "result": "passed"
+    },
+    {
+      "command": "Helm lint, production/development templates and kubectl client dry-run",
+      "result": "passed; expected production-without-PostgreSQL and multi-replica-development renders failed closed"
+    },
+    {
+      "command": "GOVAR_TEST_DATABASE_URL=<synthetic local URL> go test -count=1 -v ./internal/govar",
+      "result": "passed against fresh postgres:16-alpine, including lifecycle, missing-outbox CAS and unreconciled-legacy rejection tests"
+    },
+    {
+      "command": "docker buildx imagetools inspect quay.io/brancz/kube-rbac-proxy@sha256:2c7b120590cbe9f634f5099f2cbb91d0b668569023a81505ca124a5c437e7663",
+      "result": "passed; digest resolved as a manifest list including linux/amd64"
+    },
+    {
+      "command": "KIND_CLUSTER=gov-ar go test -count=1 -v ./test/e2e",
+      "result": "interrupted when concurrent implementation edits began; not counted as pass or implementation failure; Ginkgo cleanup completed"
+    }
+  ],
+  "unresolved_critical_or_major_findings": [
+    "POSTFIX-C1",
+    "POSTFIX-C2",
+    "POSTFIX-C3",
+    "POSTFIX-C4",
+    "POSTFIX-M1",
+    "POSTFIX-M2",
+    "POSTFIX-M3",
+    "POSTFIX-M4",
+    "POSTFIX-M5",
+    "POSTFIX-M6",
+    "POSTFIX-M7",
+    "POSTFIX-M8",
+    "POSTFIX-M9",
+    "POSTFIX-M10",
+    "POSTFIX-M11"
+  ],
+  "required_next_action": "Stop implementation edits, capture exact hashes for every reviewed source and test file, then perform a fresh independent review and complete the clean PostgreSQL and Kind campaigns. This failed artifact must not be converted into approval by changing statuses in place.",
+  "reviewer_changes": "No implementation file was edited. The reviewer added only this failed review record and stopped the synthetic PostgreSQL container."
+}

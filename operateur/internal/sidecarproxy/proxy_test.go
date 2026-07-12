@@ -1,6 +1,7 @@
 package sidecarproxy
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -57,6 +58,7 @@ func TestProxyInjectsHeadersViaHTTPProxy(t *testing.T) {
 func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 	var gotAdmit map[string]any
 	var gotSettle map[string]any
+	var dispatchStatuses []string
 	govar := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/v1/admit":
@@ -65,7 +67,13 @@ func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 				"decision":            "ADMIT",
 				"reason_code":         "highest_utility_feasible",
 				"selected_deployment": "gpt-fr",
+				"provider_attempt_id": "attempt-1",
 			})
+		case "/v1/dispatch":
+			var payload map[string]any
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+			dispatchStatuses = append(dispatchStatuses, payload["status"].(string))
+			_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
 		case "/v1/settle":
 			_ = json.NewDecoder(r.Body).Decode(&gotSettle)
 			_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
@@ -91,9 +99,12 @@ func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 	defer upstream.Close()
 
 	proxy := httptest.NewServer(New(Config{
+		GOVAREnabled:      true,
 		Namespace:         "finance",
 		Application:       "risk-assistant",
 		TenantID:          "tenant-finance",
+		WorkloadUID:       "pod-uid-finance",
+		BearerToken:       "projected-bound-token",
 		BudgetPolicyName:  "budget-finance",
 		RoutingPolicyName: "routing-finance",
 		GOVAREndpoint:     govar.URL,
@@ -123,6 +134,9 @@ func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 	if gotAdmit["tenant_id"] != "tenant-finance" {
 		t.Fatalf("admit tenant_id = %#v", gotAdmit["tenant_id"])
 	}
+	if gotAdmit["workload_uid"] != "pod-uid-finance" || len(dispatchStatuses) != 2 || dispatchStatuses[0] != "CLAIMED" || dispatchStatuses[1] != "DELIVERED" {
+		t.Fatalf("admit/dispatch path: admit=%#v statuses=%#v", gotAdmit, dispatchStatuses)
+	}
 	if gotSettle["actual_input_tokens"] != float64(10) || gotSettle["actual_output_tokens"] != float64(20) {
 		t.Fatalf("settle payload = %#v", gotSettle)
 	}
@@ -130,6 +144,7 @@ func TestProxyCallsGOVARAdmitAndSettle(t *testing.T) {
 
 func TestProxyCancelsOnUpstreamFailure(t *testing.T) {
 	cancelCalled := false
+	var dispatchStatuses []string
 	govar := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/v1/admit":
@@ -137,7 +152,13 @@ func TestProxyCancelsOnUpstreamFailure(t *testing.T) {
 				"decision":            "ADMIT",
 				"reason_code":         "highest_utility_feasible",
 				"selected_deployment": "gpt-fr",
+				"provider_attempt_id": "attempt-1",
 			})
+		case "/v1/dispatch":
+			var payload map[string]any
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+			dispatchStatuses = append(dispatchStatuses, payload["status"].(string))
+			_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
 		case "/v1/cancel":
 			cancelCalled = true
 			_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
@@ -155,9 +176,12 @@ func TestProxyCancelsOnUpstreamFailure(t *testing.T) {
 	defer upstream.Close()
 
 	proxy := httptest.NewServer(New(Config{
+		GOVAREnabled:      true,
 		Namespace:         "finance",
 		Application:       "risk-assistant",
 		TenantID:          "tenant-finance",
+		WorkloadUID:       "pod-uid-finance",
+		BearerToken:       "projected-bound-token",
 		BudgetPolicyName:  "budget-finance",
 		RoutingPolicyName: "routing-finance",
 		GOVAREndpoint:     govar.URL,
@@ -180,6 +204,9 @@ func TestProxyCancelsOnUpstreamFailure(t *testing.T) {
 	defer resp.Body.Close()
 	if !cancelCalled {
 		t.Fatal("expected cancel to be called")
+	}
+	if len(dispatchStatuses) != 2 || dispatchStatuses[0] != "CLAIMED" || dispatchStatuses[1] != "DELIVERED" {
+		t.Fatalf("dispatch statuses=%#v, want claimed then delivered", dispatchStatuses)
 	}
 }
 
@@ -222,4 +249,124 @@ func TestProxyHonorsTargetFilter(t *testing.T) {
 	if headers.Get(HeaderApp) != "" {
 		t.Fatalf("%s = %q, want empty", HeaderApp, headers.Get(HeaderApp))
 	}
+}
+
+func TestGovernedCONNECTFailsClosedEvenWhenTargetFilterExcludesHost(t *testing.T) {
+	handler := New(Config{GOVAREnabled: true, Targets: []string{"different.example.test"}, GOVAREndpoint: "http://govar.invalid"})
+	req := httptest.NewRequest(http.MethodConnect, "http://api.example.test:443", nil)
+	req.Host = "api.example.test:443"
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusForbidden || !strings.Contains(recorder.Body.String(), "native synchronous gateway") {
+		t.Fatalf("CONNECT response=%d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestEnabledIncompleteConfigFailsClosedForAllGovernedShapes(t *testing.T) {
+	for _, path := range []string{"/v1/chat/completions", "/v1/responses", "/v1/embeddings", "/v1/rerank"} {
+		handler := New(Config{GOVAREnabled: true, Targets: []string{"different.example.test"}})
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://provider.example"+path, strings.NewReader(`{}`)))
+		if recorder.Code != http.StatusServiceUnavailable {
+			t.Fatalf("path=%s status=%d", path, recorder.Code)
+		}
+	}
+}
+
+func TestEnabledModeIgnoresPodTargetExclusionForLLMAdmission(t *testing.T) {
+	admitCalled := false
+	govar := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/v1/admit" {
+			admitCalled = true
+			_ = json.NewEncoder(w).Encode(map[string]any{"decision": "ADMIT", "reason_code": "duplicate_request"})
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer govar.Close()
+	cfg := readyGOVARConfig(govar.URL)
+	cfg.Targets = []string{"different.example.test"}
+	handler := New(cfg)
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://provider.example/v1/chat/completions", strings.NewReader(`{"max_tokens":8}`)))
+	if !admitCalled || recorder.Code != http.StatusConflict {
+		t.Fatalf("admit=%v status=%d", admitCalled, recorder.Code)
+	}
+}
+
+func TestParseUsageRequiresPresentValidUsage(t *testing.T) {
+	invalid := [][]byte{nil, []byte(`{}`), []byte(`{"usage":null}`), []byte(`{"usage":{}}`), []byte(`{"usage":{"prompt_tokens":1,"completion_tokens":-1}}`), []byte(`not-json`)}
+	for _, body := range invalid {
+		if _, ok := parseUsage(body); ok {
+			t.Fatalf("invalid usage accepted: %s", body)
+		}
+	}
+	got, ok := parseUsage([]byte(`{"usage":{"input_tokens":0,"output_tokens":0}}`))
+	if !ok || got.PromptTokens != 0 || got.CompletionTokens != 0 {
+		t.Fatalf("valid zero usage rejected: %+v %v", got, ok)
+	}
+}
+
+func TestDuplicateAdmissionStopsBeforeProviderDispatch(t *testing.T) {
+	providerCalled := false
+	upstream := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { providerCalled = true }))
+	defer upstream.Close()
+	govar := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/admit" {
+			t.Fatalf("unexpected GOV-AR call after duplicate admission: %s", r.URL.Path)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"decision": "ADMIT", "reason_code": "duplicate_request", "provider_attempt_id": "attempt-1"})
+	}))
+	defer govar.Close()
+	handler := New(readyGOVARConfig(govar.URL))
+	req := httptest.NewRequest(http.MethodPost, upstream.URL+"/v1/chat/completions", strings.NewReader(`{"max_tokens":8}`))
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusConflict || providerCalled {
+		t.Fatalf("duplicate response=%d providerCalled=%v", recorder.Code, providerCalled)
+	}
+}
+
+func TestDuplicateClaimIsNotProviderAuthorization(t *testing.T) {
+	govar := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"reason_code": "duplicate_event"})
+	}))
+	defer govar.Close()
+	p := New(readyGOVARConfig(govar.URL)).(*proxy)
+	if err := p.callDispatch(context.Background(), "r1", "a1", "claim", "CLAIMED"); err == nil {
+		t.Fatal("duplicate claim was treated as provider authorization")
+	}
+}
+
+func TestMissingUsageMarksDeliveredRequestUnresolvedWithoutSettle(t *testing.T) {
+	cancelCalled, settleCalled := false, false
+	govar := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/admit":
+			_ = json.NewEncoder(w).Encode(map[string]any{"decision": "ADMIT", "reason_code": "highest_utility_feasible", "provider_attempt_id": "attempt-1"})
+		case "/v1/dispatch":
+			_ = json.NewEncoder(w).Encode(map[string]any{"reason_code": "dispatch_delivered"})
+		case "/v1/cancel":
+			cancelCalled = true
+			_ = json.NewEncoder(w).Encode(map[string]any{"reason_code": "cancellation_delivery_ambiguous"})
+		case "/v1/settle":
+			settleCalled = true
+		}
+	}))
+	defer govar.Close()
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = io.WriteString(w, `{}`) }))
+	defer upstream.Close()
+	handler := New(readyGOVARConfig(govar.URL))
+	req := httptest.NewRequest(http.MethodPost, upstream.URL+"/v1/chat/completions", strings.NewReader(`{"max_tokens":8}`))
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, req)
+	if !cancelCalled || settleCalled {
+		t.Fatalf("missing usage cancel=%v settle=%v", cancelCalled, settleCalled)
+	}
+}
+
+func readyGOVARConfig(endpoint string) Config {
+	return Config{GOVAREnabled: true, Namespace: "finance", Application: "app", GOVAREndpoint: endpoint,
+		TenantID: "tenant-a", WorkloadUID: "uid-a", BudgetPolicyName: "budget", RoutingPolicyName: "routing",
+		BearerToken: "projected-bound-token"}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"net/url"
 	"strings"
 	"sync"
 
@@ -30,6 +31,9 @@ const (
 	GOVARSensitiveKey    = "aiops.imperium.io/govar-sensitive-data"
 	SidecarContainerName = "greenops-header-proxy"
 	ProxyURL             = "http://127.0.0.1:15088"
+	GOVARTokenVolumeName = "govar-bound-token"
+	GOVARTokenMountPath  = "/var/run/secrets/govar"
+	GOVARTokenAudience   = "gov-ar-admission"
 )
 
 // ImageResolver resolves the image used for the injected sidecar.
@@ -167,6 +171,12 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 			app := resolveApplication(mutated)
 			targetHosts := parseCSV(mutated.Annotations[TargetHostsKey])
 			govarCfg := resolveGOVARConfig(mutated)
+			if err := validateGOVARConfig(govarCfg); err != nil {
+				return admission.Denied(err.Error())
+			}
+			if govarCfg.Enabled {
+				ensureGOVARTokenVolume(mutated)
+			}
 			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts, govarCfg))
 			for i := range mutated.Spec.Containers {
 				if mutated.Spec.Containers[i].Name == SidecarContainerName {
@@ -231,6 +241,11 @@ func sidecarContainer(image, app string, targetHosts []string, govarCfg govarCon
 		env = append(env, corev1.EnvVar{Name: "GREENOPS_TARGET_HOSTS", Value: strings.Join(targetHosts, ",")})
 	}
 	if govarCfg.Enabled {
+		env = append(env, corev1.EnvVar{Name: "GOVAR_ENABLED", Value: "true"})
+		env = append(env, corev1.EnvVar{Name: "GOVAR_WORKLOAD_UID", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.uid"},
+		}})
+		env = append(env, corev1.EnvVar{Name: "GOVAR_TOKEN_FILE", Value: GOVARTokenMountPath + "/token"})
 		if govarCfg.Endpoint != "" {
 			env = append(env, corev1.EnvVar{Name: "GOVAR_ENDPOINT", Value: govarCfg.Endpoint})
 		}
@@ -250,7 +265,7 @@ func sidecarContainer(image, app string, targetHosts []string, govarCfg govarCon
 			env = append(env, corev1.EnvVar{Name: "GOVAR_SENSITIVE_DATA", Value: "true"})
 		}
 	}
-	return corev1.Container{
+	container := corev1.Container{
 		Name:            SidecarContainerName,
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
@@ -270,11 +285,61 @@ func sidecarContainer(image, app string, targetHosts []string, govarCfg govarCon
 			Limits:   corev1.ResourceList{},
 		},
 	}
+	if govarCfg.Enabled {
+		container.VolumeMounts = []corev1.VolumeMount{{Name: GOVARTokenVolumeName, MountPath: GOVARTokenMountPath, ReadOnly: true}}
+	}
+	return container
+}
+
+func validateGOVARConfig(cfg govarConfig) error {
+	if !cfg.Enabled {
+		return nil
+	}
+	missing := make([]string, 0, 5)
+	if cfg.Endpoint == "" {
+		missing = append(missing, GOVAREndpointKey)
+	}
+	if cfg.TenantID == "" {
+		missing = append(missing, GOVARTenantKey)
+	}
+	if cfg.BudgetPolicyName == "" {
+		missing = append(missing, GOVARBudgetPolicyKey)
+	}
+	if cfg.RoutingPolicy == "" {
+		missing = append(missing, GOVARRoutingKey)
+	}
+	if len(missing) != 0 {
+		return fmt.Errorf("GOV-AR enabled but required trusted configuration is incomplete: %s", strings.Join(missing, ","))
+	}
+	endpoint, err := url.Parse(cfg.Endpoint)
+	if err != nil || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") {
+		return fmt.Errorf("%s must be a trusted in-cluster HTTP(S) service URL", GOVAREndpointKey)
+	}
+	host := strings.ToLower(endpoint.Hostname())
+	if !(strings.HasSuffix(host, ".svc") || strings.HasSuffix(host, ".svc.cluster.local")) {
+		return fmt.Errorf("%s must target an in-cluster Kubernetes Service", GOVAREndpointKey)
+	}
+	return nil
+}
+
+func ensureGOVARTokenVolume(pod *corev1.Pod) {
+	for _, volume := range pod.Spec.Volumes {
+		if volume.Name == GOVARTokenVolumeName {
+			return
+		}
+	}
+	expiration := int64(3600)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: GOVARTokenVolumeName, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: []corev1.VolumeProjection{{ServiceAccountToken: &corev1.ServiceAccountTokenProjection{Audience: GOVARTokenAudience, ExpirationSeconds: &expiration, Path: "token"}}}}}})
 }
 
 func injectProxyEnv(envs *[]corev1.EnvVar) {
 	upsertEnv(envs, corev1.EnvVar{Name: "HTTP_PROXY", Value: ProxyURL})
 	upsertEnv(envs, corev1.EnvVar{Name: "http_proxy", Value: ProxyURL})
+	// CONNECT cannot expose an encrypted LLM request for synchronous admission;
+	// the proxy fails governed CONNECT closed and HTTPS services must use the
+	// native gateway integration.
+	upsertEnv(envs, corev1.EnvVar{Name: "HTTPS_PROXY", Value: ProxyURL})
+	upsertEnv(envs, corev1.EnvVar{Name: "https_proxy", Value: ProxyURL})
 }
 
 func upsertEnv(envs *[]corev1.EnvVar, env corev1.EnvVar) {

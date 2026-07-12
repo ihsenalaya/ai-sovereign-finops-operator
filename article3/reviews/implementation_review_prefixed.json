@@ -1,0 +1,276 @@
+{
+  "review_id": "phase-d-implementation-review-prefixed-20260712-v1",
+  "reviewer_role": "independent Phase D implementation reviewer",
+  "reviewed_at_utc": "2026-07-12T07:31:00Z",
+  "verdict": "failed",
+  "branch": "article3-q1-recovery-20260711",
+  "reviewed_base_head": "49d3e123ce52209a4d94ab960c96078ebb882902",
+  "scope": "Independent read-only audit of the uncommitted Phase D GOV-AR implementation observed above the recorded base HEAD. Implementation changes began after this snapshot. This record is a pre-fix failure report and is not approval, verification, or review of the later moving or post-fix tree. A fresh hash-bound independent post-fix review is required.",
+  "reviewed_paths": [
+    "operateur/cmd/gov-ar-admission/main.go",
+    "operateur/cmd/header-proxy/main.go",
+    "operateur/internal/govar/engine.go",
+    "operateur/internal/govar/money.go",
+    "operateur/internal/govar/postgres_engine.go",
+    "operateur/internal/govar/snapshot.go",
+    "operateur/internal/sidecarproxy/proxy.go",
+    "operateur/internal/webhook/podinjector/injector.go",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-admission-deployment.yaml",
+    "operateur/charts/ai-sovereign-finops-operator/values.yaml",
+    "article3/infra/postgres/init.sql",
+    "article3/design/"
+  ],
+  "findings": [
+    {
+      "id": "IMPL-C1",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "The synchronous measured path did not govern HTTPS provider traffic.",
+      "evidence": "operateur/internal/sidecarproxy/proxy.go:98-102 and 207-248 passed CONNECT through as an opaque tunnel; operateur/internal/webhook/podinjector/injector.go:287-290 injected only HTTP_PROXY/http_proxy and no HTTPS_PROXY. Normal Azure/OpenAI HTTPS requests therefore bypassed admission and settlement."
+    },
+    {
+      "id": "IMPL-C2",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "Missing or unparseable provider usage was finalized as zero cost and released the hold.",
+      "evidence": "operateur/internal/sidecarproxy/proxy.go:190-198 always settled a successful 2xx; lines 378-402 returned zero usage when usage was absent/unparseable; lines 437-449 sent actual_cost_micros=0 with final=true; operateur/internal/govar/engine.go:457-524 accepted the zero and released the residual. This contradicted the frozen missing-telemetry rule."
+    },
+    {
+      "id": "IMPL-C3",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "A duplicate active request identity could authorize more than one billable provider execution under one reservation.",
+      "evidence": "operateur/internal/sidecarproxy/proxy.go:308-315 trusted x-govar-request-id/x-request-id; operateur/internal/govar/engine.go:239-247 returned the existing active ADMIT without binding the admission payload; the duplicate dispatch claim was treated as a successful no-op and proxy.go:130-167 still executed RoundTrip."
+    },
+    {
+      "id": "IMPL-C4",
+      "severity": "critical",
+      "status": "reproduced_unresolved_at_snapshot",
+      "summary": "The additive PostgreSQL migration discarded legacy financial exposure and did not reconstruct the outbox.",
+      "evidence": "Against a fresh postgres:16-alpine container initialized with article3/infra/postgres/init.sql, a synthetic legacy tenant with budget=100, settled=20, reserved=30 and one active reservation became budget_micros=0, settled_micros=0, reserved_micros=0. The migrated reservation had reserved_cost_micros=0, residual_hold_micros=0, blank workload_uid and no govar_outbox row. Root cause was default-zero additive migration without reconciled import/backfill at operateur/internal/govar/postgres_engine.go:41-137."
+    },
+    {
+      "id": "IMPL-C5",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "A downward post-finality correction created reusable budget and broke record/aggregate equality.",
+      "evidence": "operateur/internal/govar/engine.go:471-485 added a signed negative correction delta to carried_adjustment_micros, while lines 642-644 subtracted that value from availability. A negative adjustment therefore increased admission capacity; settled aggregate also remained at the pre-correction value."
+    },
+    {
+      "id": "IMPL-C6",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "Identity authentication did not bind a key to a principal or separate workload authority from authoritative accounting authority.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:286-320 accepted any tenant/workload pair signed by the one configured HMAC key. The same caller-facing interface accepted arbitrary actual_cost_micros and authoritative_unbilled=true at operateur/internal/govar/engine.go:137-161 and 541-561. Injected workloads selected a secret reference at operateur/internal/webhook/podinjector/injector.go:237-245 and 339-368."
+    },
+    {
+      "id": "IMPL-C7",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "The required hard governance feasibility filter was absent and material constraints were caller-controlled.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:141-172 loaded caller-selected namespace, budget and routing objects. operateur/internal/govar/snapshot.go:60-99 checked only target strings, caller-provided sensitivity/zones and parsable prices. It did not enforce model/provider readiness and observed generation, routability, quality gates and minimum quality/latency, sovereignty policy, approval/override state, pricing freshness/completeness, or budget-target-to-principal binding. RequireApproval was a request-body boolean."
+    },
+    {
+      "id": "IMPL-C8",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "The Phase C/G reservation and GOV-AR algorithms were not implemented.",
+      "evidence": "Both engines always used one strict input-plus-max-output estimate, recorded AllocatedRiskPPB=0, and had no mean, fixed-margin, fixed/adaptive quantile, fixed-envelope, tenant risk allocation, drift fallback, budget-window renewal or rollover implementation. The implementation could not execute the required baseline or ablation matrix."
+    },
+    {
+      "id": "IMPL-C9",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "The implementation labeled reservations strict without establishing a provider-enforced complete billing cap.",
+      "evidence": "operateur/internal/sidecarproxy/proxy.go:330-360 estimated input tokens as len(body)/4. Pricing and settlement represented only input/output tokens, omitting cached input, hidden reasoning, tools, media, retries and fallbacks. operateur/internal/govar/engine.go:273-283 nevertheless recorded reservation_mode=strict_provider_cap without verifying provider cap semantics."
+    },
+    {
+      "id": "IMPL-C10",
+      "severity": "critical",
+      "status": "unresolved_at_snapshot",
+      "summary": "The deployable service could silently run non-durable independent in-memory ledgers.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:80-92 fell back to memory whenever DATABASE_URL was absent. operateur/charts/ai-sovereign-finops-operator/values.yaml:72-92 permitted arbitrary replicaCount and defaulted PostgreSQL off, while the deployment injected DATABASE_URL only conditionally. Multiple replicas had independent budget/idempotency state and a single replica lost state on restart."
+    },
+    {
+      "id": "IMPL-M1",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Settlement was accepted directly from RESERVED with a still-pending outbox.",
+      "evidence": "operateur/internal/govar/engine.go:457-539 had no settlement source-state precondition and changed the outbox to delivered. Tests at engine_test.go:107-112 and 133-140 exercised settlement without a dispatch claim, leaving the claim/cancel boundary unsound."
+    },
+    {
+      "id": "IMPL-M2",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Every admission could overwrite the tenant budget without an immutable policy/window identity.",
+      "evidence": "operateur/internal/govar/engine.go:630-638 and operateur/internal/govar/postgres_engine.go:203-217 replaced budget_micros for an existing tenant. There was no budget window, origin window, policy UID, renewal or carryover record, so selecting a different or stale budget policy changed availability mid-window."
+    },
+    {
+      "id": "IMPL-M3",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Admission and routing selection were not joint and did not implement the frozen objective.",
+      "evidence": "operateur/internal/govar/engine.go:263-270 and the PostgreSQL analogue selected candidates[0] and queued when it did not fit instead of evaluating other feasible candidates. engine.go:646-661 did not implement the latency objective, measured quality score, switch penalty or the frozen scalar objective."
+    },
+    {
+      "id": "IMPL-M4",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Reservation and outbox state could diverge, and lifecycle workers were absent.",
+      "evidence": "operateur/internal/govar/postgres_engine.go:263-264, 278-279 and 293-294 updated govar_outbox without checking affected rows, then committed reservation state. Missing migrated outboxes could therefore transition. No durable dispatch worker, expiry compare/cancel worker, window renewal or unresolved-resolution workflow was present."
+    },
+    {
+      "id": "IMPL-M5",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Pricing and governance snapshots were not immutable or complete.",
+      "evidence": "operateur/internal/govar/engine.go:274-283 and 626-628 hardcoded pricing_version=provider-pricing-live. The record omitted complete provider/model/policy/resource version and billable-category snapshots, so later CR mutations could not be tied to an immutable settlement basis."
+    },
+    {
+      "id": "IMPL-M6",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Readiness and liability reporting hid backend failure.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:109-117 always returned ready. operateur/internal/govar/postgres_engine.go:374-384 discarded the database query error and returned a zero-valued liability response."
+    },
+    {
+      "id": "IMPL-M7",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Required GOV-AR metrics, structured transition audit and traces were absent.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:98 exposed only the default Prometheus registry. No GOV-AR decision, reservation, settlement, correction, fault or latency metrics, structured transition logs, or trace propagation were implemented."
+    },
+    {
+      "id": "IMPL-M8",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "The /v1 API and schema change was breaking and lacked a safe migration contract.",
+      "evidence": "operateur/internal/govar/engine.go:110-151 changed response/cost fields to integer micros and lines 581-588 rejected nonzero legacy actual_cost. article3/infra/postgres/init.sql:1-30 remained the old floating schema. No versioned compatibility or reconciled conversion documentation was present."
+    },
+    {
+      "id": "IMPL-M9",
+      "severity": "major",
+      "status": "reproduced_unresolved_at_snapshot",
+      "summary": "The correct-cluster end-to-end suite failed because a pinned deployment image no longer resolved.",
+      "evidence": "KIND_CLUSTER=gov-ar go test -count=1 -v ./test/e2e ran against kind-gov-ar and failed after 390.76 seconds with 0/1 specs passed. The controller pod was Pending/ImagePullBackOff because gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0 at operateur/config/default/manager_auth_proxy_patch.yaml:12-18 returned NotFound. This is distinct from the earlier wrong default KIND_CLUSTER=kind environment failure."
+    },
+    {
+      "id": "IMPL-M10",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "The sidecar broke streaming and coupled it to the zero-usage defect.",
+      "evidence": "operateur/internal/sidecarproxy/proxy.go:176-204 read the entire provider response before replying. Streaming/SSE was buffered and parsed as ordinary JSON; missing parsed usage then followed IMPL-C2. The response read was not size-bounded."
+    },
+    {
+      "id": "IMPL-M11",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Provider success was returned even when dispatch-delivered or settlement recording failed.",
+      "evidence": "operateur/internal/sidecarproxy/proxy.go:177-198 ignored errors from delivered, settle and cancel calls. Holds could remain conservative, but successful client responses did not imply complete accounting and the failure was not surfaced."
+    },
+    {
+      "id": "IMPL-M12",
+      "severity": "major",
+      "status": "unresolved_at_snapshot",
+      "summary": "Serializable PostgreSQL conflicts had no bounded retry and backend failures were misclassified.",
+      "evidence": "operateur/internal/govar/postgres_engine.go used serializable transactions without retry/backoff for serialization failures or deadlocks. operateur/cmd/gov-ar-admission/main.go:173-176 mapped Admit backend failures to HTTP 400, making transient concurrency/DB failures indistinguishable from bad requests."
+    },
+    {
+      "id": "IMPL-m1",
+      "severity": "minor",
+      "status": "unresolved_at_snapshot",
+      "summary": "Malformed settlement fields were commonly reported as authenticated-principal mismatch.",
+      "evidence": "operateur/internal/govar/engine.go:332-335 and operateur/internal/govar/postgres_engine.go:268-271 returned ReasonPrincipalMismatch for all validateSettleRequest errors, including cost/version/legacy-format errors."
+    },
+    {
+      "id": "IMPL-m2",
+      "severity": "minor",
+      "status": "unresolved_at_snapshot",
+      "summary": "Settlement payload-bound idempotence omitted error_status.",
+      "evidence": "operateur/internal/govar/engine.go:338 and operateur/internal/govar/postgres_engine.go:272 did not include error_status in the settlement hash, and the field was not persisted as transition evidence."
+    },
+    {
+      "id": "IMPL-m3",
+      "severity": "minor",
+      "status": "unresolved_at_snapshot",
+      "summary": "In-memory aggregate integer operations were unchecked at int64 limits.",
+      "evidence": "operateur/internal/govar/engine.go performed MoneyMicros aggregate additions/subtractions directly. Individual cost conversion used big.Int, but aggregate overflow behavior differed from PostgreSQL BIGINT, which failed atomically."
+    },
+    {
+      "id": "IMPL-m4",
+      "severity": "minor",
+      "status": "unresolved_at_snapshot",
+      "summary": "The admission HTTP server lacked defensive timeouts and limits.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:105-106 used http.ListenAndServe without read-header, read, write or idle timeouts."
+    }
+  ],
+  "test_evidence": [
+    {
+      "command": "go test -count=1 ./internal/govar ./internal/sidecarproxy ./internal/webhook/podinjector ./cmd/gov-ar-admission",
+      "result": "passed"
+    },
+    {
+      "command": "go test -race -count=1 ./internal/govar",
+      "result": "passed"
+    },
+    {
+      "command": "go vet ./...",
+      "result": "passed"
+    },
+    {
+      "command": "helm lint charts/ai-sovereign-finops-operator",
+      "result": "passed with only the informational missing-icon recommendation"
+    },
+    {
+      "command": "helm template with GOV-AR and PostgreSQL enabled, followed by kubectl apply --dry-run=client",
+      "result": "passed"
+    },
+    {
+      "command": "GOVAR_TEST_DATABASE_URL=<synthetic local postgres URL> go test -count=1 -run TestPostgresEngineLifecycle -v ./internal/govar",
+      "result": "passed against a fresh postgres:16-alpine container"
+    },
+    {
+      "command": "legacy schema migration reproduction against postgres:16-alpine",
+      "result": "failed safety expectation: legacy settled/reserved state became zero-valued micros and the active reservation had no outbox row",
+      "root_cause": "default-zero additive columns and no reconciled financial/outbox backfill"
+    },
+    {
+      "command": "KIND_CLUSTER=gov-ar go test -count=1 ./...",
+      "result": "failed because test/e2e failed; non-e2e Go packages shown by the run passed"
+    },
+    {
+      "command": "KIND_CLUSTER=gov-ar go test -count=1 -v ./test/e2e",
+      "result": "failed after 390.76 seconds; 0 of 1 specs passed",
+      "root_cause": "gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0 was NotFound and the controller pod remained Pending/ImagePullBackOff"
+    }
+  ],
+  "unresolved_critical_count_at_snapshot": 10,
+  "unresolved_major_count_at_snapshot": 12,
+  "unresolved_minor_count_at_snapshot": 4,
+  "unresolved_critical_or_major_findings": [
+    "IMPL-C1",
+    "IMPL-C2",
+    "IMPL-C3",
+    "IMPL-C4",
+    "IMPL-C5",
+    "IMPL-C6",
+    "IMPL-C7",
+    "IMPL-C8",
+    "IMPL-C9",
+    "IMPL-C10",
+    "IMPL-M1",
+    "IMPL-M2",
+    "IMPL-M3",
+    "IMPL-M4",
+    "IMPL-M5",
+    "IMPL-M6",
+    "IMPL-M7",
+    "IMPL-M8",
+    "IMPL-M9",
+    "IMPL-M10",
+    "IMPL-M11",
+    "IMPL-M12"
+  ],
+  "post_review_state": "Implementation edits began after the reviewed snapshot. No finding in this file is marked resolved by those later edits, and this file must not be used as post-fix approval.",
+  "reviewer_changes": "No implementation file was edited. The reviewer added only this review record; the synthetic PostgreSQL container was removed after testing."
+}

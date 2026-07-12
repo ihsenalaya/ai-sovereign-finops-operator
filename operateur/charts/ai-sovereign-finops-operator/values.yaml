@@ -70,7 +70,12 @@ affinity: {}
 extraArgs: []
 
 govArAdmission:
+  # The injected proxy fails governed HTTPS CONNECT closed because it cannot
+  # inspect encrypted request/usage payloads. Actual HTTPS LLM service traffic
+  # must use the native synchronous gateway integration.
   enabled: false
+  # Development-only single-process ledger. Production must keep this false and configure PostgreSQL.
+  devInMemory: false
   replicaCount: 1
   image:
     repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-admission
@@ -83,6 +88,33 @@ govArAdmission:
     limits:
       cpu: 250m
       memory: 256Mi
+  identity:
+    # Server-only master used for the ext_proc-to-ledger authenticated loopback.
+    # Injected Pods use Pod-bound projected service-account tokens, never this secret.
+    masterExistingSecret: ""
+    masterSecretKey: GOVAR_IDENTITY_MASTER_SECRET
+  extProc:
+    # Official Envoy ext_proc gRPC service. Production requires mutual TLS on
+    # this hop as well as downstream mTLS and SANITIZE_SET XFCC at Envoy.
+    port: 9002
+    gatewaySPIFFEID: ""
+    tls:
+      serverExistingSecret: ""
+      serverCertKey: tls.crt
+      serverPrivateKeyKey: tls.key
+      clientCAExistingSecret: ""
+      clientCAKey: ca.crt
+    envoyExample:
+      enabled: false
+      listenerPort: 8443
+      backendAddress: llm-backend.default.svc.cluster.local
+      backendPort: 443
+      downstreamTLSCertPath: /etc/envoy/tls/tls.crt
+      downstreamTLSKeyPath: /etc/envoy/tls/tls.key
+      downstreamClientCAPath: /etc/envoy/client-ca/ca.crt
+      upstreamClientCertPath: /etc/envoy/ext-proc-client/tls.crt
+      upstreamClientKeyPath: /etc/envoy/ext-proc-client/tls.key
+      upstreamServerCAPath: /etc/envoy/ext-proc-server-ca/ca.crt
   postgres:
     enabled: false
     existingSecret: ""

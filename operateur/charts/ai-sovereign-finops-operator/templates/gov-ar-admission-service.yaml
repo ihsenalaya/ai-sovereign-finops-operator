@@ -18,4 +18,10 @@ spec:
       port: 8084
       targetPort: http
       protocol: TCP
+    {{- if not .Values.govArAdmission.devInMemory }}
+    - name: ext-proc
+      port: {{ .Values.govArAdmission.extProc.port }}
+      targetPort: ext-proc
+      protocol: TCP
+    {{- end }}
 {{- end }}

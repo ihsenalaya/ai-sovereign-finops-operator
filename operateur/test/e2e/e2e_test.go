@@ -31,6 +31,17 @@ const namespace = "ai-sovereign-finops-operator-system"
 
 var _ = Describe("controller", Ordered, func() {
 	BeforeAll(func() {
+		By("removing stale operator webhooks from an interrupted prior run")
+		cmd := exec.Command("make", "undeploy")
+		_, _ = utils.Run(cmd)
+		for _, args := range [][]string{
+			{"delete", "validatingwebhookconfiguration", "aiops-confidential-pod-validator", "--ignore-not-found"},
+			{"delete", "mutatingwebhookconfiguration", "aiops-sidecar-injector", "--ignore-not-found"},
+		} {
+			cmd = exec.Command("kubectl", args...)
+			_, _ = utils.Run(cmd)
+		}
+
 		By("installing prometheus operator")
 		Expect(utils.InstallPrometheusOperator()).To(Succeed())
 
@@ -38,11 +49,22 @@ var _ = Describe("controller", Ordered, func() {
 		Expect(utils.InstallCertManager()).To(Succeed())
 
 		By("creating manager namespace")
-		cmd := exec.Command("kubectl", "create", "ns", namespace)
+		cmd = exec.Command("kubectl", "create", "ns", namespace)
 		_, _ = utils.Run(cmd)
 	})
 
 	AfterAll(func() {
+		By("undeploying the controller and admission webhooks")
+		cmd := exec.Command("make", "undeploy")
+		_, _ = utils.Run(cmd)
+		for _, args := range [][]string{
+			{"delete", "validatingwebhookconfiguration", "aiops-confidential-pod-validator", "--ignore-not-found"},
+			{"delete", "mutatingwebhookconfiguration", "aiops-sidecar-injector", "--ignore-not-found"},
+		} {
+			cmd = exec.Command("kubectl", args...)
+			_, _ = utils.Run(cmd)
+		}
+
 		By("uninstalling the Prometheus manager bundle")
 		utils.UninstallPrometheusOperator()
 
@@ -50,7 +72,7 @@ var _ = Describe("controller", Ordered, func() {
 		utils.UninstallCertManager()
 
 		By("removing manager namespace")
-		cmd := exec.Command("kubectl", "delete", "ns", namespace)
+		cmd = exec.Command("kubectl", "delete", "ns", namespace)
 		_, _ = utils.Run(cmd)
 	})
 

@@ -8,6 +8,15 @@ metadata:
     {{- include "operator.labels" . | nindent 4 }}
     app.kubernetes.io/component: gov-ar-admission
 spec:
+  {{- if and .Values.govArAdmission.devInMemory (ne (int .Values.govArAdmission.replicaCount) 1) }}
+  {{- fail "govArAdmission.devInMemory requires replicaCount=1" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.postgres.enabled) (not .Values.govArAdmission.postgres.existingSecret)) }}
+  {{- fail "production GOV-AR admission requires postgres.enabled=true and postgres.existingSecret" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.extProc.tls.serverExistingSecret) (not .Values.govArAdmission.extProc.tls.clientCAExistingSecret) (not .Values.govArAdmission.extProc.gatewaySPIFFEID)) }}
+  {{- fail "production GOV-AR ext_proc requires tls.serverExistingSecret, tls.clientCAExistingSecret, and gatewaySPIFFEID" }}
+  {{- end }}
   replicas: {{ .Values.govArAdmission.replicaCount }}
   selector:
     matchLabels:
@@ -36,6 +45,34 @@ spec:
           env:
             - name: GOV_AR_ADMISSION_ADDR
               value: ":8084"
+            - name: GOV_AR_EXT_PROC_ADDR
+              {{- if .Values.govArAdmission.devInMemory }}
+              value: "127.0.0.1:{{ .Values.govArAdmission.extProc.port }}"
+              {{- else }}
+              value: ":{{ .Values.govArAdmission.extProc.port }}"
+              {{- end }}
+            - name: GOV_AR_INTERNAL_ADMISSION_URL
+              value: "http://127.0.0.1:8084"
+            {{- if .Values.govArAdmission.devInMemory }}
+            - name: GOV_AR_EXT_PROC_DEV_INSECURE
+              value: "true"
+            {{- else }}
+            - name: GOV_AR_EXT_PROC_TLS_CERT_FILE
+              value: "/var/run/gov-ar/ext-proc-server/{{ .Values.govArAdmission.extProc.tls.serverCertKey }}"
+            - name: GOV_AR_EXT_PROC_TLS_KEY_FILE
+              value: "/var/run/gov-ar/ext-proc-server/{{ .Values.govArAdmission.extProc.tls.serverPrivateKeyKey }}"
+            - name: GOV_AR_EXT_PROC_CLIENT_CA_FILE
+              value: "/var/run/gov-ar/ext-proc-client-ca/{{ .Values.govArAdmission.extProc.tls.clientCAKey }}"
+            - name: GOV_AR_EXT_PROC_GATEWAY_SPIFFE_ID
+              value: {{ .Values.govArAdmission.extProc.gatewaySPIFFEID | quote }}
+            {{- end }}
+            - name: GOV_AR_DEV_IN_MEMORY
+              value: {{ .Values.govArAdmission.devInMemory | quote }}
+            - name: GOV_AR_IDENTITY_MASTER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "govArAdmission.identity.masterExistingSecret is required when GOV-AR admission is enabled" .Values.govArAdmission.identity.masterExistingSecret }}
+                  key: {{ .Values.govArAdmission.identity.masterSecretKey }}
             {{- if and .Values.govArAdmission.postgres.enabled .Values.govArAdmission.postgres.existingSecret }}
             - name: DATABASE_URL
               valueFrom:
@@ -47,6 +84,11 @@ spec:
             - name: http
               containerPort: 8084
               protocol: TCP
+            {{- if not .Values.govArAdmission.devInMemory }}
+            - name: ext-proc
+              containerPort: {{ .Values.govArAdmission.extProc.port }}
+              protocol: TCP
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -64,9 +106,25 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- if not .Values.govArAdmission.devInMemory }}
+            - name: ext-proc-server-tls
+              mountPath: /var/run/gov-ar/ext-proc-server
+              readOnly: true
+            - name: ext-proc-client-ca
+              mountPath: /var/run/gov-ar/ext-proc-client-ca
+              readOnly: true
+            {{- end }}
           resources:
             {{- toYaml .Values.govArAdmission.resources | nindent 12 }}
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- if not .Values.govArAdmission.devInMemory }}
+        - name: ext-proc-server-tls
+          secret:
+            secretName: {{ .Values.govArAdmission.extProc.tls.serverExistingSecret }}
+        - name: ext-proc-client-ca
+          secret:
+            secretName: {{ .Values.govArAdmission.extProc.tls.clientCAExistingSecret }}
+        {{- end }}
 {{- end }}
