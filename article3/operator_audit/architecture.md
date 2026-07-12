@@ -1,6 +1,6 @@
 # Operator architecture audit
 
-This audit is generated from the recovery branch source by `article3/tools/operator_inventory.py`. Inventories contain 18 CRDs, 17 controller files/manager registrations, and 40 Go test files. 15 controllers are normally enabled; the two attestation evidence/report reconcilers are conditional to preserve the dedicated verifier's single-writer role.
+This audit is generated from the recovery branch source by `article3/tools/operator_inventory.py`. Inventories contain 18 CRDs, 17 controller files/manager registrations, and 40 Go test files. In the main manager, 15 controllers are normally enabled; the two attestation evidence/report reconcilers are conditional to preserve the dedicated verifier's single-writer role. The separate central-verifier deployment normally runs the RawAttestationReport reconciler when that module is enabled.
 
 ## Established request and control path
 

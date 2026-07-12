@@ -16,7 +16,7 @@ OUT = ROOT / "article3" / "operator_audit"
 
 def write_csv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fields)
+        writer = csv.DictWriter(fh, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -29,8 +29,13 @@ def git(*args: str) -> str:
 
 def crd_inventory() -> list[dict[str, object]]:
     rows = []
-    controllers = {p.stem.removesuffix("_controller").replace("_", "").lower(): p
-                   for p in (OP / "internal" / "controller").glob("*_controller.go")}
+    controllers: dict[str, Path] = {}
+    for candidate in (OP / "internal" / "controller").glob("*_controller.go"):
+        source = candidate.read_text(encoding="utf-8", errors="ignore")
+        for watched_kind in re.findall(r"For\(&\w+\.(\w+)\{\}", source):
+            if watched_kind in controllers:
+                raise RuntimeError(f"multiple primary controllers for {watched_kind}")
+            controllers[watched_kind] = candidate
     for path in sorted((OP / "config" / "crd" / "bases").glob("*.yaml")):
         text = path.read_text(encoding="utf-8")
         def get(pattern: str, default: str = "") -> str:
@@ -39,12 +44,12 @@ def crd_inventory() -> list[dict[str, object]]:
         kind = get(r"^\s{4}kind:\s*(\S+)")
         plural = get(r"^\s{4}plural:\s*(\S+)")
         scope = get(r"^\s{2}scope:\s*(\S+)")
-        versions = ";".join(re.findall(r"^\s{4}- name:\s*(\S+)", text, re.M))
-        key = kind.replace("AI", "ai").replace("Raw", "raw").replace("Attestation", "attestation").lower()
-        controller = ""
-        for normalized, candidate in controllers.items():
-            if kind.lower() in candidate.read_text(encoding="utf-8", errors="ignore").lower():
-                controller = str(candidate.relative_to(ROOT)); break
+        # controller-gen emits a version either on the list-item line or, when
+        # printer columns precede it, as the four-space ``name`` field belonging
+        # to that item. Nested schema/printer names use deeper indentation.
+        versions = ";".join(re.findall(r"^(?:  - name|    name):\s*(\S+)", text, re.M))
+        candidate = controllers.get(kind)
+        controller = str(candidate.relative_to(ROOT)) if candidate else ""
         rows.append({"kind": kind, "plural": plural, "scope": scope, "versions": versions,
                      "crd_path": str(path.relative_to(ROOT)), "controller_path": controller,
                      "article3_role": "policy/catalog/aggregate governance" if kind in {
@@ -83,7 +88,7 @@ def test_inventory() -> list[dict[str, object]]:
         lower = text.lower()
         kind = "unit"
         if "envtest" in lower or "ginkgo" in lower: kind = "envtest/controller"
-        if "/e2e" in str(path).replace("\\", "/"): kind = "e2e scaffold"
+        if "/e2e" in str(path).replace("\\", "/"): kind = "e2e"
         rows.append({"path": str(path.relative_to(ROOT)), "test_functions": direct,
                      "ginkgo_cases": ginkgo, "category": kind, "executed_in_current_audit": "false"})
     return rows
@@ -106,7 +111,7 @@ def main() -> None:
 
     architecture = f"""# Operator architecture audit
 
-This audit is generated from the recovery branch source by `article3/tools/operator_inventory.py`. Inventories contain {len(crds)} CRDs, {len(controllers)} controller files/manager registrations, and {len(tests)} Go test files. {enabled} controllers are normally enabled; the two attestation evidence/report reconcilers are conditional to preserve the dedicated verifier's single-writer role.
+This audit is generated from the recovery branch source by `article3/tools/operator_inventory.py`. Inventories contain {len(crds)} CRDs, {len(controllers)} controller files/manager registrations, and {len(tests)} Go test files. In the main manager, {enabled} controllers are normally enabled; the two attestation evidence/report reconcilers are conditional to preserve the dedicated verifier's single-writer role. The separate central-verifier deployment normally runs the RawAttestationReport reconciler when that module is enabled.
 
 ## Established request and control path
 
@@ -219,6 +224,8 @@ The experimental release must use a new SemVer prerelease and immutable commit/r
         ("R10", "major", "Aggregate Prometheus counters are treated as budget windows", "incorrect daily/weekly/monthly spend", "request ledger windows plus reconciler"),
         ("R11", "major", "Release workflow omits GOV-AR, verifier and node-agent images", "unreproducible chart", "build/push all referenced images and resolve digests"),
         ("R12", "major", "No real PostgreSQL/gateway/race/fault/upgrade tests", "measured-path bugs", "complete D/E test matrix before pilot"),
+        ("R13", "critical", "PostgreSQL tenant IDs are global while caller-selected namespaced policies overwrite their budgets", "cross-namespace collision and budget substitution", "namespace/workload-bound tenant identity and immutable budget-window policy version"),
+        ("R14", "major", "The e2e test mutates the current Kubernetes context before loading into a cluster named kind by default (KIND_CLUSTER can override only the image-load target)", "unintended cluster changes and non-reproducible failure", "ephemeral explicit kubeconfig/cluster input with teardown scoped to run ID"),
     ]
     write_csv(OUT / "risk_register.csv", ["risk_id", "severity", "risk", "impact", "required_control"],
               [dict(zip(["risk_id", "severity", "risk", "impact", "required_control"], r)) for r in risks])

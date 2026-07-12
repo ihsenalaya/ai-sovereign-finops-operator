@@ -12,3 +12,5 @@
 - **R10 (major)** — Aggregate Prometheus counters are treated as budget windows. Impact: incorrect daily/weekly/monthly spend. Required control: request ledger windows plus reconciler.
 - **R11 (major)** — Release workflow omits GOV-AR, verifier and node-agent images. Impact: unreproducible chart. Required control: build/push all referenced images and resolve digests.
 - **R12 (major)** — No real PostgreSQL/gateway/race/fault/upgrade tests. Impact: measured-path bugs. Required control: complete D/E test matrix before pilot.
+- **R13 (critical)** — PostgreSQL tenant IDs are global while caller-selected namespaced policies overwrite their budgets. Impact: cross-namespace collision and budget substitution. Required control: namespace/workload-bound tenant identity and immutable budget-window policy version.
+- **R14 (major)** — The e2e test mutates the current Kubernetes context before loading into a cluster named kind by default (KIND_CLUSTER can override only the image-load target). Impact: unintended cluster changes and non-reproducible failure. Required control: ephemeral explicit kubeconfig/cluster input with teardown scoped to run ID.

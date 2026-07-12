@@ -1,7 +1,7 @@
 {
-  "review_id": "operator-architecture-audit-20260711",
+  "review_id": "operator-architecture-audit-20260712-v2",
   "reviewer_role": "independent operator architecture auditor",
-  "reviewed_at_utc": "2026-07-11T08:25:00Z",
+  "reviewed_at_utc": "2026-07-12T06:35:00Z",
   "scope": "source-derived CRD/controller/telemetry/cost/budget/routing/gateway/release/test architecture at takeover",
   "verdict": "pass",
   "inventory": {
@@ -17,7 +17,10 @@
     {"severity": "critical", "status": "accepted", "summary": "Admission identity and mutation endpoints are unauthenticated; HTTPS/webhook failure can bypass enforcement."},
     {"severity": "major", "status": "accepted", "summary": "No dispatch/expiry/late-settlement/window lifecycle or requested risk allocation/quantile/drift behavior exists."},
     {"severity": "major", "status": "accepted", "summary": "Feasibility omits readiness, routability, quality, approval, sovereignty, pricing freshness and objective."},
-    {"severity": "major", "status": "accepted", "summary": "Release workflow/chart omit required GOV-AR image and PostgreSQL production support; measured-path tests are absent."}
+    {"severity": "major", "status": "accepted", "summary": "Release workflow/chart omit required GOV-AR image and PostgreSQL production support; measured-path tests are absent."},
+    {"severity": "critical", "status": "accepted", "summary": "PostgreSQL tenant IDs are global while caller-selected namespaced policies can overwrite their budgets."},
+    {"severity": "major", "status": "accepted", "summary": "The e2e test mutates the current Kubernetes context before its Kind image-load step defaults to cluster kind."},
+    {"severity": "critical", "status": "resolved", "summary": "The generator now parses every CRD version and maps controllers only through exact primary For watches; independent recomputation matched every regenerated inventory row."}
   ],
   "evidence": [
     "article3/operator_audit/architecture.md",

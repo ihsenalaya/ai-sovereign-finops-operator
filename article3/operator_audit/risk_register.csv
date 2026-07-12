@@ -11,3 +11,5 @@ R09,major,Model resource name may not match Envoy model name,failed or wrong rou
 R10,major,Aggregate Prometheus counters are treated as budget windows,incorrect daily/weekly/monthly spend,request ledger windows plus reconciler
 R11,major,"Release workflow omits GOV-AR, verifier and node-agent images",unreproducible chart,build/push all referenced images and resolve digests
 R12,major,No real PostgreSQL/gateway/race/fault/upgrade tests,measured-path bugs,complete D/E test matrix before pilot
+R13,critical,PostgreSQL tenant IDs are global while caller-selected namespaced policies overwrite their budgets,cross-namespace collision and budget substitution,namespace/workload-bound tenant identity and immutable budget-window policy version
+R14,major,The e2e test mutates the current Kubernetes context before loading into a cluster named kind by default (KIND_CLUSTER can override only the image-load target),unintended cluster changes and non-reproducible failure,ephemeral explicit kubeconfig/cluster input with teardown scoped to run ID
