@@ -1,99 +1,41 @@
-# Invariants
+# GOV-AR invariants and assumptions
 
-## Hard Invariants
+## Ledger invariants
 
-These must hold in every mode unless the system explicitly abstains or rejects.
+1. **Integer accounting:** budget, settled cost, outstanding/residual/rollover-guard liability, carried debt, historical audit credit, and per-record actual cost are non-negative integer monetary units. Historical credit is not an enforcement offset.
+2. **Record/aggregate equality:** tenant outstanding liability equals the sum of holds and rollover guards for active, unresolved, and provisionally settled records; aggregate settled cost, carried debt, and audit credit equal effective request outcomes and corrections in the frozen views.
+3. **Atomic feasibility:** a committed reservation and dispatch outbox exist only if the locked tenant view had sufficient availability. A provider attempt cannot precede that commit.
+4. **One effective settlement/finality:** any number of identical or differently keyed duplicate usage deliveries causes at most one base settlement effect for a request/attempt. Corrections apply only their monotone-versioned delta once, and finality releases the residual once.
+5. **No double release:** an authoritative unbilled cancellation, settlement, late settlement, or correction cannot release the same hold twice.
+6. **Unresolved and correction carryover:** expiry, timeout, disconnect, missing usage, ambiguous delivery, and window rollover do not reduce the hold of a potentially billable attempt. Provisional settlement retains `R_i-Y_i`; after rollover, an on-time provisional record also guards `Y_i`, keeping current exposure at `R_i`. Corrections move deltas between cost/debt/guard and residual; only authoritative finality releases the applicable remainder.
+7. **No reusable historical credit:** a downward correction attributed to a closed window may reduce that window's reported cost, but never increases current or future admission availability.
+8. **Tenant/workload isolation:** an event authenticated for one tenant/workload UID cannot mutate another tenant's record or aggregate.
+9. **Price/version determinism:** settlement uses the immutable pricing/billable-category snapshot bound to the attempt; a later price change does not rewrite prior cost except through an explicit correction.
+10. **State validity:** terminal/no-op transitions are absorbing except for explicitly versioned provisional correction/finality transitions. Upward post-finality correction is outside the strict-mode guarantee and becomes visible external debt.
+11. **Outbox/inbox boundary:** PostgreSQL can make ledger/outbox/inbox effects atomic; it does not make external provider execution exactly once.
 
-### I1. Governance Safety
+## Hard governance invariants
 
-No admitted request may be assigned to a model that violates:
+An admitted route passes every frozen provider, deployment readiness, routability, region/residency, workload sensitivity, quality-gate, approval, price freshness, and provider-attempt eligibility check. Optimization cannot override a failed hard check. Every decision and transition has a stable reason code and immutable policy/pricing references.
 
-- sovereignty zone constraints
-- sensitive data provider restrictions
-- explicit provider deny rules
-- route availability constraints
+## Conditional strict-ledger feasibility
 
-### I2. Tenant Isolation
+The invariant `settled_current + carried_debt + outstanding_residual_and_guard_liability <= active_budget` is deterministic only under all of these assumptions:
 
-Reservations and settlements for tenant `t1` must not consume the budget of tenant `t2`.
+- every potentially billable provider attempt is separately reserved before dispatch;
+- provider-enforced token/charge caps cover input, output, cached input, hidden reasoning, tools, media, retries, fallbacks, cancellations, and any other billed category;
+- authoritative estimated token cost for an attempt never exceeds its reservation;
+- residual `R_i-Y_i` and any required provisional rollover guard are retained until authoritative finality, historical credit does not expand availability, correction versions are monotone, and no upward correction occurs after finality;
+- pricing and token accounting are correct and immutable for the attempt;
+- the transactional ledger serializes every effective transition;
+- bypass of the governed gateway path is prevented within the tested trust boundary.
 
-### I3. Idempotent Settlement
+Without those assumptions the result is not a hard provider-invoice guarantee. The manuscript calls it conditional strict-ledger feasibility.
 
-Repeated settlement events for the same request must not double-charge the ledger.
+## Conditional probabilistic statement
 
-### I4. Non-Negative Ledger
+For an arrival-opportunity cohort fixed before outcomes, predictable admission indicators, selected-route tail bounds, and a pathwise allocated sum of tail probabilities imply only the fixed-opportunity-cohort union bound defined in `problem_formulation.md`. They do not imply selected-outstanding-set or tenant-window coverage. Empirical calibration is reported separately, and drift fallback stops advertising calibration rather than restoring a theorem.
 
-For every tenant and window:
+## Liveness obligations
 
-- settled budget is non-negative
-- reserved budget is non-negative
-- released reservation amount is non-negative
-
-### I5. Explainable Decision
-
-Every non-trivial decision must have a machine-readable reason:
-
-- admitted with chosen model and reservation
-- queued with queue reason
-- rejected with blocking reason
-- abstained with confidence or evidence reason
-
-## Strict-Mode Invariants
-
-These are intended for a deterministic safety mode.
-
-### S1. Deterministic Budget Safety
-
-If GOV-AR runs in strict mode and its reservation upper bound is valid, then:
-
-- a request is admitted only if the reserved amount fits within remaining tenant budget
-
-### S2. No Overcommit by Construction
-
-In strict mode:
-
-- `settled + reserved <= budget`
-
-must hold at admission time for every tenant.
-
-## Risk-Bounded Invariants
-
-These depend on statistical assumptions and calibration quality.
-
-### R1. Calibrated Reservation
-
-For an admitted request with reservation quantile level `q`,
-the realized cost should exceed the reserved cost no more often than the target risk level, up to calibration error and distribution shift.
-
-### R2. Portfolio Risk Allocation
-
-If per-tenant risk budget `alpha_t` is respected, then aggregate overshoot probability should remain bounded by the chosen policy envelope under the stated dependence assumptions.
-
-## Operational Invariants
-
-### O1. Atomic Admission Outcome
-
-A request admission is valid only if the following commit atomically from the decision layer perspective:
-
-- chosen action
-- chosen model when admitted
-- reservation record
-- request identifier
-
-### O2. Reservation Release
-
-Every terminal request outcome must eventually trigger one of:
-
-- settlement and release
-- expiry and release
-- cancellation and release
-
-### O3. Conservative Degradation
-
-When evidence is stale, missing, or drift alarms fire, GOV-AR must degrade toward safer actions:
-
-- lower-capacity admission
-- cheaper or better-calibrated model
-- queue
-- abstain
-- reject
+Conservative unresolved, residual, and rollover-guard holds can reduce availability indefinitely. Carried debt persists until explicit repayment or authorized budget adjustment; historical credit remains audit-only. The experiments therefore measure unresolved backlog, hold age, false refusal, time in conservative mode, operator intervention, payoff, and recovery. Safety is not presented without this liveness/utility cost.

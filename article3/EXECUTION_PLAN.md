@@ -18,9 +18,9 @@ Repair, validate, and release Article 3 under `Q1_GATE_CONTRACT.md`. The target 
 
 | Phase | Depends on | Acceptance evidence | Status |
 |---|---|---|---|
-| A forensic/operator audit | branch + archive | recomputed prior-output audit; source-derived architecture/inventories reproducible by auditor | completed (`ed8105d`) |
-| B literature/novelty | A comprehension | two saturation passes; >=40 verified references; independent novelty and red-team resolutions | completed |
-| C formulation/theory | B novelty gate | frozen 2-3 contributions; reviewed assumptions/proofs; formal invariant model passes | in progress |
+| A forensic/operator audit | branch + archive | recomputed prior-output audit; source-derived architecture/inventories reproducible by auditor | completed (`5f9cc43`) |
+| B literature/novelty | A comprehension | two post-material saturation passes; >=40 independently verified references; bibliography, novelty, and red-team resolutions | completed (57 verified; 49 peer-reviewed; corpus `6711d84b...b71a`) |
+| C formulation/theory | B novelty gate | frozen 2-3 contributions; reviewed assumptions/proofs; formal invariant model passes | completed (schema v4; independent theory/red-team approval) |
 | D implementation | C | measured-path tests, race, transaction, integration, gateway, envtest all pass | pending |
 | E images/Helm/Kind | D | immutable remote digests; install/upgrade/rollback/uninstall; three idempotent cluster profiles | pending |
 | F datasets/splits | B,D | verified licenses/checksums; contamination checks; hidden frozen test split | pending |
@@ -33,7 +33,7 @@ Repair, validate, and release Article 3 under `Q1_GATE_CONTRACT.md`. The target 
 
 ## Current checkpoint
 
-Phase C. Replace the exploratory formulation/state machine with the red-team-approved three-contribution boundary; define every liability/risk event and transition; add outbox/exactly-once-ledger semantics, unresolved-liability carryover, explicit assumptions, and an executable formal model. Obtain independent theory review before implementation.
+Phase D implementation. Replace the exploratory float ledger with the reviewed integer-money state machine and transactional outbox/inbox path; add provisional settlement, correction finality, workload identity, gateway dispatch semantics, and adversarial transaction tests. Implementation cannot be its own only reviewer.
 
 ## Recovery commands
 

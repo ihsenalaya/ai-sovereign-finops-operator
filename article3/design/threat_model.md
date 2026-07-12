@@ -1,67 +1,44 @@
-# Threat Model
+# GOV-AR threat and failure model
 
-## Scope
+## Trust boundary
 
-The threat model for Article 3 focuses on governance and budget-control correctness, not on proving general security of all infrastructure components.
+The evaluated path begins at an authenticated gateway that overwrites caller identity and ends at ledger reconciliation of provider-reported usage. The study does not establish legal compliance, provider honesty, invoice equality, or Byzantine security. Token-derived values are estimated token cost unless billing records are reconciled.
 
-## Threats Considered
+## In-scope failures
 
-### T1. Budget Exhaustion by Burst Concurrency
+- burst concurrency that defeats settled-spend-only checks;
+- unknown/heavy-tailed output cost and duration-dependent censoring;
+- stale calibration, task/price/model/policy drift, and incomplete support;
+- duplicate response, duplicate settlement with the same or different event ID, duplicate gateway event, and reordered events;
+- lost or late settlement, timeout followed by late response, response without usage, telemetry loss, and censored latent billable cost `C_i*`;
+- crash before/after reserve, dispatch, response, settlement, and acknowledgement;
+- ambiguous outbox delivery, separately billable retry/fallback attempts, and provider-idempotency mismatch;
+- PostgreSQL outage/latency, leader eviction, two settlers, network partition/recovery, and route rollback;
+- budget-window rollover and policy/price change while requests are in flight;
+- workload deletion/recreation with UID change and cross-namespace tenant collision;
+- provider/model unreadiness, unroutability, quality failure, missing approval, and gateway bypass;
+- hidden/cached/reasoning/tool/media tokens, cancellation charges, and any billing dimension omitted from a strict bound.
 
-Many concurrent requests from one tenant may individually appear admissible if only settled spend is considered.
+## Required controls
 
-Mitigation target:
+- gateway-authenticated workload UID/tenant binding and fail-closed governed route;
+- versioned hard feasibility before optimization;
+- integer-money serializable reservation with transactional outbox/inbox;
+- one effective provisional ledger settlement per request/attempt, residual correction hold until authoritative finality, and monotone-versioned correction deltas;
+- separately reserved billable attempts unless provider idempotency is verified;
+- unresolved/quarantined liability for ambiguous delivery, timeout, expiry, missing usage, or late telemetry;
+- immutable policy/pricing/billable-category snapshot;
+- visible drift fallback and calibration revalidation;
+- invariant recomputation and complete diagnostics for every final fault trial.
 
-- in-flight reservation accounting
+## Safety/liveness trade-off
 
-### T2. Delayed Settlement Blindness
+Conservative unresolved liability can block service when telemetry never arrives. The fault campaign measures backlog, refusal, queue growth, intervention, and recovery alongside budget safety. A safe but permanently unavailable system is not described as operationally superior.
 
-Telemetry lag can cause the control plane to underestimate active liability.
+## Out of scope
 
-Mitigation target:
-
-- reserve-settle ledger and expiry rules
-
-### T3. Governance Bypass by Cheaper Non-Compliant Route
-
-A low-cost model may violate sovereignty or provider restrictions.
-
-Mitigation target:
-
-- hard filter before optimization
-
-### T4. Drift-Induced Under-Reservation
-
-Token length distribution can shift over time, invalidating calibrated reservation levels.
-
-Mitigation target:
-
-- drift alarms and conservative fallback
-
-Current scaffold note:
-
-- the research predictor already includes a simple mean-ratio drift detector
-- the admission layer can abstain when `BlockOnDrift` is enabled
-
-### T5. Duplicate Settlement Events
-
-Retries or repeated telemetry delivery may double-charge a tenant.
-
-Mitigation target:
-
-- idempotent settlement keys
-
-### T6. Partial Failure Between Reserve and Dispatch
-
-The system may reserve budget but fail before dispatch, or dispatch without durable settlement metadata.
-
-Mitigation target:
-
-- atomic reservation protocol and expiry cleanup
-
-## Out of Scope
-
-- cryptographic compromise of cloud providers
-- legal sufficiency of compliance claims
-- adversarial prompt-content attacks beyond budget and routing implications
-- full Byzantine telemetry forgery model
+- cryptographic compromise or malicious falsification by the provider;
+- correctness of provider invoices not reconciled in the study;
+- prompt-injection/content safety except where it changes eligibility or cost;
+- general Byzantine PostgreSQL/Kubernetes behavior;
+- universal cloud performance or legal sufficiency.

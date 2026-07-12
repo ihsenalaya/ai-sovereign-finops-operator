@@ -85,15 +85,41 @@ def file_ok(path: Path, minimum: int = 1) -> bool:
     return path.is_file() and path.stat().st_size >= minimum
 
 
+def literature_corpus_sha256() -> str:
+    digest = hashlib.sha256()
+    for name in ("search_log.csv", "screening.csv", "related_work_matrix.csv",
+                 "novelty_assessment.md", "references.bib", "rejected_references.csv"):
+        digest.update(name.encode("utf-8") + b"\0")
+        digest.update((A3 / "literature" / name).read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def review_clear(path: Path) -> tuple[bool, str]:
     doc = load_json(path)
     if not isinstance(doc, dict):
         return False, "missing or malformed JSON review"
     findings = doc.get("findings", [])
     unresolved = [f for f in findings if str(f.get("severity", "")).lower() in {"critical", "major"}
-                  and str(f.get("status", "open")).lower() not in {"resolved", "accepted"}]
+                  and str(f.get("status", "open")).lower() != "resolved"]
     approved = str(doc.get("verdict", "")).lower() in {"approve", "approved", "pass", "passed"}
     return approved and not unresolved, f"verdict={doc.get('verdict')!r}, unresolved_critical_major={len(unresolved)}"
+
+
+def source_bound_review_clear(path: Path, source_field: str) -> tuple[bool, str]:
+    ok, detail = review_clear(path)
+    doc = load_json(path)
+    if not isinstance(doc, dict):
+        return False, detail
+    sources = doc.get(source_field)
+    if not isinstance(sources, dict) or not sources:
+        return False, f"{detail}, missing {source_field}"
+    mismatches: list[str] = []
+    for rel, expected in sources.items():
+        candidate = ROOT / str(rel)
+        if not candidate.is_file() or not re.fullmatch(r"[0-9a-f]{64}", str(expected)) or sha256(candidate) != expected:
+            mismatches.append(str(rel))
+    return ok and not mismatches, f"{detail}, sources={len(sources)}, mismatches={mismatches}"
 
 
 def verify_archive() -> tuple[bool, str]:
@@ -208,16 +234,34 @@ def literature_checks(strict: bool) -> None:
     add("literature", "majority peer-reviewed primary research", len(verified) >= 40 and len(peer) > len(verified) / 2,
         f"peer_reviewed={len(peer)}/{len(verified)}")
     searches = csv_rows(lit / "search_log.csv")
-    saturation = [r for r in searches if r.get("pass_type", "").lower() in {"expanded", "citation_chase", "citation-chase"}
+    last_material = max((i for i, r in enumerate(searches)
+                         if r.get("material_new_work", "").lower() == "true"), default=-1)
+    saturation = [r for i, r in enumerate(searches) if i > last_material
+                  and r.get("pass_type", "").lower() in {"expanded", "expanded_search", "citation_chase", "citation-chase"}
                   and r.get("material_new_work", "").lower() == "false"]
     add("literature", "two material-novelty saturation passes", len(saturation) >= 2, f"passes={len(saturation)}")
     matrix_text = (lit / "novelty_assessment.md").read_text(encoding="utf-8", errors="ignore").lower() if file_ok(lit / "novelty_assessment.md") else ""
-    closest_markers = ["token budgets", "paretobandit", "r2-router", "pilot"]
+    closest_markers = ["token budgets", "paretobandit", "r2-router", "pilot", "racer", "concur",
+                       "selective deferred routing", "solo.io", "keel", "agentbudget"]
     add("literature", "closest current prior art explicitly assessed", all(x in matrix_text for x in closest_markers),
         f"markers_present={[x for x in closest_markers if x in matrix_text]}")
+    bibliography = load_json(A3 / "reviews" / "bibliography_verification.json")
+    bibliography_ok, bibliography_detail = review_clear(A3 / "reviews" / "bibliography_verification.json")
+    expected_corpus = literature_corpus_sha256() if not missing else ""
+    bibliography_ids = bibliography.get("verified_ids", []) if isinstance(bibliography, dict) else []
+    bibliography_ok = (bibliography_ok and isinstance(bibliography, dict)
+                       and int(bibliography.get("independently_verified_records", 0)) >= 40
+                       and isinstance(bibliography_ids, list)
+                       and len(set(map(str, bibliography_ids))) == int(bibliography.get("independently_verified_records", 0))
+                       and bibliography.get("corpus_sha256") == expected_corpus)
+    add("review", "bibliography_verification.json", bibliography_ok,
+        f"{bibliography_detail}, verified={bibliography.get('independently_verified_records') if isinstance(bibliography, dict) else None}, corpus_match={isinstance(bibliography, dict) and bibliography.get('corpus_sha256') == expected_corpus}")
     for role in ("literature_novelty_audit.json", "scientific_red_team.json"):
         ok, detail = review_clear(A3 / "reviews" / role)
-        add("review", role, ok, detail)
+        review = load_json(A3 / "reviews" / role)
+        ok = ok and isinstance(review, dict) and review.get("corpus_sha256") == expected_corpus
+        add("review", role, ok,
+            f"{detail}, corpus_match={isinstance(review, dict) and review.get('corpus_sha256') == expected_corpus}")
 
 
 def implementation_checks(strict: bool) -> None:
@@ -236,9 +280,39 @@ def implementation_checks(strict: bool) -> None:
         ("gateway", "admission", "atomic_reserve", "backend", "usage", "settlement", "aggregate_state"))
     add("implementation", "full measured E0 path", e0_ok, json.dumps(e0, sort_keys=True)[:600] if e0 else "missing")
 
+    formal_rc, formal_output = run(["bash", "article3/formal/check.sh"], timeout=120)
     formal = load_json(A3 / "formal" / "results.json")
-    formal_ok = isinstance(formal, dict) and formal.get("exit_code") == 0 and formal.get("invariants_checked", 0) >= 3
-    add("theory", "formal invariant model passes", formal_ok, json.dumps(formal, sort_keys=True)[:500] if formal else "missing")
+    required_invariants = {"conditional_strict_ledger_feasibility",
+                           "one_effective_settlement_finalization_and_correction",
+                           "outbox_claim_cancel_delivery_relation", "record_aggregate_equality",
+                           "tenant_and_workload_uid_isolation", "residual_correction_exposure_retained",
+                           "provisional_rollover_guard_prevents_credit_reuse",
+                           "required_transition_coverage"}
+    model_path = A3 / "formal" / "ledger_model.py"
+    formal_ok = (formal_rc == 0 and isinstance(formal, dict) and formal.get("exit_code") == 0
+                 and formal.get("model_sha256") == sha256(model_path)
+                 and required_invariants <= set(formal.get("invariants", []))
+                 and formal.get("failures") == [])
+    add("theory", "formal invariant model passes", formal_ok,
+        f"runner_rc={formal_rc}, output={formal_output[-300:]}, result={json.dumps(formal, sort_keys=True)[:500] if formal else 'missing'}")
+
+    theory_ok, theory_detail = source_bound_review_clear(A3 / "reviews" / "theory_review.json", "source_sha256")
+    theory_review = load_json(A3 / "reviews" / "theory_review.json")
+    theory_formal = theory_review.get("formal_check", {}) if isinstance(theory_review, dict) else {}
+    theory_ok = (theory_ok and isinstance(theory_formal, dict)
+                 and theory_formal.get("model_sha256") == sha256(model_path)
+                 and theory_formal.get("exit_code") == 0
+                 and int(theory_formal.get("scenario_traces_checked", 0)) >= 9)
+    add("review", "independent source-bound Phase C theory review", theory_ok,
+        f"{theory_detail}, formal_model_match={isinstance(theory_formal, dict) and theory_formal.get('model_sha256') == sha256(model_path)}")
+
+    gate_review_ok, gate_review_detail = review_clear(A3 / "reviews" / "q1_gate_change_review.json")
+    gate_review = load_json(A3 / "reviews" / "q1_gate_change_review.json")
+    gate_review_ok = (gate_review_ok and isinstance(gate_review, dict)
+                      and gate_review.get("change_type") == "additive_tightening"
+                      and gate_review.get("q1_gate_sha256") == sha256(A3 / "tools" / "q1_gate.py"))
+    add("review", "independent review of additive Q1 gate tightening", gate_review_ok,
+        f"{gate_review_detail}, gate_hash_match={isinstance(gate_review, dict) and gate_review.get('q1_gate_sha256') == sha256(A3 / 'tools' / 'q1_gate.py')}")
 
     digests = csv_rows(A3 / "provenance" / "image_digests.csv")
     immutable = [r for r in digests if re.fullmatch(r"sha256:[0-9a-f]{64}", r.get("digest", ""))]

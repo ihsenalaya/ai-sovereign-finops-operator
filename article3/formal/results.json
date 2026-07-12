@@ -1,24 +1,61 @@
 {
   "assumptions": [
-    "strict-mode authoritative actual cost is <= reserved amount",
-    "one transactional ledger serializes each accepted transition",
-    "rejected transitions are atomic no-ops"
+    "every potentially billable attempt is reserved with a pending outbox before dispatch",
+    "strict-mode authoritative final estimated token cost is no greater than its reservation",
+    "residual reservation R-C is retained until authoritative finality",
+    "prior-window provisional actual plus residual is guarded at R until finality",
+    "historical downward-correction credit is audit-only and cannot expand later availability",
+    "corrections are monotone-versioned and post-finality upward corrections are outside the strict guarantee",
+    "one transactional ledger serializes every effective transition",
+    "provider execution itself is not claimed exactly once"
   ],
-  "checked_at_utc": "2026-07-12T06:05:17.160698+00:00",
-  "depth": 5,
+  "checked_at_utc": "2026-07-12T07:23:25.312599+00:00",
+  "depth": 6,
   "exit_code": 0,
   "failures": [],
   "invariants": [
-    "non_negative_ledger",
-    "record_accounting_matches_tenant_views",
-    "settlement_idempotence_and_rejected_transition_noop",
-    "strict_budget_safety",
-    "tenant_isolation",
-    "terminal_events_have_single_effect"
+    "conditional_strict_ledger_feasibility",
+    "non_negative_integer_ledger",
+    "one_effective_settlement_finalization_and_correction",
+    "outbox_claim_cancel_delivery_relation",
+    "provisional_rollover_guard_prevents_credit_reuse",
+    "record_aggregate_equality",
+    "rejected_transition_atomic_noop",
+    "required_transition_coverage",
+    "residual_correction_exposure_retained",
+    "tenant_and_workload_uid_isolation"
   ],
-  "invariants_checked": 6,
-  "model": "bounded exhaustive reservation-ledger state exploration",
-  "schema_version": 1,
-  "states_checked": 2232,
-  "transitions_checked": 55352
+  "invariants_checked": 10,
+  "model": "bounded exhaustive outbox and residual-correction ledger exploration",
+  "model_sha256": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
+  "scenario_traces_checked": [
+    "unresolved_rollover_late_correction_finality",
+    "atomic_pending_expiry_blocks_late_claim",
+    "reordered_usage_proves_delivery",
+    "residual_hold_blocks_correction_refill_race",
+    "semantic_duplicate_no_second_effect",
+    "same_tenant_concurrent_reservations_isolated_by_workload_uid",
+    "historical_credit_cannot_expand_future_windows",
+    "correction_exact_replay_after_later_version",
+    "stale_correction_version_rejected"
+  ],
+  "schema_version": 4,
+  "states_checked": 2910,
+  "transition_coverage": [
+    "ambiguous_timeout_retains_hold",
+    "atomic_reserve_and_pending_outbox",
+    "authoritative_finality_releases_residual",
+    "authoritative_unbilled_cancel_and_release",
+    "exact_correction_replay_no_effect",
+    "late_settlement",
+    "monotone_correction_with_residual_hold",
+    "outbox_claim",
+    "pending_outbox_cancel_and_release",
+    "provider_delivery",
+    "reordered_usage_proves_delivery",
+    "rollover_preserves_holds_and_adjustments",
+    "semantic_duplicate_no_effect",
+    "settlement_with_residual_hold"
+  ],
+  "transitions_checked": 42826
 }

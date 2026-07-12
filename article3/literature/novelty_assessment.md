@@ -1,10 +1,10 @@
 # GOV-AR Literature and Novelty Assessment
 
-Verification date: **2026-07-11**. This assessment is based on primary publisher/proceedings records, accepted OpenReview records, and clearly labelled arXiv preprints. It does not treat an arXiv DOI as evidence of peer review.
+Verification date: **2026-07-12**. This assessment is based on primary publisher/proceedings records, accepted OpenReview records, clearly labelled arXiv preprints, and explicitly labelled industry implementations/product documentation. It does not treat an arXiv DOI, a whitepaper, product documentation, or an engineering article as evidence of peer review.
 
 ## Review scope and disposition
 
-The review retained 51 relevant works. Forty-six are peer-reviewed primary research or peer-reviewed journal/conference articles (90.2%); four are explicitly labelled preprints and RouterBench is explicitly labelled as workshop evidence. The retained set covers:
+The review retained 57 relevant works. Forty-nine are peer-reviewed primary research or peer-reviewed journal/conference articles (86.0%); four are explicitly labelled preprints, RouterBench is explicitly labelled as workshop evidence, and three are explicitly labelled industry/whitepaper evidence. The retained set covers:
 
 - budget-constrained, cost-aware, online, and adaptive LLM routing;
 - multi-tenant scheduling, isolation, fairness, and capacity constraints;
@@ -16,42 +16,37 @@ The review retained 51 relevant works. Forty-six are peer-reviewed primary resea
 - serving-system implementation and performance context.
 - Kubernetes operator/controller reliability testing and transaction availability limits.
 
-`search_log.csv` records database searches, backward/forward chasing, and four explicit saturation checks. Expanded synonym passes S16 and S18 and citation-chasing passes S17 and S19 each found `material_new_work=false`. These passes added context but did not change the closest-prior-work ordering or the conclusion below.
+`search_log.csv` records database searches and backward/forward chasing. The earlier saturation claim was invalidated when later searches found RACER, CONCUR, Selective Deferred Routing, Solo.io quota-management, Keel budget envelopes, and AgentBudget. After adding those works and narrowing the contribution, post-update passes S24 and S25 each found `material_new_work=false`. The search therefore stops only at those two post-update passes.
 
 ## Novelty gate conclusion
 
-The broad proposition “a budget-aware, adaptive, risk-controlled LLM router” is **not novel**. Nor are joint model/output-budget selection, output-length prediction, conformal routing, multi-tenant fairness, drift adaptation, escrow reservation, idempotent settlement, or hard policy filtering individually novel.
+The broad proposition “a budget-aware, adaptive, risk-controlled LLM router” is **not novel**. Nor are joint model/output-budget selection, output-length prediction, conformal routing, multi-tenant fairness, drift adaptation, escrow reservation, idempotent settlement, hard policy filtering, pre-dispatch monetary reservation, hierarchical budget isolation, PostgreSQL-backed gateway enforcement, provider-usage reconciliation, or approval workflows individually novel.
 
 The defensible paper nucleus is narrower:
 
-> A synchronous multi-provider admission controller that makes hard governance eligibility decisions, selects an eligible model and upper monetary reservation, accounts for the **current concurrent set of unresolved estimated-cost liabilities**, and maintains exactly-once ledger effects under delayed, duplicate, missing, late, and reordered usage events.
+> A formal and empirical study of how distribution-aware monetary reservations behave across **current concurrent unresolved liabilities** when output cost is uncertain and usage events are delayed, duplicate, missing, late, or reordered, with conservative state semantics that never interpret missing telemetry as released liability.
 
-No retained primary source implements that complete combination. This is an absence-of-found-precedent conclusion after the documented search, not proof that no such system exists and not evidence that the composition is a new algorithm. The default contribution is therefore a problem formulation, fault-tolerant systems realization, and measurement study. Optimized risk allocation remains an experimental component whose algorithmic contribution is rejected unless it is formally distinct from classical chance-constraint allocation and survives the matched-risk falsifier.
+R55 and R56 invalidate the earlier systems-integration novelty boundary: public systems already implement gateway-side reserve-before-dispatch, outstanding pending spend, hierarchical isolation, actual-cost reconciliation, prices, periods, approvals, and PostgreSQL. The retained sources did not demonstrate calibrated monetary tail allocation together with conservative late/missing-event liability semantics and a matched risk--utilization/fault evaluation, but this is only an absence-of-found-evidence statement. It is not proof of priority and not evidence of a new algorithm. The default contribution is therefore a narrow problem/metric formulation and a comparative systems measurement study. Optimized risk allocation remains known chance-constraint machinery unless a later derivation establishes otherwise; no algorithmic novelty is approved.
 
 ## Closest prior work
 
 | Rank | Work | Exact overlap | Boundary relative to GOV-AR |
 |---|---|---|---|
-| 1 | R01, *Token Budgets* (preprint) | Pre-flight reservation, refund/reconciliation, cap arithmetic, concurrency/delegation races, double-spend prevention, live provider tests, adaptive estimation, lightweight formal checks | Explicitly single-process; distributed multi-tenant reservation is not implemented; no model routing; missing canceled-stream usage and hidden tokens remain open |
-| 2 | R02, *ParetoBandit* (preprint) | Closed-loop dollar pacing, cost/quality drift, partial feedback, model hot-swap | Long-run average cost; sequential realized-cost update; no unresolved concurrent liability, hard tenant window, or settlement ledger |
-| 3 | R03, *R2-Router* (ICML 2026) | Joint model and output-length-budget choice | Controls requested output length rather than reserving a stochastic monetary liability and settling actual usage |
-| 4 | R04/R08/R21, PILOT/StageRoute/TREACLE | Budget-constrained online routing, constrained deployment, joint model/prompt actions | Costs are action estimates or realized sequential feedback; no atomic reserve–settle state under concurrency |
-| 5 | R06/R07, conformal LLM routing and LEC | Finite-sample or selection-conditioned routing-risk control | Risk concerns answer error, not aggregate outstanding monetary liability |
-| 6 | R30/R10, VTC and H-MAS | Multi-tenant fairness, burst/drift response, QoS isolation | Allocate GPU service, not tenant financial exposure across providers |
-| 7 | R45/R46, escrow and transactional streams | Long-lived reservation, recovery, duplicate/reordered events, transactional invariants | General database machinery; not probabilistic LLM output cost or governance-aware routing |
+| 1 | R55, Solo.io quota-management (industry reference) | Trusted gateway identity, hierarchical atomic PostgreSQL reservations, pending spend, provider-usage settlement, prices, periods, approvals, metrics, orphan cleanup | Static estimate/multiplier; no calibrated tail allocation or joint quality routing; audited expiry does not preserve conservative late liability, while a possible concurrent-settlement double-charge race is a source inference pending a faithful pinned-code test |
+| 2 | R56, Keel budget envelopes (product documentation) | `remaining = total - reserved - spent`, integer microdollars, reserve before provider dispatch, reconcile actual-minus-locked afterward | No public calibration, concurrent risk allocation, joint routing, fault semantics, formal model, or comparative evidence identified |
+| 3 | R01, *Token Budgets* (preprint) | Pre-flight reservation, refund/reconciliation, cap arithmetic, concurrency/delegation races, adaptive estimation, lightweight formal checks | Explicitly single-process; no model routing or tenant-window ledger; canceled-stream usage and hidden tokens remain open |
+| 4 | R52/R06/R07, RACER, conformal LLM routing, and LEC | Finite-sample or selection-conditioned routing-risk control and abstention | Risk concerns answer error/model-set inclusion, not aggregate outstanding monetary liability |
+| 5 | R02/R04/R05/R08/R21/R53, constrained online routers | Dollar/compute pacing, partial feedback, dynamic strategy addition, constrained deployment, joint model/prompt actions | Costs are action estimates, compute budgets, or realized sequential feedback; no conservative faulty-event liability state |
+| 6 | R03, *R2-Router* (ICML 2026) | Joint model and output-length-budget choice | Controls requested output length rather than reserving and settling a priced stochastic liability |
+| 7 | R57, AgentBudget (whitepaper) | Two-phase pre-call estimation/post-call reconciliation, nested budgets, loop circuit breaker, live calls | In-process session boundary; average estimate; no shared pending-reservation ledger, tenants, delayed events, or fault semantics |
+| 8 | R30/R10, VTC and H-MAS | Multi-tenant fairness, burst/drift response, QoS isolation | Allocate GPU service, not tenant financial exposure across providers |
+| 9 | R45/R46/R49, escrow, transactional streams, and HAT | Reservation, recovery, duplicate/reordered events, transaction/availability limits | General database machinery; not probabilistic LLM output cost or governance-aware admission |
 
 ## Answers to the six novelty questions
 
 ### 1. Which exact element is new?
 
-No individual algorithmic element is established as new. The candidate contribution boundary is the evaluated combination of:
-
-1. pre-dispatch monetary upper-tail reservation for unknown output tokens;
-2. explicit accounting of the tenant's **currently unresolved concurrent requests**, with any risk allocation treated as known chance-constraint machinery unless proven otherwise;
-3. model/reservation choice after a non-bypassable governance feasibility filter; and
-4. a cross-process transactional state machine that preserves the liability invariant despite delayed and faulty settlement.
-
-The paper may say only that no retained work demonstrated this complete operational combination. It must not call the combination a new routing or risk-allocation algorithm. A “first” claim is unnecessary and will be omitted unless a later journal-specific review requires and supports it.
+No individual algorithmic or integration element is established as new. The only candidate scientific boundary is the evaluated formulation that simultaneously distinguishes request under-reservation, fixed-cohort liability exceedance, selected outstanding-set exceedance, and tenant budget-window overshoot while testing distribution-aware reservations under faulty settlement. Risk allocation is treated as known chance-constraint machinery, and reserve--dispatch--reconcile is established industry practice by R55--R57. The paper may state only that the retained sources did not report this exact metric/fault evaluation; it will make no “first” claim.
 
 ### 2. Which elements are known individually?
 
@@ -63,27 +58,23 @@ The paper may say only that no retained work demonstrated this complete operatio
 - Drift/non-stationary online learning: R02, R09, R10, R39, R42, R43.
 - Multi-tenant fairness and resource isolation: R10, R30, R47.
 - Escrow reservation and transaction recovery: R45, R46.
+- LLM/agent pre-dispatch budget reservation and reconciliation: R55--R57.
+- Hierarchical gateway budget isolation, pricing, periods, approvals, and PostgreSQL pending-spend accounting: R55.
+- Integer monetary budget envelopes with explicit in-flight reserved state: R56.
 - Router integrity attacks: R11.
 - Dynamic/distributed routing and model availability: R08, R09, R24.
 
 ### 3. What is the closest prior work?
 
-R01 is the closest on financial liability and concurrency; R02 is the closest on dollar-aware adaptive routing; R03 is the closest on joint model/output-budget choice. None alone is an adequate comparator. GOV-AR must compare against an R01-style adaptive estimator with a correctly locked runtime counter, not only against a deliberately weak settled-spend or mean baseline.
+R55 is the closest implemented gateway system, R56 is the closest documented budget-envelope abstraction, and R01 is the closest adaptive reservation/concurrency research preprint. R52 is the closest calibrated routing-risk method; CONCUR, ParetoBandit, PILOT, and StageRoute (R53/R02/R04/R08) are the closest constrained/dynamic routers; R03 is the closest joint model/output-budget choice; Selective Deferred Routing (R54) is the closest local/remote cost-quality deferral method; and AgentBudget (R57) is the closest in-process two-phase nested-agent budget implementation. GOV-AR must compare against the R55 fixed-estimate/multiplier design and an R01-style adaptive estimator with a correctly locked transactional counter, not only against deliberately weak settled-spend or mean baselines.
 
 ### 4. Is the contribution more than systems integration?
 
-Not by default. It becomes a defensible scientific method contribution only if:
-
-- the concurrent risk-allocation/reservation rule is formally distinct;
-- any probability statement is restricted to the exact fixed cohort/event its assumptions support;
-- it improves the measured risk–utilization frontier over fixed and adaptive quantile reservation and the R01-style counter at matched empirical risk; and
-- the ledger/fault path is evaluated as a systems contribution rather than presented as new transaction theory.
-
-If those conditions fail, the honest contribution is a systems study of failure-safe LLM financial admission, not a new routing algorithm.
+No. R55 and R56 demonstrate that the gateway, PostgreSQL, pending-liability, reserve/settle, hierarchy, pricing, and approval composition is already implemented practice. The work becomes a defensible scientific contribution only as a preregistered comparative measurement study if probability statements remain tied to their exact events/assumptions, strong practical and academic comparators are used, and the fault campaign exposes reproducible differences in conservative late/missing-event behavior. If fixed/adaptive reservation or the R55-style design matches the full method at matched risk, the result is a null/negative systems study, not a new routing method.
 
 ### 5. What experiment would falsify the claimed advantage?
 
-The central claim is falsified if an adaptive quantile reservation plus cheapest governance-compliant router—or an R01-style adaptive estimator with a correct transactional counter—matches GOV-AR's utilization, served quality, and refusal rate at the same empirical overshoot risk under matched concurrent delayed-settlement streams.
+The central advantage is falsified if an adaptive quantile reservation plus cheapest governance-compliant router, an R01-style adaptive estimator, or an R55-style atomic fixed-estimate/multiplier envelope matches GOV-AR's utilization, served quality, and refusal rate at the same empirical overshoot risk under matched concurrent delayed-settlement streams.
 
 Additional required falsifiers are:
 
@@ -107,6 +98,8 @@ Remove claims of being the first:
 - distributed or dynamically reconfigurable router;
 - multi-tenant fair LLM scheduler;
 - reservation/refund ledger or idempotent transactional processor.
+- gateway-side reserve-before-dispatch and provider-usage settlement;
+- hierarchical tenant/team budget isolation, approvals, price versioning, periods, PostgreSQL pending spend, or budget-envelope arithmetic.
 
 Do not describe nonzero-risk mode as deterministically enforcing a hard budget. Deterministic budget safety is supportable only in strict mode under explicit price, tokenizer, hidden-token, dispatch, and provider-cap assumptions.
 
@@ -118,13 +111,12 @@ A fixed-time result for the selected outstanding set would additionally require 
 
 ## Contribution wording approved by this audit
 
-Subject to experimental validation, the manuscript may make at most three contributions:
+Subject to experimental validation, the manuscript may make only two scientific contributions:
 
-1. **Problem formulation:** distinguish settled spend, unresolved estimated-cost liability, request under-reservation, cohort exceedance, and budget-window overshoot for governed multi-tenant LLM admission.
-2. **Systems realization:** implement and fault-test atomic local reservation, a transactional dispatch outbox, exactly-once settlement effects, unresolved-liability carryover, and a synchronous gateway integrated with aggregate Kubernetes policy state.
-3. **Measurement evidence:** quantify risk–utilization, isolation, drift, failure, and overhead trade-offs against strong reservation/routing baselines on matched streams and bounded live providers.
+1. **Problem and safety formulation:** distinguish settled spend, unresolved estimated-cost liability, request under-reservation, fixed-cohort and selected-outstanding-set exceedance, and tenant budget-window overshoot; state only assumption-conditional cohort bounds and explicit ledger invariants.
+2. **Comparative measurement evidence:** quantify risk--utilization, isolation, drift, missing/late/duplicate-event behavior, and local overhead against R55/R56-style fixed envelopes, R01-style adaptive estimation, fixed/adaptive quantiles, strong routers, and strict reservation on matched streams and bounded live providers.
 
-An algorithmic risk-allocation contribution is not approved. It may be reconsidered only after formal distinction and matched-risk evidence. Kubernetes CRDs, PostgreSQL transactions, Envoy integration, conformal calibration, and standard routing objectives remain implementation ingredients rather than independent scientific contributions.
+The gateway/operator implementation is the experimental vehicle and reproducibility artifact, not an independent scientific novelty claim. Algorithmic risk allocation is not approved. Kubernetes CRDs, PostgreSQL transactions, Envoy/agentgateway integration, reservation/reconciliation, conformal calibration, and standard routing objectives remain known ingredients.
 
 ## Required baseline mapping
 
@@ -133,6 +125,7 @@ An algorithmic risk-allocation contribution is not approved. It may be reconside
 - Risk-controlled routers: R06 and R07.
 - Multi-tenant fairness/QoS: R10 and R30.
 - Reservation/counter comparator: R01 plus strict max, mean, margin, fixed quantile, and adaptive quantile.
+- Practical envelope comparator: R55/R56 fixed estimate plus safety multiplier with atomic pending-spend accounting and expiry behavior.
 - Oracle and benchmark sanity: R12/R13 with frozen counterfactual outcomes hidden from online methods.
 
-The claims-to-evidence table must point to matched-stream comparisons against these categories; omission of R01, R02, R03, R04, R06, R08, R12, R21, or R30 would materially weaken the novelty argument.
+The claims-to-evidence table must point to matched-stream comparisons against these categories; omission of R01, R02, R03, R04, R06, R08, R12, R21, R30, R52, R53, or an R55/R56-style practical envelope would materially weaken the novelty argument.

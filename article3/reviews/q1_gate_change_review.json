@@ -1,0 +1,51 @@
+{
+  "review_id": "q1-gate-change-review-20260712-v1",
+  "reviewer_role": "independent Q1 gate-change verifier",
+  "reviewed_at_utc": "2026-07-12T07:20:35Z",
+  "verdict": "approved",
+  "change_type": "additive_tightening",
+  "q1_gate_sha256": "66346676dccdf15903656ebde48cc50c0c23d26b51028c1b64b63bb05e88892c",
+  "baseline_q1_gate_sha256": "b09daa22a8288646ff0ef435c954d94cf6706bc533e9cff02748f94a66735396",
+  "q1_gate_contract_sha256": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+  "rationale": "The change preserves all pre-existing Q1 contract checks and adds fail-closed requirements for resolved-only review findings, exact source hashes in the independent Phase C theory review, a matching freshly executed formal-model hash with at least nine scenario traces, and an independent additive-gate review bound to the exact q1_gate.py hash. Missing, malformed, stale, unresolved, source-mismatched, model-mismatched, or later-edited evidence now fails. No previous success condition is removed, relaxed, made non-critical, or bypassed.",
+  "reviewed_additions": [
+    "source_bound_review_clear validates every declared source path against a 64-hex SHA-256 and requires a non-empty source map",
+    "review_clear now treats every non-resolved critical or major finding as unresolved",
+    "the formal checker is executed and its result is bound to the current ledger_model.py hash and required invariants",
+    "the independent Phase C theory review must be approved, resolved-only, source-bound, match the formal model, report exit code zero, and cover at least nine scenario traces",
+    "the independent gate-change review must declare additive_tightening and match the exact current q1_gate.py SHA-256"
+  ],
+  "findings": [
+    {
+      "id": "GATE-C1",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "Comparison with the immutable Q1 contract and baseline gate found no removed, relaxed, downgraded, or bypassed minimum requirement; the new checks can only convert a former pass into a failure."
+    },
+    {
+      "id": "GATE-C2",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "The Phase C theory approval is fail-closed: critical and major findings must be resolved, every declared source hash must match, the current formal model hash must match, the recorded formal exit code must be zero, and at least nine scenario traces are required."
+    },
+    {
+      "id": "GATE-M1",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The gate-change review is self-invalidating on later q1_gate.py edits because the gate recomputes and compares its exact SHA-256."
+    },
+    {
+      "id": "GATE-M2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Missing or malformed review JSON, an empty source map, malformed hashes, missing sources, stale hashes, unresolved findings, a non-additive change type, or an unapproved verdict all fail a critical gate check."
+    },
+    {
+      "id": "GATE-M3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The authoritative Q1 contract file is unchanged, and the strict gate still succeeds only when every critical check passes; STATUS.json remains derived output rather than evidence."
+    }
+  ],
+  "unresolved_critical_major": []
+}

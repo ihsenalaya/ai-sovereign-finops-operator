@@ -31,14 +31,14 @@
     },
     {
       "critical": true,
-      "detail": "unexpected=['M .gitignore', 'R  article3/analysis/STATISTICAL_SUMMARY.md -> article3/archive/codex_20260711/STATISTICAL_SUMMARY.md', 'R  article3/STATUS.json -> article3/archive/codex_20260711/STATUS.json', 'R  article3/STATUS.md -> article3/archive/codex_20260711/STATUS.md', 'R  article3/artifacts/AZURE_VALIDATION_SUMMARY.md -> article3/archive/codex_20260711/artifacts/AZURE_VALIDATION_SUMMARY.md', 'R  article3/artifacts/CHANGELOG_ARTICLE3.md -> article3/archive/codex_20260711/artifacts/CHANGELOG_ARTICLE3.md', 'R  article3/artifacts/CLAIMS_TO_EVIDENCE.csv -> article3/archive/codex_20260711/artifacts/CLAIMS_TO_EVIDENCE.csv', 'R  article3/artifacts/EXPERIMENT_SUMMARY.csv -> article3/archive/codex_20260711/artifacts/EXPERIMENT_SUMMARY.csv', 'R  article3/artifacts/FINAL_REPORT.md -> article3/archive/codex_20260711/artifacts/FINAL_REPORT.md', 'R  article3/artifacts/GOV_AR_COMPLETE_TRANSFER_20260711.zip -> article3/archive/codex_20260711/artifacts/GOV_AR_COMPLETE_TRANSFER_20260711.zip', 'R  article3/artifacts/GOV_AR_article.pdf -> article3/archive/codex_20260711/artifacts/GOV_AR_article.pdf', 'R  article3/artifacts/GOV_AR_overleaf.zip -> article3/archive/codex_20260711/artifacts/GOV_AR_overleaf.zip', 'R  article3/artifacts/GOV_AR_replication_package.zip -> article3/archive/codex_20260711/artifacts/GOV_AR_replication_package.zip', 'R  article3/artifacts/HELM_RELEASE.md -> article3/archive/codex_20260711/artifacts/HELM_RELEASE.md', 'R  article3/artifacts/IMAGE_DIGESTS.csv -> article3/archive/codex_20260711/artifacts/IMAGE_DIGESTS.csv', 'R  article3/artifacts/LAST_RUN_COMMIT.txt -> article3/archive/codex_20260711/artifacts/LAST_RUN_COMMIT.txt', 'R  article3/artifacts/LAST_RUN_UTC.txt -> article3/archive/codex_20260711/artifacts/LAST_RUN_UTC.txt', 'R  article3/artifacts/LITERATURE_REVIEW.md -> article3/archive/codex_20260711/artifacts/LITERATURE_REVIEW.md', 'R  article3/artifacts/REPRODUCTION.md -> article3/archive/codex_20260711/artifacts/REPRODUCTION.md', 'R  article3/artifacts/STATISTICAL_SUMMARY.md -> article3/archive/codex_20260711/artifacts/STATISTICAL_SUMMARY.md', 'R  article3/artifacts/TEST_REPORT.md -> article3/archive/codex_20260711/artifacts/TEST_REPORT.md', 'R  article3/artifacts/TRANSFER_README.md -> article3/archive/codex_20260711/artifacts/TRANSFER_README.md', 'R  article3/artifacts/article3-overleaf.zip -> article3/archive/codex_20260711/artifacts/article3-overleaf.zip', 'R  article3/artifacts/article3-paper.pdf -> article3/archive/codex_20260711/artifacts/article3-paper.pdf', 'R  article3/artifacts/article3-replication-bundle.zip -> article3/archive/codex_20260711/artifacts/article3-replication-bundle.zip', 'R  article3/artifacts/helm/gov-ar-experiment-0.1.0.tgz -> article3/archive/codex_20260711/artifacts/helm/gov-ar-experiment-0.1.0.tgz', 'R  article3/experiments/registry/frozen_protocol.yaml -> article3/archive/codex_20260711/experiments/frozen_protocol.yaml', 'R  article3/experiments/logs/kind-diagnostics/20260711T011858Z/describe.txt -> article3/archive/codex_20260711/experiments/logs/kind-diagnostics/20260711T011858Z/describe.txt', 'R  article3/experiments/logs/kind-diagnostics/20260711T011858Z/helm-list.txt -> article3/archive/codex_20260711/experiments/logs/kind-diagnostics/20260711T011858Z/helm-list.txt', 'R  article3/experiments/logs/kind-diagnostics/20260711T011858Z/job-logs.txt -> article3/archive/codex_20260711/experiments/logs/kind-diagnostics/20260711T011858Z/job-logs.txt'], preserved=['?? propmt.txt']",
+      "detail": "unexpected=['M article3/DECISIONS.md', ' M article3/EXECUTION_PLAN.md', ' M article3/STATUS.json', ' M article3/analysis/statistical_plan.md', ' M article3/design/gov_ar_algorithm.md', ' M article3/design/invariants.md', ' M article3/design/problem_formulation.md', ' M article3/design/state_machine.md', ' M article3/design/threat_model.md', ' M article3/formal/README.md', ' M article3/formal/ledger_model.py', ' M article3/formal/results.json', ' M article3/literature/novelty_assessment.md', ' M article3/literature/references.bib', ' M article3/literature/rejected_references.csv', ' M article3/literature/related_work_matrix.csv', ' M article3/literature/screening.csv', ' M article3/literature/search_log.csv', ' M article3/literature/validation_report.json', ' M article3/reviews/bibliography_verification.json', ' M article3/reviews/literature_novelty_audit.json', ' M article3/reviews/scientific_red_team.json', ' M article3/tools/q1_gate.py', ' M article3/tools/validate_literature.py', ' M operateur/cmd/gov-ar-admission/main.go', ' M operateur/internal/govar/engine.go', ' M operateur/internal/govar/engine_test.go', ' M operateur/internal/govar/postgres_engine.go', ' M operateur/internal/govar/snapshot.go', '?? article3/design/decision_records/0003-prior-art-narrowing.md'], preserved=['?? propmt.txt']",
       "group": "repository",
       "name": "final tree committed",
       "passed": true
     },
     {
       "critical": true,
-      "detail": "a77eca34b9c67eb2b974a90e6437e420d700e7aa",
+      "detail": "5f9cc43667202e9f1d8c249bdedc2609228bc1e9",
       "group": "repository",
       "name": "HEAD resolves",
       "passed": true
@@ -52,52 +52,59 @@
     },
     {
       "critical": true,
-      "detail": "missing=['search_log.csv', 'screening.csv', 'related_work_matrix.csv', 'novelty_assessment.md', 'references.bib', 'rejected_references.csv']",
+      "detail": "missing=[]",
       "group": "literature",
       "name": "required review outputs",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
-      "detail": "bib=0, verified_relevant=0",
+      "detail": "bib=57, verified_relevant=57",
       "group": "literature",
       "name": ">=40 verified relevant bibliography records",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
-      "detail": "peer_reviewed=0/0",
+      "detail": "peer_reviewed=49/57",
       "group": "literature",
       "name": "majority peer-reviewed primary research",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
-      "detail": "passes=0",
+      "detail": "passes=2",
       "group": "literature",
       "name": "two material-novelty saturation passes",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
-      "detail": "markers_present=[]",
+      "detail": "markers_present=['token budgets', 'paretobandit', 'r2-router', 'pilot', 'racer', 'concur', 'selective deferred routing', 'solo.io', 'keel', 'agentbudget']",
       "group": "literature",
       "name": "closest current prior art explicitly assessed",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
-      "detail": "verdict='conditional', unresolved_critical_major=2",
+      "detail": "verdict='approved', unresolved_critical_major=0, verified=57, corpus_match=True",
+      "group": "review",
+      "name": "bibliography_verification.json",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "verdict='approved', unresolved_critical_major=0, corpus_match=True",
       "group": "review",
       "name": "literature_novelty_audit.json",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
-      "detail": "missing or malformed JSON review",
+      "detail": "verdict='approved', unresolved_critical_major=0, corpus_match=True",
       "group": "review",
       "name": "scientific_red_team.json",
-      "passed": false
+      "passed": true
     },
     {
       "critical": true,
@@ -115,10 +122,24 @@
     },
     {
       "critical": true,
-      "detail": "missing",
+      "detail": "runner_rc=0, output=roves_delivery\",\n    \"rollover_preserves_holds_and_adjustments\",\n    \"semantic_duplicate_no_effect\",\n    \"settlement_with_residual_hold\"\n  ],\n  \"transitions_checked\": 42826\n}\nformal_check=PASS model_sha256=37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273 states=2910 transitions=42826, result={\"assumptions\": [\"every potentially billable attempt is reserved with a pending outbox before dispatch\", \"strict-mode authoritative final estimated token cost is no greater than its reservation\", \"residual reservation R-C is retained until authoritative finality\", \"prior-window provisional actual plus residual is guarded at R until finality\", \"historical downward-correction credit is audit-only and cannot expand later availability\", \"corrections are monotone-versioned and post-finality upward co",
       "group": "theory",
       "name": "formal invariant model passes",
-      "passed": false
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "verdict='approved', unresolved_critical_major=0, sources=10, mismatches=[], formal_model_match=True",
+      "group": "review",
+      "name": "independent source-bound Phase C theory review",
+      "passed": true
+    },
+    {
+      "critical": true,
+      "detail": "verdict='approved', unresolved_critical_major=0, gate_hash_match=True",
+      "group": "review",
+      "name": "independent review of additive Q1 gate tightening",
+      "passed": true
     },
     {
       "critical": true,
@@ -276,7 +297,7 @@
     }
   ],
   "gate_passed": false,
-  "generated_at_utc": "2026-07-11T08:28:45.199805+00:00",
+  "generated_at_utc": "2026-07-12T07:22:51.060192+00:00",
   "generated_by": "article3/tools/q1_gate.py",
   "groups": {
     "claims": {
@@ -296,8 +317,8 @@
       "passed": 0
     },
     "literature": {
-      "failed": 5,
-      "passed": 0
+      "failed": 0,
+      "passed": 5
     },
     "manuscript": {
       "failed": 3,
@@ -316,8 +337,8 @@
       "passed": 6
     },
     "review": {
-      "failed": 3,
-      "passed": 0
+      "failed": 1,
+      "passed": 5
     },
     "security": {
       "failed": 2,
@@ -328,15 +349,15 @@
       "passed": 0
     },
     "theory": {
-      "failed": 1,
-      "passed": 0
+      "failed": 0,
+      "passed": 1
     }
   },
-  "head_sha": "a77eca34b9c67eb2b974a90e6437e420d700e7aa",
+  "head_sha": "5f9cc43667202e9f1d8c249bdedc2609228bc1e9",
   "schema_version": 1,
   "strict": false,
   "summary": {
-    "failed": 31,
-    "passed": 8
+    "failed": 23,
+    "passed": 19
   }
 }

@@ -1,30 +1,142 @@
 {
-  "review_id": "scientific-red-team-20260711-v2",
+  "review_id": "scientific-red-team-20260712-v5",
   "reviewer_role": "fresh-context scientific red-team reviewer",
-  "reviewed_at_utc": "2026-07-11T08:36:00Z",
+  "reviewed_at_utc": "2026-07-12T07:20:35Z",
+  "corpus_sha256": "6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a",
   "verdict": "approved",
+  "scope": "Active non-archive literature, decisions, design, formal model, statistical plan, reviews, execution plan, and Q1 gate after RACER, CONCUR, Selective Deferred Routing, Solo.io quota-management, Keel Budget Envelopes, and AgentBudget updates.",
+  "reviewed_artifact_sha256": {
+    "article3/analysis/statistical_plan.md": "b1cbddf8ad64a260f4e4f44036dfaa1c5e303e9641c76194aaf6f1a4c81e4db2",
+    "article3/design/gov_ar_algorithm.md": "1e3d78cdf349f8302bbdfb7429c89d815bf177ffe9f5ead5d8943cec3a92c8e0",
+    "article3/design/invariants.md": "02fae1755dc6b9b95eb405a0b729172842015ebcd30a388facfed1f358bec9b1",
+    "article3/design/problem_formulation.md": "47ce90df6c7dbe66cfa6c366e88b522c978940318b9fc261c22525a1c76ea330",
+    "article3/design/state_machine.md": "66a549527b04b5ac9fca64bd56fed60dd42d80b9423176d75f8db8e5f3a79fae",
+    "article3/design/threat_model.md": "44a4f29bfb30ee42907d4df4b19f757abcdf653605bee1bb12dc66a4a33d1650",
+    "article3/formal/README.md": "dcfc59efca96246c3b76eff79f71d69b43143d0e29054ade97677d57c9371537",
+    "article3/formal/check.sh": "0ebb1af5d08aefb51dfe7cacbe084c8aaf694ad3bfc68aaf0d16b5d6348c3db7",
+    "article3/formal/ledger_model.py": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
+    "article3/literature/r55_source_audit.md": "044379b3554f85efb2faaff5529efc7bf1e12ef869e2d5bda042494736cff466",
+    "article3/tools/audit_r55_prior_art.py": "60b6bffb51498dfaf5cef014a685eded9a74848d0f2760d2fb3c481ae6ef2e42",
+    "article3/tools/q1_gate.py": "66346676dccdf15903656ebde48cc50c0c23d26b51028c1b64b63bb05e88892c",
+    "article3/tools/validate_literature.py": "35456c11ba40e5a5171a538b6cdae6227af77b7ed8043204ff8b0b82f9f7a92b"
+  },
   "findings": [
-    {"id": "RT-C1", "severity": "critical", "status": "resolved", "summary": "Algorithmic risk-allocation novelty was explicitly rejected; classical allocation is treated as known machinery."},
-    {"id": "RT-C2", "severity": "critical", "status": "resolved", "summary": "The novelty assessment rejects conditional validity from marginal quantiles and defaults to an explicit fixed-cohort event."},
-    {"id": "RT-C3", "severity": "critical", "status": "resolved", "summary": "Request, cohort, selected outstanding-set, and budget-window events are separated in the approved framing."},
-    {"id": "RT-C4", "severity": "critical", "status": "accepted", "summary": "Phase C must implement D007: expiry/missing telemetry carries unresolved liability rather than releasing it."},
-    {"id": "RT-C5", "severity": "critical", "status": "accepted", "summary": "Phase C/D must use transactional outbox/inbox and claim exactly-once ledger effects, not atomic provider execution."},
-    {"id": "RT-M1", "severity": "major", "status": "accepted", "summary": "Phase C strict-mode assumptions must enumerate every billable token/attempt/pricing dimension and concern estimated token cost unless invoices are reconciled."},
-    {"id": "RT-M2", "severity": "major", "status": "accepted", "summary": "Phase C state machine must add approval, late settlement, corrections, attempts, workload UID and rollover."},
-    {"id": "RT-M3", "severity": "major", "status": "accepted", "summary": "Phase C invariant proof must cover every transition, not admission only."},
-    {"id": "RT-M4", "severity": "major", "status": "accepted", "summary": "Drift fallback is operational and does not restore statistical calibration without revalidation."},
-    {"id": "RT-M5", "severity": "major", "status": "accepted", "summary": "Matched-risk fixed/adaptive allocation falsifier remains frozen-design work; failure removes any optional algorithmic claim."},
-    {"id": "RT-M6", "severity": "major", "status": "accepted", "summary": "Phase H/J must use hierarchical independent units and state live-tail precision limits."}
+    {
+      "id": "RT3-C1",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "Dispatched expiry, timeout, disconnect, missing usage, and ambiguous delivery retain unresolved liability across rollover; release requires atomic pending-outbox cancellation or authoritative unbilled proof."
+    },
+    {
+      "id": "RT3-C2",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "The current corpus and all independent reviews are bound to the exact literature corpus hash after R52-R57 removed algorithmic and systems-integration novelty."
+    },
+    {
+      "id": "RT3-C3",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "Review gates require critical and major findings to be resolved, not merely accepted, and validate all required review artifacts against the current corpus."
+    },
+    {
+      "id": "RT3-C4",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "The Q1 gate reruns the committed formal checker, verifies the model hash, required semantic invariants, transition coverage, and empty failure set rather than trusting a stale results label."
+    },
+    {
+      "id": "RT3-M1",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "ADR 0003 and the active design remove new-router and integration novelty; the implementation is an experimental vehicle for only the problem formulation and comparative measurement study."
+    },
+    {
+      "id": "RT3-M2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Request, fixed-opportunity-cohort, selected-outstanding-set, and tenant-window events are defined separately; the common-G theorem uses predictable admission indicators and selected-route bounds, follows by conditional union bound and iterated expectation, and does not transfer to selected sets or windows."
+    },
+    {
+      "id": "RT3-M3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Strict safety is labeled conditional ledger feasibility and enumerates provider-cap, billable-category, finality, pricing, serialization, and gateway-bypass assumptions."
+    },
+    {
+      "id": "RT3-M4",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The pre-outcome statistical plan uses hierarchical independent units, matched streams, faithful practical and academic comparators, exact rare-event bounds, multiplicity control, and explicit null-result retention."
+    },
+    {
+      "id": "RT3-M5",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The operational falsifier requires frozen matched-risk rules, equivalence or noninferiority margins, Pareto or scalar decisions, and removal of advantage language when practical envelopes or adaptive quantiles match."
+    },
+    {
+      "id": "RT3-M6",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Pinned R55 source facts are reproducibly hash-checked, while the possible concurrent-settlement double-charge race is explicitly an inference pending a faithful pinned-code test."
+    },
+    {
+      "id": "RT3-M7",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The literature validator requires resolved-only corpus-bound bibliography, novelty, and scientific reviews, post-material saturation, named closest work, unique verified IDs, and at least 40 live-reachable primary records."
+    },
+    {
+      "id": "RT3R-M1",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Explicit outbox pending, claimed, delivered, and canceled states make claim and cancellation mutually exclusive; a late claim after atomic expiry cancellation is rejected."
+    },
+    {
+      "id": "RT3R-M2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Provisional settlement retains residual correction exposure until authoritative finality; after rollover a temporary guard keeps exposure at the original reservation, carried debt remains non-negative, and historical downward-correction credit is audit-only."
+    },
+    {
+      "id": "RT3R-M3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The schema-v4 bounded formal model uses explicit effect counters, tenant and workload identities, representative wrong-principal actions for every mutating API shape, same-tenant concurrency traces, nine required scenarios, and required transition coverage."
+    },
+    {
+      "id": "RT3R-M4",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "A historical downward correction changes origin-window audit credit only; it cannot offset carried debt or increase admission availability in the current or a later budget window."
+    },
+    {
+      "id": "RT3R-M5",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The theorem indexes a pre-outcome arrival-opportunity cohort, makes admission and route choice predictable, assigns a pathwise capped risk allocation without redistributing rejected-slot weight, and gives dynamic active-set allocation no fixed-cohort theorem."
+    },
+    {
+      "id": "RT3R-M6",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Correction inbox entries bind event ID to immutable request, version, and value payload; an exact replay is acknowledged without a second posting even after later correction versions, while conflicting or stale payloads are rejected."
+    }
   ],
+  "unresolved_critical_major": [],
   "closest_work": [
-    {"work": "Token Budgets", "url": "https://arxiv.org/abs/2606.04056", "overlap": "reservation, concurrency races, adaptive estimation, live APIs"},
-    {"work": "StageRoute", "url": "https://iclr.cc/virtual/2026/poster/10010213", "overlap": "online cost-budget routing and concurrency cap"},
-    {"work": "PILOT", "url": "https://aclanthology.org/2025.findings-emnlp.1301/", "overlap": "bandit routing and knapsack budget policy"},
-    {"work": "R2-Router", "url": "https://openreview.net/forum?id=S3m1tSp8F4", "overlap": "joint model/output-length budget"},
-    {"work": "Iterative Risk Allocation", "url": "https://groups.csail.mit.edu/mers/papers/Ono-Williams_CDC08.pdf", "overlap": "flexible individual risk allocation under a joint Boole bound"},
-    {"work": "Online Chance-Constrained Resource Allocation", "url": "https://arxiv.org/abs/2303.03254", "overlap": "online acceptance/allocation under uncertain consumption"}
+    "R55 Solo.io quota-management",
+    "R56 Keel Budget Envelopes",
+    "R01 Token Budgets",
+    "R52 RACER",
+    "R53 CONCUR",
+    "R54 Selective Deferred Routing",
+    "R57 AgentBudget"
   ],
-  "resolution_decisions": ["D005", "D006", "D007"],
-  "required_rereview": false,
-  "progression_verdict": "Phase B novelty resolution passes; safe to advance to Phase C with no unresolved critical or major novelty-language issue."
+  "approved_contribution_boundary": [
+    "Problem and safety formulation separating non-equivalent monetary risk events with assumption-scoped ledger invariants and the common-G fixed-cohort union bound.",
+    "Preregistered comparative measurement of risk-utilization, isolation, drift, faulty-event behavior, liveness cost, and local overhead against faithful practical envelopes and strong academic baselines."
+  ],
+  "progression_verdict": "Phase B literature and novelty and Phase C formulation/theory are approved for progression. This is not approval of implementation, protocol freeze, experiments, manuscript, or release; their Q1 gate obligations remain pending."
 }

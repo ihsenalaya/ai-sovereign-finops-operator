@@ -1,22 +1,64 @@
 {
-  "review_id": "bibliography-verification-20260711",
+  "review_id": "bibliography-verification-20260712-v3",
   "reviewer_role": "independent primary-source bibliography verifier",
-  "reviewed_at_utc": "2026-07-11T08:41:00Z",
-  "verdict": "conditional",
-  "verified_candidate_count": 57,
-  "categories": {
-    "llm_routing_budget_model_selection": 21,
-    "delayed_feedback_bandits_budgets": 10,
-    "quantiles_conformal_chance_constraints": 9,
-    "transactions_compensation_streams": 7,
-    "output_length_serving_multitenancy_controller_reliability": 10
+  "reviewed_at_utc": "2026-07-12T07:06:55Z",
+  "corpus_sha256": "6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a",
+  "verdict": "approved",
+  "independently_verified_records": 57,
+  "peer_reviewed_records": 49,
+  "verified_ids": [
+    "R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10",
+    "R11", "R12", "R13", "R14", "R15", "R16", "R17", "R18", "R19", "R20",
+    "R21", "R22", "R23", "R24", "R25", "R26", "R27", "R28", "R29", "R30",
+    "R31", "R32", "R33", "R34", "R35", "R36", "R37", "R38", "R39", "R40",
+    "R41", "R42", "R43", "R44", "R45", "R46", "R47", "R48", "R49", "R50",
+    "R51", "R52", "R53", "R54", "R55", "R56", "R57"
+  ],
+  "comparison_fields": ["title", "authors", "year", "venue", "identifier", "review_status"],
+  "non_peer_reviewed_labels": {
+    "preprints": ["R01", "R02", "R25", "R29"],
+    "workshop": ["R13"],
+    "industry_reference": ["R55"],
+    "product_documentation": ["R56"],
+    "whitepaper": ["R57"]
   },
   "findings": [
-    {"severity": "major", "status": "open", "summary": "Cross-check every final BibTeX key and retained CSV record after references.bib is generated."},
-    {"severity": "major", "status": "open", "summary": "Use the official NeurIPS 2025 proceedings record for Efficient Training-Free Online Routing, not only protected OpenReview metadata."},
-    {"severity": "major", "status": "open", "summary": "Keep RouterBench as workshop/non-main-track, Token Budgets and ParetoBandit as unreviewed preprints, and ACL SRW as workshop evidence."},
-    {"severity": "major", "status": "open", "summary": "Use version-of-record metadata for FrugalGPT (TMLR 2024), Learn then Test (AOAS 2025), HAT (PVLDB 2013), Acto (SOSP 2023), and Sieve (OSDI 2022)."}
+    {
+      "id": "PB-META-35",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "R35 now uses DOI 10.1109/FOCS.2013.30 and pages 207-216; the prior DOI pointed to an unrelated FOCS paper."
+    },
+    {
+      "id": "PB-META-56",
+      "severity": "minor",
+      "status": "resolved",
+      "summary": "R56 now records the current Keel documentation update date, 2026-06-07."
+    },
+    {
+      "id": "PB-OLD-1",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Every retained CSV record and BibTeX key was cross-checked against its primary record; no mismatch remains on the bound corpus."
+    },
+    {
+      "id": "PB-OLD-2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "R05 uses the official NeurIPS 2025 proceedings record."
+    },
+    {
+      "id": "PB-OLD-3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Preprint, workshop, industry, product-documentation, and whitepaper status is explicit and not counted as peer review."
+    },
+    {
+      "id": "PB-OLD-4",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Version-of-record metadata is used for FrugalGPT, Learn then Test, HAT, Acto, and Sieve."
+    }
   ],
-  "novelty_conclusion": "No individual novelty for joint model/output-budget routing, contextual budget policy, conformal routing, output-length prediction, escrow, compensation, or idempotence. The plausible gap is the fault-tolerant multi-tenant composition under delayed/duplicated/missing/reordered monetary telemetry and hard eligibility.",
-  "primary_ledger_note": "The verifier returned exact source URLs and metadata for 57 candidates; the parent cross-checks them against the generated screening, matrix and BibTeX files."
+  "note": "The independent comparison covered all 57 retained records. Harmless display-name/diacritic normalization was allowed; identifier, author-set, year, venue, and review-status differences were not."
 }

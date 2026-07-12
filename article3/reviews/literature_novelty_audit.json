@@ -1,28 +1,70 @@
 {
-  "review_id": "literature-novelty-final-20260711",
+  "review_id": "literature-novelty-20260712-v4",
   "reviewer_role": "independent literature and novelty auditor",
-  "reviewed_at_utc": "2026-07-11T08:24:00Z",
+  "reviewed_at_utc": "2026-07-12T07:06:55Z",
+  "corpus_sha256": "6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a",
   "verdict": "approved",
+  "corpus": {
+    "retained": 57,
+    "peer_reviewed": 49,
+    "last_material_search": "S23",
+    "post_material_saturation_passes": ["S24", "S25"]
+  },
   "findings": [
-    {"severity": "critical", "status": "resolved", "summary": "Broad novelty for joint routing/budget/adaptation is contradicted by current prior art; algorithmic novelty was removed."},
-    {"severity": "major", "status": "resolved", "summary": "Final corpus has 51 verified retained references, 46 peer-reviewed, 21 search families, and four no-material-change saturation passes."},
-    {"severity": "major", "status": "resolved", "summary": "Fresh scientific red team approved the narrowed formulation/systems/measurement contribution boundary for progression to Phase C."}
+    {
+      "id": "LIT-C1",
+      "severity": "critical",
+      "status": "resolved",
+      "summary": "RACER, CONCUR, SDR, Solo.io quota-management, Keel budget envelopes, and AgentBudget were added; two new no-material-change passes follow the last material search."
+    },
+    {
+      "id": "LIT-M1",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The bibliography audit is corpus-bound and independently verifies all retained metadata and review status."
+    },
+    {
+      "id": "LIT-M2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "R49, R35, and R56 metadata are corrected against their primary records."
+    },
+    {
+      "id": "LIT-M3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Systems-integration novelty was removed after R55 and R56 established gateway reserve-dispatch-reconcile and budget envelopes as prior art."
+    },
+    {
+      "id": "LIT-M4",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "R55 concurrency wording now distinguishes source-confirmed expiry behavior from a possible concurrent-settlement race that remains an inference pending a faithful test of the pinned code."
+    }
   ],
   "closest_prior_work": [
-    "Khan 2026 Token Budgets, arXiv:2606.04056",
-    "Taberner-Miller 2026 ParetoBandit, arXiv:2604.00136",
-    "Xue et al. 2026 R2-Router, ICML 2026",
-    "Panda et al. 2025 PILOT, Findings EMNLP 2025",
-    "Li and Li 2026 StageRoute, ICLR 2026",
-    "Wang et al. 2025 MixLLM, NAACL 2025"
+    "R55 Solo.io quota-management: closest implemented gateway system",
+    "R56 Keel Budget Envelopes: closest documented liability abstraction",
+    "R01 Token Budgets: closest adaptive reservation/concurrency research preprint",
+    "R52/R06/R07: calibrated routing and selection risk",
+    "R02/R04/R05/R08/R21/R53: constrained, online, and dynamic routing",
+    "R03 R2-Router: joint model and requested output-length budget",
+    "R54 Selective Deferred Routing: local/remote cost-quality deferral",
+    "R57 AgentBudget: in-process two-phase agent-call enforcement",
+    "R30/R10: multi-tenant service fairness",
+    "R45/R46/R49: transaction and recovery machinery"
   ],
-  "provisional_nucleus": "Problem formulation, fault-tolerant systems realization, and measurement of concurrent unresolved estimated-cost liabilities under delayed/faulty settlement and hard eligibility; no algorithmic risk-allocation novelty is claimed.",
-  "falsifier": "At matched empirical risk, adaptive quantile or Khan-style locked runtime reservation matches GOV-AR utilization, quality and budget outcomes, or drift prevents valid coverage without earlier fallback.",
+  "approved_contributions": [
+    "Problem and safety formulation separating settled spend, unresolved liability, request under-reservation, fixed-cohort exceedance, selected-outstanding-set exceedance, and budget-window overshoot with assumption-scoped bounds and invariants.",
+    "Preregistered comparative measurement of risk-utilization, isolation, drift, faulty-event behavior, and local overhead against practical envelopes, adaptive estimators, quantiles, strict reservation, and strong routers."
+  ],
   "forbidden_claims": [
-    "first cost-aware or budget-constrained LLM router",
-    "first joint model/output-budget router",
-    "first risk-controlled or conformal router",
-    "novel output-length prediction, escrow, transaction or idempotence in isolation",
-    "deterministic hard-budget safety in nonzero-risk mode"
-  ]
+    "first cost-aware, budget-constrained, adaptive, conformal, or risk-controlled LLM router",
+    "first joint model and token-budget router",
+    "novel reserve-before-dispatch, budget envelope, PostgreSQL pending-spend ledger, hierarchical budget, approval workflow, provider-usage settlement, or gateway integration",
+    "novel output-length prediction, chance-risk allocation, transaction, escrow, idempotence, drift adaptation, or multi-tenant fairness in isolation",
+    "deterministic hard-window safety in nonzero-risk mode"
+  ],
+  "falsifier": "At matched empirical risk, an R55/R56-style atomic fixed envelope, an R01-style locked adaptive estimator, or fixed/adaptive quantile reservation matches the proposed method on utilization, quality, refusal, and fault outcomes.",
+  "gate_change_review": "approved additive tightening; post-material saturation and exact corpus-bound independent review are required without changing Q1_GATE_CONTRACT.md"
 }

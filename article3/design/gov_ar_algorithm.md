@@ -1,170 +1,59 @@
-# GOV-AR Algorithm
+# GOV-AR evaluated policy
 
-## Informal Overview
+## Prior-art status
 
-GOV-AR is a two-layer method:
+The reserve--dispatch--reconcile pattern is not the algorithmic contribution. R55 implements atomic gateway/PostgreSQL pending-spend reservation and provider-usage settlement; R56 documents the same budget-envelope arithmetic in integer microdollars; R57 uses two-phase agent-call cost control. GOV-AR uses these known mechanisms to compare reservation/routing policies under a stricter fault model.
 
-1. hard governance filter
-   - remove infeasible providers and models
+## Required reservation policies
 
-2. risk-bounded admission and routing
-   - estimate a reservation for each feasible model
-   - compare expected utility against tenant budget and queue pressure
-   - choose `admit`, `queue`, `reject`, or `abstain`
+For each eligible deployment and immutable pricing snapshot, the implementation exposes:
 
-## Inputs
+- strict provider-cap reservation;
+- output-cost mean;
+- mean plus frozen fixed margin;
+- fixed offline quantile;
+- adaptive quantile without joint routing;
+- R55/R56-style fixed estimate plus safety multiplier;
+- R01-style locked adaptive estimator;
+- GOV-AR allocation over concurrent tenant liabilities.
 
-For request `r` from tenant `t`:
+The no-control, settled-only, expected-cost router, oracle-future-cost, and required routing baselines share the same request streams and hidden outcome tables. Oracle outcomes are never exposed to online methods.
 
-- request features `x_r`
-- compliant model set `M_t(r)`
-- tenant budget state
-- settled and reserved ledger state
-- latency and reliability observations
-- quality priors and optional application-specific scores
-- output token prediction distribution for each candidate model
+## Prediction and reservation
 
-## Core Quantities
+Known input cost and every billable category are represented explicitly. The output predictor returns an empirical or modeled distribution plus calibration cohort, support, freshness, and coverage diagnostics. A reservation is an integer monetary amount computed under the selected policy. Risk allocation across a prespecified fixed cohort is known chance-constraint machinery and is not claimed novel. For the theorem-bearing policy, a common pre-outcome field `G` fixes exactly `N` arrival-opportunity identities/features and non-negative slot weights `w_i` with `sum w_i = 1` before any provider outcome. It assigns `alpha_i = alpha_K w_i`; the default comparison uses `w_i = 1/N`. Admission indicator `A_i` may depend on `H_i`, but a non-dispatched slot has `A_i=0`, zero reservation, and an empty under-reservation event; unused weight is not redistributed. The weights may be frozen from development-only workload classes, but cannot react to completion, output length, or frozen-test outcomes. Therefore the allocation cap holds pathwise despite adaptive admissions. A dynamic active-set allocator may be evaluated as a separately named empirical policy, but it inherits no fixed-cohort theorem.
 
-For each candidate model `m`, GOV-AR computes:
+When support is insufficient or drift invalidates calibration, the service enters visible conservative mode and chooses a frozen fallback: provider-enforced strict cap where complete, a larger validated bound, queue, approval, abstention, or rejection. It stops reporting the calibrated risk target until a prespecified revalidation succeeds.
 
-- `u(m, r)`:
-  expected utility or score
-- `c_in(m, r)`:
-  known prompt-side input cost
-- `C_out(m, r)`:
-  random output cost
-- `R_q(m, r)`:
-  reservation amount at target quantile or calibrated bound
-- `liability_t`:
-  current in-flight reserved amount for tenant `t`
+## Joint decision
 
-The provisional total budget impact of admitting `r` on `m` is:
+1. Authenticate and bind tenant/workload identity.
+2. Build a versioned hard-feasibility snapshot and discard every ineligible deployment.
+3. If approval is required, return `REQUIRE_APPROVAL`; if evidence is insufficient, return `ABSTAIN`; if policy forbids service, return `REJECT`.
+4. For every eligible deployment, compute each policy's reservation from prompt-visible features only.
+5. For candidate `m`, compute the frozen score `J(r,m) = q_hat(r,m) - lambda_c E_hat[C|r,m] - lambda_l l_hat(r,m) - lambda_s 1[m != previous_route]`, with all features and non-negative coefficients frozen from development data. Maximize `J` only among hard-feasible candidates whose integer reservation fits the locked availability view. Break exact ties by ascending immutable deployment ID. Priority changes queue order or a prespecified coefficient; it never bypasses feasibility.
+6. If no candidate fits, return the prespecified `QUEUE` or `REJECT` outcome.
+7. Atomically commit the selected reservation, immutable snapshots, and dispatch outbox.
+8. Dispatch only from the committed outbox. Separately reserve any retry/fallback attempt unless verified provider idempotency makes it non-billable.
+9. Settle, late-settle, or correct using authoritative usage through the state machine. Missing evidence moves to `UNRESOLVED` without release.
 
-`reservation_total(m, r) = c_in(m, r) + R_q(m, r)`
+## Decisions
 
-## Candidate Evaluation
+- `ADMIT`: reservation and outbox commit succeeded; response includes deployment, attempt, monetary hold, method, allocated risk, policy/pricing versions, expiry semantics, and trace ID.
+- `QUEUE`: no dispatch/reservation; retry ordering and expiry are durable and reason-coded.
+- `REJECT`: hard policy or budget outcome that will not improve within the frozen queue rule.
+- `ABSTAIN`: the controller lacks evidence for a governed decision.
+- `REQUIRE_APPROVAL`: a versioned approval is required before a new decision attempt.
 
-For each feasible model `m`:
+## Drift and fault semantics
 
-1. predict output token distribution
-2. compute reservation bound
-3. check whether remaining budget supports the reservation
-4. compute a utility-adjusted score
-5. penalize models with weak calibration, stale telemetry, or drift alarms
-6. abstain instead of forcing a weak-evidence governed decision when required evidence is missing
+- Drift fallback is operational; it does not retroactively restore statistical validity.
+- Queue expiry and unambiguously undispatched reservations may release.
+- `DISPATCH_PENDING`, `DISPATCHED`, and `UNRESOLVED` holds survive deadline and window rollover.
+- Different settlement IDs for the same request/attempt are semantic duplicates after the first effective settlement.
+- The first usage posting is provisional: it posts observed `Y_i` and retains residual hold `R_i-Y_i`. Monotone-versioned corrections move only their delta between provisional cost and residual. At rollover, an on-time provisional record also guards `Y_i`, so the new enforcement exposure remains `R_i` until finality; historical downward corrections never create reusable availability. Authoritative finality releases the applicable residual/rollover guard once. Strict mode excludes upward correction after finality.
+- Provider execution and database commit are not called exactly once; only ledger effects are.
 
-## Decision Policy
+## Frozen falsifier
 
-### Strict Mode
-
-Admit model `m*` only if:
-
-- governance constraints hold
-- reservation fits entirely in available tenant budget
-- guardrails are satisfied
-
-Else:
-
-- queue if short-term release is plausible
-- otherwise reject or abstain
-
-### Risk-Bounded Mode
-
-Admit model `m*` only if:
-
-- governance constraints hold
-- risk-adjusted reservation fits tenant risk budget
-- portfolio exposure remains within configured bounds
-- score exceeds baseline safe action
-
-Else:
-
-- queue if expected near-term feasibility improves
-- abstain if calibration is weak
-- reject if policy or budget makes service unsafe
-
-## Atomic Reserve-Dispatch-Settle Pattern
-
-The algorithm depends on a three-stage pattern:
-
-1. reserve
-   - atomically write request reservation in the tenant ledger
-
-2. dispatch
-   - send request only after successful reservation commit
-
-3. settle
-   - reconcile actual usage when delayed telemetry arrives
-
-This is the main conceptual upgrade over the current operator.
-
-## Conservative Fallbacks
-
-If any of the following is insufficient:
-
-- telemetry freshness
-- calibration quality
-- route confidence
-- provider evidence
-
-GOV-AR degrades conservatively by:
-
-- using a cheaper model
-- reserving a larger upper bound
-- queueing
-- abstaining
-- rejecting
-
-## Current Research Scaffold Status
-
-The initial `article3/` code scaffold already includes:
-
-- empirical quantile reservation bounds
-- mean-plus-standard-deviation reservation bounds
-- tenant settled versus reserved budget state
-- per-request reservation records
-- idempotent settlement by event identifier
-- expiry-based reservation release
-- a first decision layer distinguishing `admit`, `queue`, `reject`, and `abstain`
-- a minimal replay engine with delayed settlement to test admission-plus-ledger interactions
-- replay-time integration of reservation policy selection
-
-## Pseudocode Sketch
-
-```text
-for request r from tenant t:
-  feasible <- governance_filter(r, tenant_policy[t], model_catalog)
-  if feasible is empty:
-    return abstain(no_compliant_model)
-
-  candidates <- []
-  for m in feasible:
-    pred <- predict_output_distribution(r, m)
-    reserve <- reservation_bound(pred, mode, alpha_t, calibration_state[m])
-    if not budget_feasible(t, reserve):
-      continue
-    score <- utility_score(r, m, reserve, telemetry, quality, reliability)
-    score <- apply_drift_and_confidence_penalties(score)
-    candidates.append((m, reserve, score))
-
-  if candidates is empty:
-    return queue_or_reject_or_abstain(t, r)
-
-  best <- argmax score over candidates
-  if not atomic_reserve(t, r, best.reserve, best.model):
-    return queue_or_reject(t, r)
-
-  dispatch(r, best.model)
-  return admit(best.model, best.reserve)
-```
-
-## Expected Experimental Knobs
-
-- strict versus risk-bounded mode
-- reservation quantile
-- reservation z-score
-- queue timeout
-- drift penalty strength
-- model utility weights
-- fallback policy under missing evidence
+Before final outcomes, freeze a primary risk event, service/quality/utilization metrics, equivalence or noninferiority margins, matched-risk interpolation rule, Pareto/scalar decision rule, independent units, rare-event interval, and multiplicity family. If a faithful practical envelope, locked adaptive estimator, strict bound, or fixed/adaptive quantile is equivalent or Pareto-nondominated in the prespecified regimes, remove the advantage claim and report the null or negative result.
