@@ -1,0 +1,24 @@
+{
+  "assumptions": [
+    "strict-mode authoritative actual cost is <= reserved amount",
+    "one transactional ledger serializes each accepted transition",
+    "rejected transitions are atomic no-ops"
+  ],
+  "checked_at_utc": "2026-07-12T06:05:17.160698+00:00",
+  "depth": 5,
+  "exit_code": 0,
+  "failures": [],
+  "invariants": [
+    "non_negative_ledger",
+    "record_accounting_matches_tenant_views",
+    "settlement_idempotence_and_rejected_transition_noop",
+    "strict_budget_safety",
+    "tenant_isolation",
+    "terminal_events_have_single_effect"
+  ],
+  "invariants_checked": 6,
+  "model": "bounded exhaustive reservation-ledger state exploration",
+  "schema_version": 1,
+  "states_checked": 2232,
+  "transitions_checked": 55352
+}
