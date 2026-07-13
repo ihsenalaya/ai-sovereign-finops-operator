@@ -2,13 +2,11 @@ package v1alpha1
 
 import (
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -40,58 +38,54 @@ func TestAIWorkloadBindingSpecValidate(t *testing.T) {
 	}
 }
 
-func TestAdmissionApprovalDigestAndConsumptionIdentityBindImmutableInput(t *testing.T) {
-	request := AIAdmissionApprovalRequest{RequestID: "request-1", Namespace: "finance", TenantID: "tenant-a", WorkloadUID: "workload-a",
-		BudgetPolicy:      AIWorkloadBindingResolvedReference{Name: "budget", UID: "budget-uid", Generation: 2},
-		RoutingPolicy:     AIWorkloadBindingResolvedReference{Name: "routing", UID: "routing-uid", Generation: 3},
-		CandidateModelRef: "model", CandidateSnapshotVersion: strings.Repeat("b", 64), RouteSnapshot: GOVARRouteSnapshot{Namespace: "finance", ModelName: "model", ModelUID: "model-uid", ModelGeneration: 1, ModelResourceVersion: "m1", ProviderName: "provider", ProviderUID: "provider-uid", ProviderGeneration: 1, ProviderResourceVersion: "p1", PricingVersion: "prices-v1", PricingComplianceHash: strings.Repeat("a", 64), RouteBindingName: "primary", ProviderDeployment: "provider-model", Cluster: "backend", Authority: "backend.example", PathMode: "openai-body", SnapshotHash: strings.Repeat("b", 64)},
-		InputTokens: 10, MaxOutputTokens: 100, ExpiresAt: metav1.NewTime(time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC))}
-	request.RequestDigest = request.ComputeDigest()
-	if len(request.RequestDigest) != 64 || request.RequestDigest != request.ComputeDigest() {
-		t.Fatalf("unstable digest %q", request.RequestDigest)
+func TestGOVARRouteApprovalScopeDigestBindsPolicyModelProviderRouteAndExpiry(t *testing.T) {
+	scope := GOVARRouteApprovalScope{
+		RoutingPolicy:       AIWorkloadBindingResolvedReference{Name: "routing", UID: "routing-uid", Generation: 3},
+		Model:               AIWorkloadBindingResolvedReference{Name: "model", UID: "model-uid", Generation: 4},
+		Provider:            AIWorkloadBindingResolvedReference{Name: "provider", UID: "provider-uid", Generation: 5},
+		RouteSnapshotDigest: strings.Repeat("a", 64),
+		ValidUntil:          metav1.NewTime(time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)),
 	}
-	altered := request
-	altered.TenantID = "tenant-b"
-	if altered.ComputeDigest() == request.RequestDigest {
-		t.Fatal("tenant mutation did not change approval digest")
+	scope.ScopeDigest = scope.ComputeDigest()
+	if len(scope.ScopeDigest) != 64 || scope.ScopeDigest != scope.ComputeDigest() {
+		t.Fatalf("unstable digest %q", scope.ScopeDigest)
 	}
-	for index := 0; index < reflect.TypeOf(request.RouteSnapshot).NumField(); index++ {
-		fieldName := reflect.TypeOf(request.RouteSnapshot).Field(index).Name
-		changed := request
-		field := reflect.ValueOf(&changed.RouteSnapshot).Elem().Field(index)
-		switch field.Kind() {
-		case reflect.String:
-			field.SetString(field.String() + "x")
-		case reflect.Int64:
-			field.SetInt(field.Int() + 1)
-		default:
-			t.Fatalf("unhandled route snapshot field %s kind %s", fieldName, field.Kind())
+	mutations := []func(*GOVARRouteApprovalScope){
+		func(v *GOVARRouteApprovalScope) { v.RoutingPolicy.Generation++ },
+		func(v *GOVARRouteApprovalScope) { v.RoutingPolicy.UID = "other-routing" },
+		func(v *GOVARRouteApprovalScope) { v.Model.Generation++ },
+		func(v *GOVARRouteApprovalScope) { v.Model.UID = "other-model" },
+		func(v *GOVARRouteApprovalScope) { v.Provider.Generation++ },
+		func(v *GOVARRouteApprovalScope) { v.Provider.UID = "other-provider" },
+		func(v *GOVARRouteApprovalScope) { v.RouteSnapshotDigest = strings.Repeat("b", 64) },
+		func(v *GOVARRouteApprovalScope) { v.ValidUntil = metav1.NewTime(v.ValidUntil.Add(time.Second)) },
+	}
+	for i, mutate := range mutations {
+		changed := scope
+		mutate(&changed)
+		if changed.ComputeDigest() == scope.ScopeDigest {
+			t.Fatalf("scope mutation %d did not change digest", i)
 		}
-		if changed.ComputeDigest() == request.RequestDigest {
-			t.Fatalf("route snapshot field %s did not change the one-request approval digest", fieldName)
-		}
-	}
-	if AdmissionApprovalConsumptionName(types.UID("proposal-a")) == AdmissionApprovalConsumptionName(types.UID("proposal-b")) {
-		t.Fatal("different proposal UIDs share a consumption Lease name")
 	}
 }
 
-func TestAdmissionApprovalCRDsSeparateProposalAndHumanDecision(t *testing.T) {
-	proposal, err := os.ReadFile("../../config/crd/bases/aiops.imperium.io_aiadmissionapprovals.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	decision, err := os.ReadFile("../../config/crd/bases/aiops.imperium.io_aiadmissionapprovaldecisions.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for name, text := range map[string]string{"proposal": string(proposal), "decision": string(decision)} {
-		if !strings.Contains(text, "spec is immutable") {
-			t.Fatalf("%s CRD lacks immutable-spec CEL", name)
+func TestRequestLevelApprovalCRDsAreRemoved(t *testing.T) {
+	for _, path := range []string{
+		"../../config/crd/bases/aiops.imperium.io_aiadmissionapprovals.yaml",
+		"../../config/crd/bases/aiops.imperium.io_aiadmissionapprovaldecisions.yaml",
+	} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("obsolete per-request CRD still exists at %s: err=%v", path, err)
 		}
 	}
-	if strings.Contains(string(proposal), "decision:\n") || !strings.Contains(string(decision), "proposalUID:") || !strings.Contains(string(decision), "requestDigest:") {
-		t.Fatal("proposal and decision authorities are not structurally separated")
+	change, err := os.ReadFile("../../config/crd/bases/aiops.imperium.io_aichangerequests.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, required := range []string{"authorize-gov-ar-route", "govarRouteApproval:", "approvedScopeDigest:", "routeSnapshotDigest:", "scopeDigest:", "validUntil:"} {
+		if !strings.Contains(string(change), required) {
+			t.Fatalf("AIChangeRequest CRD lacks %q", required)
+		}
 	}
 }
 
@@ -103,10 +97,11 @@ func TestGOVARRoutingPolicySpecValidate(t *testing.T) {
 			AdaptiveQuantileOutputTokens: &adaptive,
 		},
 		Calibration: &GOVARCalibrationPolicy{
-			ArtifactRef:    "sha256:calibration",
-			Version:        "v1",
-			MinimumSupport: 100,
-			MaxAgeSeconds:  3600,
+			ArtifactRef: "calibration-v1", ArtifactSHA256: strings.Repeat("c", 64),
+			CalibrationDataRef: "calibration", CalibrationInputSHA256: strings.Repeat("d", 64), MonitoringDataRef: "monitoring",
+			Version: "v1", FeatureSchemaVersion: "features-v1", PriceRegimeSHA256: strings.Repeat("e", 64),
+			CapRegimeSHA256: strings.Repeat("f", 64), ProducerSoftwareSHA256: strings.Repeat("1", 64), CoverageTargetPPB: 990_000_000,
+			MinimumSupport: 100, MaxAgeSeconds: 3600,
 		},
 		Drift: GOVARDriftPolicy{
 			Detector:                   "coverage-gap",
@@ -132,7 +127,13 @@ func TestGOVARRoutingPolicySpecValidate(t *testing.T) {
 	invalid.Cohort = nil
 	invalid.Risk = nil
 	errs := invalid.Validate(field.NewPath("spec", "govar"))
-	if len(errs) != 4 {
-		t.Fatalf("invalid GOV-AR policy errors = %d, want 4: %v", len(errs), errs)
+	if len(errs) != 3 {
+		t.Fatalf("invalid GOV-AR policy errors = %d, want calibration/cohort/risk: %v", len(errs), errs)
+	}
+	joined := errs.ToAggregate().Error()
+	for _, want := range []string{"calibration", "cohort", "risk"} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("conditional errors %q lack %q", joined, want)
+		}
 	}
 }

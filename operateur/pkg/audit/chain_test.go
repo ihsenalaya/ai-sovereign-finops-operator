@@ -4,22 +4,22 @@ import (
 	"testing"
 	"time"
 
-	platformcrypto "github.com/imperium/ai-sovereign-finops-operator/pkg/crypto"
 	"github.com/imperium/ai-sovereign-finops-operator/pkg/audit"
+	platformcrypto "github.com/imperium/ai-sovereign-finops-operator/pkg/crypto"
 )
 
 func sampleEntry(event audit.EventType, pod string) audit.AuditEntry {
 	return audit.AuditEntry{
-		Timestamp:    time.Now().UTC(),
-		EventType:    event,
-		Namespace:    "test-ns",
-		PodName:      pod,
-		PodUID:       "uid-" + pod,
-		NodeName:     "node-1",
-		RuntimeClass: "simulated-kata-qemu-tdx",
-		PolicyHash:   "pol-hash",
-		PodSpecHash:  "spec-hash",
-		Decision:     "allow",
+		Timestamp:     time.Now().UTC(),
+		EventType:     event,
+		Namespace:     "test-ns",
+		PodName:       pod,
+		PodUID:        "uid-" + pod,
+		NodeName:      "node-1",
+		RuntimeClass:  "simulated-kata-qemu-tdx",
+		PolicyHash:    "pol-hash",
+		PodSpecHash:   "spec-hash",
+		Decision:      "allow",
 		ComponentName: "test",
 	}
 }

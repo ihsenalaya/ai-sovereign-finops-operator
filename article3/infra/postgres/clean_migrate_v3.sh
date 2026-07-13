@@ -17,7 +17,7 @@ INSERT INTO govar_migration_count VALUES(0);
 DO $$
 DECLARE name TEXT; n BIGINT;
 BEGIN
-  FOREACH name IN ARRAY ARRAY['govar_tenants','govar_reservations','govar_settlements','govar_outbox','govar_inbox','govar_budget_adjustments','govar_reconciliation_tasks','govar_frozen_cohorts','govar_frozen_cohort_slots'] LOOP
+  FOREACH name IN ARRAY ARRAY['govar_tenants','govar_reservations','govar_settlements','govar_outbox','govar_inbox','govar_budget_adjustments','govar_reconciliation_tasks','govar_frozen_cohorts','govar_frozen_cohort_slots','govar_audit_events','govar_audit_tenant_sequences'] LOOP
     IF to_regclass(name) IS NOT NULL THEN
       EXECUTE format('SELECT count(*) FROM %I',name) INTO n;
       UPDATE govar_migration_count SET total=total+n;
@@ -35,7 +35,9 @@ pg_dump "${DATABASE_URL}" --schema-only --no-owner --no-privileges > "${prefix}.
 sha256sum "${prefix}.before.sql" "${root}/init.sql" > "${prefix}.before.sha256"
 psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 <<'SQL'
 BEGIN;
-DROP TABLE IF EXISTS govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
+DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
+DROP FUNCTION IF EXISTS govar_reject_audit_mutation() CASCADE;
+DROP FUNCTION IF EXISTS govar_validate_audit_append() CASCADE;
 COMMIT;
 SQL
 psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 -f "${root}/init.sql"
@@ -44,4 +46,4 @@ psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 -Atc \
   "SELECT version FROM govar_schema_migrations ORDER BY version; SELECT count(*) FROM govar_tenants; SELECT count(*) FROM govar_reservations;" \
   > "${prefix}.reconciliation"
 sha256sum "${prefix}.after.sql" "${prefix}.reconciliation" "${root}/init.sql" > "${prefix}.after.sha256"
-echo "clean GOV-AR schema v4 migration evidence: ${prefix}.* (compatibility script name clean_migrate_v3.sh)"
+echo "clean GOV-AR schema v6 migration evidence: ${prefix}.* (compatibility script name clean_migrate_v3.sh)"

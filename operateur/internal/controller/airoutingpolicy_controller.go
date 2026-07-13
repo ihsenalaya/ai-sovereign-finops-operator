@@ -23,13 +23,16 @@ import (
 	"strconv"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/routingscore"
@@ -47,6 +50,8 @@ type AIRoutingPolicyReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	// Now is injectable only for deterministic calibration freshness tests.
+	Now func() time.Time
 }
 
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=airoutingpolicies,verbs=get;list;watch;create;update;patch;delete
@@ -65,6 +70,7 @@ func (r *AIRoutingPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	policy.Status.ObservedGeneration = policy.Generation
+	policy.Status.GOVAR = r.reconcileGOVAREvidence(ctx, &policy)
 
 	cat, err := loadCatalog(ctx, r.Client, policy.Namespace)
 	if err != nil {
@@ -157,5 +163,24 @@ func (r *AIRoutingPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 func (r *AIRoutingPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&aiopsv1alpha1.AIRoutingPolicy{}).
+		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.policiesForCalibrationConfigMap)).
 		Complete(r)
+}
+
+func (r *AIRoutingPolicyReconciler) policiesForCalibrationConfigMap(ctx context.Context, object client.Object) []reconcile.Request {
+	var policies aiopsv1alpha1.AIRoutingPolicyList
+	if err := r.List(ctx, &policies, client.InNamespace(object.GetNamespace())); err != nil {
+		return nil
+	}
+	requests := make([]reconcile.Request, 0)
+	for i := range policies.Items {
+		govar := policies.Items[i].Spec.GOVAR
+		if govar == nil || govar.Calibration == nil {
+			continue
+		}
+		if govar.Calibration.CalibrationDataRef == object.GetName() || govar.Calibration.MonitoringDataRef == object.GetName() {
+			requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&policies.Items[i])})
+		}
+	}
+	return requests
 }

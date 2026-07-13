@@ -16,28 +16,28 @@ import (
 type DenyReason string
 
 const (
-	ReasonAllowed              DenyReason = "ALLOWED"
-	ReasonPolicyNotRequired    DenyReason = "POLICY_NOT_REQUIRED"
-	ReasonEvidenceRevoked      DenyReason = "EVIDENCE_REVOKED"
-	ReasonEvidenceExpired      DenyReason = "EVIDENCE_EXPIRED"
-	ReasonEvidenceNotVerified  DenyReason = "EVIDENCE_NOT_VERIFIED"
-	ReasonTokenInvalid         DenyReason = "TOKEN_INVALID"
-	ReasonTokenExpired         DenyReason = "TOKEN_EXPIRED"
-	ReasonPodUIDMismatch       DenyReason = "POD_UID_MISMATCH"
-	ReasonModelDigestMismatch  DenyReason = "MODEL_DIGEST_MISMATCH"
-	ReasonImageDigestMismatch  DenyReason = "IMAGE_DIGEST_MISMATCH"
-	ReasonPolicyHashMismatch   DenyReason = "POLICY_HASH_MISMATCH"
-	ReasonRevocationActive     DenyReason = "REVOCATION_ACTIVE"
-	ReasonTTLInvalid           DenyReason = "TTL_INVALID"
-	ReasonAuditRequired        DenyReason = "AUDIT_REQUIRED_NOT_MET"
+	ReasonAllowed             DenyReason = "ALLOWED"
+	ReasonPolicyNotRequired   DenyReason = "POLICY_NOT_REQUIRED"
+	ReasonEvidenceRevoked     DenyReason = "EVIDENCE_REVOKED"
+	ReasonEvidenceExpired     DenyReason = "EVIDENCE_EXPIRED"
+	ReasonEvidenceNotVerified DenyReason = "EVIDENCE_NOT_VERIFIED"
+	ReasonTokenInvalid        DenyReason = "TOKEN_INVALID"
+	ReasonTokenExpired        DenyReason = "TOKEN_EXPIRED"
+	ReasonPodUIDMismatch      DenyReason = "POD_UID_MISMATCH"
+	ReasonModelDigestMismatch DenyReason = "MODEL_DIGEST_MISMATCH"
+	ReasonImageDigestMismatch DenyReason = "IMAGE_DIGEST_MISMATCH"
+	ReasonPolicyHashMismatch  DenyReason = "POLICY_HASH_MISMATCH"
+	ReasonRevocationActive    DenyReason = "REVOCATION_ACTIVE"
+	ReasonTTLInvalid          DenyReason = "TTL_INVALID"
+	ReasonAuditRequired       DenyReason = "AUDIT_REQUIRED_NOT_MET"
 )
 
 // Request contains all inputs needed to evaluate a key release.
 type Request struct {
 	// Pod identity
-	Namespace string `json:"namespace"`
-	PodName   string `json:"podName"`
-	PodUID    string `json:"podUID"`
+	Namespace   string `json:"namespace"`
+	PodName     string `json:"podName"`
+	PodUID      string `json:"podUID"`
 	PodSpecHash string `json:"podSpecHash,omitempty"`
 
 	// Key being requested
@@ -53,15 +53,15 @@ type Request struct {
 	PlacementToken string `json:"placementToken,omitempty"`
 
 	// Evidence metadata
-	EvidenceVerified    bool      `json:"evidenceVerified"`
-	EvidenceRevoked     bool      `json:"evidenceRevoked"`
-	EvidenceLastSeen    time.Time `json:"evidenceLastSeen,omitempty"`
-	MaxEvidenceAgeSecs  int32     `json:"maxEvidenceAgeSecs,omitempty"`
+	EvidenceVerified   bool      `json:"evidenceVerified"`
+	EvidenceRevoked    bool      `json:"evidenceRevoked"`
+	EvidenceLastSeen   time.Time `json:"evidenceLastSeen,omitempty"`
+	MaxEvidenceAgeSecs int32     `json:"maxEvidenceAgeSecs,omitempty"`
 
 	// Policy flags
-	PolicyRequired       bool  `json:"policyRequired"`
-	PolicyTTLSeconds     int32 `json:"policyTTLSeconds,omitempty"`
-	PolicyAuditRequired  bool  `json:"policyAuditRequired,omitempty"`
+	PolicyRequired      bool  `json:"policyRequired"`
+	PolicyTTLSeconds    int32 `json:"policyTTLSeconds,omitempty"`
+	PolicyAuditRequired bool  `json:"policyAuditRequired,omitempty"`
 
 	// Revocation
 	RevocationActive bool `json:"revocationActive,omitempty"`
@@ -72,11 +72,11 @@ type Request struct {
 
 // Response is the key-release decision.
 type Response struct {
-	Allowed         bool       `json:"allowed"`
-	Reason          DenyReason `json:"reason"`
-	KeyMaterialRef  string     `json:"keyMaterialRef,omitempty"`
-	TTLSeconds      int32      `json:"ttlSeconds,omitempty"`
-	EvidenceRecord  string     `json:"evidenceRecord,omitempty"`
+	Allowed        bool       `json:"allowed"`
+	Reason         DenyReason `json:"reason"`
+	KeyMaterialRef string     `json:"keyMaterialRef,omitempty"`
+	TTLSeconds     int32      `json:"ttlSeconds,omitempty"`
+	EvidenceRecord string     `json:"evidenceRecord,omitempty"`
 }
 
 // Evaluate decides whether to allow or deny the key release.
@@ -137,9 +137,9 @@ func Evaluate(req Request) Response {
 	}
 
 	return Response{
-		Allowed:    true,
-		Reason:     ReasonAllowed,
-		TTLSeconds: req.PolicyTTLSeconds,
+		Allowed:        true,
+		Reason:         ReasonAllowed,
+		TTLSeconds:     req.PolicyTTLSeconds,
 		KeyMaterialRef: fmt.Sprintf("key://%s", req.KeyID),
 	}
 }

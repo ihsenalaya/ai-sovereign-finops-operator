@@ -21,15 +21,54 @@ import (
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extprocv3 "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
+	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/govar"
 )
 
+func TestParseUsageNormalizesCachedAndReasoningWithoutDoubleCounting(t *testing.T) {
+	start := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+	required := []aiopsv1alpha1.ProviderBillableBasis{aiopsv1alpha1.ProviderBasisInputTokens, aiopsv1alpha1.ProviderBasisCachedInputTokens, aiopsv1alpha1.ProviderBasisOutputTokens, aiopsv1alpha1.ProviderBasisReasoningTokens, aiopsv1alpha1.ProviderBasisRequest, aiopsv1alpha1.ProviderBasisToolCall, aiopsv1alpha1.ProviderBasisBillableSecond, aiopsv1alpha1.ProviderBasisCancellation, aiopsv1alpha1.ProviderBasisRetryAttempt, aiopsv1alpha1.ProviderBasisMediaUnit}
+	body := []byte(`{"usage":{"prompt_tokens":100,"completion_tokens":80,"prompt_tokens_details":{"cached_tokens":40},"completion_tokens_details":{"reasoning_tokens":30}},"choices":[{"message":{"tool_calls":[{},{}]}}]}`)
+	got, ok := parseUsage(body, required, start, start.Add(1500*time.Millisecond))
+	if !ok {
+		t.Fatal("valid provider usage rejected")
+	}
+	want := map[aiopsv1alpha1.ProviderBillableBasis]int64{aiopsv1alpha1.ProviderBasisInputTokens: 60, aiopsv1alpha1.ProviderBasisCachedInputTokens: 40, aiopsv1alpha1.ProviderBasisOutputTokens: 50, aiopsv1alpha1.ProviderBasisReasoningTokens: 30, aiopsv1alpha1.ProviderBasisRequest: 1, aiopsv1alpha1.ProviderBasisToolCall: 2, aiopsv1alpha1.ProviderBasisBillableSecond: 2, aiopsv1alpha1.ProviderBasisCancellation: 0, aiopsv1alpha1.ProviderBasisRetryAttempt: 0}
+	if len(got.Quantities) != len(want) {
+		t.Fatalf("quantities=%+v", got.Quantities)
+	}
+	for _, q := range got.Quantities {
+		if want[q.Basis] != q.Quantity {
+			t.Fatalf("%s=%d want=%d", q.Basis, q.Quantity, want[q.Basis])
+		}
+		delete(want, q.Basis)
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing normalized values: %v", want)
+	}
+}
+
 func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
+	spanRecorder := tracetest.NewSpanRecorder()
+	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()), sdktrace.WithSpanProcessor(spanRecorder))
+	previousProvider := otel.GetTracerProvider()
+	previousPropagator := otel.GetTextMapPropagator()
+	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() {
+		_ = tracerProvider.Shutdown(context.Background())
+		otel.SetTracerProvider(previousProvider)
+		otel.SetTextMapPropagator(previousPropagator)
+	})
 	var calls []string
 	admission := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls = append(calls, r.URL.Path)
@@ -69,8 +108,10 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	const parentTraceID = "4bf92f3577b34da6a3ce929d0e0e4736"
 	headers := &corev3.HeaderMap{Headers: []*corev3.HeaderValue{
 		{Key: ":path", Value: "/v1/chat/completions?api-version=2026-01-01"}, {Key: "x-request-id", Value: "request-1"}, {Key: "x-forwarded-client-cert", Value: "By=spiffe://govar.local/gateway/envoy;Hash=" + strings.Repeat("ab", 32) + ";URI=" + identity},
+		{Key: "traceparent", Value: "00-" + parentTraceID + "-00f067aa0ba902b7-01"},
 		{Key: "x-govar-namespace", Value: "victim-ns"}, {Key: "x-govar-tenant-id", Value: "victim"},
 		{Key: "x-govar-workload-uid", Value: "victim-uid"}, {Key: "x-govar-budget-policy", Value: "victim-budget"},
 	}}
@@ -79,6 +120,11 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 	}
 	if response, err := stream.Recv(); err != nil || response.GetRequestHeaders() == nil {
 		t.Fatalf("request headers response=%+v err=%v", response, err)
+	} else {
+		traceparent := headerMutationValue(response.GetRequestHeaders().GetResponse().GetHeaderMutation(), "traceparent")
+		if !strings.HasPrefix(traceparent, "00-"+parentTraceID+"-") || strings.HasSuffix(traceparent, "-00f067aa0ba902b7-01") {
+			t.Fatalf("provider-bound traceparent does not join the caller trace with a child span: %q", traceparent)
+		}
 	}
 	requestBody := []byte(`{"model":"original","max_tokens":32,"messages":[{"role":"user","content":"public"}]}`)
 	if err := stream.Send(&extprocv3.ProcessingRequest{Request: &extprocv3.ProcessingRequest_RequestBody{RequestBody: &extprocv3.HttpBody{Body: requestBody, EndOfStream: true}}}); err != nil {
@@ -92,6 +138,10 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 	if mutation == nil || headerMutationValue(mutation, "x-ai-eg-model") != "model-eu" || headerMutationValue(mutation, "x-govar-upstream-cluster") != "backend-eu" ||
 		headerMutationValue(mutation, "x-govar-upstream-authority") != "eu.provider.test" || headerMutationValue(mutation, ":path") != "/v1/chat/completions?api-version=2026-01-01" {
 		t.Fatalf("route mutation=%+v", mutation)
+	}
+	providerTraceparent := headerMutationValue(mutation, "traceparent")
+	if !strings.HasPrefix(providerTraceparent, "00-"+parentTraceID+"-") {
+		t.Fatalf("selected provider did not receive the joined provider-attempt context: %q", providerTraceparent)
 	}
 	var mutatedBody map[string]any
 	if err := json.Unmarshal(bodyResponse.GetRequestBody().GetResponse().GetBodyMutation().GetBody(), &mutatedBody); err != nil || mutatedBody["model"] != "provider-model-eu" {
@@ -112,6 +162,31 @@ func TestEnvoyExtProcLifecycleAdmitClaimRouteDeliverSettle(t *testing.T) {
 	}
 	if want := []string{"/v1/admit", "/v1/dispatch", "/v1/dispatch", "/v1/settle"}; !reflect.DeepEqual(calls, want) {
 		t.Fatalf("calls=%v want=%v", calls, want)
+	}
+	if err := stream.CloseSend(); err != nil {
+		t.Fatal(err)
+	}
+	_, _ = stream.Recv()
+	wantSpans := map[string]bool{
+		"govar.ext_proc.request": false, "govar.admission_request": false,
+		"govar.route_actuation": false, "govar.dispatch_transition": false,
+		"govar.provider_attempt": false, "govar.settlement": false,
+	}
+	for _, span := range spanRecorder.Ended() {
+		if span.SpanContext().TraceID().String() != parentTraceID {
+			t.Fatalf("span %q escaped the joined trace: %s", span.Name(), span.SpanContext().TraceID())
+		}
+		if _, required := wantSpans[span.Name()]; required {
+			wantSpans[span.Name()] = true
+		}
+		if span.Name() == "govar.provider_attempt" && !strings.Contains(providerTraceparent, "-"+span.SpanContext().SpanID().String()+"-") {
+			t.Errorf("backend traceparent %q is not the recorded provider-attempt span %s", providerTraceparent, span.SpanContext().SpanID())
+		}
+	}
+	for name, observed := range wantSpans {
+		if !observed {
+			t.Errorf("joined trace missing span %q; ended=%d", name, len(spanRecorder.Ended()))
+		}
 	}
 }
 

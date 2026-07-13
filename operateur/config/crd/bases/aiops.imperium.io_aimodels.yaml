@@ -69,6 +69,52 @@ spec:
                   GOVAR contains typed hard-feasibility and route-actuation inputs. When
                   absent, admission must not infer these values from annotations.
                 properties:
+                  outputCapEvidence:
+                    description: |-
+                      OutputCapEvidence is administrator-attested unless a provider-specific
+                      capability producer replaces it with provider catalog/API evidence.
+                      Existing objects decode without it but are not GOV-AR feasible.
+                    properties:
+                      capabilityAdapterVersion:
+                        minLength: 1
+                        type: string
+                      enforcedByPathAdapter:
+                        type: boolean
+                      evidenceSHA256:
+                        pattern: ^[0-9a-f]{64}$
+                        type: string
+                      maxOutputTokens:
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      mode:
+                        description: |-
+                          ProviderPricingEvidenceMode records who supplied pricing/capability evidence.
+                          Only provider_catalog and provider_api may be described as provider verified.
+                        enum:
+                        - provider_catalog
+                        - provider_api
+                        - admin_attested
+                        type: string
+                      requestParameter:
+                        minLength: 1
+                        type: string
+                      sourceVersion:
+                        minLength: 1
+                        type: string
+                      validUntil:
+                        format: date-time
+                        type: string
+                    required:
+                    - capabilityAdapterVersion
+                    - enforcedByPathAdapter
+                    - evidenceSHA256
+                    - maxOutputTokens
+                    - mode
+                    - requestParameter
+                    - sourceVersion
+                    - validUntil
+                    type: object
                   routable:
                     description: Routable explicitly allows this model to enter the
                       hard-feasibility set.
@@ -120,7 +166,7 @@ spec:
                 x-kubernetes-validations:
                 - message: routeBindingRef is required when routable is true
                   rule: '!self.routable || (has(self.routeBindingRef) && self.routeBindingRef
-                    != ”)'
+                    != '''')'
               modelName:
                 description: ModelName is the provider-side model identifier (e.g.
                   gpt-4o, mistral-small).
@@ -280,29 +326,71 @@ spec:
                     description: VerifiedOutputCap is absent until capability verification
                       has run.
                     properties:
+                      capabilityAdapterVersion:
+                        type: string
+                      enforcedByPathAdapter:
+                        type: boolean
+                      evidenceMode:
+                        description: |-
+                          ProviderPricingEvidenceMode records who supplied pricing/capability evidence.
+                          Only provider_catalog and provider_api may be described as provider verified.
+                        enum:
+                        - provider_catalog
+                        - provider_api
+                        - admin_attested
+                        type: string
+                      evidenceSHA256:
+                        type: string
                       maxOutputTokens:
                         description: MaxOutputTokens is the verified provider-enforced
                           maximum.
                         format: int64
                         minimum: 0
                         type: integer
+                      modelVersion:
+                        type: string
                       observedAt:
                         description: ObservedAt is when the capability was verified.
                         format: date-time
+                        type: string
+                      pricingSnapshotSHA256:
+                        type: string
+                      providerDeployment:
+                        type: string
+                      providerGeneration:
+                        format: int64
+                        type: integer
+                      providerUID:
+                        type: string
+                      requestParameter:
                         type: string
                       sourceVersion:
                         description: SourceVersion identifies the immutable provider/model
                           capability source.
                         minLength: 1
                         type: string
+                      validUntil:
+                        format: date-time
+                        type: string
                       verified:
                         description: Verified states that the provider enforces this
                           cap for the observed version.
                         type: boolean
                     required:
+                    - capabilityAdapterVersion
+                    - enforcedByPathAdapter
+                    - evidenceMode
+                    - evidenceSHA256
                     - maxOutputTokens
+                    - modelVersion
                     - observedAt
+                    - pricingSnapshotSHA256
+                    - providerDeployment
+                    - providerGeneration
+                    - providerUID
+                    - requestParameter
                     - sourceVersion
+                    - validUntil
                     - verified
                     type: object
                     x-kubernetes-validations:

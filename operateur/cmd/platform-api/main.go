@@ -55,7 +55,7 @@ func init() {
 
 // apiServer holds the Kubernetes client and handles all API requests.
 type apiServer struct {
-	k8s        client.Client
+	k8s          client.Client
 	insecureAuth bool
 }
 

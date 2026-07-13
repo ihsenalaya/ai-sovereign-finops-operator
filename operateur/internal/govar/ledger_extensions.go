@@ -38,7 +38,7 @@ type FrozenCohort struct {
 	SoftwareHash        string             `json:"software_hash"`
 }
 
-const LedgerLayoutID = "govar-v4-route-snapshot-20260712"
+const LedgerLayoutID = "govar-v5-complete-liability-20260713"
 const RouteSnapshotSchemaID = "govar-route-snapshot-v1"
 
 type FrozenCohortSlot struct {
@@ -234,10 +234,24 @@ func validateCohortAdmission(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPo
 	if c.RegistryDigest == "" || c.FrozenAt.After(now.UTC()) || c.RegisteredAt.IsZero() || c.RegisteredAt.After(now.UTC()) || req.CohortIndex < 0 || req.CohortIndex >= c.Size {
 		return 0, errors.New("cohort is absent, not frozen before admission, or slot is out of range")
 	}
-	// The annotation surface is forbidden for theorem-bearing parameters; the
-	// registry is the only authority for N, alpha, and weights.
-	if strings.TrimSpace(routing.Annotations[AnnotationCohortSize]) != "" || strings.TrimSpace(routing.Annotations[AnnotationTenantRiskPPB]) != "" {
-		return 0, errors.New("fixed cohort size/risk annotations are caller-controlled and forbidden")
+	govar := routing.Spec.GOVAR
+	if govar == nil || govar.Cohort == nil || govar.Risk == nil || govar.Reservation.Method != aiopsv1alpha1.GOVARReservationFixedCohort {
+		return 0, errors.New("typed fixed-cohort policy is required")
+	}
+	if govar.Cohort.RegistryRef != c.RegistryDigest || govar.Cohort.Size != c.Size || govar.Cohort.OpportunitySetHash != c.DataHash || govar.Cohort.WeightsHash != c.ConfigHash || !govar.Cohort.FrozenAt.Time.Equal(c.FrozenAt) {
+		return 0, errors.New("typed cohort identity does not match immutable registry")
+	}
+	if govar.Risk.TenantRiskPPB != c.TenantRiskPPB {
+		return 0, errors.New("typed tenant risk does not match immutable registry")
+	}
+	if govar.Risk.Allocation == "uniform" {
+		for _, candidate := range c.Slots {
+			if candidate.WeightPPB != 1_000_000_000/c.Size {
+				return 0, errors.New("uniform typed allocation does not match registry weights")
+			}
+		}
+	} else if govar.Risk.Allocation != "fixed-weights" {
+		return 0, errors.New("unsupported typed risk allocation")
 	}
 	slot := c.Slots[req.CohortIndex]
 	if slot.RequestID != req.RequestID || slot.OpportunityDigest != OpportunityDigest(req) {

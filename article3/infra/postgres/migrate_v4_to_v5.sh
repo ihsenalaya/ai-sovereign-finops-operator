@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${DATABASE_URL:?DATABASE_URL is required}"
+evidence_dir="${1:-${root}/migration-v5-evidence}"
+mkdir -p "${evidence_dir}"
+prefix="${evidence_dir}/$(date -u +%Y%m%dT%H%M%S).v4-to-v5"
+pg_dump "${DATABASE_URL}" --schema-only --no-owner --no-privileges > "${prefix}.before.sql"
+psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 -Atc "SELECT max(version),(SELECT layout_id FROM govar_schema_metadata WHERE version=4),(SELECT count(*) FROM govar_reservations)" > "${prefix}.preflight-counts"
+sha256sum "${prefix}.before.sql" "${prefix}.preflight-counts" "${root}/migrate_v4_to_v5.sql" > "${prefix}.before.sha256"
+psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 -f "${root}/migrate_v4_to_v5.sql"
+pg_dump "${DATABASE_URL}" --schema-only --no-owner --no-privileges > "${prefix}.after.sql"
+psql "${DATABASE_URL}" -X -v ON_ERROR_STOP=1 -Atc "SELECT max(version),(SELECT layout_id FROM govar_schema_metadata WHERE version=5),(SELECT count(*) FROM govar_reservations)" > "${prefix}.result"
+sha256sum "${prefix}.after.sql" "${prefix}.result" "${root}/migrate_v4_to_v5.sql" > "${prefix}.after.sha256"
+echo "GOV-AR v4-to-v5 migration evidence: ${prefix}.*"

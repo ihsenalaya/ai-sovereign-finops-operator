@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -27,7 +28,7 @@ func TestPostgresEmptyLegacySchemaIsRefusedAsIncompatible(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close(ctx)
-	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_frozen_cohort_slots,govar_frozen_cohorts,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_migrations CASCADE;
+	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
 CREATE TABLE govar_tenants (tenant_id TEXT PRIMARY KEY,budget_eur DOUBLE PRECISION NOT NULL DEFAULT 0,settled_eur DOUBLE PRECISION NOT NULL DEFAULT 0,reserved_eur DOUBLE PRECISION NOT NULL DEFAULT 0,active_reservations INTEGER NOT NULL DEFAULT 0,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 CREATE TABLE govar_reservations(request_id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,selected_deployment TEXT NOT NULL,reserved_cost DOUBLE PRECISION NOT NULL,actual_cost DOUBLE PRECISION NOT NULL DEFAULT 0,policy_version TEXT NOT NULL,pricing_version TEXT NOT NULL,reservation_mode TEXT NOT NULL,risk_level TEXT NOT NULL,expiry TIMESTAMPTZ NOT NULL,settled BOOLEAN NOT NULL DEFAULT FALSE,canceled BOOLEAN NOT NULL DEFAULT FALSE,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());`)
 	if err != nil {
@@ -50,7 +51,7 @@ func TestPostgresEngineRejectsUnreconciledLegacyFloatLedger(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close(ctx)
-	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_migrations CASCADE;
+	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
 CREATE TABLE govar_tenants (tenant_id TEXT PRIMARY KEY,budget_eur DOUBLE PRECISION NOT NULL DEFAULT 0,settled_eur DOUBLE PRECISION NOT NULL DEFAULT 0,reserved_eur DOUBLE PRECISION NOT NULL DEFAULT 0,active_reservations INTEGER NOT NULL DEFAULT 0,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 INSERT INTO govar_tenants(tenant_id,budget_eur) VALUES ('legacy',1.25);`)
 	if err != nil {
@@ -60,7 +61,7 @@ INSERT INTO govar_tenants(tenant_id,budget_eur) VALUES ('legacy',1.25);`)
 		engine.Close()
 		t.Fatal("service accepted unreconciled legacy floating-point ledger")
 	}
-	_, _ = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_migrations CASCADE`)
+	_, _ = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE`)
 }
 
 func TestPostgresEngineRejectsNonemptyPreV3IntegerUpgrade(t *testing.T) {
@@ -74,7 +75,7 @@ func TestPostgresEngineRejectsNonemptyPreV3IntegerUpgrade(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close(ctx)
-	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_frozen_cohort_slots,govar_frozen_cohorts,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_migrations CASCADE;
+	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
 CREATE TABLE govar_schema_migrations(version INTEGER PRIMARY KEY,applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()); INSERT INTO govar_schema_migrations(version) VALUES(2);
 CREATE TABLE govar_tenants(tenant_id TEXT PRIMARY KEY,budget_micros BIGINT NOT NULL DEFAULT 0,settled_micros BIGINT NOT NULL DEFAULT 0,reserved_micros BIGINT NOT NULL DEFAULT 0,carried_adjustment_micros BIGINT NOT NULL DEFAULT 0,active_reservations INTEGER NOT NULL DEFAULT 0,budget_identity TEXT NOT NULL,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 CREATE TABLE govar_reservations(request_id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,workload_uid TEXT NOT NULL DEFAULT '',selected_deployment TEXT NOT NULL,provider_attempt_id TEXT,outbox_id TEXT,outbox_state TEXT NOT NULL DEFAULT 'PENDING',state TEXT NOT NULL DEFAULT 'RESERVED',reserved_cost_micros BIGINT NOT NULL DEFAULT 0,provisional_cost_micros BIGINT NOT NULL DEFAULT 0,residual_hold_micros BIGINT NOT NULL DEFAULT 0,usage_version BIGINT NOT NULL DEFAULT 0,finalized BOOLEAN NOT NULL DEFAULT FALSE,policy_version TEXT NOT NULL,pricing_version TEXT NOT NULL,reservation_mode TEXT NOT NULL,risk_level TEXT NOT NULL,allocated_risk_ppb BIGINT NOT NULL DEFAULT 0,input_price_micros_per_million BIGINT NOT NULL DEFAULT 0,output_price_micros_per_million BIGINT NOT NULL DEFAULT 0,admission_fingerprint TEXT NOT NULL,candidate_snapshot_version TEXT NOT NULL,cohort_id TEXT NOT NULL DEFAULT '',cohort_index BIGINT NOT NULL DEFAULT 0,expiry TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
@@ -83,7 +84,7 @@ CREATE TABLE govar_reservations(request_id TEXT PRIMARY KEY,tenant_id TEXT NOT N
 		t.Fatal(err)
 	}
 	defer func() {
-		_, _ = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_frozen_cohort_slots,govar_frozen_cohorts,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_migrations CASCADE`)
+		_, _ = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE`)
 	}()
 	if e, err := NewPostgresEngine(ctx, url); err == nil {
 		e.Close()
@@ -102,14 +103,14 @@ func TestPostgresEngineRejectsEmptyPreV3IntegerUpgrade(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close(ctx)
-	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
+	_, err = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE;
 CREATE TABLE govar_schema_migrations(version INTEGER PRIMARY KEY,applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 INSERT INTO govar_schema_migrations(version) VALUES(2);`)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		_, _ = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE`)
+		_, _ = conn.Exec(ctx, `DROP TABLE IF EXISTS govar_audit_events,govar_audit_tenant_sequences,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_reconciliation_tasks,govar_budget_adjustments,govar_inbox,govar_outbox,govar_settlements,govar_reservations,govar_tenants,govar_schema_metadata,govar_schema_migrations CASCADE`)
 	}()
 	if e, err := NewPostgresEngine(ctx, url); err == nil {
 		e.Close()
@@ -127,21 +128,21 @@ func TestPostgresEngineRefusesNewerSchemaRollback(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = e.pool.Exec(ctx, `INSERT INTO govar_schema_migrations(version) VALUES(5)`)
+	_, err = postgresOwnerExec(ctx, e, `INSERT INTO govar_schema_migrations(version) VALUES(7)`)
 	e.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if rollback, err := NewPostgresEngine(ctx, url); err == nil {
 		rollback.Close()
-		t.Fatal("v4 binary accepted newer schema")
+		t.Fatal("v6 binary accepted newer schema")
 	}
 	conn, err := pgx.Connect(ctx, url)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close(ctx)
-	if _, err = conn.Exec(ctx, `DELETE FROM govar_schema_migrations WHERE version=5`); err != nil {
+	if _, err = conn.Exec(ctx, `DELETE FROM govar_schema_migrations WHERE version=7`); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -157,7 +158,7 @@ func TestPostgresEngineLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer engine.Close()
-	if _, err := engine.pool.Exec(ctx, `TRUNCATE govar_budget_adjustments,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`); err != nil {
+	if err := resetPostgresTestLedger(ctx, engine); err != nil {
 		t.Fatal(err)
 	}
 	admit, err := engine.Admit(admitRequest("pg-r1", testTenant, testWorkload), defaultBudget(), defaultRouting(), defaultCandidates())
@@ -179,6 +180,15 @@ func TestPostgresEngineLifecycle(t *testing.T) {
 	if _, code, err := engine.Settle(settleRequest("pg-r1", "pg-s1", 2_000, 1, false, testTenant, testWorkload)); err != nil || code != ReasonProvisionalSettlement {
 		t.Fatalf("settle=(%s,%v)", code, err)
 	}
+	readTx, err := engine.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := loadReservationTx(ctx, readTx, "pg-r1", false)
+	_ = readTx.Rollback(ctx)
+	if err != nil || loaded.PricingSnapshotSHA256 == "" || loaded.PricingSnapshot.SnapshotSHA256 != loaded.PricingSnapshotSHA256 || len(loaded.ReservedComponents) != 2 || len(loaded.ActualComponents) != 2 {
+		t.Fatalf("component persistence=(%+v,%v)", loaded, err)
+	}
 	pgFinal := settleRequest("pg-r1", "pg-s2", 2_000, 1, true, testTenant, testWorkload)
 	pgFinal.PredecessorEventID = "pg-s1"
 	if _, code, err := engine.Settle(pgFinal); err != nil || code != ReasonFinalized {
@@ -189,13 +199,13 @@ func TestPostgresEngineLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := engine.pool.Exec(ctx, `DELETE FROM govar_outbox WHERE request_id='pg-missing-outbox'`); err != nil {
+	if _, err := postgresOwnerExec(ctx, engine, `DELETE FROM govar_outbox WHERE request_id='pg-missing-outbox'`); err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err := engine.Dispatch(dispatchRequest("pg-missing-outbox", "pg-missing-outbox-claim", second.ProviderAttemptID, DispatchClaimed, testTenant, testWorkload)); err == nil {
 		t.Fatal("dispatch succeeded although outbox compare-and-swap affected no row")
 	}
-	if _, err := engine.pool.Exec(ctx, `TRUNCATE govar_reconciliation_tasks,govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`); err != nil {
+	if err := resetPostgresTestLedger(ctx, engine); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -213,7 +223,7 @@ func TestPostgresFrozenCohortConcurrentRegistrationAndAdmission(t *testing.T) {
 	defer e.Close()
 	_ = e.ConfigureLedgerAuthority("test-authority", testLedgerAuthorityKey)
 	_ = e.ConfigureCohortRuntime(testCohortSoftwareHash)
-	_, err = e.pool.Exec(ctx, `TRUNCATE govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+	err = resetPostgresTestLedger(ctx, e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,13 +252,25 @@ func TestPostgresFrozenCohortConcurrentRegistrationAndAdmission(t *testing.T) {
 	if err := e.RegisterFrozenCohort(ctx, conflict); err == nil {
 		t.Fatal("conflicting registration accepted")
 	}
-	routing := defaultRouting()
-	routing.Annotations[AnnotationReservationMethod] = "govar_fixed_cohort"
-	routing.Annotations[AnnotationAdaptiveTokens] = "1200"
-	routing.Annotations[AnnotationCalibrationSupport] = "100"
+	routing := typedAdaptiveRouting(aiopsv1alpha1.GOVARReservationFixedCohort, 1200, now, defaultCandidates()[0])
+	bindTypedCohort(&routing, c)
 	resp, err := e.Admit(r, defaultBudget(), routing, defaultCandidates())
 	if err != nil || resp.Decision != DecisionAdmit || resp.AllocatedRiskPPB != 123 {
 		t.Fatalf("admit=(%+v,%v)", resp, err)
+	}
+	readTx, err := e.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := loadReservationTx(ctx, readTx, r.RequestID, false)
+	_ = readTx.Rollback(ctx)
+	wantCalibration := routing.Status.GOVAR.Calibration.ArtifactSHA256
+	if err != nil || loaded.CalibrationArtifactSHA256 != wantCalibration {
+		t.Fatalf("persisted calibration=%q want=%q err=%v", loaded.CalibrationArtifactSHA256, wantCalibration, err)
+	}
+	audit, err := e.ExportTenantAudit(ctx, testTenant)
+	if err != nil || len(audit) < 2 || audit[len(audit)-1].CalibrationSHA256 != wantCalibration {
+		t.Fatalf("audit calibration=(%+v,%v)", audit, err)
 	}
 }
 
@@ -263,7 +285,7 @@ func TestPostgresRolloverLateCorrectionAndDebtPayoff(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer e.Close()
-	_, err = e.pool.Exec(ctx, `TRUNCATE govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+	err = resetPostgresTestLedger(ctx, e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,6 +331,49 @@ func TestPostgresRolloverLateCorrectionAndDebtPayoff(t *testing.T) {
 	}
 }
 
+func TestPostgresUpwardCorrectionAfterLateFinalPreservesFullExternalDebt(t *testing.T) {
+	url := os.Getenv("GOVAR_TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("GOVAR_TEST_DATABASE_URL is not set")
+	}
+	ctx := context.Background()
+	e, err := NewPostgresEngine(ctx, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.Close()
+	if err = resetPostgresTestLedger(ctx, e); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	e.now = func() time.Time { return now }
+	b := defaultBudget()
+	b.Spec.Period = "daily"
+	a, err := e.Admit(admitRequest("pg-late-final-up", testTenant, testWorkload), b, defaultRouting(), defaultCandidates())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = e.Dispatch(dispatchRequest("pg-late-final-up", "claim", a.ProviderAttemptID, DispatchClaimed, testTenant, testWorkload)); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(24 * time.Hour)
+	if _, err = e.LiabilityWithError(testTenant); err != nil {
+		t.Fatal(err)
+	}
+	if _, code, err := e.Settle(settleRequest("pg-late-final-up", "late-final", 2_000, 1, true, testTenant, testWorkload)); err != nil || code != ReasonLateSettlement {
+		t.Fatalf("late final=(%s,%v)", code, err)
+	}
+	up := settleRequest("pg-late-final-up", "late-up", 2_700, 2, true, testTenant, testWorkload)
+	up.PredecessorEventID = "late-final"
+	if _, code, err := e.Settle(up); err != nil || code != ReasonCorrection {
+		t.Fatalf("up correction=(%s,%v)", code, err)
+	}
+	got, err := e.LiabilityWithError(testTenant)
+	if err != nil || got.CarriedAdjustmentMicros != 2_700 {
+		t.Fatalf("late correction reduced external debt: %+v err=%v", got, err)
+	}
+}
+
 func TestPostgresExpiryScanIsCASConservative(t *testing.T) {
 	url := os.Getenv("GOVAR_TEST_DATABASE_URL")
 	if url == "" {
@@ -320,7 +385,7 @@ func TestPostgresExpiryScanIsCASConservative(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer e.Close()
-	_, _ = e.pool.Exec(ctx, `TRUNCATE govar_reconciliation_tasks,govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+	_ = resetPostgresTestLedger(ctx, e)
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	e.now = func() time.Time { return now }
 	pending, err := e.Admit(admitRequest("pg-exp-pending", testTenant, testWorkload), defaultBudget(), defaultRouting(), defaultCandidates())

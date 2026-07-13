@@ -10,15 +10,15 @@ import (
 
 func baseReq() Request {
 	return Request{
-		Namespace:          "test",
-		PodName:            "pod-1",
-		PodUID:             "uid-1",
-		KeyID:              "key-1",
-		PolicyRequired:     true,
-		PolicyTTLSeconds:   300,
-		EvidenceVerified:   true,
-		EvidenceRevoked:    false,
-		RevocationActive:   false,
+		Namespace:        "test",
+		PodName:          "pod-1",
+		PodUID:           "uid-1",
+		KeyID:            "key-1",
+		PolicyRequired:   true,
+		PolicyTTLSeconds: 300,
+		EvidenceVerified: true,
+		EvidenceRevoked:  false,
+		RevocationActive: false,
 	}
 }
 

@@ -25,6 +25,7 @@ required = {
     "tenant_and_workload_uid_isolation",
     "residual_correction_exposure_retained",
     "provisional_rollover_guard_prevents_credit_reuse",
+    "postfinal_correction_external_debt_visible",
     "required_transition_coverage",
     "provider_route_ownership",
     "route_snapshot_integrity",

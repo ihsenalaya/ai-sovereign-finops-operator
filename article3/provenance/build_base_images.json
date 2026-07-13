@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "scope": "operateur/Dockerfile.gov-ar-admission",
-  "resolved_on": "2026-07-12",
-  "recorded_at": "2026-07-12T14:36:33+01:00",
+  "scope": "all operateur/Dockerfile* build and runtime stages",
+  "resolved_on": "2026-07-13",
+  "recorded_at": "2026-07-13T18:19:15Z",
   "resolution_note": "The resolution date is recorded without inventing a wall-clock timestamp; recorded_at is when this evidence document was checked.",
   "toolchain_source": {
     "official_latest_version_url": "https://go.dev/VERSION?m=text",
@@ -47,10 +47,24 @@
       "platform_manifest_digest": "sha256:0c93c98c642502923095a650bbcda2199be101a80c7b6a898473fdf5dc9aa2af",
       "platform_manifest_size_bytes": 2863,
       "resolution_command": "DOCKER_CONFIG=<empty-temporary-directory> docker buildx imagetools inspect [--raw] gcr.io/distroless/static:nonroot"
+    },
+    {
+      "stage": "node-attestation-helper-and-runtime",
+      "source_tag": "docker.io/library/ubuntu:24.04",
+      "pinned_ref": "docker.io/library/ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90",
+      "index_media_type": "application/vnd.oci.image.index.v1+json",
+      "index_digest": "sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90",
+      "index_raw_output_sha256": "4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90",
+      "inspect_text_output_sha256": "f3428273de4e8253a0b6ba7a22a8df92577bae3668574a1b694291864c092506",
+      "platform": "linux/amd64",
+      "platform_manifest_media_type": "application/vnd.oci.image.manifest.v1+json",
+      "platform_manifest_digest": "sha256:52df9b1ee71626e0088f7d400d5c6b5f7bb916f8f0c82b474289a4ece6cf3faf",
+      "platform_manifest_size_bytes": 424,
+      "resolution_command": "docker buildx imagetools inspect [--raw] docker.io/library/ubuntu:24.04"
     }
   ],
   "build_contract": {
-    "module_go_directive": "1.21",
+    "module_go_directive": "1.25.0",
     "builder_toolchain": "go1.26.5",
     "default_build_platform": "linux/amd64",
     "build_args": {
@@ -65,6 +79,16 @@
     ],
     "bit_reproducibility_claimed": false
   },
+  "external_build_inputs": [
+    {
+      "scope": "operateur/Dockerfile.node-attestation-agent",
+      "url": "https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.1.2_amd64.deb",
+      "version": "1.1.2",
+      "sha256": "53d061f9c29459deca65a7cb4916f32bacc2fa53dc6d6f705518cfca6c0ffd0b",
+      "retrieved_on": "2026-07-13",
+      "verification": "both download stages execute sha256sum -c before package installation"
+    }
+  ],
   "focused_build_verification": {
     "status": "pending stable-tree rebuild",
     "reason": "The supported Go 1.26.5 builder supersedes the earlier Go 1.21.13 moving-tree build; no image/build success is inferred from base-image resolution.",

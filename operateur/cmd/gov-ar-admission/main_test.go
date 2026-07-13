@@ -296,71 +296,82 @@ func TestDecodeStrictJSONRejectsUnknownAndMultipleValues(t *testing.T) {
 	}
 }
 
-func TestAdmissionApprovalIsOneUseAndCrashSafe(t *testing.T) {
+func TestPolicyLevelGOVARRouteApprovalIsReusableWithoutKubernetesWrites(t *testing.T) {
 	now := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
-	req := govar.AdmitRequest{RequestID: "request-1", Namespace: "finance", TenantID: "tenant-a", WorkloadUID: "workload-uid",
-		BudgetPolicyName: "budget", RoutingPolicyName: "routing", InputTokens: 10, InputTokensExact: true, MaxOutputTokens: 100}
-	budget := aiopsv1alpha1.AIBudgetPolicy{ObjectMeta: metav1.ObjectMeta{Name: "budget", Namespace: "finance", UID: "budget-uid", Generation: 2}}
-	routing := aiopsv1alpha1.AIRoutingPolicy{ObjectMeta: metav1.ObjectMeta{Name: "routing", Namespace: "finance", UID: "routing-uid", Generation: 3}}
+	routing := aiopsv1alpha1.AIRoutingPolicy{ObjectMeta: metav1.ObjectMeta{Name: "routing", Namespace: "finance", UID: "routing-uid", Generation: 3, ResourceVersion: "routing-rv"}}
 	candidate := approvalTestCandidate()
-	approvalRequest := admissionApprovalRequest(req, budget, routing, candidate, metav1.NewTime(now.Add(time.Hour)))
-	proposal := &aiopsv1alpha1.AIAdmissionApproval{ObjectMeta: metav1.ObjectMeta{Name: admissionApprovalName(req), Namespace: req.Namespace, UID: "proposal-uid", Generation: 1},
-		Spec: aiopsv1alpha1.AIAdmissionApprovalSpec{Request: approvalRequest}, Status: aiopsv1alpha1.AIAdmissionApprovalStatus{
-			ObservedGeneration: 1, Phase: aiopsv1alpha1.AIAdmissionApprovalPhaseApproved, RequestDigest: approvalRequest.RequestDigest,
-			DecisionResourceUID: "decision-uid", DecisionResourceGeneration: 1, ApprovedAt: &metav1.Time{Time: now},
-		}}
-	c := fakeclient.NewClientBuilder().WithScheme(scheme).WithObjects(proposal).Build()
+	approval := approvedGOVARRouteChange(now, routing, candidate)
+	c := fakeclient.NewClientBuilder().WithScheme(scheme).WithObjects(approval).Build()
 	srv := &server{k8s: c, auth: identityAuthenticator{now: func() time.Time { return now }}}
-	if _, err := srv.validateAndConsumeAdmissionApproval(context.Background(), proposal.Name, req, budget, routing, []govar.Candidate{candidate}); err != nil {
-		t.Fatalf("first consumption failed: %v", err)
+	for i, ref := range []string{approval.Name, ""} {
+		got, used, err := srv.resolveGOVARRouteApproval(context.Background(), ref, routing, []govar.Candidate{candidate})
+		if err != nil || used.UID != approval.UID || got.SnapshotVersion != candidate.SnapshotVersion {
+			t.Fatalf("reuse %d failed: candidate=%+v approval=%+v err=%v", i, got, used, err)
+		}
 	}
-	// This models a crash after Lease creation but before ledger admission. A
-	// retry fails closed instead of reusing the human authorization.
-	if _, err := srv.validateAndConsumeAdmissionApproval(context.Background(), proposal.Name, req, budget, routing, []govar.Candidate{candidate}); !errors.Is(err, errApprovalReplayed) {
-		t.Fatalf("post-crash retry err=%v, want replay rejection", err)
+	var changes aiopsv1alpha1.AIChangeRequestList
+	if err := c.List(context.Background(), &changes); err != nil || len(changes.Items) != 1 {
+		t.Fatalf("approval resolution mutated Kubernetes objects: count=%d err=%v", len(changes.Items), err)
 	}
 }
 
-func TestAdmissionApprovalRejectsMissingStaleCrossTenantAlteredAndExpired(t *testing.T) {
+func TestPolicyLevelGOVARRouteApprovalRejectsMissingStaleAlteredAndExpired(t *testing.T) {
 	now := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
-	req := govar.AdmitRequest{RequestID: "request-1", Namespace: "finance", TenantID: "tenant-a", WorkloadUID: "workload-uid", BudgetPolicyName: "budget", RoutingPolicyName: "routing", MaxOutputTokens: 100}
-	budget := aiopsv1alpha1.AIBudgetPolicy{ObjectMeta: metav1.ObjectMeta{Name: "budget", Namespace: "finance", UID: "budget-uid", Generation: 2}}
-	routing := aiopsv1alpha1.AIRoutingPolicy{ObjectMeta: metav1.ObjectMeta{Name: "routing", Namespace: "finance", UID: "routing-uid", Generation: 3}}
+	routing := aiopsv1alpha1.AIRoutingPolicy{ObjectMeta: metav1.ObjectMeta{Name: "routing", Namespace: "finance", UID: "routing-uid", Generation: 3, ResourceVersion: "routing-rv"}}
 	candidate := approvalTestCandidate()
-	baseRequest := admissionApprovalRequest(req, budget, routing, candidate, metav1.NewTime(now.Add(time.Hour)))
-	base := aiopsv1alpha1.AIAdmissionApproval{ObjectMeta: metav1.ObjectMeta{Name: admissionApprovalName(req), Namespace: req.Namespace, UID: "proposal-uid", Generation: 1}, Spec: aiopsv1alpha1.AIAdmissionApprovalSpec{Request: baseRequest},
-		Status: aiopsv1alpha1.AIAdmissionApprovalStatus{ObservedGeneration: 1, Phase: aiopsv1alpha1.AIAdmissionApprovalPhaseApproved, RequestDigest: baseRequest.RequestDigest,
-			DecisionResourceUID: "decision-uid", DecisionResourceGeneration: 1, ApprovedAt: &metav1.Time{Time: now}}}
+	base := approvedGOVARRouteChange(now, routing, candidate)
 	tests := []struct {
-		name   string
-		object *aiopsv1alpha1.AIAdmissionApproval
-		ref    string
+		name       string
+		object     *aiopsv1alpha1.AIChangeRequest
+		candidate  govar.Candidate
+		routing    aiopsv1alpha1.AIRoutingPolicy
+		wantExpiry bool
 	}{
-		{name: "missing", ref: base.Name},
-		{name: "stale status", object: func() *aiopsv1alpha1.AIAdmissionApproval {
+		{name: "missing"},
+		{name: "stale status", object: func() *aiopsv1alpha1.AIChangeRequest {
 			v := base.DeepCopy()
 			v.Status.ObservedGeneration = 0
 			return v
-		}(), ref: base.Name},
-		{name: "cross tenant request", object: func() *aiopsv1alpha1.AIAdmissionApproval {
+		}()},
+		{name: "altered scope", object: func() *aiopsv1alpha1.AIChangeRequest {
 			v := base.DeepCopy()
-			v.Spec.Request.TenantID = "tenant-b"
-			v.Spec.Request.RequestDigest = v.Spec.Request.ComputeDigest()
-			v.Status.RequestDigest = v.Spec.Request.RequestDigest
+			v.Spec.GOVARRouteApproval.Provider.Generation++
 			return v
-		}(), ref: base.Name},
-		{name: "altered request", object: func() *aiopsv1alpha1.AIAdmissionApproval {
+		}()},
+		{name: "live routing UID changed", object: base.DeepCopy(), routing: func() aiopsv1alpha1.AIRoutingPolicy {
+			v := *routing.DeepCopy()
+			v.UID = "replacement-routing-uid"
+			return v
+		}()},
+		{name: "live model generation changed", object: base.DeepCopy(), candidate: func() govar.Candidate {
+			v := candidate
+			v.RouteSnapshot.ModelGeneration++
+			v.RouteSnapshot.SnapshotHash = govar.RouteSnapshotHash(v.RouteSnapshot)
+			v.SnapshotVersion = v.RouteSnapshot.SnapshotHash
+			return v
+		}()},
+		{name: "live provider generation changed", object: base.DeepCopy(), candidate: func() govar.Candidate {
+			v := candidate
+			v.RouteSnapshot.ProviderGeneration++
+			v.RouteSnapshot.SnapshotHash = govar.RouteSnapshotHash(v.RouteSnapshot)
+			v.SnapshotVersion = v.RouteSnapshot.SnapshotHash
+			return v
+		}()},
+		{name: "stale route snapshot", object: base.DeepCopy(), candidate: func() govar.Candidate {
+			v := candidate
+			v.RouteSnapshot.ProviderResourceVersion = "new-provider-rv"
+			v.RouteSnapshot.SnapshotHash = govar.RouteSnapshotHash(v.RouteSnapshot)
+			v.SnapshotVersion = v.RouteSnapshot.SnapshotHash
+			return v
+		}()},
+		{name: "expired", object: func() *aiopsv1alpha1.AIChangeRequest {
 			v := base.DeepCopy()
-			v.Spec.Request.MaxOutputTokens++
+			v.Spec.GOVARRouteApproval.ValidUntil = metav1.NewTime(now.Add(-time.Second))
+			v.Spec.GOVARRouteApproval.ScopeDigest = v.Spec.GOVARRouteApproval.ComputeDigest()
+			v.Status.ApprovedScopeDigest = v.Spec.GOVARRouteApproval.ScopeDigest
+			v.Status.ExpiresAt = &v.Spec.GOVARRouteApproval.ValidUntil
 			return v
-		}(), ref: base.Name},
-		{name: "expired", object: func() *aiopsv1alpha1.AIAdmissionApproval {
-			v := base.DeepCopy()
-			v.Spec.Request.ExpiresAt = metav1.NewTime(now.Add(-time.Second))
-			v.Spec.Request.RequestDigest = v.Spec.Request.ComputeDigest()
-			v.Status.RequestDigest = v.Spec.Request.RequestDigest
-			return v
-		}(), ref: base.Name},
+		}(), wantExpiry: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -369,11 +380,38 @@ func TestAdmissionApprovalRejectsMissingStaleCrossTenantAlteredAndExpired(t *tes
 				builder = builder.WithObjects(test.object)
 			}
 			srv := &server{k8s: builder.Build(), auth: identityAuthenticator{now: func() time.Time { return now }}}
-			if _, err := srv.validateAndConsumeAdmissionApproval(context.Background(), test.ref, req, budget, routing, []govar.Candidate{candidate}); err == nil {
+			actualCandidate := test.candidate
+			if actualCandidate.ModelRef == "" {
+				actualCandidate = candidate
+			}
+			actualRouting := test.routing
+			if actualRouting.Name == "" {
+				actualRouting = routing
+			}
+			_, _, err := srv.resolveGOVARRouteApproval(context.Background(), base.Name, actualRouting, []govar.Candidate{actualCandidate})
+			if err == nil {
 				t.Fatal("invalid approval was accepted")
+			}
+			if test.wantExpiry && !errors.Is(err, errApprovalExpired) {
+				t.Fatalf("err=%v, want expiry", err)
 			}
 		})
 	}
+}
+
+func approvedGOVARRouteChange(now time.Time, routing aiopsv1alpha1.AIRoutingPolicy, candidate govar.Candidate) *aiopsv1alpha1.AIChangeRequest {
+	snapshot := candidate.RouteSnapshot
+	scope := aiopsv1alpha1.GOVARRouteApprovalScope{
+		RoutingPolicy:       aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: routing.Name, UID: routing.UID, Generation: routing.Generation},
+		Model:               aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: snapshot.ModelName, UID: types.UID(snapshot.ModelUID), Generation: snapshot.ModelGeneration},
+		Provider:            aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: snapshot.ProviderName, UID: types.UID(snapshot.ProviderUID), Generation: snapshot.ProviderGeneration},
+		RouteSnapshotDigest: snapshot.SnapshotHash, ValidUntil: metav1.NewTime(now.Add(time.Hour)),
+	}
+	scope.ScopeDigest = scope.ComputeDigest()
+	return &aiopsv1alpha1.AIChangeRequest{ObjectMeta: metav1.ObjectMeta{Name: "approve-routing-model-provider", Namespace: routing.Namespace, UID: "change-uid", Generation: 1},
+		Spec: aiopsv1alpha1.AIChangeRequestSpec{Action: aiopsv1alpha1.AIChangeRequestActionAuthorizeGOVARRoute, Approval: aiopsv1alpha1.AIChangeRequestApprovalApproved, GOVARRouteApproval: &scope},
+		Status: aiopsv1alpha1.AIChangeRequestStatus{ObservedGeneration: 1, Phase: aiopsv1alpha1.AIChangeRequestPhaseApproved, ApprovedAt: &metav1.Time{Time: now}, ApprovedScopeDigest: scope.ScopeDigest, ExpiresAt: &scope.ValidUntil,
+			Conditions: []metav1.Condition{{Type: aiopsv1alpha1.ConditionReady, Status: metav1.ConditionTrue, Reason: aiopsv1alpha1.ReasonReconciled, LastTransitionTime: metav1.NewTime(now)}}}}
 }
 
 func approvalTestCandidate() govar.Candidate {

@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,10 +20,17 @@ import (
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extprocv3 "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	typev3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 
+	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/govar"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 )
 
 // Server is the synchronous Envoy ext_proc trust boundary. Envoy terminates
@@ -62,6 +70,11 @@ type streamState struct {
 	binding                   RouteBinding
 	route                     RouteTarget
 	routeSnapshotHash         string
+	traceContext              context.Context
+	traceSpan                 trace.Span
+	providerSpan              trace.Span
+	settlementBases           []aiopsv1alpha1.ProviderBillableBasis
+	requestStartedAt          time.Time
 }
 
 const maxExtProcBodyBytes = 1 << 20
@@ -72,6 +85,14 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 		return err
 	}
 	state := streamState{headers: map[string]string{}}
+	defer func() {
+		if state.providerSpan != nil {
+			state.providerSpan.End()
+		}
+		if state.traceSpan != nil {
+			state.traceSpan.End()
+		}
+	}()
 	for {
 		request, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
@@ -82,13 +103,19 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 		}
 		switch {
 		case request.GetRequestHeaders() != nil:
+			if state.traceSpan != nil {
+				return errors.New("duplicate ext_proc request headers")
+			}
 			state.headers = headerMap(request.GetRequestHeaders().GetHeaders())
-			binding, err := s.resolvePrincipal(stream.Context(), gatewayURI, state.headers["x-forwarded-client-cert"])
+			parent := otel.GetTextMapPropagator().Extract(stream.Context(), propagation.MapCarrier(state.headers))
+			state.traceContext, state.traceSpan = otel.Tracer("github.com/imperium/ai-sovereign-finops-operator/gov-ar-ext-proc").Start(
+				parent, "govar.ext_proc.request", trace.WithSpanKind(trace.SpanKindServer))
+			binding, err := s.resolvePrincipal(state.traceContext, gatewayURI, state.headers["x-forwarded-client-cert"])
 			if err != nil {
 				return stream.Send(immediate(http.StatusForbidden, err.Error()))
 			}
 			state.binding = binding
-			if err := stream.Send(headerContinue(true)); err != nil {
+			if err := stream.Send(headerContinue(true, state.traceContext)); err != nil {
 				return err
 			}
 		case request.GetRequestBody() != nil:
@@ -98,21 +125,21 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 			}
 			state.requestBody = append(state.requestBody, body.GetBody()...)
 			if !body.GetEndOfStream() {
-				if err := stream.Send(bodyContinue(true, RouteTarget{}, nil)); err != nil {
+				if err := stream.Send(bodyContinue(true, RouteTarget{}, nil, state.context(stream.Context()))); err != nil {
 					return err
 				}
 				continue
 			}
-			_, err := s.admitAndClaim(stream.Context(), &state)
+			_, err := s.admitAndClaim(state.context(stream.Context()), &state)
 			if err != nil {
 				return stream.Send(immediate(http.StatusForbidden, err.Error()))
 			}
-			if err := stream.Send(bodyContinue(true, state.route, state.requestBody)); err != nil {
+			if err := stream.Send(bodyContinue(true, state.route, state.requestBody, state.context(stream.Context()))); err != nil {
 				return err
 			}
 		case request.GetResponseHeaders() != nil:
 			if state.requestID != "" {
-				if err := s.dispatch(stream.Context(), state, "delivered", "DELIVERED"); err != nil {
+				if err := s.dispatch(state.context(stream.Context()), state, "delivered", "DELIVERED"); err != nil {
 					return err
 				}
 			}
@@ -126,15 +153,16 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 			}
 			state.responseBody = append(state.responseBody, body.GetBody()...)
 			if body.GetEndOfStream() && state.requestID != "" {
-				usage, ok := parseUsage(state.responseBody)
-				if ok {
-					if err := s.settle(stream.Context(), state, usage); err != nil {
-						return err
-					}
-				} else {
-					if err := s.cancel(stream.Context(), state, "missing_or_invalid_usage"); err != nil {
-						return err
-					}
+				usage, validEnvelope := parseUsage(state.responseBody, state.settlementBases, state.requestStartedAt, time.Now().UTC())
+				if !validEnvelope {
+					usage = usageSummary{}
+				}
+				if err := s.settle(state.context(stream.Context()), state, usage); err != nil {
+					return err
+				}
+				if state.providerSpan != nil {
+					state.providerSpan.End()
+					state.providerSpan = nil
 				}
 			}
 			if err := stream.Send(responseBodyContinue()); err != nil {
@@ -144,6 +172,13 @@ func (s *Server) Process(stream extprocv3.ExternalProcessor_ProcessServer) error
 			return errors.New("unsupported ext_proc message")
 		}
 	}
+}
+
+func (s streamState) context(fallback context.Context) context.Context {
+	if s.traceContext != nil {
+		return s.traceContext
+	}
+	return fallback
 }
 
 func (s *Server) authorizeGatewayTransport(ctx context.Context) (string, error) {
@@ -167,13 +202,14 @@ func (s *Server) authorizeGatewayTransport(ctx context.Context) (string, error) 
 }
 
 type admitResult struct {
-	Decision           string               `json:"decision"`
-	ReasonCode         string               `json:"reason_code"`
-	SelectedDeployment string               `json:"selected_deployment"`
-	ProviderAttemptID  string               `json:"provider_attempt_id"`
-	ApprovalRef        string               `json:"approval_ref,omitempty"`
-	PricingVersion     string               `json:"pricing_version"`
-	RouteSnapshot      *govar.RouteSnapshot `json:"route_snapshot"`
+	Decision             string                                `json:"decision"`
+	ReasonCode           string                                `json:"reason_code"`
+	SelectedDeployment   string                                `json:"selected_deployment"`
+	ProviderAttemptID    string                                `json:"provider_attempt_id"`
+	ApprovalRef          string                                `json:"approval_ref,omitempty"`
+	PricingVersion       string                                `json:"pricing_version"`
+	RouteSnapshot        *govar.RouteSnapshot                  `json:"route_snapshot"`
+	SettlementUsageBases []aiopsv1alpha1.ProviderBillableBasis `json:"settlement_usage_bases"`
 }
 
 func (s *Server) admitAndClaim(ctx context.Context, state *streamState) (admitResult, error) {
@@ -198,6 +234,33 @@ func (s *Server) admitAndClaim(ctx context.Context, state *streamState) (admitRe
 		"budget_policy_name": binding.BudgetPolicy, "routing_policy_name": binding.RoutingPolicy,
 		"sensitive_data": binding.Sensitive, "allowed_zones": binding.AllowedZones,
 		"input_tokens": int64(0), "input_tokens_exact": false, "max_output_tokens": maxOutput}
+	var chargeBounds []govarpricing.UsageQuantity
+	for _, mapping := range []struct {
+		field string
+		basis aiopsv1alpha1.ProviderBillableBasis
+	}{
+		{"max_cached_input_tokens", aiopsv1alpha1.ProviderBasisCachedInputTokens}, {"max_reasoning_tokens", aiopsv1alpha1.ProviderBasisReasoningTokens},
+		{"max_tool_calls", aiopsv1alpha1.ProviderBasisToolCall}, {"max_media_units", aiopsv1alpha1.ProviderBasisMediaUnit},
+		{"timeout_seconds", aiopsv1alpha1.ProviderBasisBillableSecond}, {"max_retry_attempts", aiopsv1alpha1.ProviderBasisRetryAttempt},
+	} {
+		if raw, exists := payload[mapping.field]; exists {
+			chargeBounds = append(chargeBounds, govarpricing.UsageQuantity{Basis: mapping.basis, Quantity: int64Value(raw)})
+		}
+	}
+	if raw, exists := payload["cancellation_possible"]; exists {
+		possible, ok := raw.(bool)
+		if !ok {
+			return admitResult{}, errors.New("cancellation_possible must be boolean")
+		}
+		q := int64(0)
+		if possible {
+			q = 1
+		}
+		chargeBounds = append(chargeBounds, govarpricing.UsageQuantity{Basis: aiopsv1alpha1.ProviderBasisCancellation, Quantity: q})
+	}
+	if len(chargeBounds) != 0 {
+		request["charge_bounds"] = chargeBounds
+	}
 	if approvalRef := strings.TrimSpace(state.headers["x-govar-approval-ref"]); approvalRef != "" {
 		request["approval_ref"] = approvalRef
 	}
@@ -209,12 +272,17 @@ func (s *Server) admitAndClaim(ctx context.Context, state *streamState) (admitRe
 		return result, fmt.Errorf("admission decision=%s reason=%s approval_ref=%s", result.Decision, result.ReasonCode, result.ApprovalRef)
 	}
 	state.attemptID = result.ProviderAttemptID
+	state.settlementBases = append([]aiopsv1alpha1.ProviderBillableBasis(nil), result.SettlementUsageBases...)
+	state.requestStartedAt = time.Now().UTC()
 	if result.RouteSnapshot == nil || result.SelectedDeployment != result.RouteSnapshot.ModelName || result.PricingVersion != result.RouteSnapshot.PricingVersion {
 		return result, errors.New("admission response route snapshot conflicts with top-level identity")
 	}
 	if err := govar.ValidateRouteSnapshot(*result.RouteSnapshot); err != nil {
 		return result, err
 	}
+	actuationContext, actuationSpan := otel.Tracer("github.com/imperium/ai-sovereign-finops-operator/gov-ar-ext-proc").Start(
+		ctx, "govar.route_actuation", trace.WithAttributes(attribute.String("govar.route_snapshot_hash", result.RouteSnapshot.SnapshotHash)))
+	defer actuationSpan.End()
 	route := RouteTarget{SelectedModel: result.RouteSnapshot.ModelName, ProviderDeployment: result.RouteSnapshot.ProviderDeployment,
 		Cluster: result.RouteSnapshot.Cluster, Authority: result.RouteSnapshot.Authority, PathMode: result.RouteSnapshot.PathMode,
 		SnapshotHash: result.RouteSnapshot.SnapshotHash}
@@ -228,9 +296,17 @@ func (s *Server) admitAndClaim(ctx context.Context, state *streamState) (admitRe
 		return result, err
 	}
 	state.route, state.requestBody = route, rewritten
-	if err := s.dispatch(ctx, *state, "claim", "CLAIMED"); err != nil {
+	trace.SpanFromContext(ctx).SetAttributes(
+		attribute.String("govar.decision", result.Decision),
+		attribute.String("govar.reason_code", result.ReasonCode),
+		attribute.String("govar.route_snapshot_hash", state.routeSnapshotHash),
+	)
+	if err := s.dispatch(actuationContext, *state, "claim", "CLAIMED"); err != nil {
 		return result, err
 	}
+	state.traceContext, state.providerSpan = otel.Tracer("github.com/imperium/ai-sovereign-finops-operator/gov-ar-ext-proc").Start(
+		ctx, "govar.provider_attempt", trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(attribute.String("govar.route_snapshot_hash", state.routeSnapshotHash)))
 	return result, nil
 }
 
@@ -306,14 +382,34 @@ func (s *Server) dispatch(ctx context.Context, state streamState, suffix, status
 func (s *Server) settle(ctx context.Context, state streamState, usage usageSummary) error {
 	return s.post(ctx, state, "/v1/settle", map[string]any{"request_id": state.requestID, "settlement_id": state.requestID + ":extproc:settle",
 		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "provider_attempt_id": state.attemptID, "actual_cost_micros": 0,
-		"actual_input_tokens": usage.Input, "actual_output_tokens": usage.Output, "usage_version": 1, "final": true}, nil)
+		"usage": usage.Quantities, "usage_version": 1, "final": true}, nil)
 }
 func (s *Server) cancel(ctx context.Context, state streamState, reason string) error {
 	return s.post(ctx, state, "/v1/cancel", map[string]any{"request_id": state.requestID, "event_id": state.requestID + ":extproc:cancel:" + reason,
 		"tenant_id": state.binding.TenantID, "workload_uid": state.binding.WorkloadUID, "provider_attempt_id": state.attemptID, "reason": reason}, nil)
 }
 
-func (s *Server) post(ctx context.Context, state streamState, path string, payload any, out any) error {
+func (s *Server) post(ctx context.Context, state streamState, path string, payload any, out any) (err error) {
+	spanName := "govar.ledger_request"
+	switch path {
+	case "/v1/admit":
+		spanName = "govar.admission_request"
+	case "/v1/dispatch":
+		spanName = "govar.dispatch_transition"
+	case "/v1/settle":
+		spanName = "govar.settlement"
+	case "/v1/cancel":
+		spanName = "govar.cancellation"
+	}
+	ctx, span := otel.Tracer("github.com/imperium/ai-sovereign-finops-operator/gov-ar-ext-proc").Start(
+		ctx, spanName, trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("http.route", path)))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "ledger request failed")
+		}
+		span.End()
+	}()
 	body, _ := json.Marshal(payload)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(s.AdmissionURL, "/")+path, bytes.NewReader(body))
 	if err != nil {
@@ -332,6 +428,7 @@ func (s *Server) post(ctx context.Context, state streamState, path string, paylo
 	req.Header.Set("X-GOVAR-Namespace", namespace)
 	req.Header.Set("X-GOVAR-Timestamp", timestamp)
 	req.Header.Set("X-GOVAR-Signature", fmt.Sprintf("%x", mac.Sum(nil)))
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 	client := s.HTTPClient
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
@@ -341,6 +438,7 @@ func (s *Server) post(ctx context.Context, state streamState, path string, paylo
 		return err
 	}
 	defer response.Body.Close()
+	span.SetAttributes(attribute.Int("http.response.status_code", response.StatusCode))
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		raw, _ := io.ReadAll(io.LimitReader(response.Body, 1024))
 		return fmt.Errorf("%s returned %d: %s", path, response.StatusCode, strings.TrimSpace(string(raw)))
@@ -397,10 +495,33 @@ func headerMap(m *corev3.HeaderMap) map[string]string {
 	}
 	return out
 }
-func headerContinue(clear bool) *extprocv3.ProcessingResponse {
-	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_RequestHeaders{RequestHeaders: &extprocv3.HeadersResponse{Response: &extprocv3.CommonResponse{Status: extprocv3.CommonResponse_CONTINUE, ClearRouteCache: clear}}}}
+func headerContinue(clear bool, ctx context.Context) *extprocv3.ProcessingResponse {
+	common := &extprocv3.CommonResponse{Status: extprocv3.CommonResponse_CONTINUE, ClearRouteCache: clear}
+	if headers := traceHeaderOptions(ctx); len(headers) != 0 {
+		common.HeaderMutation = &extprocv3.HeaderMutation{SetHeaders: headers}
+	}
+	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_RequestHeaders{RequestHeaders: &extprocv3.HeadersResponse{Response: common}}}
 }
-func bodyContinue(clear bool, route RouteTarget, body []byte) *extprocv3.ProcessingResponse {
+
+func traceHeaderOptions(ctx context.Context) []*corev3.HeaderValueOption {
+	carrier := propagation.MapCarrier{}
+	// Inject only the W3C trace context. Arbitrary baggage is deliberately not
+	// copied across the governance boundary because it may contain unbounded or
+	// identity-bearing caller data.
+	propagation.TraceContext{}.Inject(ctx, carrier)
+	if traceparent := carrier.Get("traceparent"); traceparent != "" {
+		set := func(key, value string) *corev3.HeaderValueOption {
+			return &corev3.HeaderValueOption{Header: &corev3.HeaderValue{Key: key, RawValue: []byte(value)}, AppendAction: corev3.HeaderValueOption_OVERWRITE_IF_EXISTS_OR_ADD}
+		}
+		headers := []*corev3.HeaderValueOption{set("traceparent", traceparent)}
+		if tracestate := carrier.Get("tracestate"); tracestate != "" {
+			headers = append(headers, set("tracestate", tracestate))
+		}
+		return headers
+	}
+	return nil
+}
+func bodyContinue(clear bool, route RouteTarget, body []byte, ctx context.Context) *extprocv3.ProcessingResponse {
 	common := &extprocv3.CommonResponse{Status: extprocv3.CommonResponse_CONTINUE, ClearRouteCache: clear}
 	if route.SelectedModel != "" {
 		set := func(key, value string) *corev3.HeaderValueOption {
@@ -411,6 +532,7 @@ func bodyContinue(clear bool, route RouteTarget, body []byte) *extprocv3.Process
 			set("x-govar-route-snapshot-hash", route.SnapshotHash),
 			set("content-length", strconv.Itoa(len(body))),
 		}}
+		common.HeaderMutation.SetHeaders = append(common.HeaderMutation.SetHeaders, traceHeaderOptions(ctx)...)
 		common.BodyMutation = &extprocv3.BodyMutation{Mutation: &extprocv3.BodyMutation_Body{Body: body}}
 	}
 	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_RequestBody{RequestBody: &extprocv3.BodyResponse{Response: common}}}
@@ -422,21 +544,26 @@ func responseBodyContinue() *extprocv3.ProcessingResponse {
 	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_ResponseBody{ResponseBody: &extprocv3.BodyResponse{Response: &extprocv3.CommonResponse{Status: extprocv3.CommonResponse_CONTINUE}}}}
 }
 func immediate(status int, body string) *extprocv3.ProcessingResponse {
-	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_ImmediateResponse{ImmediateResponse: &extprocv3.ImmediateResponse{Status: &typev3.HttpStatus{Code: typev3.StatusCode(status)}, Body: body, Details: "govar_ext_proc_denied"}}}
+	return &extprocv3.ProcessingResponse{Response: &extprocv3.ProcessingResponse_ImmediateResponse{ImmediateResponse: &extprocv3.ImmediateResponse{Status: &typev3.HttpStatus{Code: typev3.StatusCode(status)}, Body: []byte(body), Details: "govar_ext_proc_denied"}}}
 }
 
-type usageSummary struct{ Input, Output int64 }
+type usageSummary struct{ Quantities []govarpricing.UsageQuantity }
 
-func parseUsage(body []byte) (usageSummary, bool) {
+func parseUsage(body []byte, required []aiopsv1alpha1.ProviderBillableBasis, startedAt, finishedAt time.Time) (usageSummary, bool) {
 	var raw struct {
-		Usage *map[string]json.RawMessage `json:"usage"`
+		Usage   *map[string]json.RawMessage `json:"usage"`
+		Choices []struct {
+			Message struct {
+				ToolCalls []json.RawMessage `json:"tool_calls"`
+			} `json:"message"`
+		} `json:"choices"`
 	}
-	if json.Unmarshal(body, &raw) != nil || raw.Usage == nil {
+	if json.Unmarshal(body, &raw) != nil {
 		return usageSummary{}, false
 	}
-	read := func(keys ...string) (int64, bool) {
+	read := func(m map[string]json.RawMessage, keys ...string) (int64, bool) {
 		for _, k := range keys {
-			if v, ok := (*raw.Usage)[k]; ok {
+			if v, ok := m[k]; ok {
 				var n int64
 				if json.Unmarshal(v, &n) == nil && n >= 0 {
 					return n, true
@@ -446,9 +573,75 @@ func parseUsage(body []byte) (usageSummary, bool) {
 		}
 		return 0, false
 	}
-	in, ok1 := read("prompt_tokens", "input_tokens")
-	out, ok2 := read("completion_tokens", "output_tokens")
-	return usageSummary{in, out}, ok1 && ok2
+	usageMap := map[string]json.RawMessage{}
+	if raw.Usage != nil {
+		usageMap = *raw.Usage
+	}
+	detail := func(keys ...string) (int64, bool) {
+		for _, key := range keys {
+			value, ok := usageMap[key]
+			if !ok {
+				continue
+			}
+			var nested map[string]json.RawMessage
+			if json.Unmarshal(value, &nested) != nil {
+				return 0, false
+			}
+			if n, ok := read(nested, "cached_tokens", "reasoning_tokens"); ok {
+				return n, true
+			}
+		}
+		return 0, false
+	}
+	input, inputOK := read(usageMap, "prompt_tokens", "input_tokens")
+	output, outputOK := read(usageMap, "completion_tokens", "output_tokens")
+	cached, cachedOK := detail("prompt_tokens_details", "input_tokens_details")
+	reasoning, reasoningOK := detail("completion_tokens_details", "output_tokens_details")
+	requiredSet := map[aiopsv1alpha1.ProviderBillableBasis]bool{}
+	for _, basis := range required {
+		requiredSet[basis] = true
+	}
+	if requiredSet[aiopsv1alpha1.ProviderBasisCachedInputTokens] && inputOK && cachedOK {
+		if cached > input {
+			return usageSummary{}, false
+		}
+		input -= cached
+	}
+	if requiredSet[aiopsv1alpha1.ProviderBasisReasoningTokens] && outputOK && reasoningOK {
+		if reasoning > output {
+			return usageSummary{}, false
+		}
+		output -= reasoning
+	}
+	var quantities []govarpricing.UsageQuantity
+	appendIf := func(b aiopsv1alpha1.ProviderBillableBasis, q int64, ok bool) {
+		if requiredSet[b] && ok {
+			quantities = append(quantities, govarpricing.UsageQuantity{Basis: b, Quantity: q})
+		}
+	}
+	appendIf(aiopsv1alpha1.ProviderBasisInputTokens, input, inputOK)
+	appendIf(aiopsv1alpha1.ProviderBasisCachedInputTokens, cached, cachedOK)
+	appendIf(aiopsv1alpha1.ProviderBasisOutputTokens, output, outputOK)
+	appendIf(aiopsv1alpha1.ProviderBasisReasoningTokens, reasoning, reasoningOK)
+	appendIf(aiopsv1alpha1.ProviderBasisRequest, 1, true)
+	toolCalls := int64(0)
+	for _, choice := range raw.Choices {
+		toolCalls += int64(len(choice.Message.ToolCalls))
+	}
+	appendIf(aiopsv1alpha1.ProviderBasisToolCall, toolCalls, true)
+	secondsOK := !startedAt.IsZero() && !finishedAt.Before(startedAt)
+	seconds := int64(0)
+	if secondsOK {
+		duration := finishedAt.Sub(startedAt)
+		seconds = int64((duration + time.Second - 1) / time.Second)
+	}
+	appendIf(aiopsv1alpha1.ProviderBasisBillableSecond, seconds, secondsOK)
+	appendIf(aiopsv1alpha1.ProviderBasisCancellation, 0, true)
+	appendIf(aiopsv1alpha1.ProviderBasisRetryAttempt, 0, true)
+	// Media-unit usage has no portable authoritative response field; it remains
+	// absent so settlement retains that component's residual hold.
+	sort.Slice(quantities, func(i, j int) bool { return quantities[i].Basis < quantities[j].Basis })
+	return usageSummary{Quantities: quantities}, raw.Usage != nil
 }
 func int64Value(v any) int64 {
 	switch n := v.(type) {

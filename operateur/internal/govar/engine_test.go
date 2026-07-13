@@ -3,8 +3,10 @@ package govar
 import (
 	"sync"
 	"testing"
+	"time"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -83,6 +85,42 @@ func TestEngineRejectsSettlementBeforeDispatchClaim(t *testing.T) {
 	assertLiability(t, engine.Liability(testTenant), 0, 3_600, 99_996_400, 1)
 }
 
+func TestMissingComponentUsageCannotFinalizeOrReleaseItsHold(t *testing.T) {
+	engine := NewEngine()
+	candidate := candidateForTest("gpt-fr", "test-pricing-v1")
+	candidate.PricingSnapshot.InapplicableBases = removeTestBasis(candidate.PricingSnapshot.InapplicableBases, aiopsv1alpha1.ProviderBasisCachedInputTokens)
+	maximum := int64(500)
+	candidate.PricingSnapshot.Charges = append(candidate.PricingSnapshot.Charges, aiopsv1alpha1.AIProviderNormalizedChargeStatus{Basis: aiopsv1alpha1.ProviderBasisCachedInputTokens, Applicability: aiopsv1alpha1.ProviderChargeProviderResponse, PriceMicrosPerUnit: 200_000, UnitDenominator: 1_000_000, SettlementUsageField: aiopsv1alpha1.ProviderBasisCachedInputTokens, MaximumQuantity: &maximum, DisjointUsage: true})
+	candidate.PricingSnapshot.SnapshotSHA256 = govarpricing.SnapshotDigest(candidate.PricingSnapshot)
+	admit := mustAdmit(t, engine, "missing-detail", testTenant, testWorkload, []Candidate{candidate})
+	if _, _, err := engine.Dispatch(dispatchRequest("missing-detail", "claim-detail", admit.ProviderAttemptID, DispatchClaimed, testTenant, testWorkload)); err != nil {
+		t.Fatal(err)
+	}
+	req := settleRequest("missing-detail", "settle-detail", 2_000, 1, true, testTenant, testWorkload)
+	res, code, err := engine.Settle(req)
+	if err != nil || code != ReasonProvisionalSettlement || res.Finalized || len(res.MissingUsageBases) != 1 || res.MissingUsageBases[0] != aiopsv1alpha1.ProviderBasisCachedInputTokens || res.ResidualHoldMicros == 0 {
+		t.Fatalf("incomplete usage released hold: res=%+v code=%s err=%v", res, code, err)
+	}
+}
+
+func TestSettlementUsesFrozenPricingAndFlagsPerComponentBoundViolation(t *testing.T) {
+	engine := NewEngine()
+	candidate := candidateForTest("gpt-fr", "test-pricing-v1")
+	admit := mustAdmit(t, engine, "frozen-price", testTenant, testWorkload, []Candidate{candidate})
+	candidate.PricingSnapshot.Charges[0].PriceMicrosPerUnit = 9_000_000
+	candidate.PricingSnapshot.SnapshotSHA256 = govarpricing.SnapshotDigest(candidate.PricingSnapshot)
+	if _, _, err := engine.Dispatch(dispatchRequest("frozen-price", "claim-frozen", admit.ProviderAttemptID, DispatchClaimed, testTenant, testWorkload)); err != nil {
+		t.Fatal(err)
+	}
+	req := SettleRequest{RequestID: "frozen-price", SettlementID: "over-component", TenantID: testTenant, WorkloadUID: testWorkload, ProviderAttemptID: admit.ProviderAttemptID,
+		Usage: []govarpricing.UsageQuantity{{Basis: aiopsv1alpha1.ProviderBasisInputTokens, Quantity: 1_001}, {Basis: aiopsv1alpha1.ProviderBasisOutputTokens, Quantity: 0}}, UsageVersion: 1,
+		AuthenticatedTenantID: testTenant, AuthenticatedWorkloadUID: testWorkload}
+	res, code, err := engine.Settle(req)
+	if err != nil || code != ReasonReservationExceeded || !res.ComponentBoundExceeded || res.ProvisionalCostMicros != 401 || len(res.ActualComponents) != 2 {
+		t.Fatalf("bound violation=(%+v,%s,%v)", res, code, err)
+	}
+}
+
 func TestEngineFailsClosedOnBudgetWindowChangeWithExposure(t *testing.T) {
 	engine := NewEngine()
 	mustAdmit(t, engine, "window-1", testTenant, testWorkload, defaultCandidates())
@@ -109,6 +147,21 @@ func TestApprovalIsPolicyDerivedNotCallerControlled(t *testing.T) {
 	response, err = engine.Admit(admitRequest("policy-approval", testTenant, testWorkload), defaultBudget(), routing, defaultCandidates())
 	if err != nil || response.Decision != DecisionRequireApproval {
 		t.Fatalf("policy approval not enforced: %+v %v", response, err)
+	}
+}
+
+func TestLedgerResponsesDoNotFabricateTraceIdentity(t *testing.T) {
+	engine := NewEngine()
+	admitted, err := engine.Admit(admitRequest("trace-boundary", testTenant, testWorkload), defaultBudget(), defaultRouting(), defaultCandidates())
+	if err != nil || admitted.Decision != DecisionAdmit {
+		t.Fatalf("admit=(%+v,%v)", admitted, err)
+	}
+	if admitted.TraceID != "" {
+		t.Fatalf("ledger request identifier was exposed as trace identity: %q", admitted.TraceID)
+	}
+	rejected := decisionResponse("not-a-trace", DecisionAbstain, ReasonNoCandidate, defaultBudget(), defaultRouting())
+	if rejected.TraceID != "" {
+		t.Fatalf("decision fabricated trace identity: %q", rejected.TraceID)
 	}
 }
 
@@ -310,10 +363,24 @@ func dispatchRequest(requestID, eventID, attemptID string, status DispatchStatus
 }
 
 func settleRequest(requestID, eventID string, cost MoneyMicros, version int64, final bool, tenant, workload string) SettleRequest {
+	input, output := usageForTestCost(cost)
 	return SettleRequest{RequestID: requestID, SettlementID: eventID, TenantID: tenant, WorkloadUID: workload,
 		ProviderAttemptID: requestID + ":attempt:1",
-		ActualCostMicros:  cost, UsageVersion: version, Final: final,
+		Usage:             []govarpricing.UsageQuantity{{Basis: aiopsv1alpha1.ProviderBasisInputTokens, Quantity: input}, {Basis: aiopsv1alpha1.ProviderBasisOutputTokens, Quantity: output}}, UsageVersion: version, Final: final,
 		AuthenticatedTenantID: tenant, AuthenticatedWorkloadUID: workload}
+}
+
+func usageForTestCost(cost MoneyMicros) (int64, int64) {
+	for output := int64(0); output <= 2_000; output++ {
+		outputCost, _ := costFromPriceMicros(0, 1_600_000, 0, output)
+		for input := int64(0); input <= 1_000; input++ {
+			inputCost, _ := costFromPriceMicros(400_000, 0, input, 0)
+			if inputCost+outputCost == cost {
+				return input, output
+			}
+		}
+	}
+	panic("test cost cannot be represented within frozen component bounds")
 }
 
 func cancelRequest(requestID, eventID string, authoritative bool, tenant, workload string) CancelRequest {
@@ -328,9 +395,37 @@ func defaultCandidates() []Candidate {
 
 func candidateForTest(model, pricing string) Candidate {
 	snapshot := testRouteSnapshot(model, pricing)
+	pricingSnapshot := testPricingSnapshot(pricing)
 	return Candidate{ModelRef: model, ProviderRef: "provider-test", ProviderType: "openai", InputPriceMicrosPerMillion: 400_000, OutputPriceMicrosPerMillion: 1_600_000,
-		PricingVersion: pricing, SnapshotVersion: snapshot.SnapshotHash, RouteSnapshot: snapshot, ContextWindow: 128_000,
-		QualityScore: 0.95, VerifiedOutputCap: true, Feasible: true}
+		PricingVersion: pricing, PricingSnapshot: pricingSnapshot, SnapshotVersion: snapshot.SnapshotHash, RouteSnapshot: snapshot, ContextWindow: 128_000,
+		QualityScore: 0.95, VerifiedOutputCap: true, VerifiedOutputCapTokens: 16_384, CapEvidenceDigest: testSHA("cap"), Feasible: true}
+}
+
+func testPricingSnapshot(version string) govarpricing.NormalizedPricingSnapshot {
+	now := metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
+	future := metav1.NewTime(time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC))
+	s := govarpricing.NormalizedPricingSnapshot{SpecGeneration: 1, Version: version, ObservedAt: now, ValidUntil: future,
+		Currency: "EUR", Completeness: aiopsv1alpha1.ProviderPricingComplete, AdapterVersion: govarpricing.CurrentAdapterVersion,
+		EvidenceMode: aiopsv1alpha1.ProviderEvidenceAdminAttested, EvidenceSHA256: testSHA("pricing"), SourceVersion: "synthetic-fixture-v1",
+		Charges: []aiopsv1alpha1.AIProviderNormalizedChargeStatus{
+			{Basis: aiopsv1alpha1.ProviderBasisInputTokens, Applicability: aiopsv1alpha1.ProviderChargeRequestDeclared, PriceMicrosPerUnit: 400_000, UnitDenominator: 1_000_000, SettlementUsageField: aiopsv1alpha1.ProviderBasisInputTokens, RequestBoundField: "input_tokens"},
+			{Basis: aiopsv1alpha1.ProviderBasisOutputTokens, Applicability: aiopsv1alpha1.ProviderChargeRequestDeclared, PriceMicrosPerUnit: 1_600_000, UnitDenominator: 1_000_000, SettlementUsageField: aiopsv1alpha1.ProviderBasisOutputTokens, RequestBoundField: "max_output_tokens"},
+		},
+		InapplicableBases: []aiopsv1alpha1.ProviderBillableBasis{aiopsv1alpha1.ProviderBasisCachedInputTokens, aiopsv1alpha1.ProviderBasisReasoningTokens, aiopsv1alpha1.ProviderBasisRequest, aiopsv1alpha1.ProviderBasisToolCall, aiopsv1alpha1.ProviderBasisMediaUnit, aiopsv1alpha1.ProviderBasisBillableSecond, aiopsv1alpha1.ProviderBasisCancellation, aiopsv1alpha1.ProviderBasisRetryAttempt}}
+	s.SnapshotSHA256 = govarpricing.SnapshotDigest(s)
+	return s
+}
+
+func testSHA(seed string) string { return eventPayloadHash("test-sha", seed) }
+
+func removeTestBasis(in []aiopsv1alpha1.ProviderBillableBasis, target aiopsv1alpha1.ProviderBillableBasis) []aiopsv1alpha1.ProviderBillableBasis {
+	var out []aiopsv1alpha1.ProviderBillableBasis
+	for _, basis := range in {
+		if basis != target {
+			out = append(out, basis)
+		}
+	}
+	return out
 }
 
 func testRouteSnapshot(model, pricing string) RouteSnapshot {
@@ -350,9 +445,60 @@ func defaultBudget() aiopsv1alpha1.AIBudgetPolicy {
 
 func defaultRouting() aiopsv1alpha1.AIRoutingPolicy {
 	now := metav1.Now()
-	return aiopsv1alpha1.AIRoutingPolicy{ObjectMeta: metav1.ObjectMeta{Name: "routing", Annotations: map[string]string{AnnotationReservationMethod: "strict_provider_cap"}}, Spec: aiopsv1alpha1.AIRoutingPolicySpec{
-		Objective: "cost", Guardrails: aiopsv1alpha1.AIRoutingPolicyGuardrails{RequireSovereigntyCompliance: true}},
+	return aiopsv1alpha1.AIRoutingPolicy{ObjectMeta: metav1.ObjectMeta{Name: "routing"}, Spec: aiopsv1alpha1.AIRoutingPolicySpec{
+		Objective: "cost", Guardrails: aiopsv1alpha1.AIRoutingPolicyGuardrails{RequireSovereigntyCompliance: true},
+		GOVAR: &aiopsv1alpha1.GOVARRoutingPolicySpec{Reservation: aiopsv1alpha1.GOVARReservationPolicy{Method: aiopsv1alpha1.GOVARReservationStrictProviderCap},
+			Drift: aiopsv1alpha1.GOVARDriftPolicy{Detector: "coverage-gap", ThresholdPPB: 10_000_000, Fallback: "strict_provider_cap", RevalidationMinimumSupport: 1}}},
 		Status: aiopsv1alpha1.AIRoutingPolicyStatus{LastEvaluatedAt: &now, Conditions: []metav1.Condition{{Type: aiopsv1alpha1.ConditionReady, Status: metav1.ConditionTrue}}}}
+}
+
+func typedEstimateRouting(method aiopsv1alpha1.GOVARReservationMethod, value, margin int64) aiopsv1alpha1.AIRoutingPolicy {
+	routing := defaultRouting()
+	routing.Spec.GOVAR.Reservation.Method = method
+	switch method {
+	case aiopsv1alpha1.GOVARReservationMean:
+		routing.Spec.GOVAR.Reservation.MeanOutputTokens = &value
+	case aiopsv1alpha1.GOVARReservationFixedMargin:
+		routing.Spec.GOVAR.Reservation.MeanOutputTokens = &value
+		routing.Spec.GOVAR.Reservation.MarginOutputTokens = &margin
+	case aiopsv1alpha1.GOVARReservationFixedQuantile:
+		routing.Spec.GOVAR.Reservation.FixedQuantileOutputTokens = &value
+	}
+	return routing
+}
+
+func typedAdaptiveRouting(method aiopsv1alpha1.GOVARReservationMethod, upper int64, at time.Time, candidate Candidate) aiopsv1alpha1.AIRoutingPolicy {
+	routing := defaultRouting()
+	routing.Generation = 7
+	routing.Status.ObservedGeneration = 7
+	routing.Spec.GOVAR.Reservation.Method = method
+	cal := &aiopsv1alpha1.GOVARCalibrationPolicy{ArtifactRef: "artifact-v1", ArtifactSHA256: eventPayloadHash("artifact"),
+		CalibrationDataRef: "calibration", CalibrationInputSHA256: eventPayloadHash("calibration-input"), MonitoringDataRef: "monitoring",
+		Version: "v1", FeatureSchemaVersion: "features-v1", PriceRegimeSHA256: candidate.PricingSnapshot.SnapshotSHA256,
+		CapRegimeSHA256: candidate.CapEvidenceDigest, ProducerSoftwareSHA256: eventPayloadHash("software"), CoverageTargetPPB: 990_000_000,
+		MinimumSupport: 100, MaxAgeSeconds: 3600}
+	routing.Spec.GOVAR.Calibration = cal
+	routing.Spec.GOVAR.Drift = aiopsv1alpha1.GOVARDriftPolicy{Detector: "coverage-gap", ThresholdPPB: 10_000_000,
+		Fallback: "strict_provider_cap", RevalidationMinimumSupport: 100}
+	routing.Status.GOVAR = &aiopsv1alpha1.GOVARRoutingPolicyStatus{
+		Calibration: &aiopsv1alpha1.GOVARCalibrationStatus{ArtifactRef: cal.ArtifactRef, Version: cal.Version,
+			ArtifactSHA256: cal.ArtifactSHA256, CalibrationInputSHA256: cal.CalibrationInputSHA256,
+			FeatureSchemaVersion: cal.FeatureSchemaVersion, PriceRegimeSHA256: cal.PriceRegimeSHA256,
+			CapRegimeSHA256: cal.CapRegimeSHA256, ProducerSoftwareSHA256: cal.ProducerSoftwareSHA256,
+			CoverageTargetPPB: cal.CoverageTargetPPB, EmpiricalCoveragePPB: 995_000_000,
+			Support: 100, AdaptiveOutputTokens: upper, Valid: true,
+			CalibrationWindowStart: metav1.NewTime(at.Add(-30 * time.Minute)), CalibrationWindowEnd: metav1.NewTime(at.Add(-20 * time.Minute)), ObservedAt: metav1.NewTime(at)},
+		Drift: &aiopsv1alpha1.GOVARDriftStatus{Detected: false, ConservativeMode: false, Detector: "coverage-gap",
+			ThresholdPPB: 10_000_000, MonitoringInputSHA256: eventPayloadHash("monitoring-input"), Support: 100,
+			EmpiricalCoveragePPB: 995_000_000, MonitoringWindowStart: metav1.NewTime(at.Add(-10 * time.Minute)),
+			MonitoringWindowEnd: metav1.NewTime(at.Add(-time.Minute)), ObservedAt: metav1.NewTime(at.Add(-time.Minute))}}
+	return routing
+}
+
+func bindTypedCohort(routing *aiopsv1alpha1.AIRoutingPolicy, c FrozenCohort) {
+	routing.Spec.GOVAR.Cohort = &aiopsv1alpha1.GOVARCohortPolicy{RegistryRef: c.RegistryDigest, Size: c.Size,
+		OpportunitySetHash: c.DataHash, WeightsHash: c.ConfigHash, FrozenAt: metav1.NewTime(c.FrozenAt)}
+	routing.Spec.GOVAR.Risk = &aiopsv1alpha1.GOVARRiskPolicy{TenantRiskPPB: c.TenantRiskPPB, Allocation: "fixed-weights"}
 }
 
 func assertLiability(t *testing.T, got LiabilityResponse, settled, held, available MoneyMicros, active int) {

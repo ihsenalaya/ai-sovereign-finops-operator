@@ -11,6 +11,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govaraudit"
 )
 
 func (e *PostgresEngine) RegisterFrozenCohort(ctx context.Context, cohort FrozenCohort) error {
@@ -60,6 +62,17 @@ func (e *PostgresEngine) registerFrozenCohortOnce(ctx context.Context, c FrozenC
 		if _, err = tx.Exec(ctx, `INSERT INTO govar_frozen_cohort_slots(tenant_id,cohort_id,slot_index,request_id,opportunity_digest,weight_ppb) VALUES($1,$2,$3,$4,$5,$6)`, c.TenantID, c.CohortID, s.Index, s.RequestID, s.OpportunityDigest, s.WeightPPB); err != nil {
 			return err
 		}
+	}
+	after, err := canonicalAuditDigest(c)
+	if err != nil {
+		return err
+	}
+	if err := appendAuditTx(ctx, tx, govaraudit.Entry{TenantID: c.TenantID,
+		EventID:   "cohort-registration:" + c.TenantID + ":" + c.CohortID + ":" + c.RegistryDigest,
+		EventKind: "COHORT_REGISTRATION", PayloadSHA256: c.RegistryDigest,
+		ActorClass: govaraudit.ActorRegistry, Reason: "cohort_registered",
+		AfterStateSHA256: after, CohortSHA256: c.RegistryDigest, SoftwareSHA256: c.SoftwareHash}); err != nil {
+		return err
 	}
 	return tx.Commit(ctx)
 }
@@ -152,6 +165,10 @@ func (e *PostgresEngine) adjustBudgetOnce(ctx context.Context, a BudgetAdjustmen
 	if err = advanceTenantWindowTx(ctx, tx, a.TenantID, tenant, e.now()); err != nil {
 		return err
 	}
+	before, err := tenantAuditDigest(tenant)
+	if err != nil {
+		return err
+	}
 	result, err := tx.Exec(ctx, `UPDATE govar_tenants SET budget_micros=$3,carried_adjustment_micros=carried_adjustment_micros-$4,updated_at=NOW() WHERE tenant_id=$1 AND current_window_id=$2 AND carried_adjustment_micros >= $4`, a.TenantID, a.WindowID, a.NewBudgetMicros, a.DebtPaymentMicros)
 	if err != nil {
 		return err
@@ -160,6 +177,19 @@ func (e *PostgresEngine) adjustBudgetOnce(ctx context.Context, a BudgetAdjustmen
 		return errors.New("tenant/window not found or debt payment exceeds carried debt")
 	}
 	if _, err = tx.Exec(ctx, `INSERT INTO govar_budget_adjustments(adjustment_id,tenant_id,window_id,new_budget_micros,debt_payment_micros,authorized_by,reason,payload_hash,authority_key_id,authority_proof,approved_at,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, a.AdjustmentID, a.TenantID, a.WindowID, a.NewBudgetMicros, a.DebtPaymentMicros, a.AuthorizedBy, a.Reason, payload, a.AuthorityKeyID, a.AuthorityProof, a.ApprovedAt, a.ExpiresAt); err != nil {
+		return err
+	}
+	tenant.BudgetMicros = a.NewBudgetMicros
+	tenant.CarriedAdjustmentMicros -= a.DebtPaymentMicros
+	after, err := tenantAuditDigest(tenant)
+	if err != nil {
+		return err
+	}
+	if err := appendAuditTx(ctx, tx, govaraudit.Entry{TenantID: a.TenantID,
+		EventID: "budget-adjustment:" + a.AdjustmentID, EventKind: "BUDGET_ADJUSTMENT",
+		PayloadSHA256: payload, ActorClass: govaraudit.ActorAuthority,
+		Reason: "budget_adjusted", BeforeStateSHA256: before, AfterStateSHA256: after,
+		SoftwareSHA256: e.cohortSoftwareHash}); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
@@ -207,6 +237,10 @@ func (e *PostgresEngine) reconcileExpiredOnce(ctx context.Context, at time.Time)
 		if err != nil {
 			return nil, err
 		}
+		before, err := reservationAuditDigest(r)
+		if err != nil {
+			return nil, err
+		}
 		t, err := loadTenantTx(ctx, tx, r.TenantID)
 		if err != nil {
 			return nil, err
@@ -235,6 +269,9 @@ func (e *PostgresEngine) reconcileExpiredOnce(ctx context.Context, at time.Time)
 			return nil, err
 		}
 		if err := storeReservationTx(ctx, tx, r); err != nil {
+			return nil, err
+		}
+		if err := appendRequestAuditTx(ctx, tx, r, r.LastTransitionEventID, "EXPIRY", payload, govaraudit.ActorReconciler, r.LastReasonCode, before, e.cohortSoftwareHash, ""); err != nil {
 			return nil, err
 		}
 		if _, err := tx.Exec(ctx, `UPDATE govar_tenants SET reserved_micros=$2,active_reservations=$3,updated_at=NOW() WHERE tenant_id=$1`, r.TenantID, t.ReservedMicros, t.ActiveReservations); err != nil {

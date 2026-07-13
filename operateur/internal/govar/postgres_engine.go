@@ -2,6 +2,7 @@ package govar
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -12,10 +13,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govaraudit"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 )
 
 type PostgresEngine struct {
 	pool               *pgxpool.Pool
+	databaseURL        string
 	now                func() time.Time
 	authorityKeyID     string
 	authorityKey       []byte
@@ -30,8 +34,78 @@ func NewPostgresEngine(ctx context.Context, databaseURL string) (*PostgresEngine
 	if err != nil {
 		return nil, err
 	}
-	engine := &PostgresEngine{pool: pool, now: time.Now}
+	engine := &PostgresEngine{pool: pool, databaseURL: databaseURL, now: time.Now}
 	if err := engine.initSchema(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
+	// Schema ownership and trigger ownership remain on the migration connection.
+	// Every operational connection immediately assumes the privilege-limited
+	// runtime role, which cannot update/delete/truncate audit events.
+	runtimeConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		pool.Close()
+		return nil, err
+	}
+	priorAfterConnect := runtimeConfig.AfterConnect
+	runtimeConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		if priorAfterConnect != nil {
+			if err := priorAfterConnect(ctx, conn); err != nil {
+				return err
+			}
+		}
+		_, err := conn.Exec(ctx, `SET ROLE govar_runtime`)
+		return err
+	}
+	runtimePool, err := pgxpool.NewWithConfig(ctx, runtimeConfig)
+	if err != nil {
+		pool.Close()
+		return nil, err
+	}
+	if err := runtimePool.Ping(ctx); err != nil {
+		runtimePool.Close()
+		pool.Close()
+		return nil, err
+	}
+	pool.Close()
+	engine.pool = runtimePool
+	return engine, nil
+}
+
+// OpenPostgresEngine opens an already-migrated ledger using a distinct,
+// least-privilege runtime login. It never creates, alters, or migrates schema.
+// The login must be a member of govar_runtime, must not own the audit table,
+// and must not be a superuser or hold audit mutation privileges. Production
+// services must use this constructor; NewPostgresEngine is the explicit
+// bootstrap/test helper that owns schema initialization.
+func OpenPostgresEngine(ctx context.Context, databaseURL, softwareSHA256 string) (*PostgresEngine, error) {
+	if strings.TrimSpace(databaseURL) == "" {
+		return nil, errors.New("database url is required")
+	}
+	config, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, err
+	}
+	priorAfterConnect := config.AfterConnect
+	config.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		if priorAfterConnect != nil {
+			if err := priorAfterConnect(ctx, conn); err != nil {
+				return err
+			}
+		}
+		_, err := conn.Exec(ctx, `SET ROLE govar_runtime`)
+		return err
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+	engine := &PostgresEngine{pool: pool, now: time.Now}
+	if err := engine.ConfigureCohortRuntime(strings.TrimSpace(softwareSHA256)); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("configure runtime software digest: %w", err)
+	}
+	if err := engine.validateRuntimeSchema(ctx); err != nil {
 		pool.Close()
 		return nil, err
 	}
@@ -46,6 +120,69 @@ func (e *PostgresEngine) Close() {
 
 func (e *PostgresEngine) Ready(ctx context.Context) error { return e.pool.Ping(ctx) }
 
+func (e *PostgresEngine) validateRuntimeSchema(ctx context.Context) error {
+	var currentUser, sessionUser, auditOwner, layoutID string
+	var sessionSuperuser, sessionCreateRole, sessionCreateDB, sessionReplication, sessionBypassRLS, runtimeMember bool
+	var canSelect, canInsert, canUpdate, canDelete, canTruncate bool
+	err := e.pool.QueryRow(ctx, `
+SELECT current_user,
+       session_user,
+       pg_get_userbyid(c.relowner),
+	   COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=session_user),false),
+	   COALESCE((SELECT rolcreaterole FROM pg_roles WHERE rolname=session_user),false),
+	   COALESCE((SELECT rolcreatedb FROM pg_roles WHERE rolname=session_user),false),
+	   COALESCE((SELECT rolreplication FROM pg_roles WHERE rolname=session_user),false),
+	   COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname=session_user),false),
+       pg_has_role(session_user,'govar_runtime','MEMBER'),
+       has_table_privilege(current_user,'govar_audit_events','SELECT'),
+       has_table_privilege(current_user,'govar_audit_events','INSERT'),
+       has_table_privilege(session_user,'govar_audit_events','UPDATE'),
+       has_table_privilege(session_user,'govar_audit_events','DELETE'),
+       has_table_privilege(session_user,'govar_audit_events','TRUNCATE'),
+       COALESCE((SELECT layout_id FROM govar_schema_metadata WHERE version=6),'')
+  FROM pg_class c
+ WHERE c.oid=to_regclass('govar_audit_events')`).Scan(
+		&currentUser, &sessionUser, &auditOwner, &sessionSuperuser, &sessionCreateRole,
+		&sessionCreateDB, &sessionReplication, &sessionBypassRLS, &runtimeMember,
+		&canSelect, &canInsert, &canUpdate, &canDelete, &canTruncate, &layoutID)
+	if err != nil {
+		return fmt.Errorf("validate runtime ledger identity/schema: %w", err)
+	}
+	if currentUser != "govar_runtime" || !runtimeMember {
+		return fmt.Errorf("runtime login %q is not operating as required govar_runtime role", sessionUser)
+	}
+	if sessionSuperuser || sessionCreateRole || sessionCreateDB || sessionReplication || sessionBypassRLS || sessionUser == auditOwner {
+		return fmt.Errorf("runtime login %q must be a distinct unprivileged login from migration/audit owner %q", sessionUser, auditOwner)
+	}
+	if !canSelect || !canInsert || canUpdate || canDelete || canTruncate {
+		return fmt.Errorf("runtime audit privileges invalid: select=%t insert=%t update=%t delete=%t truncate=%t", canSelect, canInsert, canUpdate, canDelete, canTruncate)
+	}
+	if layoutID != "govar-v6-transition-audit-20260713" {
+		return fmt.Errorf("runtime requires exact GOV-AR v6 layout, got %q", layoutID)
+	}
+	var schemaOK bool
+	err = e.pool.QueryRow(ctx, `
+SELECT to_regclass('govar_tenants') IS NOT NULL
+   AND to_regclass('govar_reservations') IS NOT NULL
+   AND to_regclass('govar_outbox') IS NOT NULL
+   AND to_regclass('govar_inbox') IS NOT NULL
+   AND to_regclass('govar_audit_tenant_sequences') IS NOT NULL
+   AND EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='govar_audit_events'::regclass AND tgname='govar_audit_validate_append' AND tgenabled='O')
+   AND EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='govar_audit_events'::regclass AND tgname='govar_audit_no_mutation' AND tgenabled='O')
+   AND EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='govar_audit_events'::regclass AND tgname='govar_audit_no_truncate' AND tgenabled='O')
+   AND EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='calibration_artifact_sha256')`).Scan(&schemaOK)
+	if err != nil {
+		return fmt.Errorf("validate runtime ledger protections: %w", err)
+	}
+	if !schemaOK {
+		return errors.New("runtime GOV-AR v6 schema or audit protection identity mismatch")
+	}
+	if err := e.validateStoredRouteSnapshots(ctx); err != nil {
+		return err
+	}
+	return e.validateStoredTenantAudits(ctx)
+}
+
 func (e *PostgresEngine) initSchema(ctx context.Context) error {
 	// Fail closed rather than silently converting or zeroing legacy float state.
 	schema := `
@@ -58,8 +195,8 @@ BEGIN
   -- migration command so startup cannot silently mutate schema semantics.
   IF to_regclass('govar_schema_migrations') IS NOT NULL THEN
     EXECUTE 'SELECT COALESCE(MAX(version),0) FROM govar_schema_migrations' INTO recorded_version;
-	    IF recorded_version <> 4 THEN
-	      RAISE EXCEPTION 'existing GOV-AR schema version % is incompatible with v4; use reviewed clean migration', recorded_version;
+	    IF recorded_version <> 6 THEN
+	      RAISE EXCEPTION 'existing GOV-AR schema version % is incompatible with v6; use reviewed migration', recorded_version;
     END IF;
   ELSIF to_regclass('govar_tenants') IS NOT NULL
      OR to_regclass('govar_schema_metadata') IS NOT NULL
@@ -69,8 +206,10 @@ BEGIN
      OR to_regclass('govar_inbox') IS NOT NULL
      OR to_regclass('govar_budget_adjustments') IS NOT NULL
      OR to_regclass('govar_reconciliation_tasks') IS NOT NULL
-     OR to_regclass('govar_frozen_cohorts') IS NOT NULL
-     OR to_regclass('govar_frozen_cohort_slots') IS NOT NULL THEN
+	     OR to_regclass('govar_frozen_cohorts') IS NOT NULL
+	     OR to_regclass('govar_frozen_cohort_slots') IS NOT NULL
+	     OR to_regclass('govar_audit_events') IS NOT NULL
+	     OR to_regclass('govar_audit_tenant_sequences') IS NOT NULL THEN
     RAISE EXCEPTION 'unversioned existing GOV-AR schema is incompatible; use reviewed clean migration';
   END IF;
 END $$;
@@ -93,12 +232,18 @@ BEGIN
   END IF;
 END $$;
 DO $$ DECLARE ok BOOLEAN; BEGIN
-	 IF COALESCE((SELECT MAX(version) FROM govar_schema_migrations),0)=4 THEN
-  IF to_regclass('govar_schema_metadata') IS NULL THEN RAISE EXCEPTION 'v4 schema metadata missing'; END IF;
-  EXECUTE 'SELECT EXISTS(SELECT 1 FROM govar_schema_metadata WHERE version=4 AND layout_id=''govar-v4-route-snapshot-20260712'')' INTO ok;
-  IF NOT ok OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='route_snapshot_hash')
-    OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_frozen_cohorts' AND column_name='software_hash') THEN
-    RAISE EXCEPTION 'v4 schema layout identifier or route columns mismatch';
+	 IF COALESCE((SELECT MAX(version) FROM govar_schema_migrations),0)=6 THEN
+	  IF to_regclass('govar_schema_metadata') IS NULL THEN RAISE EXCEPTION 'v6 schema metadata missing'; END IF;
+	  EXECUTE 'SELECT EXISTS(SELECT 1 FROM govar_schema_metadata WHERE version=6 AND layout_id=''govar-v6-transition-audit-20260713'')' INTO ok;
+	  IF NOT ok OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='route_snapshot_hash')
+	    OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='pricing_snapshot_json')
+	    OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='reserved_components_json')
+	    OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='actual_components_json')
+	    OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='calibration_artifact_sha256')
+	    OR NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='govar_frozen_cohorts' AND column_name='software_hash')
+	    OR to_regclass('govar_audit_events') IS NULL
+	    OR to_regclass('govar_audit_tenant_sequences') IS NULL THEN
+	    RAISE EXCEPTION 'v6 schema layout identifier, complete liability columns, or transition audit mismatch';
   END IF;
   IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_reservation_tenant_fk' AND conrelid='govar_reservations'::regclass AND contype='f')
     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_outbox_request_fk' AND conrelid='govar_outbox'::regclass AND contype='f')
@@ -108,9 +253,13 @@ DO $$ DECLARE ok BOOLEAN; BEGIN
     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_model_generation_positive')
     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_provider_generation_positive')
     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_route_snapshot_hash_shape')
-    OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_pricing_compliance_hash_shape')
-    OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_route_path_mode_closed') THEN
-    RAISE EXCEPTION 'v4 schema constraint identity mismatch';
+	    OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_pricing_compliance_hash_shape')
+	    OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_route_path_mode_closed')
+	    OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_calibration_artifact_hash_shape')
+	    OR NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgname='govar_audit_validate_append' AND tgenabled='O')
+	    OR NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgname='govar_audit_no_mutation' AND tgenabled='O')
+	    OR NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgname='govar_audit_no_truncate' AND tgenabled='O') THEN
+	    RAISE EXCEPTION 'v6 schema constraint or audit protection identity mismatch';
   END IF;
  END IF;
 END $$;
@@ -183,6 +332,11 @@ CREATE TABLE IF NOT EXISTS govar_reservations (
 	pricing_compliance_hash TEXT NOT NULL CHECK(pricing_compliance_hash ~ '^[0-9a-f]{64}$'),route_binding_name TEXT NOT NULL,route_provider_deployment TEXT NOT NULL,
 	route_cluster TEXT NOT NULL,route_authority TEXT NOT NULL,route_path_mode TEXT NOT NULL CHECK(route_path_mode IN('openai-body','azure-deployment-path','anthropic-body','google-generate-path')),
 	route_snapshot_hash TEXT NOT NULL CHECK(route_snapshot_hash ~ '^[0-9a-f]{64}$'),
+	pricing_snapshot_json JSONB NOT NULL,reserved_components_json JSONB NOT NULL,
+	actual_components_json JSONB NOT NULL DEFAULT '[]'::jsonb,missing_usage_bases_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+	pricing_snapshot_sha256 TEXT NOT NULL CHECK(pricing_snapshot_sha256 ~ '^[0-9a-f]{64}$'),cap_evidence_sha256 TEXT NOT NULL CHECK(cap_evidence_sha256 ~ '^[0-9a-f]{64}$'),
+	component_bound_exceeded BOOLEAN NOT NULL DEFAULT FALSE,
+	calibration_artifact_sha256 TEXT NOT NULL DEFAULT '' CHECK(calibration_artifact_sha256='' OR calibration_artifact_sha256 ~ '^[0-9a-f]{64}$'),
   expiry TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -232,14 +386,27 @@ ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS route_cluster TEXT NOT N
 ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS route_authority TEXT NOT NULL DEFAULT '';
 ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS route_path_mode TEXT NOT NULL DEFAULT 'openai-body';
 ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS route_snapshot_hash TEXT NOT NULL DEFAULT '';
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS pricing_snapshot_json JSONB;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS reserved_components_json JSONB;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS actual_components_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS missing_usage_bases_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS pricing_snapshot_sha256 TEXT;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS cap_evidence_sha256 TEXT;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS component_bound_exceeded BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE govar_reservations ADD COLUMN IF NOT EXISTS calibration_artifact_sha256 TEXT NOT NULL DEFAULT '';
 DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM govar_reservations WHERE route_snapshot_hash !~ '^[0-9a-f]{64}$' OR pricing_compliance_hash !~ '^[0-9a-f]{64}$') THEN RAISE EXCEPTION 'unreconciled reservation route snapshot';END IF;
+ IF EXISTS(SELECT 1 FROM govar_reservations WHERE route_snapshot_hash !~ '^[0-9a-f]{64}$' OR pricing_compliance_hash !~ '^[0-9a-f]{64}$' OR pricing_snapshot_sha256 !~ '^[0-9a-f]{64}$' OR cap_evidence_sha256 !~ '^[0-9a-f]{64}$' OR pricing_snapshot_json IS NULL OR reserved_components_json IS NULL) THEN RAISE EXCEPTION 'unreconciled reservation pricing/route snapshot';END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_model_generation_positive') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_model_generation_positive CHECK(selected_model_generation>0);END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_provider_generation_positive') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_provider_generation_positive CHECK(selected_provider_generation>0);END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_pricing_compliance_hash_shape') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_pricing_compliance_hash_shape CHECK(pricing_compliance_hash ~ '^[0-9a-f]{64}$');END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_route_snapshot_hash_shape') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_route_snapshot_hash_shape CHECK(route_snapshot_hash ~ '^[0-9a-f]{64}$');END IF;
- IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_route_path_mode_closed') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_route_path_mode_closed CHECK(route_path_mode IN('openai-body','azure-deployment-path','anthropic-body','google-generate-path'));END IF;
+	 IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_route_path_mode_closed') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_route_path_mode_closed CHECK(route_path_mode IN('openai-body','azure-deployment-path','anthropic-body','google-generate-path'));END IF;
+	 IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_calibration_artifact_hash_shape') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_calibration_artifact_hash_shape CHECK(calibration_artifact_sha256='' OR calibration_artifact_sha256 ~ '^[0-9a-f]{64}$');END IF;
 END $$;
+ALTER TABLE govar_reservations ALTER COLUMN pricing_snapshot_json SET NOT NULL;
+ALTER TABLE govar_reservations ALTER COLUMN reserved_components_json SET NOT NULL;
+ALTER TABLE govar_reservations ALTER COLUMN pricing_snapshot_sha256 SET NOT NULL;
+ALTER TABLE govar_reservations ALTER COLUMN cap_evidence_sha256 SET NOT NULL;
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM govar_reservations WHERE admission_fingerprint='') THEN
     RAISE EXCEPTION 'unreconciled reservation rows without immutable admission fingerprint exist';
@@ -279,6 +446,44 @@ CREATE TABLE IF NOT EXISTS govar_budget_adjustments(
 );
 CREATE TABLE IF NOT EXISTS govar_reconciliation_tasks(task_id TEXT PRIMARY KEY,request_id TEXT NOT NULL,reason_code TEXT NOT NULL,state TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),completed_at TIMESTAMPTZ);
 CREATE TABLE IF NOT EXISTS govar_schema_metadata(version INTEGER PRIMARY KEY,layout_id TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS govar_audit_tenant_sequences(tenant_id TEXT PRIMARY KEY,next_sequence BIGINT NOT NULL CHECK(next_sequence>0));
+CREATE TABLE IF NOT EXISTS govar_audit_events(
+ tenant_id TEXT NOT NULL,sequence BIGINT NOT NULL CHECK(sequence>0),event_id TEXT NOT NULL UNIQUE,
+ event_kind TEXT NOT NULL CHECK(event_kind IN('RESERVE','DISPATCH','SETTLE','CANCEL','EXPIRY','ROLLOVER','BUDGET_ADJUSTMENT','COHORT_REGISTRATION','CALIBRATION_PUBLICATION','DRIFT_CHANGE','RECONCILIATION')),
+ payload_sha256 TEXT NOT NULL CHECK(payload_sha256 ~ '^[0-9a-f]{64}$'),request_id TEXT NOT NULL DEFAULT '',workload_uid TEXT NOT NULL DEFAULT '',provider_attempt_id TEXT NOT NULL DEFAULT '',
+ actor_class TEXT NOT NULL CHECK(actor_class IN('ADMISSION','GATEWAY','RECONCILER','CORRECTION','AUTHORITY','REGISTRY','CALIBRATION')),
+ reason TEXT NOT NULL CHECK(length(reason) BETWEEN 1 AND 64 AND reason ~ '^[a-z0-9_:-]+$'),
+ before_state_sha256 TEXT NOT NULL CHECK(before_state_sha256='' OR before_state_sha256 ~ '^[0-9a-f]{64}$'),after_state_sha256 TEXT NOT NULL CHECK(after_state_sha256 ~ '^[0-9a-f]{64}$'),
+ policy_version TEXT NOT NULL DEFAULT '',pricing_snapshot_sha256 TEXT NOT NULL DEFAULT '' CHECK(pricing_snapshot_sha256='' OR pricing_snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+ route_snapshot_sha256 TEXT NOT NULL DEFAULT '' CHECK(route_snapshot_sha256='' OR route_snapshot_sha256 ~ '^[0-9a-f]{64}$'),cap_evidence_sha256 TEXT NOT NULL DEFAULT '' CHECK(cap_evidence_sha256='' OR cap_evidence_sha256 ~ '^[0-9a-f]{64}$'),
+ cohort_sha256 TEXT NOT NULL DEFAULT '' CHECK(cohort_sha256='' OR cohort_sha256 ~ '^[0-9a-f]{64}$'),software_sha256 TEXT NOT NULL DEFAULT '' CHECK(software_sha256='' OR software_sha256 ~ '^[0-9a-f]{64}$'),calibration_sha256 TEXT NOT NULL DEFAULT '' CHECK(calibration_sha256='' OR calibration_sha256 ~ '^[0-9a-f]{64}$'),
+ previous_entry_sha256 TEXT NOT NULL CHECK(previous_entry_sha256='' OR previous_entry_sha256 ~ '^[0-9a-f]{64}$'),committed_at TIMESTAMPTZ NOT NULL,entry_sha256 TEXT NOT NULL UNIQUE CHECK(entry_sha256 ~ '^[0-9a-f]{64}$'),
+ PRIMARY KEY(tenant_id,sequence));
+CREATE OR REPLACE FUNCTION govar_reject_audit_mutation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'govar_audit_events is append-only'; END $$;
+CREATE OR REPLACE FUNCTION govar_validate_audit_append() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE prior govar_audit_events%ROWTYPE;
+BEGIN
+ PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id,0));
+ SELECT * INTO prior FROM govar_audit_events WHERE tenant_id=NEW.tenant_id ORDER BY sequence DESC LIMIT 1;
+ IF NOT FOUND THEN
+  IF NEW.sequence<>1 OR NEW.previous_entry_sha256<>'' THEN RAISE EXCEPTION 'first audit entry must start a contiguous tenant chain'; END IF;
+ ELSE
+  IF NEW.sequence<>prior.sequence+1 OR NEW.previous_entry_sha256<>prior.entry_sha256 THEN RAISE EXCEPTION 'audit entry does not continue the contiguous tenant chain'; END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS govar_audit_validate_append ON govar_audit_events;
+CREATE TRIGGER govar_audit_validate_append BEFORE INSERT ON govar_audit_events FOR EACH ROW EXECUTE FUNCTION govar_validate_audit_append();
+DROP TRIGGER IF EXISTS govar_audit_no_mutation ON govar_audit_events;
+CREATE TRIGGER govar_audit_no_mutation BEFORE UPDATE OR DELETE ON govar_audit_events FOR EACH ROW EXECUTE FUNCTION govar_reject_audit_mutation();
+DROP TRIGGER IF EXISTS govar_audit_no_truncate ON govar_audit_events;
+CREATE TRIGGER govar_audit_no_truncate BEFORE TRUNCATE ON govar_audit_events FOR EACH STATEMENT EXECUTE FUNCTION govar_reject_audit_mutation();
+REVOKE UPDATE,DELETE,TRUNCATE ON govar_audit_events FROM PUBLIC;
+DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='govar_runtime') THEN CREATE ROLE govar_runtime NOLOGIN; END IF; END $$;
+GRANT govar_runtime TO CURRENT_USER;
+GRANT SELECT,INSERT ON govar_audit_events TO govar_runtime;
+GRANT SELECT,INSERT,UPDATE ON govar_audit_tenant_sequences TO govar_runtime;
+GRANT SELECT ON govar_schema_migrations,govar_schema_metadata TO govar_runtime;
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_reservation_tenant_fk') THEN ALTER TABLE govar_reservations ADD CONSTRAINT govar_reservation_tenant_fk FOREIGN KEY(tenant_id) REFERENCES govar_tenants(tenant_id) ON DELETE RESTRICT; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='govar_outbox_request_fk') THEN ALTER TABLE govar_outbox ADD CONSTRAINT govar_outbox_request_fk FOREIGN KEY(request_id) REFERENCES govar_reservations(request_id) ON DELETE RESTRICT; END IF;
@@ -316,6 +521,8 @@ CREATE TABLE IF NOT EXISTS govar_frozen_cohort_slots (
  PRIMARY KEY(tenant_id,cohort_id,slot_index), UNIQUE(tenant_id,cohort_id,request_id),
  FOREIGN KEY(tenant_id,cohort_id) REFERENCES govar_frozen_cohorts(tenant_id,cohort_id) ON DELETE RESTRICT
 );
+GRANT SELECT,INSERT,UPDATE ON govar_tenants,govar_reservations,govar_outbox,govar_inbox,
+ govar_budget_adjustments,govar_reconciliation_tasks,govar_frozen_cohorts,govar_frozen_cohort_slots TO govar_runtime;
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='govar_reservations' AND column_name='reserved_cost') THEN
@@ -324,8 +531,8 @@ BEGIN
 END $$;
 DO $$
 BEGIN
-  IF COALESCE((SELECT MAX(version) FROM govar_schema_migrations),0) > 4 THEN
-    RAISE EXCEPTION 'database schema is newer than supported v4; binary rollback refused';
+	  IF COALESCE((SELECT MAX(version) FROM govar_schema_migrations),0) > 6 THEN
+		    RAISE EXCEPTION 'database schema is newer than supported v6; binary rollback refused';
   END IF;
   IF COALESCE((SELECT MAX(version) FROM govar_schema_migrations),0) < 3
      AND (EXISTS(SELECT 1 FROM govar_tenants) OR EXISTS(SELECT 1 FROM govar_reservations)
@@ -344,12 +551,15 @@ DO $$ DECLARE t RECORD; calc_reserved BIGINT;calc_active BIGINT;calc_settled BIG
  IF EXISTS(SELECT 1 FROM govar_reservations r LEFT JOIN govar_outbox o ON o.request_id=r.request_id WHERE o.request_id IS NULL OR (r.outbox_id,r.tenant_id,r.workload_uid,r.provider_attempt_id,r.outbox_state) IS DISTINCT FROM (o.outbox_id,o.tenant_id,o.workload_uid,o.provider_attempt_id,o.state)) THEN RAISE EXCEPTION 'reservation/outbox invariant mismatch';END IF;
  IF EXISTS(SELECT 1 FROM govar_reservations WHERE residual_hold_micros+rollover_guard_micros>reserved_cost_micros AND state NOT IN('FINALIZED','LATE_FINALIZED')) THEN RAISE EXCEPTION 'reservation hold exceeds ceiling';END IF;
 END $$;
-INSERT INTO govar_schema_metadata(version,layout_id) VALUES(4,'govar-v4-route-snapshot-20260712') ON CONFLICT(version) DO UPDATE SET layout_id=EXCLUDED.layout_id;
-INSERT INTO govar_schema_migrations(version) VALUES (4) ON CONFLICT DO NOTHING;`
+INSERT INTO govar_schema_metadata(version,layout_id) VALUES(6,'govar-v6-transition-audit-20260713') ON CONFLICT(version) DO UPDATE SET layout_id=EXCLUDED.layout_id;
+INSERT INTO govar_schema_migrations(version) VALUES (6) ON CONFLICT DO NOTHING;`
 	if _, err := e.pool.Exec(ctx, schema); err != nil {
 		return err
 	}
-	return e.validateStoredRouteSnapshots(ctx)
+	if err := e.validateStoredRouteSnapshots(ctx); err != nil {
+		return err
+	}
+	return e.validateStoredTenantAudits(ctx)
 }
 
 func (e *PostgresEngine) validateStoredRouteSnapshots(ctx context.Context) error {
@@ -426,7 +636,7 @@ func (e *PostgresEngine) admitOnce(req AdmitRequest, budget aiopsv1alpha1.AIBudg
 				return AdmitResponse{}, err
 			}
 			if !reservationIsActive(existing.State) {
-				return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition, TraceID: req.RequestID}, nil
+				return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition}, nil
 			}
 			return responseForReservation(existing, ReasonDuplicateRequest), nil
 		}
@@ -468,7 +678,7 @@ func (e *PostgresEngine) admitOnce(req AdmitRequest, budget aiopsv1alpha1.AIBudg
 			return AdmitResponse{}, err
 		}
 		if !reservationIsActive(existing.State) {
-			return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition, TraceID: req.RequestID}, nil
+			return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition}, nil
 		}
 		return responseForReservation(existing, ReasonDuplicateRequest), nil
 	}
@@ -502,7 +712,7 @@ ON CONFLICT (tenant_id) DO NOTHING`, req.AuthenticatedTenantID, budgetMicros, po
 			_ = tx.Commit(ctx)
 			return decisionResponse(req.RequestID, DecisionReject, ReasonBudgetWindowConflict, budget, routing), nil
 		}
-		if err := rolloverTenantTx(ctx, tx, req.AuthenticatedTenantID, ledger, windowID, budgetMicros); err != nil {
+		if err := rolloverTenantTx(ctx, tx, req.AuthenticatedTenantID, ledger, windowID, budgetMicros, e.now()); err != nil {
 			return AdmitResponse{}, err
 		}
 		ledger.BudgetIdentity = policyIdentity
@@ -511,9 +721,21 @@ ON CONFLICT (tenant_id) DO NOTHING`, req.AuthenticatedTenantID, budgetMicros, po
 			return AdmitResponse{}, err
 		}
 	}
+	choice, infeasibleReason, err := chooseAdmission(req, routing, candidates, ledger.available(), e.now().UTC())
+	if err != nil {
+		return AdmitResponse{}, err
+	}
+	if infeasibleReason != "" {
+		if err := tx.Commit(ctx); err != nil {
+			return AdmitResponse{}, err
+		}
+		decision := decisionForAdmissionFailure(routing, infeasibleReason)
+		return decisionResponse(req.RequestID, decision, infeasibleReason, budget, routing), nil
+	}
+	best, reservedCost := choice.Candidate, choice.Reservation
 	cohortDigest := ""
 	allocatedRiskOverride := int64(-1)
-	if strings.TrimSpace(routing.Annotations[AnnotationReservationMethod]) == "govar_fixed_cohort" {
+	if choice.Method == string(aiopsv1alpha1.GOVARReservationFixedCohort) {
 		cohort, loadErr := loadFrozenCohortTx(ctx, tx, req.AuthenticatedTenantID, req.CohortID)
 		if loadErr != nil {
 			if errors.Is(loadErr, pgx.ErrNoRows) {
@@ -533,21 +755,6 @@ ON CONFLICT (tenant_id) DO NOTHING`, req.AuthenticatedTenantID, budgetMicros, po
 		}
 		cohortDigest = cohort.RegistryDigest
 	}
-	choice, infeasibleReason, err := chooseAdmission(req, routing, candidates, ledger.available())
-	if err != nil {
-		return AdmitResponse{}, err
-	}
-	if infeasibleReason != "" {
-		if err := tx.Commit(ctx); err != nil {
-			return AdmitResponse{}, err
-		}
-		decision := DecisionAbstain
-		if infeasibleReason == ReasonBudgetUnavailable {
-			decision = DecisionQueue
-		}
-		return decisionResponse(req.RequestID, decision, infeasibleReason, budget, routing), nil
-	}
-	best, reservedCost := choice.Candidate, choice.Reservation
 	if allocatedRiskOverride >= 0 && choice.Method == "govar_fixed_cohort" {
 		choice.AllocatedRiskPPB = allocatedRiskOverride
 	} else if choice.Method != "govar_fixed_cohort" {
@@ -557,11 +764,23 @@ ON CONFLICT (tenant_id) DO NOTHING`, req.AuthenticatedTenantID, budgetMicros, po
 	res := Reservation{RequestID: req.RequestID, TenantID: req.AuthenticatedTenantID, WorkloadUID: req.AuthenticatedWorkloadUID,
 		SelectedDeployment: best.ModelRef, ProviderAttemptID: req.RequestID + ":attempt:1", OutboxID: req.RequestID + ":dispatch:1",
 		OutboxState: OutboxPending, State: StateReserved, ReservedCostMicros: reservedCost, ResidualHoldMicros: reservedCost,
-		PolicyVersion: policyVersion(budget, routing), PricingVersion: best.PricingVersion, ReservationMode: choice.Method,
+		ReservedComponents: append([]govarpricing.ChargeComponent(nil), choice.Components...), PricingSnapshotSHA256: best.PricingSnapshot.SnapshotSHA256, CapEvidenceSHA256: best.CapEvidenceDigest,
+		PricingSnapshot: *best.PricingSnapshot.DeepCopy(),
+		PolicyVersion:   policyVersion(budget, routing), PricingVersion: best.PricingVersion, ReservationMode: choice.Method,
 		RiskLevel: riskLevel(snapshot), AllocatedRiskPPB: choice.AllocatedRiskPPB, Expiry: expiry,
 		InputPriceMicrosPerMillion: best.InputPriceMicrosPerMillion, OutputPriceMicrosPerMillion: best.OutputPriceMicrosPerMillion,
 		AdmissionFingerprint: fingerprint, CandidateSnapshotVersion: best.SnapshotVersion, RouteSnapshot: best.RouteSnapshot, CohortID: req.CohortID, CohortIndex: req.CohortIndex,
-		CohortRegistryDigest: cohortDigest, OriginWindowID: ledger.CurrentWindowID, EnforcementWindowID: ledger.CurrentWindowID, ProviderRetryPolicy: "NO_PROVIDER_RETRY"}
+		CohortRegistryDigest: cohortDigest, OriginWindowID: ledger.CurrentWindowID, EnforcementWindowID: ledger.CurrentWindowID, ProviderRetryPolicy: "NO_PROVIDER_RETRY",
+		CalibrationArtifactSHA256: calibrationArtifactForChoice(routing, choice.Method),
+		LastReasonCode:            ReasonHighestUtility, LastTransitionEventID: reserveAuditEventPrefix + req.RequestID}
+	if choice.FallbackReason != "" {
+		res.RiskLevel = "conservative"
+		res.LastReasonCode = choice.FallbackReason
+	}
+	pricingJSON, reservedJSON, actualJSON, missingJSON, err := reservationComponentJSON(res)
+	if err != nil {
+		return AdmitResponse{}, err
+	}
 
 	if _, err := tx.Exec(ctx, `
 INSERT INTO govar_reservations (
@@ -572,9 +791,10 @@ INSERT INTO govar_reservations (
  input_price_micros_per_million, output_price_micros_per_million, admission_fingerprint, candidate_snapshot_version,cohort_id,cohort_index,
  cohort_registry_digest,origin_window_id,enforcement_window_id,
  route_namespace,selected_model_uid,selected_model_generation,selected_model_resource_version,selected_provider_name,selected_provider_uid,
- selected_provider_generation,selected_provider_resource_version,pricing_compliance_hash,route_binding_name,route_provider_deployment,route_cluster,route_authority,route_path_mode,route_snapshot_hash
+ selected_provider_generation,selected_provider_resource_version,pricing_compliance_hash,route_binding_name,route_provider_deployment,route_cluster,route_authority,route_path_mode,route_snapshot_hash,
+	 pricing_snapshot_json,reserved_components_json,actual_components_json,missing_usage_bases_json,pricing_snapshot_sha256,cap_evidence_sha256,component_bound_exceeded,calibration_artifact_sha256
 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,0,$9,0,FALSE,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,
- $25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39)`,
+	 $25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47)`,
 		res.RequestID, res.TenantID, res.WorkloadUID, res.SelectedDeployment, res.ProviderAttemptID,
 		res.OutboxID, res.OutboxState, res.State, res.ReservedCostMicros, res.PolicyVersion,
 		res.PricingVersion, res.ReservationMode, res.RiskLevel, res.AllocatedRiskPPB, res.Expiry,
@@ -583,7 +803,8 @@ INSERT INTO govar_reservations (
 		res.RouteSnapshot.Namespace, res.RouteSnapshot.ModelUID, res.RouteSnapshot.ModelGeneration, res.RouteSnapshot.ModelResourceVersion,
 		res.RouteSnapshot.ProviderName, res.RouteSnapshot.ProviderUID, res.RouteSnapshot.ProviderGeneration, res.RouteSnapshot.ProviderResourceVersion,
 		res.RouteSnapshot.PricingComplianceHash, res.RouteSnapshot.RouteBindingName, res.RouteSnapshot.ProviderDeployment, res.RouteSnapshot.Cluster,
-		res.RouteSnapshot.Authority, res.RouteSnapshot.PathMode, res.RouteSnapshot.SnapshotHash); err != nil {
+		res.RouteSnapshot.Authority, res.RouteSnapshot.PathMode, res.RouteSnapshot.SnapshotHash,
+		pricingJSON, reservedJSON, actualJSON, missingJSON, res.PricingSnapshotSHA256, res.CapEvidenceSHA256, res.ComponentBoundExceeded, res.CalibrationArtifactSHA256); err != nil {
 		return AdmitResponse{}, err
 	}
 	if _, err := tx.Exec(ctx, `
@@ -596,10 +817,20 @@ UPDATE govar_tenants SET reserved_micros=reserved_micros+$2,
  active_reservations=active_reservations+1, updated_at=NOW() WHERE tenant_id=$1`, res.TenantID, reservedCost); err != nil {
 		return AdmitResponse{}, err
 	}
+	if err := storeReservationTx(ctx, tx, res); err != nil {
+		return AdmitResponse{}, err
+	}
+	if err := appendRequestAuditTx(ctx, tx, res, res.LastTransitionEventID, "RESERVE", res.AdmissionFingerprint, govaraudit.ActorAdmission, res.LastReasonCode, "", e.cohortSoftwareHash, res.CalibrationArtifactSHA256); err != nil {
+		return AdmitResponse{}, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return AdmitResponse{}, err
 	}
-	return responseForReservation(res, ReasonHighestUtility), nil
+	reason := ReasonHighestUtility
+	if choice.FallbackReason != "" {
+		reason = choice.FallbackReason
+	}
+	return responseForReservation(res, reason), nil
 }
 
 func (e *PostgresEngine) Dispatch(req DispatchRequest) (Reservation, ReasonCode, error) {
@@ -627,7 +858,7 @@ func (e *PostgresEngine) Settle(req SettleRequest) (Reservation, ReasonCode, err
 	if err := validateSettleRequest(req); err != nil {
 		return Reservation{}, ReasonPrincipalMismatch, err
 	}
-	payloadHash := eventPayloadHash("settlement", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, fmt.Sprint(req.ActualCostMicros), fmt.Sprint(req.ActualInput), fmt.Sprint(req.ActualOutput), fmt.Sprint(req.UsageVersion), req.PredecessorEventID, fmt.Sprint(req.Final), req.ErrorStatus)
+	payloadHash := settlementPayloadHash(req)
 	return e.mutateEvent(req.SettlementID, req.RequestID, "settlement", payloadHash, func(ctx context.Context, tx pgx.Tx, res *Reservation, tenant *tenantLedger) (ReasonCode, error) {
 		if req.ProviderAttemptID != res.ProviderAttemptID {
 			return ReasonInvalidTransition, errors.New("provider_attempt_id does not match the reserved attempt")
@@ -636,6 +867,16 @@ func (e *PostgresEngine) Settle(req SettleRequest) (Reservation, ReasonCode, err
 		code, err := applySettlement(res, tenant, req)
 		if err != nil {
 			return code, err
+		}
+		if code == ReasonSettlementDuplicate || code == ReasonDuplicateEvent {
+			return code, nil
+		}
+		if res.ComponentBoundExceeded {
+			taskID := eventPayloadHash("component-bound-exceeded", res.RequestID, req.SettlementID)
+			payload := eventPayloadHash(res.PricingSnapshotSHA256, req.SettlementID, fmt.Sprint(res.ActualComponents))
+			if _, err := tx.Exec(ctx, `INSERT INTO govar_reconciliation_tasks(task_id,request_id,reason_code,state,payload_hash) VALUES($1,$2,$3,'PENDING',$4) ON CONFLICT(task_id) DO NOTHING`, taskID, res.RequestID, ReasonReservationExceeded, payload); err != nil {
+				return ReasonReservationExceeded, err
+			}
 		}
 		return code, updateOutboxState(ctx, tx, res.OutboxID, previousOutbox, res.OutboxState)
 	}, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID)
@@ -654,6 +895,9 @@ func (e *PostgresEngine) Cancel(req CancelRequest) (Reservation, ReasonCode, err
 		code, err := applyCancel(res, tenant, req.AuthoritativeUnbilled)
 		if err != nil {
 			return code, err
+		}
+		if code == ReasonDuplicateEvent || code == ReasonSettlementDuplicate {
+			return code, nil
 		}
 		return code, updateOutboxState(ctx, tx, res.OutboxID, previousOutbox, res.OutboxState)
 	}, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID)
@@ -724,16 +968,45 @@ func (e *PostgresEngine) mutateEventOnce(eventID, requestID, kind, payloadHash s
 	if err := advanceTenantWindowTx(ctx, tx, res.TenantID, tenant, e.now()); err != nil {
 		return Reservation{}, ReasonBudgetWindowConflict, err
 	}
+	// Window reconciliation may have added a rollover guard to this same
+	// reservation. Reload it so the request transition cannot overwrite that
+	// independently audited state.
+	res, err = loadReservationTx(ctx, tx, requestID, true)
+	if err != nil {
+		return Reservation{}, "", err
+	}
+	before, err := reservationAuditDigest(res)
+	if err != nil {
+		return Reservation{}, "", err
+	}
+	priorUsageVersion, priorFinalized := res.UsageVersion, res.Finalized
 	wasActive := reservationIsActive(res.State)
 	code, err := mutation(ctx, tx, &res, tenant)
 	if err != nil {
 		return res, code, err
+	}
+	if code == ReasonDuplicateEvent || code == ReasonSettlementDuplicate {
+		if err := tx.Commit(ctx); err != nil {
+			return Reservation{}, "", err
+		}
+		return res, code, nil
 	}
 	res.LastReasonCode, res.LastTransitionEventID = code, eventID
 	if _, err := tx.Exec(ctx, `INSERT INTO govar_inbox(event_id,request_id,event_kind,payload_hash) VALUES ($1,$2,$3,$4)`, eventID, requestID, kind, payloadHash); err != nil {
 		return Reservation{}, "", err
 	}
 	if err := storeReservationTx(ctx, tx, res); err != nil {
+		return Reservation{}, "", err
+	}
+	actor := govaraudit.ActorGateway
+	if kind == "settlement" && (priorFinalized || (priorUsageVersion > 0 && res.UsageVersion > priorUsageVersion)) {
+		actor = govaraudit.ActorCorrection
+	}
+	auditKind := strings.ToUpper(kind)
+	if kind == "settlement" {
+		auditKind = "SETTLE"
+	}
+	if err := appendRequestAuditTx(ctx, tx, res, eventID, auditKind, payloadHash, actor, code, before, e.cohortSoftwareHash, ""); err != nil {
 		return Reservation{}, "", err
 	}
 	isActive := reservationIsActive(res.State)
@@ -798,7 +1071,7 @@ func loadTenantTx(ctx context.Context, tx pgx.Tx, tenantID string) (*tenantLedge
 	return &t, err
 }
 
-func rolloverTenantTx(ctx context.Context, tx pgx.Tx, tenantID string, t *tenantLedger, nextWindow string, nextBudget MoneyMicros) error {
+func rolloverTenantTx(ctx context.Context, tx pgx.Tx, tenantID string, t *tenantLedger, nextWindow string, nextBudget MoneyMicros, occurredAt time.Time) error {
 	rows, err := tx.Query(ctx, `SELECT request_id FROM govar_reservations WHERE tenant_id=$1 AND state IN ('SETTLED_PROVISIONAL','CORRECTED_PROVISIONAL') AND carried=FALSE AND enforcement_window_id=$2 FOR UPDATE`, tenantID, t.CurrentWindowID)
 	if err != nil {
 		return err
@@ -821,9 +1094,19 @@ func rolloverTenantTx(ctx context.Context, tx pgx.Tx, tenantID string, t *tenant
 		if err != nil {
 			return err
 		}
+		before, err := reservationAuditDigest(r)
+		if err != nil {
+			return err
+		}
 		r.RolloverGuardMicros += r.ProvisionalCostMicros
 		t.ReservedMicros += r.ProvisionalCostMicros
+		r.LastReasonCode = ReasonBudgetWindowRollover
+		r.LastTransitionEventID = "window-rollover:" + r.RequestID + ":" + nextWindow
 		if err := storeReservationTx(ctx, tx, r); err != nil {
+			return err
+		}
+		payload := eventPayloadHash("window-rollover-v1", r.RequestID, r.ProviderAttemptID, r.OriginWindowID, nextWindow)
+		if err := appendRequestAuditTx(ctx, tx, r, r.LastTransitionEventID, "ROLLOVER", payload, govaraudit.ActorReconciler, ReasonBudgetWindowRollover, before, "", ""); err != nil {
 			return err
 		}
 	}
@@ -848,7 +1131,7 @@ func advanceTenantWindowTx(ctx context.Context, tx pgx.Tx, tenantID string, t *t
 	if !windowStartsAfter(next, t.CurrentWindowID) {
 		return errors.New("trusted clock moved before active budget window")
 	}
-	return rolloverTenantTx(ctx, tx, tenantID, t, next, t.BudgetMicros)
+	return rolloverTenantTx(ctx, tx, tenantID, t, next, t.BudgetMicros, at)
 }
 
 func loadReservationTx(ctx context.Context, tx pgx.Tx, requestID string, lock bool) (Reservation, error) {
@@ -859,11 +1142,13 @@ func loadReservationTx(ctx context.Context, tx pgx.Tx, requestID string, lock bo
  cohort_registry_digest,origin_window_id,enforcement_window_id,rollover_guard_micros,carry_effect_micros,historical_credit_micros,carried,last_usage_event_id,provider_retry_policy,last_reason_code,last_transition_event_id
  ,route_namespace,selected_model_uid,selected_model_generation,selected_model_resource_version,selected_provider_name,selected_provider_uid,
  selected_provider_generation,selected_provider_resource_version,pricing_compliance_hash,route_binding_name,route_provider_deployment,route_cluster,route_authority,route_path_mode,route_snapshot_hash
+	 ,pricing_snapshot_json,reserved_components_json,actual_components_json,missing_usage_bases_json,pricing_snapshot_sha256,cap_evidence_sha256,component_bound_exceeded,calibration_artifact_sha256
  FROM govar_reservations WHERE request_id=$1`
 	if lock {
 		query += ` FOR UPDATE`
 	}
 	var r Reservation
+	var pricingJSON, reservedJSON, actualJSON, missingJSON []byte
 	err := tx.QueryRow(ctx, query, requestID).Scan(
 		&r.RequestID, &r.TenantID, &r.WorkloadUID, &r.SelectedDeployment, &r.ProviderAttemptID,
 		&r.OutboxID, &r.OutboxState, &r.State, &r.ReservedCostMicros, &r.ProvisionalCostMicros,
@@ -874,9 +1159,13 @@ func loadReservationTx(ctx context.Context, tx pgx.Tx, requestID string, lock bo
 		&r.RouteSnapshot.Namespace, &r.RouteSnapshot.ModelUID, &r.RouteSnapshot.ModelGeneration, &r.RouteSnapshot.ModelResourceVersion,
 		&r.RouteSnapshot.ProviderName, &r.RouteSnapshot.ProviderUID, &r.RouteSnapshot.ProviderGeneration, &r.RouteSnapshot.ProviderResourceVersion,
 		&r.RouteSnapshot.PricingComplianceHash, &r.RouteSnapshot.RouteBindingName, &r.RouteSnapshot.ProviderDeployment, &r.RouteSnapshot.Cluster,
-		&r.RouteSnapshot.Authority, &r.RouteSnapshot.PathMode, &r.RouteSnapshot.SnapshotHash)
+		&r.RouteSnapshot.Authority, &r.RouteSnapshot.PathMode, &r.RouteSnapshot.SnapshotHash,
+		&pricingJSON, &reservedJSON, &actualJSON, &missingJSON, &r.PricingSnapshotSHA256, &r.CapEvidenceSHA256, &r.ComponentBoundExceeded, &r.CalibrationArtifactSHA256)
 	r.RouteSnapshot.ModelName = r.SelectedDeployment
 	r.RouteSnapshot.PricingVersion = r.PricingVersion
+	if err == nil {
+		err = decodeReservationComponentJSON(&r, pricingJSON, reservedJSON, actualJSON, missingJSON)
+	}
 	if err == nil {
 		err = validateReservationRoute(r)
 	}
@@ -884,12 +1173,64 @@ func loadReservationTx(ctx context.Context, tx pgx.Tx, requestID string, lock bo
 }
 
 func storeReservationTx(ctx context.Context, tx pgx.Tx, r Reservation) error {
-	_, err := tx.Exec(ctx, `UPDATE govar_reservations SET outbox_state=$2,state=$3,
+	_, _, actualJSON, missingJSON, err := reservationComponentJSON(r)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `UPDATE govar_reservations SET outbox_state=$2,state=$3,
  provisional_cost_micros=$4,residual_hold_micros=$5,usage_version=$6,finalized=$7,
 	 rollover_guard_micros=$8,carry_effect_micros=$9,historical_credit_micros=$10,carried=$11,enforcement_window_id=$12,
-	 base_actual_micros=$13,last_usage_event_id=$14,last_reason_code=$15,last_transition_event_id=$16,settled_effect_micros=$17,updated_at=NOW() WHERE request_id=$1`, r.RequestID, r.OutboxState, r.State,
-		r.ProvisionalCostMicros, r.ResidualHoldMicros, r.UsageVersion, r.Finalized, r.RolloverGuardMicros, r.CarryEffectMicros, r.HistoricalCreditMicros, r.Carried, r.EnforcementWindowID, r.BaseActualMicros, r.LastUsageEventID, r.LastReasonCode, r.LastTransitionEventID, r.SettledEffectMicros)
+	 base_actual_micros=$13,last_usage_event_id=$14,last_reason_code=$15,last_transition_event_id=$16,settled_effect_micros=$17,
+	 actual_components_json=$18,missing_usage_bases_json=$19,component_bound_exceeded=$20,updated_at=NOW() WHERE request_id=$1`, r.RequestID, r.OutboxState, r.State,
+		r.ProvisionalCostMicros, r.ResidualHoldMicros, r.UsageVersion, r.Finalized, r.RolloverGuardMicros, r.CarryEffectMicros, r.HistoricalCreditMicros, r.Carried, r.EnforcementWindowID, r.BaseActualMicros, r.LastUsageEventID, r.LastReasonCode, r.LastTransitionEventID, r.SettledEffectMicros,
+		actualJSON, missingJSON, r.ComponentBoundExceeded)
 	return err
+}
+
+func reservationComponentJSON(r Reservation) ([]byte, []byte, []byte, []byte, error) {
+	pricingJSON, err := json.Marshal(r.PricingSnapshot)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	reservedJSON, err := json.Marshal(r.ReservedComponents)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	actualJSON, err := json.Marshal(r.ActualComponents)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	missingJSON, err := json.Marshal(r.MissingUsageBases)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	return pricingJSON, reservedJSON, actualJSON, missingJSON, nil
+}
+
+func decodeReservationComponentJSON(r *Reservation, pricingJSON, reservedJSON, actualJSON, missingJSON []byte) error {
+	if err := json.Unmarshal(pricingJSON, &r.PricingSnapshot); err != nil {
+		return fmt.Errorf("decode pricing snapshot: %w", err)
+	}
+	if err := json.Unmarshal(reservedJSON, &r.ReservedComponents); err != nil {
+		return fmt.Errorf("decode reserved components: %w", err)
+	}
+	if err := json.Unmarshal(actualJSON, &r.ActualComponents); err != nil {
+		return fmt.Errorf("decode actual components: %w", err)
+	}
+	if err := json.Unmarshal(missingJSON, &r.MissingUsageBases); err != nil {
+		return fmt.Errorf("decode missing usage bases: %w", err)
+	}
+	if err := govarpricing.ValidateSnapshotIntegrity(r.PricingSnapshot); err != nil {
+		return err
+	}
+	if r.PricingSnapshot.SnapshotSHA256 != r.PricingSnapshotSHA256 {
+		return errors.New("persisted pricing snapshot hash mismatch")
+	}
+	reserved, err := govarpricing.SumComponents(r.ReservedComponents)
+	if err != nil || MoneyMicros(reserved) != r.ReservedCostMicros {
+		return errors.New("persisted reserved component sum mismatch")
+	}
+	return nil
 }
 
 func reservationIsActive(state ReservationState) bool {

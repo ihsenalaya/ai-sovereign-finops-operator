@@ -36,6 +36,148 @@ const (
 // +kubebuilder:validation:Enum=per-million-tokens;per-request;per-second;per-unit
 type ProviderBillableUnit string
 
+// ProviderBillableBasis is the closed accounting dimension understood by the
+// GOV-AR ledger and provider adapters.
+// +kubebuilder:validation:Enum=input_tokens;cached_input_tokens;output_tokens;reasoning_tokens;request;tool_call;media_unit;billable_second;cancellation;retry_attempt
+type ProviderBillableBasis string
+
+const (
+	ProviderBasisInputTokens       ProviderBillableBasis = "input_tokens"
+	ProviderBasisCachedInputTokens ProviderBillableBasis = "cached_input_tokens"
+	ProviderBasisOutputTokens      ProviderBillableBasis = "output_tokens"
+	ProviderBasisReasoningTokens   ProviderBillableBasis = "reasoning_tokens"
+	ProviderBasisRequest           ProviderBillableBasis = "request"
+	ProviderBasisToolCall          ProviderBillableBasis = "tool_call"
+	ProviderBasisMediaUnit         ProviderBillableBasis = "media_unit"
+	ProviderBasisBillableSecond    ProviderBillableBasis = "billable_second"
+	ProviderBasisCancellation      ProviderBillableBasis = "cancellation"
+	ProviderBasisRetryAttempt      ProviderBillableBasis = "retry_attempt"
+)
+
+// ProviderChargeApplicability describes when a charge can occur.
+// +kubebuilder:validation:Enum=always;request_declared;provider_response
+type ProviderChargeApplicability string
+
+const (
+	ProviderChargeAlways           ProviderChargeApplicability = "always"
+	ProviderChargeRequestDeclared  ProviderChargeApplicability = "request_declared"
+	ProviderChargeProviderResponse ProviderChargeApplicability = "provider_response"
+)
+
+// ProviderPricingEvidenceMode records who supplied pricing/capability evidence.
+// Only provider_catalog and provider_api may be described as provider verified.
+// +kubebuilder:validation:Enum=provider_catalog;provider_api;admin_attested
+type ProviderPricingEvidenceMode string
+
+const (
+	ProviderEvidenceCatalog       ProviderPricingEvidenceMode = "provider_catalog"
+	ProviderEvidenceAPI           ProviderPricingEvidenceMode = "provider_api"
+	ProviderEvidenceAdminAttested ProviderPricingEvidenceMode = "admin_attested"
+)
+
+// ProviderRequestBoundField is a closed request field from which a pre-dispatch
+// quantity bound is obtained.
+// +kubebuilder:validation:Enum=input_tokens;max_cached_input_tokens;max_output_tokens;max_reasoning_tokens;max_tool_calls;max_media_units;timeout_seconds;max_retry_attempts;cancellation_possible
+type ProviderRequestBoundField string
+
+// ProviderBillableCharge is the typed GOV-AR pricing input. Historical
+// BillableCategories remain decodable but are never monetary authority.
+type ProviderBillableCharge struct {
+	Basis         ProviderBillableBasis       `json:"basis"`
+	Applicability ProviderChargeApplicability `json:"applicability"`
+	// Price is converted exactly to integer micro-currency units by the controller.
+	Price resource.Quantity `json:"price"`
+	// UnitDenominator is the number of usage units represented by Price.
+	// +kubebuilder:validation:Minimum=1
+	UnitDenominator      int64                 `json:"unitDenominator"`
+	SettlementUsageField ProviderBillableBasis `json:"settlementUsageField"`
+	// IncludedIn declares that this quantity is already included in another
+	// priced basis and therefore must not be charged separately.
+	// +optional
+	IncludedIn *ProviderBillableBasis `json:"includedIn,omitempty"`
+	// MaximumQuantity is a provider-enforced upper quantity.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	MaximumQuantity *int64 `json:"maximumQuantity,omitempty"`
+	// RequestBoundField names a typed request field that supplies the upper bound.
+	// +optional
+	RequestBoundField ProviderRequestBoundField `json:"requestBoundField,omitempty"`
+	// DisjointUsage asserts that a separately priced cached-input or reasoning
+	// quantity is normalized by the adapter so it does not overlap the base
+	// input/output quantity. It must be true for those bases unless IncludedIn
+	// is used. This prevents silently charging the same token twice.
+	// +optional
+	DisjointUsage bool `json:"disjointUsage,omitempty"`
+}
+
+type AIProviderPricingEvidenceSpec struct {
+	Mode ProviderPricingEvidenceMode `json:"mode"`
+	// +kubebuilder:validation:MinLength=1
+	SourceVersion string `json:"sourceVersion"`
+	// EvidenceSHA256 binds the immutable source document or provider response.
+	// +kubebuilder:validation:Pattern=`^[0-9a-f]{64}$`
+	EvidenceSHA256 string      `json:"evidenceSHA256"`
+	ValidUntil     metav1.Time `json:"validUntil"`
+	// AdapterVersion must match the closed adapter selected for provider type.
+	// +kubebuilder:validation:MinLength=1
+	AdapterVersion string `json:"adapterVersion"`
+}
+
+type AIProviderGOVARPricingSpec struct {
+	Evidence AIProviderPricingEvidenceSpec `json:"evidence"`
+	// +optional
+	// +listType=map
+	// +listMapKey=basis
+	Charges []ProviderBillableCharge `json:"charges,omitempty"`
+	// InapplicableBases are an explicit adapter-validated declaration that the
+	// selected deployment/request mode cannot bill these bases.
+	// +optional
+	// +listType=set
+	InapplicableBases []ProviderBillableBasis `json:"inapplicableBases,omitempty"`
+}
+
+type AIProviderNormalizedChargeStatus struct {
+	Basis                ProviderBillableBasis       `json:"basis"`
+	Applicability        ProviderChargeApplicability `json:"applicability"`
+	PriceMicrosPerUnit   int64                       `json:"priceMicrosPerUnit"`
+	UnitDenominator      int64                       `json:"unitDenominator"`
+	SettlementUsageField ProviderBillableBasis       `json:"settlementUsageField"`
+	// +optional
+	IncludedIn *ProviderBillableBasis `json:"includedIn,omitempty"`
+	// +optional
+	MaximumQuantity *int64 `json:"maximumQuantity,omitempty"`
+	// +optional
+	RequestBoundField ProviderRequestBoundField `json:"requestBoundField,omitempty"`
+	// +optional
+	DisjointUsage bool `json:"disjointUsage,omitempty"`
+}
+
+type AIProviderPricingSnapshotStatus struct {
+	SpecGeneration int64                       `json:"specGeneration"`
+	Version        string                      `json:"version"`
+	ObservedAt     metav1.Time                 `json:"observedAt"`
+	ValidUntil     metav1.Time                 `json:"validUntil"`
+	Currency       string                      `json:"currency"`
+	Completeness   ProviderPricingCompleteness `json:"completeness"`
+	SnapshotSHA256 string                      `json:"snapshotSHA256"`
+	AdapterVersion string                      `json:"adapterVersion"`
+	EvidenceMode   ProviderPricingEvidenceMode `json:"evidenceMode"`
+	EvidenceSHA256 string                      `json:"evidenceSHA256"`
+	SourceVersion  string                      `json:"sourceVersion"`
+	// +listType=map
+	// +listMapKey=basis
+	Charges []AIProviderNormalizedChargeStatus `json:"charges"`
+	// +optional
+	// +listType=set
+	InapplicableBases []ProviderBillableBasis `json:"inapplicableBases,omitempty"`
+}
+
+type AIProviderGOVARStatus struct {
+	// PricingSnapshot is absent until normalization and evidence validation pass.
+	// +optional
+	PricingSnapshot *AIProviderPricingSnapshotStatus `json:"pricingSnapshot,omitempty"`
+}
+
 // ProviderBillableCategory is a versioned non-base charge that must be included
 // in liability calculation when applicable (for example cached input, reasoning,
 // tool, media, request, time, cancellation, or retry charges).
@@ -127,6 +269,11 @@ type AIProviderGOVARSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	GatewayRoutes []AIProviderGatewayRouteBinding `json:"gatewayRoutes,omitempty"`
+
+	// Pricing is the only GOV-AR monetary authority. Legacy pricing fields remain
+	// readable for older controllers but cannot make a candidate feasible alone.
+	// +optional
+	Pricing *AIProviderGOVARPricingSpec `json:"pricing,omitempty"`
 }
 
 // AIProviderSpec defines the desired state of AIProvider.
@@ -172,6 +319,10 @@ type AIProviderStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
+	// GOVAR contains controller-normalized pricing evidence.
+	// +optional
+	GOVAR *AIProviderGOVARStatus `json:"govar,omitempty"`
 }
 
 //+kubebuilder:object:root=true

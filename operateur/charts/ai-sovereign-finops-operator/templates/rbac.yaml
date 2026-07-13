@@ -46,7 +46,7 @@ rules:
   - attestationevidences
   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
 - apiGroups: ["aiops.imperium.io"]
-  resources: ["aiadmissionapprovals", "aiadmissionapprovaldecisions", "aiworkloadbindings"]
+  resources: ["aiworkloadbindings"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["aiops.imperium.io"]
   resources:
@@ -87,7 +87,7 @@ rules:
   - attestationevidences/status
   verbs: ["get", "patch", "update"]
 - apiGroups: ["aiops.imperium.io"]
-  resources: ["aiadmissionapprovals/status", "aiworkloadbindings/status"]
+  resources: ["aiworkloadbindings/status"]
   verbs: ["get", "patch", "update"]
 - apiGroups: ["aiops.imperium.io"]
   resources: ["confidentialinferencepolicies"]
@@ -141,20 +141,15 @@ rules:
 - apiGroups: ["authentication.k8s.io"]
   resources: ["tokenreviews"]
   verbs: ["create"]
-- apiGroups: ["coordination.k8s.io"]
-  resources: ["leases"]
-  verbs: ["create", "get"]
 - apiGroups: ["aiops.imperium.io"]
   resources:
   - aibudgetpolicies
+  - aichangerequests
   - aimodels
   - aiproviders
   - airoutingpolicies
   - aiworkloadbindings
   verbs: ["get", "list"]
-- apiGroups: ["aiops.imperium.io"]
-  resources: ["aiadmissionapprovals"]
-  verbs: ["create", "get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -185,9 +180,6 @@ metadata:
     app.kubernetes.io/component: gov-ar-approval-reviewer
 rules:
 - apiGroups: ["aiops.imperium.io"]
-  resources: ["aiadmissionapprovals"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["aiops.imperium.io"]
-  resources: ["aiadmissionapprovaldecisions"]
-  verbs: ["create", "get", "list", "watch"]
+  resources: ["aichangerequests"]
+  verbs: ["get", "list", "watch", "update", "patch"]
 {{- end }}

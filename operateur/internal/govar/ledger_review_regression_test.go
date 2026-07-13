@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -57,10 +58,9 @@ func TestFixedCohortFallbackStopsAdvertisingRisk(t *testing.T) {
 	if err := e.RegisterFrozenCohort(context.Background(), c); err != nil {
 		t.Fatal(err)
 	}
-	routing := defaultRouting()
-	routing.Annotations[AnnotationReservationMethod] = "govar_fixed_cohort"
-	routing.Annotations[AnnotationAdaptiveTokens] = "500"
-	routing.Annotations[AnnotationCalibrationSupport] = "1"
+	routing := typedAdaptiveRouting(aiopsv1alpha1.GOVARReservationFixedCohort, 500, now, defaultCandidates()[0])
+	bindTypedCohort(&routing, c)
+	routing.Status.GOVAR.Calibration.Support = 1
 	resp, err := e.Admit(r, defaultBudget(), routing, defaultCandidates())
 	if err != nil || resp.Decision != DecisionAdmit || resp.ReservationMode != "strict_provider_cap" || resp.AllocatedRiskPPB != 0 {
 		t.Fatalf("fallback risk=%+v err=%v", resp, err)
@@ -133,7 +133,7 @@ func TestPostgresConcurrentExactAdmissionReplaysDeterministically(t *testing.T) 
 		t.Fatal(err)
 	}
 	defer e.Close()
-	_, err = e.pool.Exec(ctx, `TRUNCATE govar_reconciliation_tasks,govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+	err = resetPostgresTestLedger(ctx, e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +188,7 @@ func TestPostgresWindowBoundarySettlementOrderIsConservative(t *testing.T) {
 			name = "rollover_first"
 		}
 		t.Run(name, func(t *testing.T) {
-			_, _ = e.pool.Exec(ctx, `TRUNCATE govar_reconciliation_tasks,govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+			_ = resetPostgresTestLedger(ctx, e)
 			now := time.Date(2026, 2, 1, 12, 0, 0, 0, time.UTC)
 			e.now = func() time.Time { return now }
 			b := defaultBudget()
@@ -229,7 +229,7 @@ func TestPostgresCorrectionCohortAndAuthorityCounterexamples(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer e.Close()
-	_, _ = e.pool.Exec(ctx, `TRUNCATE govar_reconciliation_tasks,govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+	_ = resetPostgresTestLedger(ctx, e)
 	now := time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC)
 	e.now = func() time.Time { return now }
 	if err = e.ConfigureLedgerAuthority("test-authority", testLedgerAuthorityKey); err != nil {
@@ -246,10 +246,9 @@ func TestPostgresCorrectionCohortAndAuthorityCounterexamples(t *testing.T) {
 	if err = e.RegisterFrozenCohort(ctx, c); err != nil {
 		t.Fatal(err)
 	}
-	routing := defaultRouting()
-	routing.Annotations[AnnotationReservationMethod] = "govar_fixed_cohort"
-	routing.Annotations[AnnotationAdaptiveTokens] = "500"
-	routing.Annotations[AnnotationCalibrationSupport] = "1"
+	routing := typedAdaptiveRouting(aiopsv1alpha1.GOVARReservationFixedCohort, 500, now, defaultCandidates()[0])
+	bindTypedCohort(&routing, c)
+	routing.Status.GOVAR.Calibration.Support = 1
 	resp, err := e.Admit(r, defaultBudget(), routing, defaultCandidates())
 	if err != nil || resp.ReservationMode != "strict_provider_cap" || resp.AllocatedRiskPPB != 0 {
 		t.Fatalf("PostgreSQL fallback risk=%+v err=%v", resp, err)
@@ -306,12 +305,12 @@ func TestPostgresStartupRejectsTamperedAggregates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _ = e.pool.Exec(ctx, `TRUNCATE govar_reconciliation_tasks,govar_budget_adjustments,govar_frozen_cohort_slots,govar_frozen_cohorts,govar_inbox,govar_outbox,govar_reservations,govar_tenants CASCADE`)
+	_ = resetPostgresTestLedger(ctx, e)
 	_, err = e.Admit(admitRequest("tamper-aggregate", testTenant, testWorkload), defaultBudget(), defaultRouting(), defaultCandidates())
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = e.pool.Exec(ctx, `UPDATE govar_tenants SET reserved_micros=reserved_micros+1 WHERE tenant_id=$1`, testTenant)
+	_, err = postgresOwnerExec(ctx, e, `UPDATE govar_tenants SET reserved_micros=reserved_micros+1 WHERE tenant_id=$1`, testTenant)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -349,7 +348,7 @@ func TestPostgresStartupRejectsTamperedAggregates(t *testing.T) {
 	}
 	if bad, err := NewPostgresEngine(ctx, url); err == nil {
 		bad.Close()
-		t.Fatal("v4 schema with missing safety foreign key passed startup")
+		t.Fatal("v5 schema with missing safety foreign key passed startup")
 	}
 	if _, err = conn.Exec(ctx, `ALTER TABLE govar_outbox ADD CONSTRAINT govar_outbox_request_fk FOREIGN KEY(request_id) REFERENCES govar_reservations(request_id) ON DELETE RESTRICT`); err != nil {
 		t.Fatal(err)

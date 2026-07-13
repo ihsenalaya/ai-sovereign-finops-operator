@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,16 +67,16 @@ func (r *RawAttestationReportReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Compute the verification outcome.
 	var (
-		mode        string
-		vstatus     string
-		failure     string
-		verified    bool
-		claimsHash  string
-		tokenHash   string
-		issuedAt    *metav1.Time
-		expiresAt   *metav1.Time
-		freshnessS  int64
-		attestType  string
+		mode       string
+		vstatus    string
+		failure    string
+		verified   bool
+		claimsHash string
+		tokenHash  string
+		issuedAt   *metav1.Time
+		expiresAt  *metav1.Time
+		freshnessS int64
+		attestType string
 	)
 
 	switch {

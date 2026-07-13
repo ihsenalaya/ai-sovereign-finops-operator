@@ -158,7 +158,7 @@ func (r *Runner) baselineB1(_ context.Context) BaselineResult {
 	d := placement.Evaluate(policy, ev)
 	return BaselineResult{ID: "B1", Name: "Kubernetes standard",
 		Description: "No policy, no attestation",
-		Pass: d.Allow, Detail: d.Reason, Simulated: true,
+		Pass:        d.Allow, Detail: d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
 
@@ -169,7 +169,7 @@ func (r *Runner) baselineB2(_ context.Context) BaselineResult {
 	d := placement.Evaluate(policy, ev)
 	return BaselineResult{ID: "B2", Name: "Labels/nodeSelector",
 		Description: "Node selected via labels only, no evidence",
-		Pass: d.Allow, Detail: "labels-only: " + d.Reason, Simulated: true,
+		Pass:        d.Allow, Detail: "labels-only: " + d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
 
@@ -180,7 +180,7 @@ func (r *Runner) baselineB3(_ context.Context) BaselineResult {
 	d := placement.Evaluate(policy, ev)
 	return BaselineResult{ID: "B3", Name: "RuntimeClass only",
 		Description: "Correct RuntimeClass, no attestation",
-		Pass: d.Allow, Detail: d.Reason, Simulated: true,
+		Pass:        d.Allow, Detail: d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
 
@@ -191,7 +191,7 @@ func (r *Runner) baselineB4(_ context.Context) BaselineResult {
 	d := placement.Evaluate(policy, ev)
 	return BaselineResult{ID: "B4", Name: "Confidential Containers (simulated)",
 		Description: "[SIMULATED] Confidential Containers with simulated TEE, no specialist scheduler",
-		Pass: d.Allow, Detail: "[SIMULATED] " + d.Reason, Simulated: true,
+		Pass:        d.Allow, Detail: "[SIMULATED] " + d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
 
@@ -202,7 +202,7 @@ func (r *Runner) baselineB5(_ context.Context) BaselineResult {
 	d := placement.Evaluate(policy, ev)
 	return BaselineResult{ID: "B5", Name: "DRA without attestation (simulated)",
 		Description: "[SIMULATED] DRA resource claim, no attestation — GPU aspects simulated",
-		Pass: d.Allow, Detail: "[SIMULATED] " + d.Reason, Simulated: true,
+		Pass:        d.Allow, Detail: "[SIMULATED] " + d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
 
@@ -258,7 +258,7 @@ func (r *Runner) baselineB6(_ context.Context) BaselineResult {
 
 	return BaselineResult{ID: "B6", Name: "Full solution",
 		Description: "[SIMULATED] Full path: scheduling + key release + revocation + audit",
-		Pass: true, Detail: "[SIMULATED] all components passed",
+		Pass:        true, Detail: "[SIMULATED] all components passed",
 		Simulated: true, DurationMs: time.Since(start).Milliseconds()}
 }
 
@@ -272,7 +272,7 @@ func (r *Runner) attack01FakeLabel(_ context.Context) ScenarioResult {
 	pass := !d.Allow
 	return ScenarioResult{ID: 1, Name: "Fake label confidential=true",
 		Description: "Attacker sets attested=true label without evidence",
-		Expected: OutcomeBlocked, Observed: blocked(!pass),
+		Expected:    OutcomeBlocked, Observed: blocked(!pass),
 		Pass: pass, Detail: d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -285,7 +285,7 @@ func (r *Runner) attack02NoRuntimeClass(_ context.Context) ScenarioResult {
 	pass := !d.Allow
 	return ScenarioResult{ID: 2, Name: "Sensitive pod without confidential RuntimeClass",
 		Description: "Pod uses runc instead of kata-qemu-tdx",
-		Expected: OutcomeBlocked, Observed: blocked(!pass),
+		Expected:    OutcomeBlocked, Observed: blocked(!pass),
 		Pass: pass, Detail: d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -298,7 +298,7 @@ func (r *Runner) attack03ExpiredEvidence(_ context.Context) ScenarioResult {
 	pass := !d.Allow
 	return ScenarioResult{ID: 3, Name: "Expired attestation evidence",
 		Description: "Evidence is 600s old, max is 300s",
-		Expected: OutcomeBlocked, Observed: blocked(!pass),
+		Expected:    OutcomeBlocked, Observed: blocked(!pass),
 		Pass: pass, Detail: d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -314,7 +314,7 @@ func (r *Runner) attack04ReplayEvidence(_ context.Context) ScenarioResult {
 	pass := !resp.Allowed
 	return ScenarioResult{ID: 4, Name: "Replay of old attestation evidence",
 		Description: "Attacker replays evidence from 10 minutes ago",
-		Expected: OutcomeBlocked, Observed: blocked(!pass),
+		Expected:    OutcomeBlocked, Observed: blocked(!pass),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -330,12 +330,12 @@ func (r *Runner) attack05WrongPodUID(_ context.Context) ScenarioResult {
 		PodUID: "uid-attacker", KeyID: "key-5",
 		PolicyRequired: true, PolicyTTLSeconds: 300,
 		EvidenceVerified: true,
-		PlacementToken: encoded, TokenPublicKey: pub,
+		PlacementToken:   encoded, TokenPublicKey: pub,
 	})
 	pass := !resp.Allowed
 	return ScenarioResult{ID: 5, Name: "Key release with wrong podUID",
 		Description: "Attacker uses token minted for a different pod",
-		Expected: OutcomeBlocked, Observed: blocked(!pass),
+		Expected:    OutcomeBlocked, Observed: blocked(!pass),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -351,13 +351,13 @@ func (r *Runner) attack06WrongModelDigest(_ context.Context) ScenarioResult {
 		PodUID: "uid-6", KeyID: "key-6",
 		PolicyRequired: true, PolicyTTLSeconds: 300,
 		EvidenceVerified: true,
-		ModelDigest:    "sha256:model-B",
-		PlacementToken: encoded, TokenPublicKey: pub,
+		ModelDigest:      "sha256:model-B",
+		PlacementToken:   encoded, TokenPublicKey: pub,
 	})
 	pass := !resp.Allowed && resp.Reason == keyrelease.ReasonModelDigestMismatch
 	return ScenarioResult{ID: 6, Name: "Wrong modelDigest",
 		Description: "Attacker loads a different model after placement",
-		Expected: OutcomeBlocked, Observed: blocked(!resp.Allowed),
+		Expected:    OutcomeBlocked, Observed: blocked(!resp.Allowed),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -373,13 +373,13 @@ func (r *Runner) attack07WrongImageDigest(_ context.Context) ScenarioResult {
 		PodUID: "uid-7", KeyID: "key-7",
 		PolicyRequired: true, PolicyTTLSeconds: 300,
 		EvidenceVerified: true,
-		ImageDigest:    "sha256:img-B",
-		PlacementToken: encoded, TokenPublicKey: pub,
+		ImageDigest:      "sha256:img-B",
+		PlacementToken:   encoded, TokenPublicKey: pub,
 	})
 	pass := !resp.Allowed && resp.Reason == keyrelease.ReasonImageDigestMismatch
 	return ScenarioResult{ID: 7, Name: "Wrong imageDigest",
 		Description: "Attacker swaps container image after token minting",
-		Expected: OutcomeBlocked, Observed: blocked(!resp.Allowed),
+		Expected:    OutcomeBlocked, Observed: blocked(!resp.Allowed),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -397,13 +397,13 @@ func (r *Runner) attack08PolicyModifiedAfterAdmission(_ context.Context) Scenari
 		PodUID: "uid-8", KeyID: "key-8",
 		PolicyRequired: true, PolicyTTLSeconds: 300,
 		EvidenceVerified: true,
-		PolicyHash:     modPol,
-		PlacementToken: encoded, TokenPublicKey: pub,
+		PolicyHash:       modPol,
+		PlacementToken:   encoded, TokenPublicKey: pub,
 	})
 	pass := !resp.Allowed && resp.Reason == keyrelease.ReasonPolicyHashMismatch
 	return ScenarioResult{ID: 8, Name: "Policy modified after admission",
 		Description: "Policy updated after token was minted — hash mismatch expected",
-		Expected: OutcomeBlocked, Observed: blocked(!resp.Allowed),
+		Expected:    OutcomeBlocked, Observed: blocked(!resp.Allowed),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -418,7 +418,7 @@ func (r *Runner) attack09RevokedNodeAfterPlacement(_ context.Context) ScenarioRe
 	pass := !resp.Allowed && resp.Reason == keyrelease.ReasonRevocationActive
 	return ScenarioResult{ID: 9, Name: "Node revoked after placement",
 		Description: "AIRevocationPolicy activated after pod placement",
-		Expected: OutcomeBlocked, Observed: blocked(!resp.Allowed),
+		Expected:    OutcomeBlocked, Observed: blocked(!resp.Allowed),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -431,7 +431,7 @@ func (r *Runner) attack10RescheduledWithoutEvidence(_ context.Context) ScenarioR
 	pass := !d.Allow
 	return ScenarioResult{ID: 10, Name: "Pod rescheduled without new evidence",
 		Description: "Pod moves to node without valid AttestationEvidence",
-		Expected: OutcomeBlocked, Observed: blocked(!d.Allow),
+		Expected:    OutcomeBlocked, Observed: blocked(!d.Allow),
 		Pass: pass, Detail: d.Reason, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -459,7 +459,7 @@ func (r *Runner) attack11TamperAuditRecord(_ context.Context) ScenarioResult {
 	}
 	return ScenarioResult{ID: 11, Name: "Tamper audit record",
 		Description: "Attacker modifies an AIEvidenceRecord — chain verifier must detect it",
-		Expected: OutcomeDetected, Observed: detected(pass),
+		Expected:    OutcomeDetected, Observed: detected(pass),
 		Pass: pass, Detail: detail, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -469,14 +469,14 @@ func (r *Runner) attack12KeyReleaseAfterExpiry(_ context.Context) ScenarioResult
 	resp := keyrelease.Evaluate(keyrelease.Request{
 		PodUID: "uid-12", KeyID: "key-12",
 		PolicyRequired: true, PolicyTTLSeconds: 300,
-		EvidenceVerified: true,
+		EvidenceVerified:   true,
 		MaxEvidenceAgeSecs: 60,
 		EvidenceLastSeen:   time.Now().Add(-5 * time.Minute),
 	})
 	pass := !resp.Allowed && resp.Reason == keyrelease.ReasonEvidenceExpired
 	return ScenarioResult{ID: 12, Name: "Key release after evidence expiry",
 		Description: "Attacker requests key release after evidence TTL elapsed",
-		Expected: OutcomeBlocked, Observed: blocked(!resp.Allowed),
+		Expected:    OutcomeBlocked, Observed: blocked(!resp.Allowed),
 		Pass: pass, Detail: string(resp.Reason), Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -492,7 +492,7 @@ func (r *Runner) attack13GPUNotConfidentialInKind(_ context.Context) ScenarioRes
 	}
 	return ScenarioResult{ID: 13, Name: "GPU not confidential in kind",
 		Description: "Confidential GPU must be explicitly simulated, never reported as real in kind",
-		Expected: OutcomeBlocked, Observed: detected(simulated),
+		Expected:    OutcomeBlocked, Observed: detected(simulated),
 		Pass: pass, Detail: detail, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }
@@ -535,7 +535,7 @@ func (r *Runner) attack14RewriteBeforeCheckpoint(_ context.Context) ScenarioResu
 	}
 	return ScenarioResult{ID: 14, Name: "Rewrite history before checkpoint",
 		Description: "Attacker rewrites a record prior to anchored checkpoint — must be detected",
-		Expected: OutcomeDetected, Observed: detected(pass),
+		Expected:    OutcomeDetected, Observed: detected(pass),
 		Pass: pass, Detail: detail, Simulated: true,
 		DurationMs: time.Since(start).Milliseconds()}
 }

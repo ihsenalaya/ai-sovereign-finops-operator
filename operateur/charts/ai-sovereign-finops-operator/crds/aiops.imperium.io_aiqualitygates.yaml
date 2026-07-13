@@ -259,6 +259,63 @@ spec:
                 description: SourceModel is the current provider-side model identifier.
                 minLength: 1
                 type: string
+              statistical:
+                description: Statistical configures non-inferiority, sample-size and
+                  hysteresis.
+                properties:
+                  baselineSuccessRate:
+                    description: BaselineSuccessRate is the expected source pass rate
+                      used for sample sizing.
+                    maximum: 1
+                    minimum: 0
+                    type: number
+                  compositeWeights:
+                    description: CompositeWeights configures the [0,1] audited composite
+                      score.
+                    properties:
+                      cost:
+                        minimum: 0
+                        type: number
+                      errorRate:
+                        minimum: 0
+                        type: number
+                      latencyP95:
+                        minimum: 0
+                        type: number
+                      quality:
+                        minimum: 0
+                        type: number
+                    type: object
+                  confidenceLevel:
+                    description: ConfidenceLevel is the one-sided confidence level,
+                      for example 0.95.
+                    maximum: 0.999
+                    minimum: 0.5
+                    type: number
+                  hysteresisEnterScore:
+                    description: HysteresisEnterScore is the composite score required
+                      to enter candidate-safe.
+                    maximum: 1
+                    minimum: 0
+                    type: number
+                  hysteresisExitScore:
+                    description: HysteresisExitScore is the composite score below
+                      which a safe gate becomes risky.
+                    maximum: 1
+                    minimum: 0
+                    type: number
+                  nonInferiorityDelta:
+                    description: NonInferiorityDelta is the tolerated candidate regression
+                      margin.
+                    maximum: 1
+                    minimum: 0
+                    type: number
+                  power:
+                    description: Power is the target statistical power.
+                    maximum: 0.999
+                    minimum: 0.5
+                    type: number
+                type: object
               target:
                 description: |-
                   Target is the application this gate protects. The intended granularity is
@@ -362,6 +419,10 @@ spec:
                   parsed.
                 format: int32
                 type: integer
+              compositeScore:
+                description: CompositeScore is the higher-level audited decision score
+                  in [0,1].
+                type: number
               conditions:
                 description: Conditions represent the latest available observations
                   of the gate state.
@@ -423,6 +484,13 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              datasetHash:
+                description: DatasetHash is the SHA-256 of the golden dataset content.
+                type: string
+              datasetVersion:
+                description: DatasetVersion is the declared golden dataset version,
+                  when annotated.
+                type: string
               dimensions:
                 description: Dimensions is a radar-ready view of score components.
                 items:
@@ -481,9 +549,23 @@ spec:
                 items:
                   type: string
                 type: array
+              nonInferiorityLowerBound:
+                description: NonInferiorityLowerBound is the lower confidence bound
+                  on candidate-source difference.
+                type: number
+              observedCandidateSamples:
+                description: ObservedCandidateSamples is the number of candidate samples
+                  included in the statistical test.
+                format: int32
+                type: integer
               observedGeneration:
                 description: ObservedGeneration is the .metadata.generation last reconciled.
                 format: int64
+                type: integer
+              observedSourceSamples:
+                description: ObservedSourceSamples is the number of source samples
+                  included in the statistical test.
+                format: int32
                 type: integer
               phase:
                 description: Phase summarizes the gate result.
@@ -495,6 +577,11 @@ spec:
               qualityScore:
                 description: QualityScore is the candidate composite score in [0,100].
                 type: number
+              requiredSamples:
+                description: RequiredSamples is the per-arm sample size required by
+                  the statistical test.
+                format: int32
+                type: integer
               samples:
                 description: Samples is the number of candidate evidence samples used
                   by the quality score.

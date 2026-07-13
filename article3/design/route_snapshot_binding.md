@@ -125,12 +125,16 @@ Required validation is fail closed:
    provider types must have an enumerated compatibility rule; `custom` must not
    bypass adapter validation.
 
-The request-level `AIAdmissionApproval` proposal must embed the resolved
-provider-owned route snapshot described below, not the old model-owned route.
-Its digest must therefore change when either object identity, pricing or
-compliance evidence, or the provider route binding changes. `AIChangeRequest`
-is the unrelated reroute workflow and must not be reused as the one-request
-approval authority.
+Approval is policy/change level, never request level. An
+`AIChangeRequest` with action `authorize-gov-ar-route` binds the exact routing
+policy UID/generation, model UID/generation, provider UID/generation,
+provider-owned route-snapshot digest, and absolute expiry. Its immutable scope
+digest changes when any bound identity, route, or expiry changes. The
+controller writes the independently recomputed digest to status only after a
+human approval. Admission only reads this status: it neither creates a
+Kubernetes object nor consumes a Lease for a request. The same approval may be
+reused within its exact scope while every live identity and the complete route
+snapshot still match; otherwise admission returns `REQUIRE_APPROVAL`.
 
 ## Frozen internal snapshot
 
@@ -195,23 +199,23 @@ before changing tenant liability. A reservation loaded from storage must be
 validated before it can be returned, claimed, delivered, settled, canceled, or
 reconciled. A digest mismatch fails closed and leaves liability held.
 
-### One-request approval proposal digest
+### Policy-level approval scope digest
 
-The current `AIAdmissionApprovalRequest` carries the ambiguous
-`CandidateSnapshotVersion` and the model-owned `AIModelRouteSpec`. Replace that
-pair with a complete API representation of `RouteSnapshot`. To avoid drift
-between packages, either define the JSON value type once in `api/v1alpha1` and
-alias/use it in `internal/govar`, or add a conversion whose field-by-field
-round-trip and JSON equality are tested. A free-form map is forbidden.
+`GOVARRouteApprovalScope` uses typed references, not a free-form map. Its
+`ScopeDigest` is SHA-256 over the routing-policy, model, and provider names,
+UIDs, and generations, the complete `RouteSnapshot.SnapshotHash`, and
+`ValidUntil`, with the digest field cleared during recomputation and domain
+separator `govar-route-approval-scope-v1`. The
+`AIChangeRequest` CRD makes the scope immutable after creation. Controller
+status records the observed change-request generation, approved scope digest,
+approval time, and exact expiry. Admission requires all of them and validates
+the live complete route snapshot again. Tests mutate every scope category and
+prove that the digest or live-identity comparison invalidates the approval.
 
-If `CandidateSnapshotVersion` remains for wire compatibility, proposal
-creation, admission validation, and the approval controller must require it to
-equal `RouteSnapshot.SnapshotHash`. `AIAdmissionApprovalRequest.ComputeDigest`
-must clear only `RequestDigest` and hash the fixed-field request including the
-complete route snapshot. The proposal CRD schema and generated deepcopy code
-must expose those required identity, pricing/compliance, route-binding, and
-snapshot-hash fields. Tests must prove that changing any one of them changes the
-proposal digest and invalidates an existing approval.
+The derived ledger policy-version string additionally includes the approved
+change-request UID, generation, and full scope digest. This preserves the exact
+governance authorization used by the reserve transaction without introducing
+request-level Kubernetes state or a non-atomic consumption marker.
 
 The admission fingerprint must also bind the same `SnapshotHash`. Assigning the
 validated hash to `Candidate.SnapshotVersion` is sufficient only if every

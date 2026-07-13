@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -47,10 +48,8 @@ func TestFrozenCohortIsPreOutcomeImmutableAndSlotBound(t *testing.T) {
 	if err := e.RegisterFrozenCohort(context.Background(), changed); err == nil {
 		t.Fatal("conflicting cohort mutation accepted")
 	}
-	routing := defaultRouting()
-	routing.Annotations[AnnotationReservationMethod] = "govar_fixed_cohort"
-	routing.Annotations[AnnotationAdaptiveTokens] = "1200"
-	routing.Annotations[AnnotationCalibrationSupport] = "100"
+	routing := typedAdaptiveRouting(aiopsv1alpha1.GOVARReservationFixedCohort, 1200, now, defaultCandidates()[0])
+	bindTypedCohort(&routing, c)
 	resp, err := e.Admit(req, defaultBudget(), routing, defaultCandidates())
 	if err != nil || resp.Decision != DecisionAdmit || resp.AllocatedRiskPPB != 10_000_000 {
 		t.Fatalf("fixed admission=(%+v,%v)", resp, err)
@@ -74,11 +73,9 @@ func TestFrozenCohortRejectsAbsentFutureMismatchedAndAnnotationAuthority(t *test
 		c := FrozenCohort{TenantID: testTenant, CohortID: "c", Size: 1, TenantRiskPPB: 1, Slots: []FrozenCohortSlot{{0, r.RequestID, OpportunityDigest(r), 1_000_000_000}}, DataHash: eventPayloadHash("d"), ConfigHash: eventPayloadHash("c"), ProtocolHash: eventPayloadHash("p"), FrozenAt: now.Add(-time.Second)}
 		return e, r, mustSignCohort(t, c)
 	}
-	routing := defaultRouting()
-	routing.Annotations[AnnotationReservationMethod] = "govar_fixed_cohort"
-	routing.Annotations[AnnotationAdaptiveTokens] = "1000"
-	routing.Annotations[AnnotationCalibrationSupport] = "100"
-	e, r, _ := newCase()
+	e, r, absent := newCase()
+	routing := typedAdaptiveRouting(aiopsv1alpha1.GOVARReservationFixedCohort, 1000, now, defaultCandidates()[0])
+	bindTypedCohort(&routing, absent)
 	resp, _ := e.Admit(r, defaultBudget(), routing, defaultCandidates())
 	if resp.Decision != DecisionAbstain {
 		t.Fatalf("absent cohort=%+v", resp)
@@ -92,6 +89,7 @@ func TestFrozenCohortRejectsAbsentFutureMismatchedAndAnnotationAuthority(t *test
 	if err := e.RegisterFrozenCohort(context.Background(), c); err != nil {
 		t.Fatal(err)
 	}
+	bindTypedCohort(&routing, c)
 	r.MaxOutputTokens++
 	resp, _ = e.Admit(r, defaultBudget(), routing, defaultCandidates())
 	if resp.Decision != DecisionAbstain {
@@ -101,10 +99,12 @@ func TestFrozenCohortRejectsAbsentFutureMismatchedAndAnnotationAuthority(t *test
 	if err := e.RegisterFrozenCohort(context.Background(), c); err != nil {
 		t.Fatal(err)
 	}
+	bindTypedCohort(&routing, c)
+	routing.Annotations = map[string]string{}
 	routing.Annotations[AnnotationCohortSize] = "1"
 	resp, _ = e.Admit(r, defaultBudget(), routing, defaultCandidates())
-	if resp.Decision != DecisionAbstain {
-		t.Fatalf("annotation authority=%+v", resp)
+	if resp.Decision != DecisionAdmit {
+		t.Fatalf("legacy annotation was not ignored=%+v", resp)
 	}
 }
 
@@ -264,5 +264,33 @@ func TestPostFinalCreditTracksBaseAcrossDownThenUpCorrections(t *testing.T) {
 	}
 	if got := e.Liability(testTenant); got.HistoricalAuditCreditMicros != 500 || got.CarriedAdjustmentMicros != 0 {
 		t.Fatalf("credit did not reverse to base delta: %+v", got)
+	}
+}
+
+func TestUpwardCorrectionAfterLateFinalPreservesFullExternalDebt(t *testing.T) {
+	e := NewEngine()
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	e.now = func() time.Time { return now }
+	b := defaultBudget()
+	b.Spec.Period = "daily"
+	a, err := e.Admit(admitRequest("late-final-up", testTenant, testWorkload), b, defaultRouting(), defaultCandidates())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = e.Dispatch(dispatchRequest("late-final-up", "claim", a.ProviderAttemptID, DispatchClaimed, testTenant, testWorkload)); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(24 * time.Hour)
+	_ = e.Liability(testTenant)
+	if _, code, err := e.Settle(settleRequest("late-final-up", "late-final", 2_000, 1, true, testTenant, testWorkload)); err != nil || code != ReasonLateSettlement {
+		t.Fatalf("late final=(%s,%v)", code, err)
+	}
+	up := settleRequest("late-final-up", "late-up", 2_700, 2, true, testTenant, testWorkload)
+	up.PredecessorEventID = "late-final"
+	if _, code, err := e.Settle(up); err != nil || code != ReasonCorrection {
+		t.Fatalf("up correction=(%s,%v)", code, err)
+	}
+	if got := e.Liability(testTenant); got.CarriedAdjustmentMicros != 2_700 {
+		t.Fatalf("late correction reduced external debt: %+v", got)
 	}
 }

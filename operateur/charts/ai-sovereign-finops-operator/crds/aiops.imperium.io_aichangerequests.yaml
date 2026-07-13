@@ -41,12 +41,14 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: "AIChangeRequest represents a proposed model routing change that
-          requires\nhuman approval before the operator actuates it. The workflow is:\n\n\tPending
-          → Approved (human sets spec.approval=Approved) → Actuated\n\tPending → Rejected
-          (human sets spec.approval=Rejected)\n\tPending → Expired  (expiresAfter
-          elapsed without decision)\n\nEvery decision is auditable via status conditions
-          and Kubernetes Events."
+        description: "AIChangeRequest represents either a proposed model reroute or
+          a bounded\npolicy-level GOV-AR route authorization that requires human approval.
+          The\nworkflow is:\n\n\tPending → Approved (human sets spec.approval=Approved)
+          → Actuated\n\tPending → Rejected (human sets spec.approval=Rejected)\n\tPending
+          → Expired  (expiresAfter elapsed without decision)\n\nauthorize-gov-ar-route
+          ends in Approved without actuation and may be reused\nonly inside its exact
+          immutable scope. Every decision is auditable via status\nconditions and
+          Kubernetes Events."
         properties:
           apiVersion:
             description: |-
@@ -73,6 +75,7 @@ spec:
                 description: Action is the type of change proposed.
                 enum:
                 - reroute
+                - authorize-gov-ar-route
                 type: string
               approval:
                 default: Pending
@@ -93,6 +96,110 @@ spec:
                   ExpiresAfter is how long this request waits for approval before it expires
                   (e.g. "24h"). Defaults to "48h" when not set.
                 type: string
+              govarRouteApproval:
+                description: |-
+                  GOVARRouteApproval is present only for authorize-gov-ar-route. One
+                  approved object may govern many requests under the exact frozen scope;
+                  requests never create or consume Kubernetes objects.
+                properties:
+                  model:
+                    description: |-
+                      AIWorkloadBindingResolvedReference binds a policy name to the exact object
+                      identity and generation resolved by the controller.
+                    properties:
+                      generation:
+                        description: Generation is the referenced object's observed
+                          metadata.generation.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      name:
+                        type: string
+                      uid:
+                        description: |-
+                          UID is a type that holds unique ID values, including UUIDs.  Because we
+                          don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                          intent and helps make sure that UIDs and names do not get conflated.
+                        type: string
+                    required:
+                    - generation
+                    - name
+                    - uid
+                    type: object
+                  provider:
+                    description: |-
+                      AIWorkloadBindingResolvedReference binds a policy name to the exact object
+                      identity and generation resolved by the controller.
+                    properties:
+                      generation:
+                        description: Generation is the referenced object's observed
+                          metadata.generation.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      name:
+                        type: string
+                      uid:
+                        description: |-
+                          UID is a type that holds unique ID values, including UUIDs.  Because we
+                          don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                          intent and helps make sure that UIDs and names do not get conflated.
+                        type: string
+                    required:
+                    - generation
+                    - name
+                    - uid
+                    type: object
+                  routeSnapshotDigest:
+                    description: |-
+                      RouteSnapshotDigest is the lower-case SHA-256 digest of the exact
+                      controller-validated GOVARRouteSnapshot admitted under this scope.
+                    pattern: ^[a-f0-9]{64}$
+                    type: string
+                  routingPolicy:
+                    description: |-
+                      AIWorkloadBindingResolvedReference binds a policy name to the exact object
+                      identity and generation resolved by the controller.
+                    properties:
+                      generation:
+                        description: Generation is the referenced object's observed
+                          metadata.generation.
+                        format: int64
+                        minimum: 1
+                        type: integer
+                      name:
+                        type: string
+                      uid:
+                        description: |-
+                          UID is a type that holds unique ID values, including UUIDs.  Because we
+                          don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                          intent and helps make sure that UIDs and names do not get conflated.
+                        type: string
+                    required:
+                    - generation
+                    - name
+                    - uid
+                    type: object
+                  scopeDigest:
+                    description: |-
+                      ScopeDigest is SHA-256 over every other field in this scope. Authors use
+                      ComputeDigest to populate it; the controller independently recomputes it.
+                    pattern: ^[a-f0-9]{64}$
+                    type: string
+                  validUntil:
+                    description: |-
+                      ValidUntil is an absolute, reviewer-selected upper bound. An approval is
+                      not valid at or after this instant.
+                    format: date-time
+                    type: string
+                required:
+                - model
+                - provider
+                - routeSnapshotDigest
+                - routingPolicy
+                - scopeDigest
+                - validUntil
+                type: object
               latencyImpact:
                 description: LatencyImpact is a human-readable estimated latency delta
                   (e.g. "+120ms").
@@ -122,9 +229,16 @@ spec:
                 type: string
             required:
             - action
-            - sourceModel
-            - targetModel
             type: object
+            x-kubernetes-validations:
+            - message: sourceModel and targetModel are required for reroute
+              rule: self.action != 'reroute' || (has(self.sourceModel) && has(self.targetModel))
+            - message: govarRouteApproval is required for authorize-gov-ar-route
+              rule: self.action != 'authorize-gov-ar-route' || has(self.govarRouteApproval)
+            - message: govarRouteApproval is immutable; create a new change request
+                for a new scope
+              rule: '!has(oldSelf.govarRouteApproval) || self.govarRouteApproval ==
+                oldSelf.govarRouteApproval'
           status:
             description: AIChangeRequestStatus reflects the observed state of the
               change request.
@@ -139,6 +253,17 @@ spec:
                 items:
                   type: string
                 type: array
+              approvedAt:
+                description: ApprovedAt is when the controller verified a human-approved
+                  GOV-AR route scope.
+                format: date-time
+                type: string
+              approvedScopeDigest:
+                description: |-
+                  ApprovedScopeDigest is the controller-recomputed digest of the exact
+                  reusable GOV-AR route scope. Admission rejects an absent or stale value.
+                pattern: ^[a-f0-9]{64}$
+                type: string
               conditions:
                 description: Conditions represent the latest available observations
                   of the request state.

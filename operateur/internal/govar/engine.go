@@ -12,6 +12,7 @@ import (
 	"time"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 )
 
 // MoneyMicros is one millionth of the configured ledger currency. All ledger
@@ -70,10 +71,20 @@ const (
 	ReasonLatencyExceeded          ReasonCode = "latency_guardrail_exceeded"
 	ReasonStrictCapUnverified      ReasonCode = "strict_cap_unverified"
 	ReasonInsufficientCalibration  ReasonCode = "insufficient_calibration"
+	ReasonCalibrationMissing       ReasonCode = "calibration_status_missing"
+	ReasonCalibrationGeneration    ReasonCode = "calibration_generation_mismatch"
+	ReasonCalibrationMismatch      ReasonCode = "calibration_digest_mismatch"
+	ReasonCalibrationRegime        ReasonCode = "calibration_regime_mismatch"
+	ReasonCalibrationSupport       ReasonCode = "calibration_support_insufficient"
+	ReasonCalibrationStale         ReasonCode = "calibration_stale"
+	ReasonCalibrationDrift         ReasonCode = "calibration_drift_detected"
+	ReasonCalibrationUnsupported   ReasonCode = "calibration_detector_unsupported"
+	ReasonInputBoundFallback       ReasonCode = "input_token_bound_uncertain"
 	ReasonReservationMethodUnknown ReasonCode = "reservation_method_unknown"
 	ReasonBudgetWindowConflict     ReasonCode = "budget_window_conflict"
 	ReasonRetriesDisabled          ReasonCode = "provider_retries_disabled_unreserved"
 	ReasonExpiredUndispatched      ReasonCode = "expired_undispatched"
+	ReasonBudgetWindowRollover     ReasonCode = "budget_window_rollover"
 )
 
 type ReservationState string
@@ -112,22 +123,31 @@ const (
 )
 
 type AdmitRequest struct {
-	RequestID         string   `json:"request_id"`
-	Namespace         string   `json:"namespace"`
-	TenantID          string   `json:"tenant_id"`
-	WorkloadUID       string   `json:"workload_uid"`
-	Team              string   `json:"team,omitempty"`
-	Application       string   `json:"application,omitempty"`
-	SensitiveData     bool     `json:"sensitive_data,omitempty"`
-	AllowedZones      []string `json:"allowed_zones,omitempty"`
-	BudgetPolicyName  string   `json:"budget_policy_name"`
-	RoutingPolicyName string   `json:"routing_policy_name"`
-	InputTokens       int64    `json:"input_tokens,omitempty"`
-	InputTokensExact  bool     `json:"input_tokens_exact,omitempty"`
-	MaxOutputTokens   int64    `json:"max_output_tokens,omitempty"`
-	RequireApproval   bool     `json:"require_approval,omitempty"`
-	CohortID          string   `json:"cohort_id,omitempty"`
-	CohortIndex       int64    `json:"cohort_index,omitempty"`
+	RequestID            string   `json:"request_id"`
+	Namespace            string   `json:"namespace"`
+	TenantID             string   `json:"tenant_id"`
+	WorkloadUID          string   `json:"workload_uid"`
+	Team                 string   `json:"team,omitempty"`
+	Application          string   `json:"application,omitempty"`
+	SensitiveData        bool     `json:"sensitive_data,omitempty"`
+	AllowedZones         []string `json:"allowed_zones,omitempty"`
+	BudgetPolicyName     string   `json:"budget_policy_name"`
+	RoutingPolicyName    string   `json:"routing_policy_name"`
+	InputTokens          int64    `json:"input_tokens,omitempty"`
+	InputTokensExact     bool     `json:"input_tokens_exact,omitempty"`
+	MaxOutputTokens      int64    `json:"max_output_tokens,omitempty"`
+	MaxToolCalls         int64    `json:"max_tool_calls,omitempty"`
+	MaxMediaUnits        int64    `json:"max_media_units,omitempty"`
+	TimeoutSeconds       int64    `json:"timeout_seconds,omitempty"`
+	MaxRetryAttempts     int64    `json:"max_retry_attempts,omitempty"`
+	CancellationPossible bool     `json:"cancellation_possible,omitempty"`
+	// ChargeBounds contains adapter-normalized, non-overlapping bounds for every
+	// additional request-declared billable basis. A missing basis is unknown,
+	// not zero, and makes a candidate infeasible.
+	ChargeBounds    []govarpricing.UsageQuantity `json:"charge_bounds,omitempty"`
+	RequireApproval bool                         `json:"require_approval,omitempty"`
+	CohortID        string                       `json:"cohort_id,omitempty"`
+	CohortIndex     int64                        `json:"cohort_index,omitempty"`
 
 	// Authenticated fields are populated by the trusted HTTP identity boundary,
 	// never decoded from the request body.
@@ -137,21 +157,22 @@ type AdmitRequest struct {
 }
 
 type AdmitResponse struct {
-	Decision            Decision       `json:"decision"`
-	ReasonCode          ReasonCode     `json:"reason_code"`
-	SelectedDeployment  string         `json:"selected_deployment,omitempty"`
-	ReservationID       string         `json:"reservation_id,omitempty"`
-	ProviderAttemptID   string         `json:"provider_attempt_id,omitempty"`
-	ProviderRetryPolicy string         `json:"provider_retry_policy,omitempty"`
-	ReservedCostMicros  MoneyMicros    `json:"reserved_cost_micros,omitempty"`
-	ReservationMode     string         `json:"reservation_method,omitempty"`
-	AllocatedRiskPPB    int64          `json:"allocated_risk_ppb,omitempty"`
-	RiskLevel           string         `json:"risk_level,omitempty"`
-	PolicyVersion       string         `json:"policy_version,omitempty"`
-	PricingVersion      string         `json:"pricing_version,omitempty"`
-	Expiry              string         `json:"expiry,omitempty"`
-	TraceID             string         `json:"trace_id,omitempty"`
-	RouteSnapshot       *RouteSnapshot `json:"route_snapshot,omitempty"`
+	Decision             Decision                              `json:"decision"`
+	ReasonCode           ReasonCode                            `json:"reason_code"`
+	SelectedDeployment   string                                `json:"selected_deployment,omitempty"`
+	ReservationID        string                                `json:"reservation_id,omitempty"`
+	ProviderAttemptID    string                                `json:"provider_attempt_id,omitempty"`
+	ProviderRetryPolicy  string                                `json:"provider_retry_policy,omitempty"`
+	ReservedCostMicros   MoneyMicros                           `json:"reserved_cost_micros,omitempty"`
+	ReservationMode      string                                `json:"reservation_method,omitempty"`
+	AllocatedRiskPPB     int64                                 `json:"allocated_risk_ppb,omitempty"`
+	RiskLevel            string                                `json:"risk_level,omitempty"`
+	PolicyVersion        string                                `json:"policy_version,omitempty"`
+	PricingVersion       string                                `json:"pricing_version,omitempty"`
+	Expiry               string                                `json:"expiry,omitempty"`
+	TraceID              string                                `json:"trace_id,omitempty"`
+	RouteSnapshot        *RouteSnapshot                        `json:"route_snapshot,omitempty"`
+	SettlementUsageBases []aiopsv1alpha1.ProviderBillableBasis `json:"settlement_usage_bases,omitempty"`
 }
 
 type DispatchRequest struct {
@@ -167,21 +188,24 @@ type DispatchRequest struct {
 }
 
 type SettleRequest struct {
-	RequestID                string          `json:"request_id"`
-	SettlementID             string          `json:"settlement_id"`
-	ProviderAttemptID        string          `json:"provider_attempt_id"`
-	TenantID                 string          `json:"tenant_id"`
-	WorkloadUID              string          `json:"workload_uid"`
-	ActualCostMicros         MoneyMicros     `json:"actual_cost_micros"`
-	LegacyActualCost         json.RawMessage `json:"actual_cost,omitempty"`
-	ActualInput              int64           `json:"actual_input_tokens,omitempty"`
-	ActualOutput             int64           `json:"actual_output_tokens,omitempty"`
-	UsageVersion             int64           `json:"usage_version"`
-	PredecessorEventID       string          `json:"predecessor_event_id,omitempty"`
-	Final                    bool            `json:"final"`
-	ErrorStatus              string          `json:"error_status,omitempty"`
-	AuthenticatedTenantID    string          `json:"-"`
-	AuthenticatedWorkloadUID string          `json:"-"`
+	RequestID         string          `json:"request_id"`
+	SettlementID      string          `json:"settlement_id"`
+	ProviderAttemptID string          `json:"provider_attempt_id"`
+	TenantID          string          `json:"tenant_id"`
+	WorkloadUID       string          `json:"workload_uid"`
+	ActualCostMicros  MoneyMicros     `json:"actual_cost_micros"`
+	LegacyActualCost  json.RawMessage `json:"actual_cost,omitempty"`
+	ActualInput       int64           `json:"actual_input_tokens,omitempty"`
+	ActualOutput      int64           `json:"actual_output_tokens,omitempty"`
+	// Usage is the authoritative provider-adapter-normalized component vector.
+	// It must name every separately priced basis before Final can be effective.
+	Usage                    []govarpricing.UsageQuantity `json:"usage,omitempty"`
+	UsageVersion             int64                        `json:"usage_version"`
+	PredecessorEventID       string                       `json:"predecessor_event_id,omitempty"`
+	Final                    bool                         `json:"final"`
+	ErrorStatus              string                       `json:"error_status,omitempty"`
+	AuthenticatedTenantID    string                       `json:"-"`
+	AuthenticatedWorkloadUID string                       `json:"-"`
 }
 
 type CancelRequest struct {
@@ -217,6 +241,13 @@ type Reservation struct {
 	OutboxState                 OutboxState
 	State                       ReservationState
 	ReservedCostMicros          MoneyMicros
+	ReservedComponents          []govarpricing.ChargeComponent
+	PricingSnapshot             govarpricing.NormalizedPricingSnapshot
+	PricingSnapshotSHA256       string
+	CapEvidenceSHA256           string
+	ActualComponents            []govarpricing.ActualChargeComponent
+	MissingUsageBases           []aiopsv1alpha1.ProviderBillableBasis
+	ComponentBoundExceeded      bool
 	ProvisionalCostMicros       MoneyMicros
 	BaseActualMicros            MoneyMicros
 	SettledEffectMicros         MoneyMicros
@@ -236,6 +267,7 @@ type Reservation struct {
 	CohortID                    string
 	CohortIndex                 int64
 	CohortRegistryDigest        string
+	CalibrationArtifactSHA256   string
 	OriginWindowID              string
 	EnforcementWindowID         string
 	RolloverGuardMicros         MoneyMicros
@@ -317,7 +349,7 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 			return AdmitResponse{}, errors.New("duplicate request_id has conflicting immutable admission payload")
 		}
 		if !reservationIsActive(existing.State) {
-			return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition, TraceID: req.RequestID}, nil
+			return AdmitResponse{Decision: DecisionReject, ReasonCode: ReasonInvalidTransition}, nil
 		}
 		return responseForReservation(existing, ReasonDuplicateRequest), nil
 	}
@@ -339,9 +371,18 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 	if err != nil {
 		return decisionResponse(req.RequestID, DecisionReject, ReasonBudgetWindowConflict, budget, routing), nil
 	}
+	choice, infeasibleReason, err := chooseAdmission(req, routing, candidates, tenant.available(), e.now().UTC())
+	if err != nil {
+		return AdmitResponse{}, err
+	}
+	if infeasibleReason != "" {
+		decision := decisionForAdmissionFailure(routing, infeasibleReason)
+		return decisionResponse(req.RequestID, decision, infeasibleReason, budget, routing), nil
+	}
+	best, reservedCost := choice.Candidate, choice.Reservation
 	cohortDigest := ""
 	allocatedRiskOverride := int64(-1)
-	if strings.TrimSpace(routing.Annotations[AnnotationReservationMethod]) == "govar_fixed_cohort" {
+	if choice.Method == string(aiopsv1alpha1.GOVARReservationFixedCohort) {
 		cohort, ok := e.cohorts[cohortKey(req.AuthenticatedTenantID, req.CohortID)]
 		if !ok {
 			return decisionResponse(req.RequestID, DecisionAbstain, ReasonInsufficientCalibration, budget, routing), nil
@@ -352,18 +393,6 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 		}
 		cohortDigest = cohort.RegistryDigest
 	}
-	choice, infeasibleReason, err := chooseAdmission(req, routing, candidates, tenant.available())
-	if err != nil {
-		return AdmitResponse{}, err
-	}
-	if infeasibleReason != "" {
-		decision := DecisionAbstain
-		if infeasibleReason == ReasonBudgetUnavailable {
-			decision = DecisionQueue
-		}
-		return decisionResponse(req.RequestID, decision, infeasibleReason, budget, routing), nil
-	}
-	best, reservedCost := choice.Candidate, choice.Reservation
 	if allocatedRiskOverride >= 0 && choice.Method == "govar_fixed_cohort" {
 		choice.AllocatedRiskPPB = allocatedRiskOverride
 	} else if choice.Method != "govar_fixed_cohort" {
@@ -383,6 +412,9 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 		SelectedDeployment: best.ModelRef, ProviderAttemptID: req.RequestID + ":attempt:1",
 		OutboxID: req.RequestID + ":dispatch:1", OutboxState: OutboxPending, State: StateReserved,
 		ReservedCostMicros: reservedCost, ResidualHoldMicros: reservedCost,
+		ReservedComponents:    append([]govarpricing.ChargeComponent(nil), choice.Components...),
+		PricingSnapshot:       *best.PricingSnapshot.DeepCopy(),
+		PricingSnapshotSHA256: best.PricingSnapshot.SnapshotSHA256, CapEvidenceSHA256: best.CapEvidenceDigest,
 		PolicyVersion: policyVersion(budget, routing), PricingVersion: best.PricingVersion,
 		ReservationMode: choice.Method, RiskLevel: riskLevel(snapshot), AllocatedRiskPPB: choice.AllocatedRiskPPB, Expiry: expiry,
 		InputPriceMicrosPerMillion:  best.InputPriceMicrosPerMillion,
@@ -393,14 +425,32 @@ func (e *Engine) Admit(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, ro
 		CohortID:                    req.CohortID,
 		CohortIndex:                 req.CohortIndex,
 		CohortRegistryDigest:        cohortDigest,
+		CalibrationArtifactSHA256:   calibrationArtifactForChoice(routing, choice.Method),
 		OriginWindowID:              tenant.CurrentWindowID,
 		EnforcementWindowID:         tenant.CurrentWindowID,
 		ProviderRetryPolicy:         "NO_PROVIDER_RETRY",
 	}
+	if choice.FallbackReason != "" {
+		res.RiskLevel = "conservative"
+	}
 	tenant.ReservedMicros += reservedCost
 	tenant.Requests[req.RequestID] = struct{}{}
 	e.reservations[req.RequestID] = res
-	return responseForReservation(res, ReasonHighestUtility), nil
+	reason := ReasonHighestUtility
+	if choice.FallbackReason != "" {
+		reason = choice.FallbackReason
+	}
+	return responseForReservation(res, reason), nil
+}
+
+func calibrationArtifactForChoice(routing aiopsv1alpha1.AIRoutingPolicy, method string) string {
+	if method != string(aiopsv1alpha1.GOVARReservationAdaptiveQuantile) && method != string(aiopsv1alpha1.GOVARReservationFixedCohort) {
+		return ""
+	}
+	if routing.Status.GOVAR == nil || routing.Status.GOVAR.Calibration == nil {
+		return ""
+	}
+	return routing.Status.GOVAR.Calibration.ArtifactSHA256
 }
 
 func (e *Engine) Dispatch(req DispatchRequest) (Reservation, ReasonCode, error) {
@@ -461,7 +511,7 @@ func (e *Engine) Settle(req SettleRequest) (Reservation, ReasonCode, error) {
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	payloadHash := eventPayloadHash("settlement", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, fmt.Sprint(req.ActualCostMicros), fmt.Sprint(req.ActualInput), fmt.Sprint(req.ActualOutput), fmt.Sprint(req.UsageVersion), req.PredecessorEventID, fmt.Sprint(req.Final), req.ErrorStatus)
+	payloadHash := settlementPayloadHash(req)
 	if prior, ok := e.inbox[req.SettlementID]; ok {
 		if prior.RequestID != req.RequestID {
 			return Reservation{}, ReasonDuplicateEvent, errors.New("settlement_id is already bound to another request")
@@ -621,13 +671,31 @@ func applyDispatch(res *Reservation, status DispatchStatus) (ReasonCode, error) 
 }
 
 func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) (ReasonCode, error) {
-	if req.ActualCostMicros == 0 && (req.ActualInput > 0 || req.ActualOutput > 0) {
-		cost, err := costFromPriceMicros(res.InputPriceMicrosPerMillion, res.OutputPriceMicrosPerMillion, req.ActualInput, req.ActualOutput)
-		if err != nil {
-			return ReasonInvalidTransition, err
-		}
-		req.ActualCostMicros = cost
+	usage := append([]govarpricing.UsageQuantity(nil), req.Usage...)
+	if len(usage) == 0 && (req.ActualInput > 0 || req.ActualOutput > 0) {
+		usage = []govarpricing.UsageQuantity{{Basis: aiopsv1alpha1.ProviderBasisInputTokens, Quantity: req.ActualInput}, {Basis: aiopsv1alpha1.ProviderBasisOutputTokens, Quantity: req.ActualOutput}}
 	}
+	actualComponents, missing, exceeded, err := govarpricing.SettleComponents(res.PricingSnapshot, res.ReservedComponents, usage)
+	if err != nil {
+		return ReasonPricingIncomplete, err
+	}
+	actualMicros, err := govarpricing.SumActualComponents(actualComponents)
+	if err != nil {
+		return ReasonInvalidTransition, err
+	}
+	if req.ActualCostMicros != 0 && req.ActualCostMicros != MoneyMicros(actualMicros) {
+		return ReasonInvalidTransition, errors.New("client-supplied actual cost does not match the frozen component vector")
+	}
+	req.ActualCostMicros = MoneyMicros(actualMicros)
+	if len(missing) != 0 {
+		req.Final = false
+		if req.ErrorStatus == "" {
+			req.ErrorStatus = "incomplete_authoritative_usage"
+		}
+	}
+	res.ActualComponents = append([]govarpricing.ActualChargeComponent(nil), actualComponents...)
+	res.MissingUsageBases = append([]aiopsv1alpha1.ProviderBillableBasis(nil), missing...)
+	res.ComponentBoundExceeded = res.ComponentBoundExceeded || exceeded
 	if req.ActualCostMicros < 0 || req.UsageVersion <= 0 {
 		return ReasonInvalidTransition, errors.New("actual_cost_micros must be non-negative and usage_version positive")
 	}
@@ -646,6 +714,12 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 		if delta > 0 {
 			if req.ActualCostMicros > res.BaseActualMicros {
 				targetDebt := req.ActualCostMicros - res.BaseActualMicros
+				if res.Carried {
+					// A late-final request is entirely external to the active
+					// window. Its carry effect is the full authoritative cost,
+					// not merely the delta above its first observed actual.
+					targetDebt = req.ActualCostMicros
+				}
 				tenant.CarriedAdjustmentMicros += targetDebt - res.CarryEffectMicros
 				res.CarryEffectMicros = targetDebt
 			}
@@ -657,7 +731,7 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 			res.HistoricalCreditMicros = desiredCredit
 			res.ProvisionalCostMicros = req.ActualCostMicros
 			res.LastUsageEventID = req.SettlementID
-			if req.ActualCostMicros > res.ReservedCostMicros {
+			if req.ActualCostMicros > res.ReservedCostMicros || exceeded {
 				return ReasonReservationExceeded, nil
 			}
 			return ReasonCorrection, nil
@@ -779,12 +853,12 @@ func applySettlement(res *Reservation, tenant *tenantLedger, req SettleRequest) 
 		} else {
 			res.State = StateFinalized
 		}
-		if req.ActualCostMicros > res.ReservedCostMicros {
+		if req.ActualCostMicros > res.ReservedCostMicros || exceeded {
 			return ReasonReservationExceeded, nil
 		}
 		return finalCode, nil
 	}
-	if req.ActualCostMicros > res.ReservedCostMicros {
+	if req.ActualCostMicros > res.ReservedCostMicros || exceeded {
 		res.State = StateCorrectedProvisional
 		return ReasonReservationExceeded, nil
 	}
@@ -839,13 +913,23 @@ func validateAdmitRequest(req AdmitRequest) error {
 	if strings.TrimSpace(req.RequestID) == "" || strings.TrimSpace(req.TenantID) == "" || strings.TrimSpace(req.WorkloadUID) == "" {
 		return errors.New("request_id, tenant_id, and workload_uid are required")
 	}
-	if req.InputTokens < 0 || req.MaxOutputTokens < 0 {
-		return errors.New("token counts cannot be negative")
+	if req.InputTokens < 0 || req.MaxOutputTokens < 0 || req.MaxToolCalls < 0 || req.MaxMediaUnits < 0 || req.TimeoutSeconds < 0 || req.MaxRetryAttempts < 0 {
+		return errors.New("charge bounds cannot be negative")
 	}
 	if req.Namespace == "" || req.Namespace != req.AuthenticatedNamespace {
 		return errors.New("request namespace does not match authenticated namespace")
 	}
 	return validatePrincipal(req.TenantID, req.WorkloadUID, req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID)
+}
+
+func settlementPayloadHash(req SettleRequest) string {
+	usage := append([]govarpricing.UsageQuantity(nil), req.Usage...)
+	sort.Slice(usage, func(i, j int) bool { return usage[i].Basis < usage[j].Basis })
+	parts := []string{"settlement", req.RequestID, req.TenantID, req.WorkloadUID, req.ProviderAttemptID, fmt.Sprint(req.ActualCostMicros), fmt.Sprint(req.ActualInput), fmt.Sprint(req.ActualOutput), fmt.Sprint(req.UsageVersion), req.PredecessorEventID, fmt.Sprint(req.Final), req.ErrorStatus}
+	for _, q := range usage {
+		parts = append(parts, string(q.Basis), fmt.Sprint(q.Quantity))
+	}
+	return eventPayloadHash(parts...)
 }
 
 func validateSettleRequest(req SettleRequest) error {
@@ -887,15 +971,21 @@ func matchPrincipal(res Reservation, tenantID, workloadUID string) error {
 
 func responseForReservation(res Reservation, reason ReasonCode) AdmitResponse {
 	route := res.RouteSnapshot
+	bases := make([]aiopsv1alpha1.ProviderBillableBasis, 0, len(res.ReservedComponents))
+	for _, component := range res.ReservedComponents {
+		bases = append(bases, component.Basis)
+	}
+	sort.Slice(bases, func(i, j int) bool { return bases[i] < bases[j] })
 	return AdmitResponse{
 		Decision: DecisionAdmit, ReasonCode: reason, SelectedDeployment: res.SelectedDeployment,
 		ReservationID: res.RequestID, ProviderAttemptID: res.ProviderAttemptID,
 		ReservedCostMicros: res.ReservedCostMicros, ReservationMode: res.ReservationMode,
 		AllocatedRiskPPB: res.AllocatedRiskPPB, RiskLevel: res.RiskLevel,
 		PolicyVersion: res.PolicyVersion, PricingVersion: res.PricingVersion,
-		Expiry: res.Expiry.UTC().Format(time.RFC3339), TraceID: res.RequestID,
-		ProviderRetryPolicy: res.ProviderRetryPolicy,
-		RouteSnapshot:       &route,
+		Expiry:               res.Expiry.UTC().Format(time.RFC3339),
+		ProviderRetryPolicy:  res.ProviderRetryPolicy,
+		RouteSnapshot:        &route,
+		SettlementUsageBases: bases,
 	}
 }
 
@@ -919,11 +1009,23 @@ func validateReservationRoute(res Reservation) error {
 	if res.SelectedDeployment != res.RouteSnapshot.ModelName || res.PricingVersion != res.RouteSnapshot.PricingVersion || res.CandidateSnapshotVersion != res.RouteSnapshot.SnapshotHash {
 		return errors.New("reservation route snapshot identity mismatch")
 	}
+	if err := govarpricing.ValidateSnapshotIntegrity(res.PricingSnapshot); err != nil {
+		return err
+	}
+	if res.PricingSnapshot.SnapshotSHA256 != res.PricingSnapshotSHA256 {
+		return errors.New("reservation pricing snapshot identity mismatch")
+	}
+	reserved, err := govarpricing.SumComponents(res.ReservedComponents)
+	if err != nil || MoneyMicros(reserved) != res.ReservedCostMicros {
+		return errors.New("reservation component sum mismatch")
+	}
 	return nil
 }
 
-func decisionResponse(trace string, decision Decision, reason ReasonCode, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy) AdmitResponse {
-	return AdmitResponse{Decision: decision, ReasonCode: reason, PolicyVersion: policyVersion(budget, routing), PricingVersion: "provider-pricing-live", TraceID: trace}
+func decisionResponse(_ string, decision Decision, reason ReasonCode, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy) AdmitResponse {
+	// Trace identity is transport context, not a ledger/request identifier. The
+	// HTTP boundary fills this field only from an active OpenTelemetry span.
+	return AdmitResponse{Decision: decision, ReasonCode: reason, PolicyVersion: policyVersion(budget, routing), PricingVersion: "provider-pricing-live"}
 }
 
 func (e *Engine) ensureTenant(tenantID string, budget MoneyMicros) *tenantLedger {
@@ -1009,15 +1111,13 @@ func eventPayloadHash(parts ...string) string {
 }
 
 func admissionFingerprint(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidates []Candidate) string {
+	govarSpec, _ := json.Marshal(routing.Spec.GOVAR)
+	govarStatus, _ := json.Marshal(routing.Status.GOVAR)
 	parts := []string{"admission-v1", req.Namespace, req.TenantID, req.WorkloadUID, req.Team, req.Application,
 		fmt.Sprint(req.SensitiveData), strings.Join(req.AllowedZones, "\x1f"), req.BudgetPolicyName,
 		req.RoutingPolicyName, fmt.Sprint(req.InputTokens), fmt.Sprint(req.MaxOutputTokens),
 		budget.Spec.BudgetEUR.String(), policyVersion(budget, routing), budgetIdentity(budget),
-		routing.Annotations[AnnotationReservationMethod], routing.Annotations[AnnotationMeanOutputTokens],
-		routing.Annotations[AnnotationMarginTokens], routing.Annotations[AnnotationQuantileTokens],
-		routing.Annotations[AnnotationAdaptiveTokens], routing.Annotations[AnnotationCalibrationSupport],
-		routing.Annotations[AnnotationCalibrationDrift], routing.Annotations[AnnotationCohortSize],
-		routing.Annotations[AnnotationTenantRiskPPB]}
+		string(govarSpec), string(govarStatus)}
 	parts = append(parts, req.CohortID, fmt.Sprint(req.CohortIndex))
 	for _, c := range candidates {
 		parts = append(parts, c.ModelRef, c.ProviderRef, c.Region,

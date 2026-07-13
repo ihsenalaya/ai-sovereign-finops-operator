@@ -44,22 +44,22 @@ const (
 
 // AuditEntry is a single event stored in an audit record.
 type AuditEntry struct {
-	Timestamp      time.Time `json:"timestamp"`
-	EventType      EventType `json:"event_type"`
-	Namespace      string    `json:"namespace"`
-	PodName        string    `json:"pod_name"`
-	PodUID         string    `json:"pod_uid"`
-	NodeName       string    `json:"node_name"`
-	RuntimeClass   string    `json:"runtime_class"`
-	GPUIdentity    string    `json:"gpu_identity,omitempty"`
-	PolicyHash     string    `json:"policy_hash"`
-	PodSpecHash    string    `json:"pod_spec_hash"`
-	ImageDigest    string    `json:"image_digest,omitempty"`
-	ModelDigest    string    `json:"model_digest,omitempty"`
-	EvidenceHash   string    `json:"evidence_hash,omitempty"`
-	Decision       string    `json:"decision"`
-	Reason         string    `json:"reason,omitempty"`
-	ComponentName  string    `json:"component_name"`
+	Timestamp     time.Time `json:"timestamp"`
+	EventType     EventType `json:"event_type"`
+	Namespace     string    `json:"namespace"`
+	PodName       string    `json:"pod_name"`
+	PodUID        string    `json:"pod_uid"`
+	NodeName      string    `json:"node_name"`
+	RuntimeClass  string    `json:"runtime_class"`
+	GPUIdentity   string    `json:"gpu_identity,omitempty"`
+	PolicyHash    string    `json:"policy_hash"`
+	PodSpecHash   string    `json:"pod_spec_hash"`
+	ImageDigest   string    `json:"image_digest,omitempty"`
+	ModelDigest   string    `json:"model_digest,omitempty"`
+	EvidenceHash  string    `json:"evidence_hash,omitempty"`
+	Decision      string    `json:"decision"`
+	Reason        string    `json:"reason,omitempty"`
+	ComponentName string    `json:"component_name"`
 }
 
 // BatchRecord groups N AuditEntry items into a single chain node.
@@ -91,10 +91,10 @@ func computeBatchHash(index int64, previousHash string, entries []AuditEntry) (s
 type AnomalyKind string
 
 const (
-	AnomalyHashMismatch          AnomalyKind = "HASH_MISMATCH"
-	AnomalyPreviousHashMismatch  AnomalyKind = "PREVIOUS_HASH_MISMATCH"
+	AnomalyHashMismatch            AnomalyKind = "HASH_MISMATCH"
+	AnomalyPreviousHashMismatch    AnomalyKind = "PREVIOUS_HASH_MISMATCH"
 	AnomalyRewriteBeforeCheckpoint AnomalyKind = "REWRITE_BEFORE_CHECKPOINT"
-	AnomalyMissingEntry          AnomalyKind = "MISSING_ENTRY"
+	AnomalyMissingEntry            AnomalyKind = "MISSING_ENTRY"
 )
 
 // Anomaly describes a detected chain integrity violation.
@@ -179,9 +179,9 @@ func VerifyChainAgainstCheckpoint(records []BatchRecord, cp Checkpoint) []Anomal
 // Chain is an in-memory append-only audit chain for kind/dev usage.
 // It supports batching: events are buffered until Flush() is called.
 type Chain struct {
-	records    []BatchRecord
-	pending    []AuditEntry
-	batchSize  int
+	records   []BatchRecord
+	pending   []AuditEntry
+	batchSize int
 }
 
 // NewChain creates an empty audit chain with the given batch size.

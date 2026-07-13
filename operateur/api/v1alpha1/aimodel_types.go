@@ -93,6 +93,28 @@ type AIModelGOVARSpec struct {
 	// +optional
 	// +deprecated
 	Route *AIModelRouteSpec `json:"route,omitempty"`
+
+	// OutputCapEvidence is administrator-attested unless a provider-specific
+	// capability producer replaces it with provider catalog/API evidence.
+	// Existing objects decode without it but are not GOV-AR feasible.
+	// +optional
+	OutputCapEvidence *AIModelOutputCapEvidenceSpec `json:"outputCapEvidence,omitempty"`
+}
+
+type AIModelOutputCapEvidenceSpec struct {
+	// +kubebuilder:validation:Minimum=1
+	MaxOutputTokens int64 `json:"maxOutputTokens"`
+	// +kubebuilder:validation:MinLength=1
+	RequestParameter      string                      `json:"requestParameter"`
+	EnforcedByPathAdapter bool                        `json:"enforcedByPathAdapter"`
+	Mode                  ProviderPricingEvidenceMode `json:"mode"`
+	// +kubebuilder:validation:MinLength=1
+	SourceVersion string `json:"sourceVersion"`
+	// +kubebuilder:validation:Pattern=`^[0-9a-f]{64}$`
+	EvidenceSHA256 string      `json:"evidenceSHA256"`
+	ValidUntil     metav1.Time `json:"validUntil"`
+	// +kubebuilder:validation:MinLength=1
+	CapabilityAdapterVersion string `json:"capabilityAdapterVersion"`
 }
 
 // AIModelVerifiedOutputCapStatus is an observed provider-capability assertion.
@@ -111,6 +133,18 @@ type AIModelVerifiedOutputCapStatus struct {
 	// SourceVersion identifies the immutable provider/model capability source.
 	// +kubebuilder:validation:MinLength=1
 	SourceVersion string `json:"sourceVersion"`
+
+	ProviderUID              string                      `json:"providerUID"`
+	ProviderGeneration       int64                       `json:"providerGeneration"`
+	ProviderDeployment       string                      `json:"providerDeployment"`
+	ModelVersion             string                      `json:"modelVersion"`
+	CapabilityAdapterVersion string                      `json:"capabilityAdapterVersion"`
+	EvidenceMode             ProviderPricingEvidenceMode `json:"evidenceMode"`
+	EvidenceSHA256           string                      `json:"evidenceSHA256"`
+	PricingSnapshotSHA256    string                      `json:"pricingSnapshotSHA256"`
+	ValidUntil               metav1.Time                 `json:"validUntil"`
+	RequestParameter         string                      `json:"requestParameter"`
+	EnforcedByPathAdapter    bool                        `json:"enforcedByPathAdapter"`
 }
 
 // AIModelLatencyObservation is a typed, timestamped latency sample summary.

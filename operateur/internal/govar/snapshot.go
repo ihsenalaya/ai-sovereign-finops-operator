@@ -12,6 +12,7 @@ import (
 	"time"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,6 +55,9 @@ type Candidate struct {
 	QualityScore                float64
 	QualityObservedAt           time.Time
 	VerifiedOutputCap           bool
+	VerifiedOutputCapTokens     int64
+	CapEvidenceDigest           string
+	PricingSnapshot             govarpricing.NormalizedPricingSnapshot
 	Feasible                    bool
 	InfeasibleReason            ReasonCode
 	LatencyMillis               int64
@@ -89,6 +93,10 @@ func BuildPolicySnapshot(budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alp
 }
 
 func BuildCandidates(req RequestContext, models []aiopsv1alpha1.AIModel, providers map[string]aiopsv1alpha1.AIProvider) []Candidate {
+	return BuildCandidatesAt(req, models, providers, time.Now().UTC())
+}
+
+func BuildCandidatesAt(req RequestContext, models []aiopsv1alpha1.AIModel, providers map[string]aiopsv1alpha1.AIProvider, evaluatedAt time.Time) []Candidate {
 	var out []Candidate
 	for i := range models {
 		model := models[i]
@@ -143,7 +151,7 @@ func BuildCandidates(req RequestContext, models []aiopsv1alpha1.AIModel, provide
 			out = append(out, candidate)
 			continue
 		}
-		if model.Status.LastEvaluatedAt == nil || time.Since(model.Status.LastEvaluatedAt.Time) > observationFreshnessLimit || time.Until(model.Status.LastEvaluatedAt.Time) > time.Minute {
+		if evaluatedAt.IsZero() || model.Status.LastEvaluatedAt == nil || evaluatedAt.Sub(model.Status.LastEvaluatedAt.Time) > observationFreshnessLimit || model.Status.LastEvaluatedAt.Time.Sub(evaluatedAt) > time.Minute {
 			candidate.InfeasibleReason = ReasonQualityStale
 			out = append(out, candidate)
 			continue
@@ -151,46 +159,41 @@ func BuildCandidates(req RequestContext, models []aiopsv1alpha1.AIModel, provide
 		candidate.QualityObservedAt = model.Status.LastEvaluatedAt.Time
 		if model.Status.GOVAR != nil && model.Status.GOVAR.Latency != nil {
 			latency := model.Status.GOVAR.Latency
-			if latency.SampleCount > 0 && time.Since(latency.ObservedAt.Time) <= observationFreshnessLimit && time.Until(latency.ObservedAt.Time) <= time.Minute {
+			if latency.SampleCount > 0 && evaluatedAt.Sub(latency.ObservedAt.Time) <= observationFreshnessLimit && latency.ObservedAt.Time.Sub(evaluatedAt) <= time.Minute {
 				candidate.LatencyMillis, candidate.LatencyObservedAt = latency.MeanMillis, latency.ObservedAt.Time
 			}
 		}
 		if model.Status.GOVAR != nil && model.Status.GOVAR.VerifiedOutputCap != nil {
 			cap := model.Status.GOVAR.VerifiedOutputCap
-			candidate.VerifiedOutputCap = cap.Verified && cap.MaxOutputTokens > 0 && strings.TrimSpace(cap.SourceVersion) != "" &&
-				time.Since(cap.ObservedAt.Time) <= observationFreshnessLimit && time.Until(cap.ObservedAt.Time) <= time.Minute
+			candidate.VerifiedOutputCap = provider.Status.GOVAR != nil && provider.Status.GOVAR.PricingSnapshot != nil && cap.Verified && cap.MaxOutputTokens > 0 && cap.ProviderUID == string(provider.UID) && cap.ProviderGeneration == provider.Generation &&
+				cap.ProviderDeployment == binding.ProviderDeployment && cap.ModelVersion == model.Spec.ModelName && cap.CapabilityAdapterVersion == govarpricing.CurrentAdapterVersion &&
+				cap.EnforcedByPathAdapter && cap.RequestParameter == "max_output_tokens" && len(cap.EvidenceSHA256) == 64 && cap.PricingSnapshotSHA256 == provider.Status.GOVAR.PricingSnapshot.SnapshotSHA256 && strings.TrimSpace(cap.SourceVersion) != "" &&
+				cap.ValidUntil.Time.After(evaluatedAt) && evaluatedAt.Sub(cap.ObservedAt.Time) <= observationFreshnessLimit && cap.ObservedAt.Time.Sub(evaluatedAt) <= time.Minute
+			candidate.VerifiedOutputCapTokens = cap.MaxOutputTokens
+			candidate.CapEvidenceDigest = cap.EvidenceSHA256
 		}
-		if candidate.ContextWindow <= 0 || candidate.PricingVersion == "" || provider.Spec.Pricing.Completeness != aiopsv1alpha1.ProviderPricingComplete || !strings.EqualFold(strings.TrimSpace(provider.Spec.Pricing.Currency), "EUR") {
+		if candidate.ContextWindow <= 0 || candidate.PricingVersion == "" || provider.Status.GOVAR == nil || provider.Status.GOVAR.PricingSnapshot == nil {
 			candidate.InfeasibleReason = ReasonPricingIncomplete
 			out = append(out, candidate)
 			continue
 		}
-		if provider.Spec.Pricing.ObservedAt == nil || time.Since(provider.Spec.Pricing.ObservedAt.Time) > observationFreshnessLimit || time.Until(provider.Spec.Pricing.ObservedAt.Time) > time.Minute {
+		candidate.PricingSnapshot = *provider.Status.GOVAR.PricingSnapshot.DeepCopy()
+		if err := govarpricing.ValidateSnapshot(candidate.PricingSnapshot, provider.Generation, evaluatedAt); err != nil {
 			candidate.InfeasibleReason = ReasonPricingStale
 			out = append(out, candidate)
 			continue
 		}
-		inputPrice, err := quantityToMicros(provider.Spec.Pricing.InputTokenPricePerMillion)
-		if err != nil {
-			candidate.InfeasibleReason = ReasonPricingIncomplete
-			out = append(out, candidate)
-			continue
+		for _, row := range candidate.PricingSnapshot.Charges {
+			if row.Basis == aiopsv1alpha1.ProviderBasisInputTokens {
+				candidate.InputPriceMicrosPerMillion = row.PriceMicrosPerUnit
+			}
+			if row.Basis == aiopsv1alpha1.ProviderBasisOutputTokens {
+				candidate.OutputPriceMicrosPerMillion = row.PriceMicrosPerUnit
+			}
 		}
-		outputPrice, err := quantityToMicros(provider.Spec.Pricing.OutputTokenPricePerMillion)
-		if err != nil {
-			candidate.InfeasibleReason = ReasonPricingIncomplete
-			out = append(out, candidate)
-			continue
-		}
-		candidate.InputPriceMicrosPerMillion = int64(inputPrice)
-		candidate.OutputPriceMicrosPerMillion = int64(outputPrice)
 		candidate.SensitiveDataAllowed = model.Spec.SensitiveDataAllowed || provider.Spec.Compliance.AllowedForSensitiveData
-		pricingHash, err := PricingComplianceHash(provider, inputPrice, outputPrice)
-		if err != nil {
-			candidate.InfeasibleReason = ReasonPricingIncomplete
-			out = append(out, candidate)
-			continue
-		}
+		pricingHash := fixedFieldHash("govar-pricing-compliance-v2", candidate.PricingSnapshot.SnapshotSHA256, candidate.CapEvidenceDigest,
+			strings.ToLower(provider.Spec.Type), normalizeZone(provider.Spec.Region), normalizeZone(provider.Spec.DataResidency), fmt.Sprint(provider.Spec.Managed), fmt.Sprint(provider.Spec.Compliance.AllowedForSensitiveData))
 		candidate.RouteSnapshot = RouteSnapshot{
 			Namespace: model.Namespace, ModelName: model.Name, ModelUID: string(model.UID), ModelGeneration: model.Generation,
 			ModelResourceVersion: model.ResourceVersion, ProviderName: provider.Name, ProviderUID: string(provider.UID),

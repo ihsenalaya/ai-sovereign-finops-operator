@@ -89,6 +89,10 @@ govArAdmission:
     repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-admission
     tag: ""
     pullPolicy: IfNotPresent
+  # SHA-256 of the immutable admission-service image/software artifact. It is
+  # embedded into every production audit transition and is required outside
+  # explicit in-memory development mode.
+  softwareSHA256: ""
   resources:
     requests:
       cpu: 25m
@@ -127,6 +131,18 @@ govArAdmission:
     enabled: false
     existingSecret: ""
     secretKey: DATABASE_URL
+  reconciliation:
+    # Production replicas execute the same idempotent, PostgreSQL-serialized
+    # expiry pass. At-least-once execution retains ambiguous billable holds.
+    interval: 5s
+    queryLimit: 100
+  tracing:
+    # Required in production GOV-AR mode. The endpoint is an OTLP/HTTP
+    # collector base URL (for example http://otel-collector:4318).
+    enabled: false
+    endpoint: ""
+    insecure: false
+    sampleRatio: "1"
   enforcement:
     # Required outside explicit single-replica development mode. Governed Pods
     # receive the selector label from the injector and may egress only to DNS

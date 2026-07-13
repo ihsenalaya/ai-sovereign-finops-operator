@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-13T18:19:15Z",
+  "module_go_directive": "1.25.0",
+  "host_go_used_for_resolution": "go version go1.26.4 linux/amd64",
+  "sources": [
+    {
+      "name": "OpenTelemetry Go",
+      "version": "v1.43.0",
+      "primary_release_url": "https://github.com/open-telemetry/opentelemetry-go/releases/tag/v1.43.0",
+      "official_documentation_url": "https://opentelemetry.io/docs/languages/go/",
+      "retrieved_on": "2026-07-13",
+      "module_sums": {
+        "go.opentelemetry.io/otel": "h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=",
+        "go.opentelemetry.io/otel/sdk": "h1:pi5mE86i5rTeLXqoF/hhiBtUNcrAGHLKQdhg4h4V9Dg=",
+        "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp": "h1:3iZJKlCZufyRzPzlQhUIWVmfltrXuGyfjREgGP3UUjc="
+      }
+    },
+    {
+      "name": "Envoy Go control-plane API",
+      "version": "v1.36.0",
+      "primary_module_url": "https://pkg.go.dev/github.com/envoyproxy/go-control-plane/envoy@v1.36.0",
+      "retrieved_on": "2026-07-13",
+      "module_sum": "h1:yg/JjO5E7ubRyKX3m07GF3reDNEnfOboJ0QySbH736g="
+    }
+  ],
+  "claims": {
+    "trace_signal_status": "stable according to the official OpenTelemetry Go documentation retrieved on 2026-07-13",
+    "transport": "OTLP over HTTP/protobuf using environment-configured official exporter",
+    "propagation": "W3C Trace Context plus Baggage",
+    "experimental_observation_sampling": "1.0"
+  }
+}

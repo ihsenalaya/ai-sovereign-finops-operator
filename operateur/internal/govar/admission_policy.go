@@ -3,24 +3,25 @@ package govar
 import (
 	"errors"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 )
 
 const (
-	AnnotationReservationMethod        = "aiops.imperium.io/govar-reservation-method"
-	AnnotationMeanOutputTokens         = "aiops.imperium.io/govar-mean-output-tokens"
-	AnnotationMarginTokens             = "aiops.imperium.io/govar-margin-tokens"
-	AnnotationQuantileTokens           = "aiops.imperium.io/govar-quantile-output-tokens"
-	AnnotationAdaptiveTokens           = "aiops.imperium.io/govar-adaptive-output-tokens"
-	AnnotationCalibrationSupport       = "aiops.imperium.io/govar-calibration-support"
-	AnnotationCalibrationDrift         = "aiops.imperium.io/govar-calibration-drift"
-	AnnotationCohortSize               = "aiops.imperium.io/govar-cohort-size"
-	AnnotationTenantRiskPPB            = "aiops.imperium.io/govar-tenant-risk-ppb"
-	minimumCalibrationSupport    int64 = 100
+	// Deprecated compatibility keys. They may be present on legacy objects but
+	// are never read as monetary, calibration, or risk authority.
+	AnnotationReservationMethod  = "aiops.imperium.io/govar-reservation-method"
+	AnnotationMeanOutputTokens   = "aiops.imperium.io/govar-mean-output-tokens"
+	AnnotationMarginTokens       = "aiops.imperium.io/govar-margin-tokens"
+	AnnotationQuantileTokens     = "aiops.imperium.io/govar-quantile-output-tokens"
+	AnnotationAdaptiveTokens     = "aiops.imperium.io/govar-adaptive-output-tokens"
+	AnnotationCalibrationSupport = "aiops.imperium.io/govar-calibration-support"
+	AnnotationCalibrationDrift   = "aiops.imperium.io/govar-calibration-drift"
+	AnnotationCohortSize         = "aiops.imperium.io/govar-cohort-size"
+	AnnotationTenantRiskPPB      = "aiops.imperium.io/govar-tenant-risk-ppb"
 )
 
 type admissionChoice struct {
@@ -29,6 +30,8 @@ type admissionChoice struct {
 	Method           string
 	AllocatedRiskPPB int64
 	InputTokensBound int64
+	Components       []govarpricing.ChargeComponent
+	FallbackReason   ReasonCode
 }
 
 func validatePolicyAndTarget(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy) ReasonCode {
@@ -52,11 +55,7 @@ func validatePolicyAndTarget(req AdmitRequest, budget aiopsv1alpha1.AIBudgetPoli
 	return ""
 }
 
-func chooseAdmission(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, candidates []Candidate, available MoneyMicros) (admissionChoice, ReasonCode, error) {
-	method := strings.TrimSpace(routing.Annotations[AnnotationReservationMethod])
-	if method == "" {
-		method = "strict_provider_cap"
-	}
+func chooseAdmission(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, candidates []Candidate, available MoneyMicros, evaluatedAt time.Time) (admissionChoice, ReasonCode, error) {
 	var choices []admissionChoice
 	lastReason := ReasonNoCandidate
 	feasibleBeforeBudget := false
@@ -83,7 +82,7 @@ func chooseAdmission(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, ca
 			lastReason = ReasonContextLimit
 			continue
 		}
-		outputTokens, allocatedRisk, effectiveMethod, reason := reservationTokens(method, req, routing, candidate)
+		outputTokens, allocatedRisk, effectiveMethod, fallbackReason, reason := reservationTokens(req, routing, candidate, evaluatedAt)
 		if reason != "" {
 			lastReason = reason
 			continue
@@ -93,15 +92,25 @@ func chooseAdmission(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, ca
 			inputBound = candidate.ContextWindow - outputTokens
 			effectiveMethod = "strict_context_window_bound"
 		}
-		reservation, err := costFromPriceMicros(candidate.InputPriceMicrosPerMillion, candidate.OutputPriceMicrosPerMillion, inputBound, outputTokens)
+		components, err := govarpricing.ReserveComponents(candidate.PricingSnapshot, govarpricing.RequestChargeContext{
+			InputTokens: inputBound, OutputTokens: outputTokens, MaxToolCalls: req.MaxToolCalls,
+			MaxMediaUnits: req.MaxMediaUnits, TimeoutSeconds: req.TimeoutSeconds,
+			MaxRetryAttempts: req.MaxRetryAttempts, CancellationPossible: req.CancellationPossible,
+			DeclaredBounds: req.ChargeBounds,
+		}, evaluatedAt)
 		if err != nil {
 			return admissionChoice{}, ReasonPricingIncomplete, err
 		}
+		reserved, err := govarpricing.SumComponents(components)
+		if err != nil {
+			return admissionChoice{}, ReasonPricingIncomplete, err
+		}
+		reservation := MoneyMicros(reserved)
 		feasibleBeforeBudget = true
 		if reservation > available {
 			continue
 		}
-		choices = append(choices, admissionChoice{Candidate: candidate, Reservation: reservation, Method: effectiveMethod, AllocatedRiskPPB: allocatedRisk, InputTokensBound: inputBound})
+		choices = append(choices, admissionChoice{Candidate: candidate, Reservation: reservation, Method: effectiveMethod, AllocatedRiskPPB: allocatedRisk, InputTokensBound: inputBound, Components: components, FallbackReason: fallbackReason})
 	}
 	if len(choices) == 0 {
 		if feasibleBeforeBudget {
@@ -124,23 +133,20 @@ func chooseAdmission(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, ca
 	return choices[0], "", nil
 }
 
-func reservationTokens(method string, req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, candidate Candidate) (int64, int64, string, ReasonCode) {
+func reservationTokens(req AdmitRequest, routing aiopsv1alpha1.AIRoutingPolicy, candidate Candidate, evaluatedAt time.Time) (int64, int64, string, ReasonCode, ReasonCode) {
+	method := typedReservationMethod(routing)
 	capTokens := req.MaxOutputTokens
 	if capTokens <= 0 {
-		return 0, 0, method, ReasonInsufficientEvidence
+		return 0, 0, method, "", ReasonInsufficientEvidence
 	}
-	strict := func() (int64, int64, string, ReasonCode) {
-		if !candidate.VerifiedOutputCap {
-			return 0, 0, "strict_provider_cap", ReasonStrictCapUnverified
+	strict := func(fallback ReasonCode) (int64, int64, string, ReasonCode, ReasonCode) {
+		if !candidate.VerifiedOutputCap || capTokens > candidate.VerifiedOutputCapTokens {
+			return 0, 0, "strict_provider_cap", fallback, ReasonStrictCapUnverified
 		}
-		return capTokens, 0, "strict_provider_cap", ""
+		return capTokens, 0, "strict_provider_cap", fallback, ""
 	}
 	if !req.InputTokensExact && method != "strict_provider_cap" {
-		return strict()
-	}
-	value := func(key string) (int64, bool) {
-		v, err := strconv.ParseInt(strings.TrimSpace(routing.Annotations[key]), 10, 64)
-		return v, err == nil && v >= 0
+		return strict(ReasonInputBoundFallback)
 	}
 	clamp := func(v int64) int64 {
 		if v > capTokens {
@@ -150,43 +156,127 @@ func reservationTokens(method string, req AdmitRequest, routing aiopsv1alpha1.AI
 	}
 	switch method {
 	case "strict_provider_cap":
-		return strict()
+		return strict("")
 	case "mean":
-		v, ok := value(AnnotationMeanOutputTokens)
-		if !ok {
-			return 0, 0, method, ReasonInsufficientCalibration
+		if routing.Spec.GOVAR == nil || routing.Spec.GOVAR.Reservation.MeanOutputTokens == nil {
+			return 0, 0, method, "", ReasonInsufficientCalibration
 		}
-		return clamp(v), 0, method, ""
+		if *routing.Spec.GOVAR.Reservation.MeanOutputTokens < 0 {
+			return 0, 0, method, "", ReasonInsufficientCalibration
+		}
+		return clamp(*routing.Spec.GOVAR.Reservation.MeanOutputTokens), 0, method, "", ""
 	case "fixed_margin":
-		mean, okMean := value(AnnotationMeanOutputTokens)
-		margin, okMargin := value(AnnotationMarginTokens)
-		if !okMean || !okMargin || mean > capTokens-margin {
-			return 0, 0, method, ReasonInsufficientCalibration
+		if routing.Spec.GOVAR == nil || routing.Spec.GOVAR.Reservation.MeanOutputTokens == nil || routing.Spec.GOVAR.Reservation.MarginOutputTokens == nil {
+			return 0, 0, method, "", ReasonInsufficientCalibration
 		}
-		return clamp(mean + margin), 0, method, ""
+		mean, margin := *routing.Spec.GOVAR.Reservation.MeanOutputTokens, *routing.Spec.GOVAR.Reservation.MarginOutputTokens
+		if mean < 0 || margin < 0 || mean > capTokens-margin {
+			return 0, 0, method, "", ReasonInsufficientCalibration
+		}
+		return clamp(mean + margin), 0, method, "", ""
 	case "fixed_quantile":
-		v, ok := value(AnnotationQuantileTokens)
-		if !ok {
-			return 0, 0, method, ReasonInsufficientCalibration
+		if routing.Spec.GOVAR == nil || routing.Spec.GOVAR.Reservation.FixedQuantileOutputTokens == nil {
+			return 0, 0, method, "", ReasonInsufficientCalibration
 		}
-		return clamp(v), 0, method, ""
+		if *routing.Spec.GOVAR.Reservation.FixedQuantileOutputTokens < 0 {
+			return 0, 0, method, "", ReasonInsufficientCalibration
+		}
+		return clamp(*routing.Spec.GOVAR.Reservation.FixedQuantileOutputTokens), 0, method, "", ""
 	case "adaptive_quantile", "govar_fixed_cohort":
-		support, okSupport := value(AnnotationCalibrationSupport)
-		adaptive, okAdaptive := value(AnnotationAdaptiveTokens)
-		if !okSupport || !okAdaptive || support < minimumCalibrationSupport || strings.EqualFold(routing.Annotations[AnnotationCalibrationDrift], "true") {
-			return strict()
+		invalid := validateCalibrationEvidence(routing, candidate, evaluatedAt)
+		if invalid != "" {
+			if routing.Spec.GOVAR != nil && routing.Spec.GOVAR.Drift.Fallback == aiopsv1alpha1.GOVARConservativeFallback("strict_provider_cap") {
+				return strict(invalid)
+			}
+			return 0, 0, method, invalid, invalid
 		}
+		adaptive := routing.Status.GOVAR.Calibration.AdaptiveOutputTokens
 		if method == "adaptive_quantile" {
-			return clamp(adaptive), 0, method, ""
+			return clamp(adaptive), 0, method, "", ""
 		}
 		if req.CohortID == "" || req.CohortIndex < 0 {
-			return 0, 0, method, ReasonInsufficientCalibration
+			return 0, 0, method, "", ReasonInsufficientCalibration
 		}
 		// N, alpha, and the slot weight come only from the immutable server-side
 		// FrozenCohort registry and are applied by Engine/PostgresEngine.
-		return clamp(adaptive), 0, method, ""
+		return clamp(adaptive), 0, method, "", ""
 	default:
-		return 0, 0, method, ReasonReservationMethodUnknown
+		return 0, 0, method, "", ReasonReservationMethodUnknown
+	}
+}
+
+func typedReservationMethod(routing aiopsv1alpha1.AIRoutingPolicy) string {
+	if routing.Spec.GOVAR == nil || strings.TrimSpace(string(routing.Spec.GOVAR.Reservation.Method)) == "" {
+		return string(aiopsv1alpha1.GOVARReservationStrictProviderCap)
+	}
+	return string(routing.Spec.GOVAR.Reservation.Method)
+}
+
+func validateCalibrationEvidence(routing aiopsv1alpha1.AIRoutingPolicy, candidate Candidate, evaluatedAt time.Time) ReasonCode {
+	if routing.Spec.GOVAR == nil || routing.Spec.GOVAR.Calibration == nil || routing.Status.GOVAR == nil || routing.Status.GOVAR.Calibration == nil || routing.Status.GOVAR.Drift == nil {
+		return ReasonCalibrationMissing
+	}
+	spec, status, drift := routing.Spec.GOVAR.Calibration, routing.Status.GOVAR.Calibration, routing.Status.GOVAR.Drift
+	if routing.Status.ObservedGeneration != routing.Generation {
+		return ReasonCalibrationGeneration
+	}
+	if status.ArtifactRef != spec.ArtifactRef || status.Version != spec.Version || status.ArtifactSHA256 != spec.ArtifactSHA256 ||
+		status.CalibrationInputSHA256 != spec.CalibrationInputSHA256 || status.FeatureSchemaVersion != spec.FeatureSchemaVersion ||
+		status.PriceRegimeSHA256 != spec.PriceRegimeSHA256 || status.CapRegimeSHA256 != spec.CapRegimeSHA256 ||
+		status.ProducerSoftwareSHA256 != spec.ProducerSoftwareSHA256 || status.CoverageTargetPPB != spec.CoverageTargetPPB {
+		return ReasonCalibrationMismatch
+	}
+	if status.PriceRegimeSHA256 != candidate.PricingSnapshot.SnapshotSHA256 || status.CapRegimeSHA256 != candidate.CapEvidenceDigest {
+		return ReasonCalibrationRegime
+	}
+	if !status.Valid || status.Support < spec.MinimumSupport || drift.Support < routing.Spec.GOVAR.Drift.RevalidationMinimumSupport {
+		return ReasonCalibrationSupport
+	}
+	if status.ObservedAt.IsZero() || status.CalibrationWindowEnd.IsZero() || status.ObservedAt.Time.After(evaluatedAt) || status.CalibrationWindowEnd.Time.After(evaluatedAt) || evaluatedAt.Sub(status.CalibrationWindowEnd.Time) > time.Duration(spec.MaxAgeSeconds)*time.Second {
+		return ReasonCalibrationStale
+	}
+	if drift.Detector != routing.Spec.GOVAR.Drift.Detector || drift.ThresholdPPB != routing.Spec.GOVAR.Drift.ThresholdPPB {
+		return ReasonCalibrationMismatch
+	}
+	if drift.Detector != aiopsv1alpha1.GOVARDriftDetector("coverage-gap") {
+		return ReasonCalibrationUnsupported
+	}
+	if drift.ObservedAt.IsZero() || drift.MonitoringWindowEnd.IsZero() || drift.ObservedAt.Time.After(evaluatedAt) || drift.MonitoringWindowEnd.Time.After(evaluatedAt) || evaluatedAt.Sub(drift.MonitoringWindowEnd.Time) > time.Duration(spec.MaxAgeSeconds)*time.Second {
+		return ReasonCalibrationStale
+	}
+	if drift.Detected || drift.ConservativeMode {
+		return ReasonCalibrationDrift
+	}
+	return ""
+}
+
+func decisionForAdmissionFailure(routing aiopsv1alpha1.AIRoutingPolicy, reason ReasonCode) Decision {
+	if reason == ReasonBudgetUnavailable {
+		return DecisionQueue
+	}
+	if isCalibrationReason(reason) && routing.Spec.GOVAR != nil {
+		switch routing.Spec.GOVAR.Drift.Fallback {
+		case aiopsv1alpha1.GOVARConservativeFallback("queue"):
+			return DecisionQueue
+		case aiopsv1alpha1.GOVARConservativeFallback("reject"):
+			return DecisionReject
+		case aiopsv1alpha1.GOVARConservativeFallback("require_approval"):
+			return DecisionRequireApproval
+		default:
+			return DecisionAbstain
+		}
+	}
+	return DecisionAbstain
+}
+
+func isCalibrationReason(reason ReasonCode) bool {
+	switch reason {
+	case ReasonInsufficientCalibration, ReasonCalibrationMissing, ReasonCalibrationGeneration,
+		ReasonCalibrationMismatch, ReasonCalibrationRegime, ReasonCalibrationSupport,
+		ReasonCalibrationStale, ReasonCalibrationDrift, ReasonCalibrationUnsupported:
+		return true
+	default:
+		return false
 	}
 }
 

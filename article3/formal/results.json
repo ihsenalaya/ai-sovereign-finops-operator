@@ -5,11 +5,11 @@
     "residual reservation R-C is retained until authoritative finality",
     "prior-window provisional actual plus residual is guarded at R until finality",
     "historical downward-correction credit is audit-only and cannot expand later availability",
-    "corrections are monotone-versioned and post-finality upward corrections are outside the strict guarantee",
+    "corrections are monotone-versioned; a post-finality correction voids instantaneous strict feasibility from that exogenous transition but its full debt remains visible",
     "one transactional ledger serializes every effective transition",
     "provider execution itself is not claimed exactly once"
   ],
-  "checked_at_utc": "2026-07-12T14:40:10.419665+00:00",
+  "checked_at_utc": "2026-07-13T18:56:57.876892+00:00",
   "depth": 6,
   "exit_code": 0,
   "failures": [],
@@ -20,6 +20,7 @@
     "non_negative_integer_ledger",
     "one_effective_settlement_finalization_and_correction",
     "outbox_claim_cancel_delivery_relation",
+    "postfinal_correction_external_debt_visible",
     "provider_route_ownership",
     "provisional_rollover_guard_prevents_credit_reuse",
     "record_aggregate_equality",
@@ -29,12 +30,13 @@
     "route_snapshot_integrity",
     "tenant_and_workload_uid_isolation"
   ],
-  "invariants_checked": 14,
+  "invariants_checked": 15,
   "model": "bounded exhaustive outbox and residual-correction ledger exploration",
-  "model_sha256": "039820b27595045ebf192fc1d2fc1589fae3857f22725298d48c21681168c825",
+  "model_sha256": "d2205fe805d80744612446ab9dd4a165b64f1e8f835c860732b3960ecc0e281c",
   "route_snapshot_negative_checks": 12,
   "scenario_traces_checked": [
     "unresolved_rollover_late_correction_finality",
+    "late_final_upward_correction_preserves_full_external_debt",
     "atomic_pending_expiry_blocks_late_claim",
     "reordered_usage_proves_delivery",
     "residual_hold_blocks_correction_refill_race",
@@ -49,8 +51,8 @@
     "cross_provider_binding_name_is_rejected",
     "model_owned_route_without_provider_binding_is_rejected"
   ],
-  "schema_version": 4,
-  "states_checked": 5706,
+  "schema_version": 5,
+  "states_checked": 5952,
   "transition_coverage": [
     "ambiguous_timeout_retains_hold",
     "atomic_reserve_and_pending_outbox",
@@ -65,6 +67,7 @@
     "monotone_correction_with_residual_hold",
     "outbox_claim",
     "pending_outbox_cancel_and_release",
+    "postfinal_correction_preserves_external_debt",
     "provider_delivery",
     "provider_route_price_same_name_delete_recreate",
     "reordered_usage_proves_delivery",
@@ -72,5 +75,5 @@
     "semantic_duplicate_no_effect",
     "settlement_with_residual_hold"
   ],
-  "transitions_checked": 89284
+  "transitions_checked": 90532
 }

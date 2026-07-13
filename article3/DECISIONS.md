@@ -72,3 +72,46 @@ a distinct billable attempt, and unsupported Bedrock routing fails closed. These
 controls close enforcement and reproducibility defects; they are not claimed as
 novel, and they do not close the still-open complete billable-category,
 calibration/drift-producer, worker, observability, or combined Kind E0 gates.
+
+## 2026-07-13 — D013 — Supported toolchain, reconciliation, metrics, and tracing
+
+The Article 3 prerelease raises the Go module floor from the unsupported 1.21
+line to Go 1.25 and builds every Go image with the current verified Go 1.26.5
+official image pinned by OCI index digest. All external Dockerfile stages are
+tag-and-digest pinned and recorded in the base-image provenance; this is a
+documented prerelease compatibility change, not an implicit patch release.
+
+Every production admission replica runs the same PostgreSQL-serialized,
+idempotent expiration reconciliation pass. This is at-least-once execution,
+never an exactly-once delivery claim. A failed or absent worker cannot release
+an ambiguous billable hold. Bounded-cardinality Prometheus metrics expose the
+request path, decision, ledger transition, and worker state without using
+tenant, workload, request, reservation, trace, or prompt labels.
+
+Production Helm rendering requires an OTLP/HTTP endpoint. OpenTelemetry Go
+1.43.0 supplies W3C Trace Context propagation across the Envoy ext_proc stream
+and signed internal ledger calls. Trace identity is observational only and is
+not included in any authorization or accounting decision. The measured Article
+3 path samples all spans; operational sampling below one cannot be used as an
+observation-count source.
+
+## 2026-07-13 — D014 — Policy-level approval without per-request Kubernetes state
+
+This decision supersedes only D012's request-approval paragraph. GOV-AR never
+creates a CRD or Lease per request. A bounded `AIChangeRequest` action now
+authorizes an exact routing-policy UID/generation, model UID/generation,
+provider UID/generation, provider-owned route-snapshot digest, and absolute
+expiry. The scope is immutable after creation; a separately authorized reviewer
+sets the human decision, and the controller independently validates live object
+references before writing the observed generation, recomputed scope digest,
+approval time, and exact expiry to status.
+
+Admission has read-only access to these policy/change-level objects. It returns
+`REQUIRE_APPROVAL` and the required typed scope when no exact current approval
+exists; it never proposes, consumes, or mutates approval state. A valid approval
+may be reused by multiple requests only while every bound identity, digest, and
+expiry still matches. The reserve transaction's derived policy-version record
+includes the approving change UID/generation/scope digest, eliminating the
+non-atomic one-use Lease boundary while retaining auditable authorization
+identity. The obsolete `AIAdmissionApproval` and
+`AIAdmissionApprovalDecision` APIs, controllers, CRDs, and RBAC are removed.

@@ -37,7 +37,6 @@ const (
 // +kubebuilder:validation:XValidation:rule="self.method != 'mean' || has(self.meanOutputTokens)",message="meanOutputTokens is required for mean reservation"
 // +kubebuilder:validation:XValidation:rule="self.method != 'fixed_margin' || (has(self.meanOutputTokens) && has(self.marginOutputTokens))",message="meanOutputTokens and marginOutputTokens are required for fixed_margin reservation"
 // +kubebuilder:validation:XValidation:rule="self.method != 'fixed_quantile' || has(self.fixedQuantileOutputTokens)",message="fixedQuantileOutputTokens is required for fixed_quantile reservation"
-// +kubebuilder:validation:XValidation:rule="!(self.method in ['adaptive_quantile', 'govar_fixed_cohort']) || has(self.adaptiveQuantileOutputTokens)",message="adaptiveQuantileOutputTokens is required for adaptive reservation"
 // GOVARReservationPolicy contains typed token reservations. Pointer token values
 // distinguish a configured zero from a missing method parameter.
 type GOVARReservationPolicy struct {
@@ -58,7 +57,9 @@ type GOVARReservationPolicy struct {
 	// +kubebuilder:validation:Minimum=0
 	FixedQuantileOutputTokens *int64 `json:"fixedQuantileOutputTokens,omitempty"`
 
-	// AdaptiveQuantileOutputTokens is the last controller-validated estimate.
+	// AdaptiveQuantileOutputTokens is retained only as a migration hint. Adaptive
+	// admission uses status.govar.calibration.adaptiveOutputTokens from the
+	// digest-bound controller artifact and never executes this mutable spec value.
 	// +optional
 	// +kubebuilder:validation:Minimum=0
 	AdaptiveQuantileOutputTokens *int64 `json:"adaptiveQuantileOutputTokens,omitempty"`
@@ -67,13 +68,52 @@ type GOVARReservationPolicy struct {
 // GOVARCalibrationPolicy binds adaptive reservation to a versioned immutable
 // calibration artifact and explicit freshness/support requirements.
 type GOVARCalibrationPolicy struct {
-	// ArtifactRef is an immutable calibration artifact identifier or digest.
+	// ArtifactRef is a stable logical identifier for the frozen artifact.
 	// +kubebuilder:validation:MinLength=1
 	ArtifactRef string `json:"artifactRef"`
+
+	// ArtifactSHA256 is the expected digest of the deterministically reconstructed artifact.
+	// +kubebuilder:validation:Pattern=`^[a-f0-9]{64}$`
+	ArtifactSHA256 string `json:"artifactSHA256"`
+
+	// CalibrationDataRef names a ConfigMap in this policy's namespace. Its
+	// calibration.json key is immutable and bound by CalibrationInputSHA256.
+	// +kubebuilder:validation:MinLength=1
+	CalibrationDataRef string `json:"calibrationDataRef"`
+
+	// CalibrationInputSHA256 binds the canonical eligible calibration observations.
+	// +kubebuilder:validation:Pattern=`^[a-f0-9]{64}$`
+	CalibrationInputSHA256 string `json:"calibrationInputSHA256"`
+
+	// MonitoringDataRef names the independently populated monitoring ConfigMap.
+	// Its monitoring.json rows are never calibration input.
+	// +kubebuilder:validation:MinLength=1
+	MonitoringDataRef string `json:"monitoringDataRef"`
 
 	// Version is the calibration protocol/model version.
 	// +kubebuilder:validation:MinLength=1
 	Version string `json:"version"`
+
+	// FeatureSchemaVersion prevents reuse across incompatible request features.
+	// +kubebuilder:validation:MinLength=1
+	FeatureSchemaVersion string `json:"featureSchemaVersion"`
+
+	// PriceRegimeSHA256 binds the provider price snapshot used by calibration.
+	// +kubebuilder:validation:Pattern=`^[a-f0-9]{64}$`
+	PriceRegimeSHA256 string `json:"priceRegimeSHA256"`
+
+	// CapRegimeSHA256 binds the verified output-cap evidence used by calibration.
+	// +kubebuilder:validation:Pattern=`^[a-f0-9]{64}$`
+	CapRegimeSHA256 string `json:"capRegimeSHA256"`
+
+	// ProducerSoftwareSHA256 binds the deterministic producer implementation.
+	// +kubebuilder:validation:Pattern=`^[a-f0-9]{64}$`
+	ProducerSoftwareSHA256 string `json:"producerSoftwareSHA256"`
+
+	// CoverageTargetPPB is the requested one-sided empirical coverage.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=1000000000
+	CoverageTargetPPB int64 `json:"coverageTargetPPB"`
 
 	// MinimumSupport is the required number of eligible observations.
 	// +kubebuilder:validation:Minimum=1
@@ -168,8 +208,16 @@ type GOVARRoutingPolicySpec struct {
 
 // GOVARCalibrationStatus is controller-produced evidence for an adaptive estimate.
 type GOVARCalibrationStatus struct {
-	ArtifactRef string `json:"artifactRef"`
-	Version     string `json:"version"`
+	ArtifactRef            string `json:"artifactRef"`
+	Version                string `json:"version"`
+	ArtifactSHA256         string `json:"artifactSHA256"`
+	CalibrationInputSHA256 string `json:"calibrationInputSHA256"`
+	FeatureSchemaVersion   string `json:"featureSchemaVersion"`
+	PriceRegimeSHA256      string `json:"priceRegimeSHA256"`
+	CapRegimeSHA256        string `json:"capRegimeSHA256"`
+	ProducerSoftwareSHA256 string `json:"producerSoftwareSHA256"`
+	CoverageTargetPPB      int64  `json:"coverageTargetPPB"`
+	EmpiricalCoveragePPB   int64  `json:"empiricalCoveragePPB"`
 
 	// Support is the number of eligible observations.
 	// +kubebuilder:validation:Minimum=0
@@ -179,17 +227,26 @@ type GOVARCalibrationStatus struct {
 	// +kubebuilder:validation:Minimum=0
 	AdaptiveOutputTokens int64 `json:"adaptiveOutputTokens"`
 
-	Valid      bool        `json:"valid"`
-	ObservedAt metav1.Time `json:"observedAt"`
+	Valid                  bool        `json:"valid"`
+	Reason                 string      `json:"reason,omitempty"`
+	CalibrationWindowStart metav1.Time `json:"calibrationWindowStart"`
+	CalibrationWindowEnd   metav1.Time `json:"calibrationWindowEnd"`
+	ObservedAt             metav1.Time `json:"observedAt"`
 }
 
 // GOVARDriftStatus makes calibration invalidation and fallback externally visible.
 type GOVARDriftStatus struct {
-	Detected         bool               `json:"detected"`
-	ConservativeMode bool               `json:"conservativeMode"`
-	Detector         GOVARDriftDetector `json:"detector"`
-	Reason           string             `json:"reason,omitempty"`
-	ObservedAt       metav1.Time        `json:"observedAt"`
+	Detected              bool               `json:"detected"`
+	ConservativeMode      bool               `json:"conservativeMode"`
+	Detector              GOVARDriftDetector `json:"detector"`
+	ThresholdPPB          int64              `json:"thresholdPPB"`
+	MonitoringInputSHA256 string             `json:"monitoringInputSHA256,omitempty"`
+	Support               int64              `json:"support"`
+	EmpiricalCoveragePPB  int64              `json:"empiricalCoveragePPB"`
+	Reason                string             `json:"reason,omitempty"`
+	MonitoringWindowStart metav1.Time        `json:"monitoringWindowStart,omitempty"`
+	MonitoringWindowEnd   metav1.Time        `json:"monitoringWindowEnd,omitempty"`
+	ObservedAt            metav1.Time        `json:"observedAt"`
 }
 
 // GOVARRoutingPolicyStatus contains controller-owned calibration/drift evidence.
@@ -326,7 +383,6 @@ func (s GOVARRoutingPolicySpec) Validate(path *field.Path) field.ErrorList {
 	case GOVARReservationFixedQuantile:
 		requireTokens("fixedQuantileOutputTokens", r.FixedQuantileOutputTokens)
 	case GOVARReservationAdaptiveQuantile, GOVARReservationFixedCohort:
-		requireTokens("adaptiveQuantileOutputTokens", r.AdaptiveQuantileOutputTokens)
 		if s.Calibration == nil {
 			errs = append(errs, field.Required(path.Child("calibration"), "required by adaptive reservation method"))
 		}

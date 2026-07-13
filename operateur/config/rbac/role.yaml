@@ -59,43 +59,6 @@ rules:
 - apiGroups:
   - aiops.imperium.io
   resources:
-  - aiadmissionapprovaldecisions
-  - aiadmissionapprovals
-  - aiworkloadbindings
-  - confidentialinferencepolicies
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - aiops.imperium.io
-  resources:
-  - aiadmissionapprovals/status
-  - aibreakevenanalyses/status
-  - aibudgetpolicies/status
-  - aichangerequests/status
-  - aievidencerecords/status
-  - aifinopsreports/status
-  - aigateways/status
-  - aikeyreleasepolicies/status
-  - aimodels/status
-  - aiplacementdecisions/status
-  - aiproviders/status
-  - aiqualitygates/status
-  - airevocationpolicies/status
-  - airouteoverrides/status
-  - airoutingpolicies/status
-  - aisovereigntypolicies/status
-  - aiworkloadbindings/status
-  - attestationevidences/status
-  - rawattestationreports/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - aiops.imperium.io
-  resources:
   - aibreakevenanalyses
   - aibudgetpolicies
   - aichangerequests
@@ -144,6 +107,40 @@ rules:
 - apiGroups:
   - aiops.imperium.io
   resources:
+  - aibreakevenanalyses/status
+  - aibudgetpolicies/status
+  - aichangerequests/status
+  - aievidencerecords/status
+  - aifinopsreports/status
+  - aigateways/status
+  - aikeyreleasepolicies/status
+  - aimodels/status
+  - aiplacementdecisions/status
+  - aiproviders/status
+  - aiqualitygates/status
+  - airevocationpolicies/status
+  - airouteoverrides/status
+  - airoutingpolicies/status
+  - aisovereigntypolicies/status
+  - aiworkloadbindings/status
+  - attestationevidences/status
+  - rawattestationreports/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - aiops.imperium.io
+  resources:
+  - aiworkloadbindings
+  - confidentialinferencepolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - aiops.imperium.io
+  resources:
   - rawattestationreports
   verbs:
   - get
@@ -158,14 +155,6 @@ rules:
   verbs:
   - create
   - delete
-  - get
-  - list
-  - watch
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
   - get
   - list
   - watch

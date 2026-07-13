@@ -240,6 +240,7 @@ class Record:
     outbox: str = "pending"
     actual: int = 0
     base_actual: int = 0
+    settled_effect: int = 0
     enforcement_window: int = -1
     carried: bool = False
     carry_effect: int = 0
@@ -248,6 +249,7 @@ class Record:
     base_event: str = ""
     correction_version: int = 0
     correction_events: tuple[str, ...] = ()
+    postfinal_correction_effects: int = 0
     settlement_effects: int = 0
     finalization_effects: int = 0
     unbilled_release_effects: int = 0
@@ -498,6 +500,7 @@ def settle(state: State, request_id: str, tenant_id: str, workload_uid: str,
         residual_hold=residual,
         actual=actual,
         base_actual=actual,
+        settled_effect=0 if late else actual,
         enforcement_window=tenant.current_window,
         carried=late,
         carry_effect=actual if late else 0,
@@ -522,11 +525,35 @@ def correct(state: State, request_id: str, tenant_id: str, workload_uid: str,
             state.transition_coverage.add("exact_correction_replay_no_effect")
             return True
         return False
-    if (record.status not in PROVISIONAL or new_actual < 0
+    if (record.status not in (PROVISIONAL | FINAL) or new_actual < 0
             or new_actual > record.reserved_ceiling or version != record.correction_version + 1):
         return False
     tenant = state.tenants[tenant_id]
     delta = new_actual - record.actual
+    if record.status in FINAL:
+        # Finality releases the residual hold. A provider-side correction can
+        # therefore no longer be funded retroactively from that hold. Preserve
+        # the original settled charge and expose every upward difference as
+        # carried debt; for an already-late request the whole authoritative
+        # amount remains external to the active window. Downward corrections
+        # are audit-only credits and never mint availability.
+        new_carry = record.carry_effect
+        if delta > 0 and new_actual > record.base_actual:
+            target_debt = new_actual if record.carried else new_actual - record.base_actual
+            replace_tenant(state, tenant_id,
+                           carried_debt=tenant.carried_debt + target_debt - record.carry_effect)
+            new_carry = target_debt
+            tenant = state.tenants[tenant_id]
+        desired_credit = max(record.base_actual - new_actual, 0)
+        replace_tenant(state, tenant_id,
+                       historical_credit=tenant.historical_credit + desired_credit - record.credit_effect)
+        replace_record(state, request_id, actual=new_actual, carry_effect=new_carry,
+                       credit_effect=desired_credit, correction_version=version,
+                       correction_events=record.correction_events + (correction_id,),
+                       postfinal_correction_effects=record.postfinal_correction_effects + 1)
+        state.inbox[correction_id] = payload
+        state.transition_coverage.add("postfinal_correction_preserves_external_debt")
+        return True
     new_residual = record.residual_hold - delta
     if not 0 <= new_residual <= record.reserved_ceiling:
         return False
@@ -537,6 +564,7 @@ def correct(state: State, request_id: str, tenant_id: str, workload_uid: str,
     carried_debt = tenant.carried_debt
     historical_credit = tenant.historical_credit
     reserved = tenant.reserved
+    settled_effect = record.settled_effect
     if record.carried:
         new_carry += delta
         carried_debt += delta
@@ -550,13 +578,14 @@ def correct(state: State, request_id: str, tenant_id: str, workload_uid: str,
         new_credit = desired_credit
     else:
         settled += delta
+        settled_effect += delta
         reserved -= delta
     replace_tenant(state, tenant_id, reserved=reserved,
                    settled=settled, carried_debt=carried_debt,
                    historical_credit=historical_credit)
     replace_record(state, request_id, status="corrected_provisional", residual_hold=new_residual,
                    actual=new_actual, carry_effect=new_carry, credit_effect=new_credit,
-                   rollover_guard=new_guard,
+                   rollover_guard=new_guard, settled_effect=settled_effect,
                    correction_version=version,
                    correction_events=record.correction_events + (correction_id,))
     state.inbox[correction_id] = payload
@@ -605,13 +634,23 @@ def inv_non_negative(state: State) -> bool:
     if not all(min(t.budget, t.settled, t.reserved, t.carried_debt, t.historical_credit) >= 0
                for t in state.tenants.values()):
         return False
-    return all(min(r.reserved_ceiling, r.residual_hold, r.actual, r.carry_effect,
+    return all(min(r.reserved_ceiling, r.residual_hold, r.actual, r.settled_effect, r.carry_effect,
                    r.credit_effect, r.rollover_guard) >= 0
                for r in state.records.values())
 
 
 def inv_conditional_strict_feasibility(state: State) -> bool:
-    return all(t.settled + t.reserved + t.carried_debt <= t.budget for t in state.tenants.values())
+    # A correction after authoritative finality is explicitly outside the
+    # instantaneous strict guarantee: its hold has already been released and
+    # another request may have consumed it. The model still requires the full
+    # external debt to remain visible (checked separately). Before such an
+    # exogenous correction, strict feasibility must hold for every state.
+    for tenant_id, tenant in state.tenants.items():
+        postfinal = any(r.tenant_id == tenant_id and r.postfinal_correction_effects > 0
+                        for r in state.records.values())
+        if not postfinal and tenant.settled + tenant.reserved + tenant.carried_debt > tenant.budget:
+            return False
+    return True
 
 
 def inv_record_accounting(state: State) -> bool:
@@ -619,7 +658,7 @@ def inv_record_accounting(state: State) -> bool:
         records = [r for r in state.records.values() if r.tenant_id == tenant_id]
         reserved = sum(r.residual_hold + r.rollover_guard
                        for r in records if r.status in (ACTIVE | PROVISIONAL))
-        settled = sum(r.actual for r in records if r.status in (PROVISIONAL | FINAL)
+        settled = sum(r.settled_effect for r in records if r.status in (PROVISIONAL | FINAL)
                       and not r.carried and r.enforcement_window == tenant.current_window)
         carry = sum(r.carry_effect for r in records if r.status in (PROVISIONAL | FINAL))
         credit = sum(r.credit_effect for r in records if r.status in (PROVISIONAL | FINAL))
@@ -658,6 +697,8 @@ def inv_effect_counts(state: State) -> bool:
             return False
         if r.correction_version != len(r.correction_events) or len(set(r.correction_events)) != len(r.correction_events):
             return False
+        if r.postfinal_correction_effects < 0 or r.postfinal_correction_effects > r.correction_version:
+            return False
     return True
 
 
@@ -670,6 +711,23 @@ def inv_residual_correction_exposure(state: State) -> bool:
     return all(r.residual_hold == r.reserved_ceiling - r.actual
                and (r.rollover_guard == 0 or r.residual_hold + r.rollover_guard == r.reserved_ceiling)
                for r in state.records.values() if r.status in PROVISIONAL)
+
+
+def inv_postfinal_correction_visible(state: State) -> bool:
+    for record in state.records.values():
+        if record.postfinal_correction_effects == 0:
+            continue
+        if record.status not in FINAL or record.residual_hold != 0:
+            return False
+        expected_carry = record.base_actual if record.carried else 0
+        if record.actual > record.base_actual:
+            expected_carry = record.actual if record.carried else record.actual - record.base_actual
+        # Downward corrections never erase already posted carried debt.
+        if record.carry_effect < expected_carry:
+            return False
+        if record.credit_effect != max(record.base_actual - record.actual, 0):
+            return False
+    return True
 
 
 def inv_provisional_rollover_guard(state: State) -> bool:
@@ -730,6 +788,7 @@ INVARIANTS: dict[str, Callable[[State], bool]] = {
     "one_effective_settlement_finalization_and_correction": inv_effect_counts,
     "tenant_and_workload_uid_isolation": inv_identity_isolation,
     "residual_correction_exposure_retained": inv_residual_correction_exposure,
+    "postfinal_correction_external_debt_visible": inv_postfinal_correction_visible,
     "provisional_rollover_guard_prevents_credit_reuse": inv_provisional_rollover_guard,
     "provider_route_ownership": inv_provider_route_ownership,
     "route_snapshot_integrity": inv_route_snapshot_integrity,
@@ -840,6 +899,14 @@ def required_scenarios() -> dict[str, list[tuple[str, tuple]]]:
             ("settle", ("req-a1", *a, "evt-late", 1)),
             ("correct", ("req-a1", *a, "corr-late-1", 1, 2)),
             ("finalize", ("req-a1", *a, "fin-late")),
+        ],
+        "late_final_upward_correction_preserves_full_external_debt": [
+            ("reserve", ("req-a1", *a)), ("claim", ("req-a1", *a)),
+            ("dispatch", ("req-a1", *a)), ("timeout", ("req-a1", *a)),
+            ("rollover", ("tenant-a", *a)),
+            ("settle", ("req-a1", *a, "evt-late-final", 1)),
+            ("finalize", ("req-a1", *a, "fin-late-final")),
+            ("correct", ("req-a1", *a, "corr-after-final", 1, 2)),
         ],
         "atomic_pending_expiry_blocks_late_claim": [
             ("reserve", ("req-a1", *a)), ("timeout", ("req-a1", *a)),
@@ -1005,6 +1072,7 @@ def main() -> int:
         "settlement_with_residual_hold", "reordered_usage_proves_delivery",
         "semantic_duplicate_no_effect", "monotone_correction_with_residual_hold",
         "exact_correction_replay_no_effect",
+        "postfinal_correction_preserves_external_debt",
         "authoritative_finality_releases_residual", "rollover_preserves_holds_and_adjustments",
         "model_same_name_delete_recreate", "provider_route_price_same_name_delete_recreate",
         "cross_provider_binding_injection", "model_owned_route_injection",
@@ -1016,7 +1084,7 @@ def main() -> int:
 
     model_path = Path(__file__)
     result = {
-        "schema_version": 4,
+        "schema_version": 5,
         "checked_at_utc": datetime.now(timezone.utc).isoformat(),
         "model": "bounded exhaustive outbox and residual-correction ledger exploration",
         "model_sha256": hashlib.sha256(model_path.read_bytes()).hexdigest(),
@@ -1026,7 +1094,7 @@ def main() -> int:
             "residual reservation R-C is retained until authoritative finality",
             "prior-window provisional actual plus residual is guarded at R until finality",
             "historical downward-correction credit is audit-only and cannot expand later availability",
-            "corrections are monotone-versioned and post-finality upward corrections are outside the strict guarantee",
+            "corrections are monotone-versioned; a post-finality correction voids instantaneous strict feasibility from that exogenous transition but its full debt remains visible",
             "one transactional ledger serializes every effective transition",
             "provider execution itself is not claimed exactly once",
         ],

@@ -249,13 +249,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AIChangeRequest")
 		os.Exit(1)
 	}
-	if err = (&controller.AIAdmissionApprovalReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AIAdmissionApproval")
-		os.Exit(1)
-	}
 	if envBool("AIOPS_ENABLE_LEGACY_EVIDENCE_RECONCILER", false) {
 		if err = (&controller.AttestationEvidenceReconciler{
 			Client:   mgr.GetClient(),

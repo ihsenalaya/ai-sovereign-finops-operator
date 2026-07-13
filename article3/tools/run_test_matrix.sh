@@ -58,8 +58,11 @@ fi
 if [[ "${1:-}" == "--internal-envtest" ]]; then
   cd "$OPERATOR"
   make envtest ENVTEST_VERSION=v0.24.1
-  assets="$(./bin/setup-envtest-v0.24.1 use 1.31.0 --bin-dir ./bin -p path)"
-  [[ "$assets" == "$OPERATOR/bin/k8s/1.31.0-"* && -x "$assets/kube-apiserver" && -x "$assets/etcd" ]]
+  assets="$(./bin/setup-envtest-v0.24.1 use 1.31.0 --bin-dir "$OPERATOR/bin" -p path)" || exit $?
+  [[ "$assets" == "$OPERATOR/bin/k8s/1.31.0-"* && -x "$assets/kube-apiserver" && -x "$assets/etcd" ]] || {
+    echo "invalid envtest assets: $assets" >&2
+    exit 1
+  }
   KUBEBUILDER_ASSETS="$assets" go test -count=1 ./internal/controller
   exit $?
 fi
@@ -89,8 +92,12 @@ if [[ "${1:-}" == "--internal-helm-lint" ]]; then
     --set govArAdmission.identity.masterExistingSecret=govar-master \
     --set govArAdmission.postgres.enabled=true \
     --set govArAdmission.postgres.existingSecret=govar-db \
+    --set govArAdmission.softwareSHA256=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
     --set govArAdmission.enforcement.networkPolicy.enabled=true \
     --set govArAdmission.enforcement.networkPolicy.governedNamespace=article3-workloads \
+    --set govArAdmission.tracing.enabled=true \
+    --set govArAdmission.tracing.endpoint=http://otel-collector.article3-observability.svc:4318 \
+    --set govArAdmission.tracing.insecure=true \
     --set govArAdmission.extProc.tls.serverExistingSecret=govar-ext-proc-server \
     --set govArAdmission.extProc.tls.clientCAExistingSecret=govar-ext-proc-client-ca \
     --set govArAdmission.extProc.gatewaySPIFFEID=spiffe://govar.local/gateway/envoy >/dev/null

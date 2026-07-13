@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 )
 
 // AIProviderReconciler reconciles a AIProvider object.
@@ -34,6 +37,7 @@ type AIProviderReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	Now      func() time.Time
 }
 
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aiproviders,verbs=get;list;watch;create;update;patch;delete
@@ -51,8 +55,25 @@ func (r *AIProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	provider.Status.ObservedGeneration = provider.Generation
-	meta.SetStatusCondition(&provider.Status.Conditions,
-		readyTrue(provider.Generation, "AIProvider registered with pricing and compliance"))
+	adapter, adapterErr := govarpricing.ForProviderType(provider.Spec.Type)
+	if adapterErr == nil {
+		now := time.Now().UTC()
+		if r.Now != nil {
+			now = r.Now().UTC()
+		}
+		snapshot, _, normalizeErr := adapter.Normalize(provider, now)
+		adapterErr = normalizeErr
+		if normalizeErr == nil {
+			provider.Status.GOVAR = &aiopsv1alpha1.AIProviderGOVARStatus{PricingSnapshot: &snapshot}
+			meta.SetStatusCondition(&provider.Status.Conditions,
+				readyTrue(provider.Generation, "typed pricing snapshot normalized and complete"))
+		}
+	}
+	if adapterErr != nil {
+		provider.Status.GOVAR = nil
+		meta.SetStatusCondition(&provider.Status.Conditions, readyFalse(provider.Generation,
+			"PricingEvidenceInvalid", fmt.Sprintf("GOV-AR pricing is not executable: %v", adapterErr)))
+	}
 
 	if err := r.Status().Update(ctx, &provider); err != nil {
 		return ctrl.Result{}, err

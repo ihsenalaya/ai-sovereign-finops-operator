@@ -5,7 +5,10 @@
 - `QUEUED`: no provider attempt and no active monetary reservation; retry creates a new decision attempt under the same workload identity.
 - `REJECTED`: terminal policy/budget denial with a machine-readable reason.
 - `ABSTAINED`: terminal refusal to make a governed decision because evidence is insufficient.
-- `REQUIRE_APPROVAL`: no dispatch; a later approved request re-enters with a versioned approval reference.
+- `REQUIRE_APPROVAL`: no dispatch; a later attempt may reuse a controller-approved
+  policy-level `AIChangeRequest` only while its routing-policy/model/provider/
+  route-snapshot digest and expiry scope match exactly. Admission creates no
+  per-request Kubernetes object and consumes no Lease.
 
 Queue or approval expiry releases no provider liability because dispatch was never authorized.
 

@@ -17,20 +17,19 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	extprocv3 "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	authenticationv1 "k8s.io/api/authentication/v1"
-	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -92,6 +91,17 @@ type identityAuthenticator struct {
 }
 
 func main() {
+	tracingShutdown, err := initializeTracing(context.Background())
+	if err != nil {
+		log.Fatalf("configure GOV-AR tracing: %v", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := tracingShutdown(ctx); err != nil {
+			log.Printf("flush GOV-AR traces: %v", err)
+		}
+	}()
 	addr := os.Getenv("GOV_AR_ADMISSION_ADDR")
 	if addr == "" {
 		addr = ":8084"
@@ -113,7 +123,8 @@ func main() {
 	var engine admissionBackend
 	devInMemory := strings.EqualFold(strings.TrimSpace(os.Getenv("GOV_AR_DEV_IN_MEMORY")), "true")
 	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		pgEngine, err := govar.NewPostgresEngine(context.Background(), databaseURL)
+		softwareSHA256 := strings.TrimSpace(os.Getenv("GOV_AR_SOFTWARE_SHA256"))
+		pgEngine, err := govar.OpenPostgresEngine(context.Background(), databaseURL, softwareSHA256)
 		if err != nil {
 			log.Fatalf("create postgres engine: %v", err)
 		}
@@ -126,6 +137,13 @@ func main() {
 		}
 		engine = govar.NewEngine()
 		log.Println("gov-ar-admission using explicit single-replica development in-memory ledger")
+	}
+	workerContext, stopWorkers := context.WithCancel(context.Background())
+	defer stopWorkers()
+	if reconciler, ok := engine.(durableReconciliationBackend); ok {
+		startReconciliationWorker(workerContext, reconciler, reconciliationWorkerConfigFromEnvironment())
+	} else if !devInMemory {
+		log.Fatal("production ledger does not implement durable reconciliation")
 	}
 
 	srv := &server{k8s: k8sClient, engine: engine, auth: identityAuthenticator{masterSecret: []byte(identitySecret), now: time.Now, reviewToken: tokenReviewFunc(k8sClient)}}
@@ -180,7 +198,7 @@ func main() {
 	mux.HandleFunc("/v1/liability/", srv.handleLiability)
 
 	log.Printf("gov-ar-admission listening on %s; Envoy ext_proc on %s", addr, extProcAddr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(http.ListenAndServe(addr, instrumentHTTP(mux)))
 }
 
 func extProcServerCredentials(certFile, keyFile, clientCAFile string) (credentials.TransportCredentials, error) {
@@ -278,6 +296,7 @@ func (s *server) handleAdmit(w http.ResponseWriter, r *http.Request) {
 		providers[providerList.Items[i].Name] = providerList.Items[i]
 	}
 
+	_, feasibilitySpan := startGOVAROperation(ctx, "govar.feasibility_filter")
 	candidates := govar.BuildCandidates(govar.RequestContext{
 		Namespace:     req.Namespace,
 		Team:          req.Team,
@@ -285,24 +304,27 @@ func (s *server) handleAdmit(w http.ResponseWriter, r *http.Request) {
 		SensitiveData: req.SensitiveData,
 		AllowedZones:  req.AllowedZones,
 	}, modelList.Items, providers)
+	finishGOVAROperation(feasibilitySpan, nil, attribute.Int("govar.candidate_count", len(candidates)))
 	routingForAdmission := routing
 	if routing.Spec.Canary.Enabled {
-		if strings.TrimSpace(apiRequest.ApprovalRef) == "" {
-			approval, err := s.ensurePendingAdmissionApproval(ctx, req, budget, routing, candidates)
-			if err != nil {
-				writeAPIError(w, http.StatusConflict, govar.ReasonApprovalRequired, err)
+		approvedCandidate, approval, err := s.resolveGOVARRouteApproval(ctx, apiRequest.ApprovalRef, routing, candidates)
+		if err != nil {
+			if errors.Is(err, errApprovalRequired) {
+				candidate, candidateErr := selectApprovalCandidate(candidates)
+				if candidateErr != nil {
+					writeAPIError(w, http.StatusConflict, govar.ReasonApprovalRequired, candidateErr)
+					return
+				}
+				approvalResponse := map[string]any{"decision": govar.DecisionRequireApproval, "reason_code": govar.ReasonApprovalRequired,
+					"required_approval": requiredGOVARRouteApproval(routing, candidate)}
+				if traceID := traceIDFromContext(ctx); traceID != "" {
+					approvalResponse["trace_id"] = traceID
+				}
+				writeJSON(w, approvalResponse)
+				recordAdmissionDecision(ctx, govar.DecisionRequireApproval, govar.ReasonApprovalRequired)
 				return
 			}
-			writeJSON(w, map[string]any{"decision": govar.DecisionRequireApproval, "reason_code": govar.ReasonApprovalRequired,
-				"trace_id": req.RequestID, "approval_ref": approval.Name, "approval_expires_at": approval.Spec.Request.ExpiresAt})
-			return
-		}
-		approvedCandidate, err := s.validateAndConsumeAdmissionApproval(ctx, apiRequest.ApprovalRef, req, budget, routing, candidates)
-		if err != nil {
 			status := http.StatusForbidden
-			if errors.Is(err, errApprovalReplayed) {
-				status = http.StatusConflict
-			}
 			if errors.Is(err, errApprovalExpired) {
 				status = http.StatusGone
 			}
@@ -312,102 +334,100 @@ func (s *server) handleAdmit(w http.ResponseWriter, r *http.Request) {
 		candidates = []govar.Candidate{approvedCandidate}
 		routingForAdmission = *routing.DeepCopy()
 		routingForAdmission.Spec.Canary.Enabled = false
+		// Bind the exact controller-approved change identity to the immutable
+		// ledger policyVersion without mutating the Kubernetes policy object.
+		routingForAdmission.ResourceVersion = routing.ResourceVersion + "|govar-approval:" + string(approval.UID) + ":" + strconv.FormatInt(approval.Generation, 10) + ":" + approval.Status.ApprovedScopeDigest
 	}
+	_, reservationSpan := startGOVAROperation(ctx, "govar.reservation_transaction")
 	resp, err := s.engine.Admit(req, budget, routingForAdmission, candidates)
+	finishGOVAROperation(reservationSpan, err,
+		attribute.String("govar.decision", string(resp.Decision)),
+		attribute.String("govar.reason_code", string(resp.ReasonCode)),
+		attribute.String("govar.reservation_method", resp.ReservationMode))
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, govar.ReasonInvalidTransition, err)
 		return
 	}
+	if traceID := traceIDFromContext(ctx); traceID != "" {
+		resp.TraceID = traceID
+	}
+	recordAdmissionDecision(ctx, resp.Decision, resp.ReasonCode)
 	writeJSON(w, resp)
 }
 
-const admissionApprovalTTL = 15 * time.Minute
-
 var (
-	errApprovalReplayed = errors.New("request-level approval was already consumed")
-	errApprovalExpired  = errors.New("request-level approval expired")
+	errApprovalRequired = errors.New("no current exact policy-level GOV-AR route approval exists")
+	errApprovalExpired  = errors.New("policy-level GOV-AR route approval expired")
 )
 
-func (s *server) ensurePendingAdmissionApproval(ctx context.Context, req govar.AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidates []govar.Candidate) (*aiopsv1alpha1.AIAdmissionApproval, error) {
-	candidate, err := selectApprovalCandidate(candidates)
-	if err != nil {
-		return nil, err
+func (s *server) resolveGOVARRouteApproval(ctx context.Context, approvalRef string, routing aiopsv1alpha1.AIRoutingPolicy, candidates []govar.Candidate) (govar.Candidate, *aiopsv1alpha1.AIChangeRequest, error) {
+	if ref := strings.TrimSpace(approvalRef); ref != "" {
+		var change aiopsv1alpha1.AIChangeRequest
+		if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: routing.Namespace, Name: ref}, &change); err != nil {
+			return govar.Candidate{}, nil, fmt.Errorf("approved AIChangeRequest lookup failed: %w", err)
+		}
+		candidate, err := s.validateGOVARRouteApproval(&change, routing, candidates)
+		return candidate, &change, err
 	}
-	expires := metav1.NewTime(s.currentTime().Add(admissionApprovalTTL))
-	request := admissionApprovalRequest(req, budget, routing, candidate, expires)
-	name := admissionApprovalName(req)
-	proposal := &aiopsv1alpha1.AIAdmissionApproval{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace,
-		Labels: map[string]string{"aiops.imperium.io/request-approval": "true"}}, Spec: aiopsv1alpha1.AIAdmissionApprovalSpec{Request: request}}
-	if err := s.k8s.Create(ctx, proposal); err == nil {
-		return proposal, nil
-	} else if !apierrors.IsAlreadyExists(err) {
-		return nil, fmt.Errorf("create immutable request approval proposal: %w", err)
+	var changes aiopsv1alpha1.AIChangeRequestList
+	if err := s.k8s.List(ctx, &changes, client.InNamespace(routing.Namespace)); err != nil {
+		return govar.Candidate{}, nil, fmt.Errorf("list policy-level GOV-AR approvals: %w", err)
 	}
-	var existing aiopsv1alpha1.AIAdmissionApproval
-	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: name}, &existing); err != nil {
-		return nil, err
+	sort.Slice(changes.Items, func(i, j int) bool { return changes.Items[i].Name < changes.Items[j].Name })
+	for i := range changes.Items {
+		change := &changes.Items[i]
+		candidate, err := s.validateGOVARRouteApproval(change, routing, candidates)
+		if err == nil {
+			return candidate, change, nil
+		}
 	}
-	if existing.Spec.Request.RequestDigest != request.RequestDigest || existing.Spec.Request.ComputeDigest() != request.RequestDigest {
-		return nil, errors.New("deterministic approval name exists with conflicting immutable request")
-	}
-	return &existing, nil
+	return govar.Candidate{}, nil, errApprovalRequired
 }
 
-func (s *server) validateAndConsumeAdmissionApproval(ctx context.Context, approvalRef string, req govar.AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidates []govar.Candidate) (govar.Candidate, error) {
-	if approvalRef != admissionApprovalName(req) {
-		return govar.Candidate{}, errors.New("approval reference is not bound to this request principal")
+func (s *server) validateGOVARRouteApproval(change *aiopsv1alpha1.AIChangeRequest, routing aiopsv1alpha1.AIRoutingPolicy, candidates []govar.Candidate) (govar.Candidate, error) {
+	if change == nil || change.Namespace != routing.Namespace || !change.DeletionTimestamp.IsZero() || change.UID == "" || change.Generation < 1 ||
+		change.Spec.Action != aiopsv1alpha1.AIChangeRequestActionAuthorizeGOVARRoute || change.Spec.Approval != aiopsv1alpha1.AIChangeRequestApprovalApproved ||
+		change.Spec.GOVARRouteApproval == nil || change.Status.Phase != aiopsv1alpha1.AIChangeRequestPhaseApproved ||
+		change.Status.ObservedGeneration != change.Generation || change.Status.ApprovedAt == nil || !apimeta.IsStatusConditionTrue(change.Status.Conditions, aiopsv1alpha1.ConditionReady) {
+		return govar.Candidate{}, errors.New("AIChangeRequest lacks current controller-approved GOV-AR route evidence")
 	}
-	var proposal aiopsv1alpha1.AIAdmissionApproval
-	if err := s.k8s.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: approvalRef}, &proposal); err != nil {
-		return govar.Candidate{}, fmt.Errorf("approved AIAdmissionApproval lookup failed: %w", err)
+	scope := change.Spec.GOVARRouteApproval
+	if scope.ScopeDigest == "" || scope.ScopeDigest != scope.ComputeDigest() || change.Status.ApprovedScopeDigest != scope.ScopeDigest ||
+		change.Status.ExpiresAt == nil || !change.Status.ExpiresAt.Time.Equal(scope.ValidUntil.Time) {
+		return govar.Candidate{}, errors.New("AIChangeRequest GOV-AR route scope digest or expiry evidence is stale")
 	}
-	approval := proposal.Spec.Request
-	if proposal.UID == "" || proposal.Status.Phase != aiopsv1alpha1.AIAdmissionApprovalPhaseApproved ||
-		proposal.Status.ObservedGeneration != proposal.Generation || proposal.Status.ConsumedAt != nil ||
-		proposal.Status.RequestDigest != approval.RequestDigest || proposal.Status.DecisionResourceUID == "" ||
-		proposal.Status.DecisionResourceGeneration < 1 || proposal.Status.ApprovedAt == nil {
-		return govar.Candidate{}, errors.New("AIAdmissionApproval lacks current unconsumed controller-owned approval evidence")
+	now := time.Now().UTC()
+	if s.auth.now != nil {
+		now = s.auth.now().UTC()
 	}
-	if !s.currentTime().Before(approval.ExpiresAt.Time) {
+	if !now.Before(scope.ValidUntil.Time) {
 		return govar.Candidate{}, errApprovalExpired
 	}
-	if approval.Namespace != req.Namespace || approval.RequestID != req.RequestID || approval.TenantID != req.TenantID || approval.WorkloadUID != req.WorkloadUID {
-		return govar.Candidate{}, errors.New("approval tenant/workload/request binding mismatch")
+	if scope.RoutingPolicy.Name != routing.Name || scope.RoutingPolicy.UID != routing.UID || scope.RoutingPolicy.Generation != routing.Generation {
+		return govar.Candidate{}, errors.New("approved routing-policy UID/generation does not match the live policy")
 	}
-	candidate, ok := candidateByModelRef(candidates, approval.CandidateModelRef)
-	if !ok {
-		return govar.Candidate{}, errors.New("approved candidate is no longer feasible")
-	}
-	expected := admissionApprovalRequest(req, budget, routing, candidate, approval.ExpiresAt)
-	if approval.RequestDigest != expected.RequestDigest || approval.RequestDigest != approval.ComputeDigest() {
-		return govar.Candidate{}, errors.New("approval does not match current request, policy, reservation inputs, candidate, or route")
-	}
-	leaseName := aiopsv1alpha1.AdmissionApprovalConsumptionName(proposal.UID)
-	holder := approval.RequestDigest
-	now := metav1.NewMicroTime(s.currentTime())
-	transitions := int32(1)
-	lease := &coordinationv1.Lease{ObjectMeta: metav1.ObjectMeta{Name: leaseName, Namespace: proposal.Namespace,
-		Labels: map[string]string{"aiops.imperium.io/request-approval": proposal.Name}, OwnerReferences: []metav1.OwnerReference{{APIVersion: aiopsv1alpha1.GroupVersion.String(), Kind: "AIAdmissionApproval", Name: proposal.Name, UID: proposal.UID}}},
-		Spec: coordinationv1.LeaseSpec{HolderIdentity: &holder, AcquireTime: &now, LeaseTransitions: &transitions}}
-	if err := s.k8s.Create(ctx, lease); err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			return govar.Candidate{}, errApprovalReplayed
+	for _, candidate := range candidates {
+		snapshot := candidate.RouteSnapshot
+		if !candidate.Feasible || govar.ValidateRouteSnapshot(snapshot) != nil ||
+			scope.Model.Name != snapshot.ModelName || string(scope.Model.UID) != snapshot.ModelUID || scope.Model.Generation != snapshot.ModelGeneration ||
+			scope.Provider.Name != snapshot.ProviderName || string(scope.Provider.UID) != snapshot.ProviderUID || scope.Provider.Generation != snapshot.ProviderGeneration ||
+			scope.RouteSnapshotDigest != snapshot.SnapshotHash || scope.RouteSnapshotDigest != govar.RouteSnapshotHash(snapshot) {
+			continue
 		}
-		return govar.Candidate{}, fmt.Errorf("atomically consume request approval: %w", err)
+		return candidate, nil
 	}
-	return candidate, nil
+	return govar.Candidate{}, errors.New("approved model/provider/route snapshot is no longer a feasible exact candidate")
 }
 
-func admissionApprovalRequest(req govar.AdmitRequest, budget aiopsv1alpha1.AIBudgetPolicy, routing aiopsv1alpha1.AIRoutingPolicy, candidate govar.Candidate, expires metav1.Time) aiopsv1alpha1.AIAdmissionApprovalRequest {
-	value := aiopsv1alpha1.AIAdmissionApprovalRequest{RequestID: req.RequestID, Namespace: req.Namespace, TenantID: req.TenantID, WorkloadUID: req.WorkloadUID,
-		Team: req.Team, Application: req.Application, BudgetPolicy: aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: budget.Name, UID: budget.UID, Generation: budget.Generation},
-		RoutingPolicy:     aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: routing.Name, UID: routing.UID, Generation: routing.Generation},
-		CandidateModelRef: candidate.ModelRef, CandidateSnapshotVersion: candidate.SnapshotVersion,
-		RouteSnapshot: candidate.RouteSnapshot,
-		InputTokens:   req.InputTokens, InputTokensExact: req.InputTokensExact, MaxOutputTokens: req.MaxOutputTokens, SensitiveData: req.SensitiveData,
-		AllowedZones: sortedCopy(req.AllowedZones), CohortID: req.CohortID, CohortIndex: req.CohortIndex, ExpiresAt: expires}
-	value.RequestDigest = value.ComputeDigest()
-	return value
+func requiredGOVARRouteApproval(routing aiopsv1alpha1.AIRoutingPolicy, candidate govar.Candidate) map[string]any {
+	snapshot := candidate.RouteSnapshot
+	return map[string]any{
+		"kind": "AIChangeRequest", "action": aiopsv1alpha1.AIChangeRequestActionAuthorizeGOVARRoute,
+		"routing_policy":        aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: routing.Name, UID: routing.UID, Generation: routing.Generation},
+		"model":                 aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: snapshot.ModelName, UID: types.UID(snapshot.ModelUID), Generation: snapshot.ModelGeneration},
+		"provider":              aiopsv1alpha1.AIWorkloadBindingResolvedReference{Name: snapshot.ProviderName, UID: types.UID(snapshot.ProviderUID), Generation: snapshot.ProviderGeneration},
+		"route_snapshot_digest": snapshot.SnapshotHash,
+	}
 }
 
 func selectApprovalCandidate(candidates []govar.Candidate) (govar.Candidate, error) {
@@ -426,27 +446,6 @@ func selectApprovalCandidate(candidates []govar.Candidate) (govar.Candidate, err
 		return govar.Candidate{}, errors.New("no feasible typed candidate exists for approval")
 	}
 	return *selected, nil
-}
-
-func candidateByModelRef(candidates []govar.Candidate, modelRef string) (govar.Candidate, bool) {
-	for _, candidate := range candidates {
-		if candidate.Feasible && candidate.ModelRef == modelRef {
-			return candidate, true
-		}
-	}
-	return govar.Candidate{}, false
-}
-
-func admissionApprovalName(req govar.AdmitRequest) string {
-	digest := sha256.Sum256([]byte(req.Namespace + "\x00" + req.TenantID + "\x00" + req.WorkloadUID + "\x00" + req.RequestID))
-	return "govar-approval-" + fmt.Sprintf("%x", digest[:12])
-}
-
-func (s *server) currentTime() time.Time {
-	if s.auth.now != nil {
-		return s.auth.now().UTC()
-	}
-	return time.Now().UTC()
 }
 
 func (s *server) handleDispatch(w http.ResponseWriter, r *http.Request) {
@@ -474,11 +473,15 @@ func (s *server) handleDispatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID = trusted.tenant, trusted.uid
+	_, transitionSpan := startGOVAROperation(r.Context(), "govar.dispatch_transaction")
 	res, code, err := s.engine.Dispatch(req)
+	finishGOVAROperation(transitionSpan, err, attribute.String("govar.reason_code", string(code)))
 	if err != nil {
 		writeAPIError(w, http.StatusConflict, code, err)
+		recordLedgerTransition(r.Context(), "dispatch", code, false)
 		return
 	}
+	recordLedgerTransition(r.Context(), "dispatch", code, true)
 	writeJSON(w, transitionResponse(res, code))
 }
 
@@ -511,11 +514,15 @@ func (s *server) handleSettle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID = trusted.tenant, trusted.uid
+	_, settlementSpan := startGOVAROperation(r.Context(), "govar.settlement_transaction")
 	res, code, err := s.engine.Settle(req)
+	finishGOVAROperation(settlementSpan, err, attribute.String("govar.reason_code", string(code)))
 	if err != nil {
 		writeAPIError(w, http.StatusConflict, code, err)
+		recordLedgerTransition(r.Context(), "settle", code, false)
 		return
 	}
+	recordLedgerTransition(r.Context(), "settle", code, true)
 	writeJSON(w, transitionResponse(res, code))
 }
 
@@ -548,11 +555,15 @@ func (s *server) handleCancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.AuthenticatedTenantID, req.AuthenticatedWorkloadUID = trusted.tenant, trusted.uid
+	_, cancellationSpan := startGOVAROperation(r.Context(), "govar.cancellation_transaction")
 	res, code, err := s.engine.Cancel(req)
+	finishGOVAROperation(cancellationSpan, err, attribute.String("govar.reason_code", string(code)))
 	if err != nil {
 		writeAPIError(w, http.StatusConflict, code, err)
+		recordLedgerTransition(r.Context(), "cancel", code, false)
 		return
 	}
+	recordLedgerTransition(r.Context(), "cancel", code, true)
 	writeJSON(w, transitionResponse(res, code))
 }
 
@@ -834,14 +845,6 @@ func (s *server) authorizeEvent(ctx context.Context, principal authenticatedPrin
 	return trusted, nil
 }
 
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value = strings.TrimSpace(value); value != "" {
-			return value
-		}
-	}
-	return ""
-}
 func splitAndNormalize(value string) []string {
 	var out []string
 	for _, item := range strings.Split(value, ",") {

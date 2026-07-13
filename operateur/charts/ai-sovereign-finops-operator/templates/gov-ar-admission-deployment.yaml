@@ -14,11 +14,17 @@ spec:
   {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.postgres.enabled) (not .Values.govArAdmission.postgres.existingSecret)) }}
   {{- fail "production GOV-AR admission requires postgres.enabled=true and postgres.existingSecret" }}
   {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (not (regexMatch "^[0-9a-f]{64}$" .Values.govArAdmission.softwareSHA256)) }}
+  {{- fail "production GOV-AR admission requires softwareSHA256 as a lowercase SHA-256 digest" }}
+  {{- end }}
   {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.extProc.tls.serverExistingSecret) (not .Values.govArAdmission.extProc.tls.clientCAExistingSecret) (not .Values.govArAdmission.extProc.gatewaySPIFFEID)) }}
   {{- fail "production GOV-AR ext_proc requires tls.serverExistingSecret, tls.clientCAExistingSecret, and gatewaySPIFFEID" }}
   {{- end }}
   {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.enforcement.networkPolicy.enabled) (not .Values.govArAdmission.enforcement.networkPolicy.governedNamespace)) }}
   {{- fail "production GOV-AR requires enforcement.networkPolicy.enabled=true and a dedicated governedNamespace" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.tracing.enabled) (not .Values.govArAdmission.tracing.endpoint)) }}
+  {{- fail "production GOV-AR requires tracing.enabled=true and an OTLP endpoint" }}
   {{- end }}
   replicas: {{ .Values.govArAdmission.replicaCount }}
   selector:
@@ -71,6 +77,26 @@ spec:
             {{- end }}
             - name: GOV_AR_DEV_IN_MEMORY
               value: {{ .Values.govArAdmission.devInMemory | quote }}
+            - name: GOV_AR_RECONCILIATION_INTERVAL
+              value: {{ .Values.govArAdmission.reconciliation.interval | quote }}
+            - name: GOV_AR_RECONCILIATION_QUERY_LIMIT
+              value: {{ .Values.govArAdmission.reconciliation.queryLimit | quote }}
+            - name: GOV_AR_SOFTWARE_VERSION
+              value: {{ default .Chart.AppVersion .Values.govArAdmission.image.tag | quote }}
+            {{- if .Values.govArAdmission.softwareSHA256 }}
+            - name: GOV_AR_SOFTWARE_SHA256
+              value: {{ .Values.govArAdmission.softwareSHA256 | quote }}
+            {{- end }}
+            - name: GOV_AR_TRACING_ENABLED
+              value: {{ .Values.govArAdmission.tracing.enabled | quote }}
+            {{- if .Values.govArAdmission.tracing.enabled }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ required "govArAdmission.tracing.endpoint is required when tracing is enabled" .Values.govArAdmission.tracing.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              value: {{ .Values.govArAdmission.tracing.insecure | quote }}
+            - name: GOV_AR_TRACE_SAMPLE_RATIO
+              value: {{ .Values.govArAdmission.tracing.sampleRatio | quote }}
+            {{- end }}
             - name: GOV_AR_IDENTITY_MASTER_SECRET
               valueFrom:
                 secretKeyRef:

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -83,6 +84,15 @@ func TestBuildCandidatesFiltersByGovernanceAndTarget(t *testing.T) {
 			Status: aiopsv1alpha1.AIProviderStatus{ObservedGeneration: 1, Conditions: ready},
 		},
 	}
+	for name, provider := range providers {
+		attachTestPricingStatus(t, &provider, now)
+		providers[name] = provider
+	}
+	for i := range models {
+		provider := providers[models[i].Spec.ProviderRef]
+		binding := provider.Spec.GOVAR.GatewayRoutes[0]
+		models[i].Status.GOVAR.VerifiedOutputCap = testCapStatus(provider, binding.ProviderDeployment, models[i].Spec.ModelName, now)
+	}
 
 	got := BuildCandidates(RequestContext{
 		Namespace:     "finance",
@@ -139,6 +149,26 @@ func TestProviderPathCompatibilityFailsBedrockClosed(t *testing.T) {
 }
 
 func ptrTime(value metav1.Time) *metav1.Time { return &value }
+
+func attachTestPricingStatus(t *testing.T, provider *aiopsv1alpha1.AIProvider, now metav1.Time) {
+	t.Helper()
+	future := metav1.NewTime(now.Add(24 * time.Hour))
+	provider.Spec.GOVAR.Pricing = &aiopsv1alpha1.AIProviderGOVARPricingSpec{Evidence: aiopsv1alpha1.AIProviderPricingEvidenceSpec{
+		Mode: aiopsv1alpha1.ProviderEvidenceAdminAttested, SourceVersion: "synthetic-v1", EvidenceSHA256: testSHA("provider-pricing-" + provider.Name), ValidUntil: future, AdapterVersion: govarpricing.CurrentAdapterVersion},
+		InapplicableBases: []aiopsv1alpha1.ProviderBillableBasis{aiopsv1alpha1.ProviderBasisCachedInputTokens, aiopsv1alpha1.ProviderBasisReasoningTokens, aiopsv1alpha1.ProviderBasisRequest, aiopsv1alpha1.ProviderBasisToolCall, aiopsv1alpha1.ProviderBasisMediaUnit, aiopsv1alpha1.ProviderBasisBillableSecond, aiopsv1alpha1.ProviderBasisCancellation, aiopsv1alpha1.ProviderBasisRetryAttempt}}
+	snapshot, _, err := govarpricing.Normalize(*provider, now.Time)
+	if err != nil {
+		t.Fatalf("normalize test provider: %v", err)
+	}
+	provider.Status.GOVAR = &aiopsv1alpha1.AIProviderGOVARStatus{PricingSnapshot: &snapshot}
+}
+
+func testCapStatus(provider aiopsv1alpha1.AIProvider, deployment, model string, now metav1.Time) *aiopsv1alpha1.AIModelVerifiedOutputCapStatus {
+	return &aiopsv1alpha1.AIModelVerifiedOutputCapStatus{Verified: true, MaxOutputTokens: 4096, ObservedAt: now, SourceVersion: "cap-v1",
+		ProviderUID: string(provider.UID), ProviderGeneration: provider.Generation, ProviderDeployment: deployment, ModelVersion: model,
+		CapabilityAdapterVersion: govarpricing.CurrentAdapterVersion, EvidenceMode: aiopsv1alpha1.ProviderEvidenceAdminAttested,
+		EvidenceSHA256: testSHA("cap-" + provider.Name), ValidUntil: metav1.NewTime(now.Add(24 * time.Hour)), RequestParameter: "max_output_tokens", EnforcedByPathAdapter: true}
+}
 
 func TestBuildPolicySnapshotCarriesBudgetAndRoutingGuardrails(t *testing.T) {
 	budget := aiopsv1alpha1.AIBudgetPolicy{
