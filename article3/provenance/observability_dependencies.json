@@ -27,7 +27,7 @@
   "claims": {
     "trace_signal_status": "stable according to the official OpenTelemetry Go documentation retrieved on 2026-07-13",
     "transport": "OTLP over HTTP/protobuf using environment-configured official exporter",
-    "propagation": "W3C Trace Context plus Baggage",
+    "propagation": "W3C Trace Context end to end; W3C Baggage is accepted only on trusted internal requests and is not forwarded by ext_proc to providers",
     "experimental_observation_sampling": "1.0"
   }
 }

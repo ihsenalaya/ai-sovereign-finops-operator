@@ -43,10 +43,12 @@ path rather than Prometheus labels.
 ## Traces
 
 Production rendering requires `govArAdmission.tracing.enabled=true` and an
-OTLP/HTTP collector endpoint. The service uses W3C Trace Context and Baggage,
-continues a trusted downstream `traceparent` through Envoy `ext_proc`, and
-injects that context into the signed internal admission, dispatch, settlement,
-and cancellation calls. Spans record bounded HTTP routes, status, decisions,
+OTLP/HTTP collector endpoint. The service uses W3C Trace Context, continues a
+trusted downstream `traceparent` through Envoy `ext_proc`, and injects that
+context into the signed internal admission, dispatch, settlement, and
+cancellation calls. The process may extract W3C Baggage on trusted internal
+requests, but `ext_proc` deliberately forwards no arbitrary baggage to a model
+provider. Spans record bounded HTTP routes, status, decisions,
 reason codes, and the immutable route-snapshot digest; prompts and tenant,
 workload, request, or reservation identifiers are not span attributes. The
 admission response returns the actual OpenTelemetry trace ID when a valid span

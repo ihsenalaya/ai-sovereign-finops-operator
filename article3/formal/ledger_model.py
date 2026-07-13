@@ -249,7 +249,10 @@ class Record:
     base_event: str = ""
     correction_version: int = 0
     correction_events: tuple[str, ...] = ()
-    postfinal_correction_effects: int = 0
+    # Counts only upward corrections accepted after authoritative finality.
+    # Equal or downward post-final corrections remain inside the strict
+    # feasibility predicate because they cannot increase enforcement exposure.
+    postfinal_upward_correction_effects: int = 0
     settlement_effects: int = 0
     finalization_effects: int = 0
     unbilled_release_effects: int = 0
@@ -547,12 +550,23 @@ def correct(state: State, request_id: str, tenant_id: str, workload_uid: str,
         desired_credit = max(record.base_actual - new_actual, 0)
         replace_tenant(state, tenant_id,
                        historical_credit=tenant.historical_credit + desired_credit - record.credit_effect)
-        replace_record(state, request_id, actual=new_actual, carry_effect=new_carry,
-                       credit_effect=desired_credit, correction_version=version,
-                       correction_events=record.correction_events + (correction_id,),
-                       postfinal_correction_effects=record.postfinal_correction_effects + 1)
+        replace_record(
+            state,
+            request_id,
+            actual=new_actual,
+            carry_effect=new_carry,
+            credit_effect=desired_credit,
+            correction_version=version,
+            correction_events=record.correction_events + (correction_id,),
+            postfinal_upward_correction_effects=(
+                record.postfinal_upward_correction_effects + (1 if delta > 0 else 0)
+            ),
+        )
         state.inbox[correction_id] = payload
-        state.transition_coverage.add("postfinal_correction_preserves_external_debt")
+        state.transition_coverage.add(
+            "postfinal_upward_correction_preserves_external_debt"
+            if delta > 0 else "postfinal_nonupward_correction_preserves_feasibility"
+        )
         return True
     new_residual = record.residual_hold - delta
     if not 0 <= new_residual <= record.reserved_ceiling:
@@ -640,15 +654,19 @@ def inv_non_negative(state: State) -> bool:
 
 
 def inv_conditional_strict_feasibility(state: State) -> bool:
-    # A correction after authoritative finality is explicitly outside the
-    # instantaneous strict guarantee: its hold has already been released and
-    # another request may have consumed it. The model still requires the full
-    # external debt to remain visible (checked separately). Before such an
-    # exogenous correction, strict feasibility must hold for every state.
+    # An *upward* correction after authoritative finality is explicitly outside
+    # the instantaneous strict guarantee: its hold has already been released
+    # and another request may have consumed it. The model still requires the
+    # full external debt to remain visible (checked separately). Equal and
+    # downward post-final corrections do not increase exposure and therefore
+    # must not disable this invariant.
     for tenant_id, tenant in state.tenants.items():
-        postfinal = any(r.tenant_id == tenant_id and r.postfinal_correction_effects > 0
-                        for r in state.records.values())
-        if not postfinal and tenant.settled + tenant.reserved + tenant.carried_debt > tenant.budget:
+        postfinal_upward = any(
+            r.tenant_id == tenant_id and r.postfinal_upward_correction_effects > 0
+            for r in state.records.values()
+        )
+        if (not postfinal_upward
+                and tenant.settled + tenant.reserved + tenant.carried_debt > tenant.budget):
             return False
     return True
 
@@ -697,7 +715,8 @@ def inv_effect_counts(state: State) -> bool:
             return False
         if r.correction_version != len(r.correction_events) or len(set(r.correction_events)) != len(r.correction_events):
             return False
-        if r.postfinal_correction_effects < 0 or r.postfinal_correction_effects > r.correction_version:
+        if (r.postfinal_upward_correction_effects < 0
+                or r.postfinal_upward_correction_effects > r.correction_version):
             return False
     return True
 
@@ -715,7 +734,7 @@ def inv_residual_correction_exposure(state: State) -> bool:
 
 def inv_postfinal_correction_visible(state: State) -> bool:
     for record in state.records.values():
-        if record.postfinal_correction_effects == 0:
+        if record.postfinal_upward_correction_effects == 0:
             continue
         if record.status not in FINAL or record.residual_hold != 0:
             return False
@@ -908,6 +927,20 @@ def required_scenarios() -> dict[str, list[tuple[str, tuple]]]:
             ("finalize", ("req-a1", *a, "fin-late-final")),
             ("correct", ("req-a1", *a, "corr-after-final", 1, 2)),
         ],
+        "postfinal_equal_correction_does_not_disable_strict_feasibility": [
+            ("reserve", ("req-a1", *a)), ("claim", ("req-a1", *a)),
+            ("dispatch", ("req-a1", *a)),
+            ("settle", ("req-a1", *a, "evt-equal-final", 1)),
+            ("finalize", ("req-a1", *a, "fin-equal-final")),
+            ("correct", ("req-a1", *a, "corr-equal-final", 1, 1)),
+        ],
+        "postfinal_downward_correction_does_not_disable_strict_feasibility": [
+            ("reserve", ("req-a1", *a)), ("claim", ("req-a1", *a)),
+            ("dispatch", ("req-a1", *a)),
+            ("settle", ("req-a1", *a, "evt-down-final", 1)),
+            ("finalize", ("req-a1", *a, "fin-down-final")),
+            ("correct", ("req-a1", *a, "corr-down-final", 1, 0)),
+        ],
         "atomic_pending_expiry_blocks_late_claim": [
             ("reserve", ("req-a1", *a)), ("timeout", ("req-a1", *a)),
             ("claim", ("req-a1", *a)),
@@ -1072,7 +1105,8 @@ def main() -> int:
         "settlement_with_residual_hold", "reordered_usage_proves_delivery",
         "semantic_duplicate_no_effect", "monotone_correction_with_residual_hold",
         "exact_correction_replay_no_effect",
-        "postfinal_correction_preserves_external_debt",
+        "postfinal_upward_correction_preserves_external_debt",
+        "postfinal_nonupward_correction_preserves_feasibility",
         "authoritative_finality_releases_residual", "rollover_preserves_holds_and_adjustments",
         "model_same_name_delete_recreate", "provider_route_price_same_name_delete_recreate",
         "cross_provider_binding_injection", "model_owned_route_injection",
@@ -1094,7 +1128,7 @@ def main() -> int:
             "residual reservation R-C is retained until authoritative finality",
             "prior-window provisional actual plus residual is guarded at R until finality",
             "historical downward-correction credit is audit-only and cannot expand later availability",
-            "corrections are monotone-versioned; a post-finality correction voids instantaneous strict feasibility from that exogenous transition but its full debt remains visible",
+            "corrections are monotone-versioned; only an upward post-finality correction violates the no-upward-after-finality precondition and its full debt remains visible",
             "one transactional ledger serializes every effective transition",
             "provider execution itself is not claimed exactly once",
         ],

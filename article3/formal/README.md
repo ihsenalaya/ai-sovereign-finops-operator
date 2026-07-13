@@ -5,7 +5,7 @@
 It recomputes these conditional ledger properties:
 
 - non-negative integer monetary views;
-- conditional strict-ledger feasibility when actual estimated token cost is no greater than its reservation;
+- conditional strict-ledger feasibility when actual estimated token cost is no greater than its reservation and no upward correction occurs after authoritative finality;
 - record/aggregate equality;
 - unresolved dispatched liability and non-negative carried debt survive window rollover;
 - dispatch claim and pending-outbox cancellation have mutually exclusive ledger effects;
