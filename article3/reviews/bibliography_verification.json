@@ -1,64 +1,144 @@
 {
-  "review_id": "bibliography-verification-20260712-v3",
-  "reviewer_role": "independent primary-source bibliography verifier",
-  "reviewed_at_utc": "2026-07-12T07:06:55Z",
-  "corpus_sha256": "6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a",
+  "review_id": "bibliography-verification-20260713-v5",
+  "reviewer_role": "independent primary-source bibliography verifier in a fresh context",
+  "reviewed_at_utc": "2026-07-13T22:38:34Z",
+  "corpus_sha256": "f1281929d9c90ec7938b286ebf1a6407267ee7264753568bb65a0a13008b0bd8",
   "verdict": "approved",
-  "independently_verified_records": 57,
-  "peer_reviewed_records": 49,
+  "corpus_counts": {
+    "retained_records": 77,
+    "peer_reviewed_records": 65,
+    "preprints": 7,
+    "workshop_records": 1,
+    "industry_or_product_records": 3,
+    "whitepapers": 1,
+    "bibtex_entries": 77,
+    "new_records_audited": 20,
+    "existing_records_risk_sampled": 22
+  },
+  "independently_verified_records": 42,
   "verified_ids": [
-    "R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10",
-    "R11", "R12", "R13", "R14", "R15", "R16", "R17", "R18", "R19", "R20",
-    "R21", "R22", "R23", "R24", "R25", "R26", "R27", "R28", "R29", "R30",
-    "R31", "R32", "R33", "R34", "R35", "R36", "R37", "R38", "R39", "R40",
-    "R41", "R42", "R43", "R44", "R45", "R46", "R47", "R48", "R49", "R50",
-    "R51", "R52", "R53", "R54", "R55", "R56", "R57"
+    "R01", "R02", "R03", "R04", "R05", "R06", "R07", "R12", "R13", "R21",
+    "R30", "R35", "R41", "R45", "R46", "R49", "R52", "R53", "R54", "R55",
+    "R56", "R57", "R58", "R59", "R60", "R61", "R62", "R63", "R64", "R65",
+    "R66", "R67", "R68", "R69", "R70", "R71", "R72", "R73", "R74", "R75",
+    "R76", "R77"
   ],
-  "comparison_fields": ["title", "authors", "year", "venue", "identifier", "review_status"],
+  "audited_new_ids": [
+    "R58", "R59", "R60", "R61", "R62", "R63", "R64", "R65", "R66", "R67",
+    "R68", "R69", "R70", "R71", "R72", "R73", "R74", "R75", "R76", "R77"
+  ],
+  "risk_sampled_existing_ids": [
+    "R01", "R02", "R03", "R04", "R05", "R06", "R07", "R12", "R13", "R21",
+    "R30", "R35", "R41", "R45", "R46", "R49", "R52", "R53", "R54", "R55",
+    "R56", "R57"
+  ],
+  "comparison_fields": [
+    "title", "authors", "year", "venue", "identifier", "review_status", "withdrawal_status",
+    "problem", "method", "datasets", "main_results", "limitations"
+  ],
+  "corpus_source_sha256": {
+    "search_log.csv": "efcd8009e46938c5fff854597d726d771ccf2d854ae3adf26dfe36a86ea1086c",
+    "screening.csv": "effaa30389997b1de47fb28ca1b6d032cbcd903660cae32a8635ae8b2b08c605",
+    "related_work_matrix.csv": "456cddb57e7b859b38768a3ec145afe847264c095359f63e09c44994e78dfddc",
+    "novelty_assessment.md": "9bb55f4fd1d742232268768af54932fa1365b95a5715e6f4a69329002ce73a9b",
+    "references.bib": "59103450e89b28b156f608b877656a8720ce628af4a7e30e089b6e421bc09bc6",
+    "rejected_references.csv": "d326823d587ab4902ed577a1bdd5df294be5ca71be0a563bf12e257c203d6afa"
+  },
+  "primary_source_snapshot_sha256": {
+    "ACL_2025.findings-emnlp.208_bib": "7f306ab6c99b6b9a436778a9ddf53e7aa278b4212276162886636bb059446191",
+    "ACL_2025.findings-emnlp.787_bib": "c8e1af7e744028a3654a831169b0ba2bad3fd79d9d4c0998c37769e2ce71740d",
+    "ACL_2026.acl-long.1007_bib": "7563cccb8f1facd9843b65d0e0e3d2cf737bfb8107ed83806f38b0027041089c",
+    "ACL_2026.acl-long.1018_bib": "db5904ef2f31374c2b7066d68913ed2b23340b33f70d556d7d8011723530d74c",
+    "ACL_2026.acl-long.2045_bib": "5b9c13328a71334dc41e7d3074cc4736e66c6ce1d18c38000eb3e23d6a069129",
+    "ACL_2026.acl-long.2051_bib": "5826e1844685792c3642b676893d28ccdef570699155fa428d616b43cc090335",
+    "ACL_2026.eacl-long.228_bib": "a3c7ca178ab8a9d3e6ef104c8effb4dfaa58be7ee93f44f50a712d161f442c67",
+    "ACL_2026.eacl-srw.22_bib": "6afa16874e18139eb6af823acc41935e19dd5dfeac5b1b89ccacdb0e5592c00f",
+    "ACL_2026.findings-acl.1888_bib": "33d6a03f2fd3b5758330217148fc35db4635aa7d1eb6d759b331aa9b070f6b6c",
+    "NeurIPS_2025_1759a83b_bib": "82c3255dcbc375ec0065c76b04d04d2f355a2cc62eecacb9067bd62835ffb953",
+    "NeurIPS_2025_305a5630_bib": "1c49aba3fcf97384ee5e5f261e5093c164a2be67ead5d8b084102e3f3f15e961",
+    "NeurIPS_2025_357774d5_bib": "deb73d2ce12ebe1884acddbd18bcfd5a5b15039456b37669d60ea3bdab1c403c",
+    "NeurIPS_2025_39c60dda_bib": "bb8f1b8c331789c42c0bc237d9f8a585d3c591fd4fd426aff566c2309ff1e28d",
+    "NeurIPS_2025_4dd1d9b8_bib": "a50ee1e78edd9619540ddcc7c88de61db3a2010fcc4e42f8160b05b42fbf598d",
+    "NeurIPS_2025_e46eb640_bib": "4fd27fa2708ca132be1e8ca0776795fc768f127b4a1e8383deade5d9c6dfe49c"
+  },
+  "live_primary_source_checks": [
+    {
+      "ids": ["R58", "R59", "R60", "R61", "R62", "R66", "R67", "R73", "R77"],
+      "authority": "ACL Anthology",
+      "result": "titles, author sets, years, proceedings venues, DOIs, and pages match the official records"
+    },
+    {
+      "ids": ["R63", "R64", "R65", "R72", "R75", "R76"],
+      "authority": "NeurIPS proceedings",
+      "result": "titles, author sets, conference year, venue, and official paper hashes match"
+    },
+    {
+      "ids": ["R68", "R69", "R71"],
+      "authority": "arXiv primary records",
+      "result": "titles, author sets, identifiers, dates, and preprint status match; R69 uses canonical 2604.08075 and R71 explicitly says under review"
+    },
+    {
+      "ids": ["X22"],
+      "authority": "https://arxiv.org/abs/2604.09613",
+      "result": "correctly rejected once as withdrawn duplicate of retained 2604.08075; current record has no PDF or license"
+    },
+    {
+      "ids": ["R70"],
+      "authority": "Maxim/Bifrost official engineering article",
+      "result": "title, author, date, claims, and non-peer-reviewed industry status match"
+    },
+    {
+      "ids": ["R74"],
+      "authority": "OpenReview ICLR 2026 record r0BFucF2dH",
+      "result": "title, author set, identifier, and ICLR 2026 accepted status match"
+    },
+    {
+      "ids": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R12", "R13", "R21", "R30", "R35", "R41", "R45", "R46", "R49", "R52", "R53", "R54", "R55", "R56", "R57"],
+      "authority": "current primary arXiv, proceedings, publisher, product, and artifact records",
+      "result": "risk-based existing-corpus sample rechecked; no title, author-set, identifier, venue, year, or review-status mismatch found"
+    }
+  ],
+  "registry_consistency": {
+    "retained_screening_ids_equal_matrix_ids": true,
+    "rejected_screening_ids_equal_rejected_registry_ids": true,
+    "duplicate_retained_primary_urls": [],
+    "duplicate_rejected_primary_urls": [],
+    "duplicate_normalized_titles_within_disposition": [],
+    "cross_disposition_primary_url_collisions": [],
+    "cross_disposition_normalized_title_collisions": []
+  },
   "non_peer_reviewed_labels": {
-    "preprints": ["R01", "R02", "R25", "R29"],
+    "preprints": ["R01", "R02", "R25", "R29", "R68", "R69", "R71"],
     "workshop": ["R13"],
-    "industry_reference": ["R55"],
+    "industry_reference": ["R55", "R70"],
     "product_documentation": ["R56"],
     "whitepaper": ["R57"]
   },
   "findings": [
     {
-      "id": "PB-META-35",
+      "id": "PB-20260713-M1",
       "severity": "major",
       "status": "resolved",
-      "summary": "R35 now uses DOI 10.1109/FOCS.2013.30 and pages 207-216; the prior DOI pointed to an unrelated FOCS paper."
+      "summary": "The withdrawn arXiv:2604.09613 duplicate is no longer counted as an independent retained work. R69 now matches canonical arXiv:2604.08075 for title, author set, identifier, status, datasets, and reported results; X22 records the withdrawn duplicate once."
     },
     {
-      "id": "PB-META-56",
+      "id": "PB-20260713-M2",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "Retained and rejected registries are now bijective with their screening decisions. No duplicate source URL, normalized title, or cross-disposition collision remains, including SeqRoute."
+    },
+    {
+      "id": "PB-20260713-M3",
       "severity": "minor",
       "status": "resolved",
-      "summary": "R56 now records the current Keel documentation update date, 2026-06-07."
+      "summary": "The novelty prose now reports seven preprints, reconciling 65 peer-reviewed records plus 12 explicitly non-peer-reviewed records to the 77-record retained corpus."
     },
     {
-      "id": "PB-OLD-1",
+      "id": "PB-20260713-R1",
       "severity": "major",
       "status": "resolved",
-      "summary": "Every retained CSV record and BibTeX key was cross-checked against its primary record; no mismatch remains on the bound corpus."
-    },
-    {
-      "id": "PB-OLD-2",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "R05 uses the official NeurIPS 2025 proceedings record."
-    },
-    {
-      "id": "PB-OLD-3",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "Preprint, workshop, industry, product-documentation, and whitepaper status is explicit and not counted as peer review."
-    },
-    {
-      "id": "PB-OLD-4",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "Version-of-record metadata is used for FrugalGPT, Learn then Test, HAT, Acto, and Sieve."
+      "summary": "All 20 newly added R58-R77 records and a 22-record risk-based sample of R01-R57 were checked against current primary records; no unresolved critical or major metadata, identifier, or review-status discrepancy remains."
     }
   ],
-  "note": "The independent comparison covered all 57 retained records. Harmless display-name/diacritic normalization was allowed; identifier, author-set, year, venue, and review-status differences were not."
+  "note": "Approval is bound only to the six-file corpus hash above. Harmless display-name, diacritic, and middle-name abbreviation differences were allowed; author-set, identifier, year, venue, review-status, and withdrawal-status differences were not."
 }

@@ -1,70 +1,96 @@
 {
-  "review_id": "literature-novelty-20260712-v4",
-  "reviewer_role": "independent literature and novelty auditor",
-  "reviewed_at_utc": "2026-07-12T07:06:55Z",
-  "corpus_sha256": "6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a",
+  "review_id": "literature-novelty-20260713-v6",
+  "reviewer_role": "independent literature and novelty auditor in a fresh context",
+  "reviewed_at_utc": "2026-07-13T22:38:34Z",
+  "corpus_sha256": "f1281929d9c90ec7938b286ebf1a6407267ee7264753568bb65a0a13008b0bd8",
   "verdict": "approved",
   "corpus": {
-    "retained": 57,
-    "peer_reviewed": 49,
-    "last_material_search": "S23",
-    "post_material_saturation_passes": ["S24", "S25"]
+    "retained": 77,
+    "peer_reviewed": 65,
+    "last_material_search": "S28",
+    "post_material_saturation_passes": ["S29", "S30"],
+    "post_material_passes_with_no_material_new_work": 2
   },
+  "corpus_source_sha256": {
+    "search_log.csv": "efcd8009e46938c5fff854597d726d771ccf2d854ae3adf26dfe36a86ea1086c",
+    "screening.csv": "effaa30389997b1de47fb28ca1b6d032cbcd903660cae32a8635ae8b2b08c605",
+    "related_work_matrix.csv": "456cddb57e7b859b38768a3ec145afe847264c095359f63e09c44994e78dfddc",
+    "novelty_assessment.md": "9bb55f4fd1d742232268768af54932fa1365b95a5715e6f4a69329002ce73a9b",
+    "references.bib": "59103450e89b28b156f608b877656a8720ce628af4a7e30e089b6e421bc09bc6",
+    "rejected_references.csv": "d326823d587ab4902ed577a1bdd5df294be5ca71be0a563bf12e257c203d6afa"
+  },
+  "primary_source_basis": [
+    "Current ACL Anthology records for R58-R62, R66-R67, R73, and R77",
+    "Current NeurIPS proceedings records for R63-R65, R72, and R75-R76",
+    "Current accepted OpenReview records for R63, R72, and R74",
+    "Current arXiv records for R68, canonical R69, R71, and withdrawn duplicate X22",
+    "Current Solo.io, Keel, AgentBudget, and Maxim/Bifrost primary product or engineering records",
+    "Current primary records for the risk-based R01-R57 sample listed in bibliography_verification.json"
+  ],
   "findings": [
     {
-      "id": "LIT-C1",
-      "severity": "critical",
-      "status": "resolved",
-      "summary": "RACER, CONCUR, SDR, Solo.io quota-management, Keel budget envelopes, and AgentBudget were added; two new no-material-change passes follow the last material search."
-    },
-    {
-      "id": "LIT-M1",
+      "id": "LIT-20260713-M1",
       "severity": "major",
       "status": "resolved",
-      "summary": "The bibliography audit is corpus-bound and independently verifies all retained metadata and review status."
+      "summary": "R69 now uses the canonical non-withdrawn dual-pool paper arXiv:2604.08075 with exact primary-source metadata and results. Withdrawn duplicate 2604.09613 is excluded once as X22 and does not inflate the retained corpus or prior-art count."
     },
     {
-      "id": "LIT-M2",
+      "id": "LIT-20260713-M2",
       "severity": "major",
       "status": "resolved",
-      "summary": "R49, R35, and R56 metadata are corrected against their primary records."
+      "summary": "Every retained or rejected work has one reproducible final disposition. SeqRoute is retained only as R68; no contradictory or duplicate screening identity remains."
     },
     {
-      "id": "LIT-M3",
+      "id": "LIT-20260713-R1",
       "severity": "major",
       "status": "resolved",
-      "summary": "Systems-integration novelty was removed after R55 and R56 established gateway reserve-dispatch-reconcile and budget envelopes as prior art."
+      "summary": "The refreshed primary sources invalidate algorithmic and integration priority: QUARTZ covers conditional cost quantiles and admission; MESS+/SLARouter cover online cost/SLA routing; MTRouter/SeqRoute cover global or session budgets; R2-Router covers joint model/output budget; Solo.io and Keel cover reserve-before-dispatch and outstanding monetary envelopes."
     },
     {
-      "id": "LIT-M4",
+      "id": "LIT-20260713-R2",
       "severity": "major",
       "status": "resolved",
-      "summary": "R55 concurrency wording now distinguishes source-confirmed expiry behavior from a possible concurrent-settlement race that remains an inference pending a faithful test of the pinned code."
+      "summary": "The approved boundary is an absence-of-found-evidence statement for a comparative monetary-liability/fault-semantics study, not proof of priority, algorithmic novelty, or systems-integration novelty."
+    },
+    {
+      "id": "LIT-20260713-R3",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "S29 and S30 are two expanded/citation-chasing searches after material pass S28; both record no material new work through 2026-07-13 and the repaired screening identities are reproducible."
     }
   ],
-  "closest_prior_work": [
-    "R55 Solo.io quota-management: closest implemented gateway system",
-    "R56 Keel Budget Envelopes: closest documented liability abstraction",
-    "R01 Token Budgets: closest adaptive reservation/concurrency research preprint",
-    "R52/R06/R07: calibrated routing and selection risk",
-    "R02/R04/R05/R08/R21/R53: constrained, online, and dynamic routing",
-    "R03 R2-Router: joint model and requested output-length budget",
-    "R54 Selective Deferred Routing: local/remote cost-quality deferral",
-    "R57 AgentBudget: in-process two-phase agent-call enforcement",
-    "R30/R10: multi-tenant service fairness",
-    "R45/R46/R49: transaction and recovery machinery"
+  "six_novelty_gate_answers": {
+    "1_exact_new_element": "No individual algorithmic or integration element is established as new. The only defensible candidate contribution is the evaluated formulation that distinguishes request under-reservation, prespecified fixed-cohort liability exceedance, selected outstanding-set exceedance, and tenant-window overshoot for priced output-token liabilities under delayed, duplicate, missing, late, and reordered settlement. The retained sources were not found to report that exact metric/fault evaluation; this is not proof of priority and permits no first claim.",
+    "2_known_individual_elements": "Cost-quality routing, budget-constrained and online routing, sparse/selected-only feedback, virtual-queue SLA control, joint model/output-budget selection, global/session budget state, length and cost prediction, conditional quantiles, conformal risk control, drift adaptation, multi-tenant fairness, escrow and transactional recovery, hard governance filtering, reserve-before-dispatch, outstanding budget envelopes, provider-usage reconciliation, hierarchical isolation, PostgreSQL accounting, price versioning, periods, and approval workflows are all known individually.",
+    "3_closest_prior_work": "R55 Solo.io is the closest public reserve-settle gateway; R62 QUARTZ is the closest peer-reviewed conditional-quantile admission system; R56 Keel is the closest documented monetary outstanding-liability envelope; R01 Token Budgets is the closest adaptive reservation/concurrency research preprint. R63/R71 are the closest online cost/SLA routers, R61/R68 the closest global/session-budget routers, R52/R06/R07 the closest calibrated routing-risk work, R03/R66 the closest length/cost routing work, and R45/R46/R49 the relevant transaction machinery.",
+    "4_more_than_systems_integration": "No. The current boundary is not more than systems integration as an algorithmic contribution. It becomes scientifically defensible only as a preregistered comparative measurement and formal problem study with explicit event-specific probability statements, leakage-controlled selected feedback, strong practical and academic comparators, and reproducible negative/null results. The gateway/operator is the experimental vehicle, not a novelty claim.",
+    "5_falsifying_experiment": "The claimed advantage is falsified if, at matched empirical overshoot risk and on identical streams, a Solo.io/Keel-style atomic fixed-estimate envelope, a Token-Budgets-style locked adaptive estimator, QUARTZ-style monetary quantile admission, or an adaptive-quantile plus cheapest-governance-compliant router matches GOV-AR on utilization, served quality, refusal, isolation, and faulty-event outcomes. It is also falsified if removing risk allocation does not move the frontier or if missing/late/duplicate events do not distinguish conservative liability semantics.",
+    "6_claim_to_remove_or_narrow": "Remove every first-of-kind claim for cost-aware, budgeted, online, adaptive, conformal, quantile-aware, SLA, sparse-feedback, global-budget, joint model/token-budget, multi-tenant, reserve-settle, budget-envelope, idempotent-ledger, or gateway-governance functionality. Remove algorithmic risk-allocation novelty. Do not call nonzero-risk mode deterministic hard-budget enforcement. State only an assumption-scoped fixed-cohort probability bound and empirically measured risk-utilization/fault behavior if frozen evidence supports them."
+  },
+  "closest_prior_work_ordering": [
+    "R55 Solo.io quota-management: closest implemented reserve-settle gateway and hierarchy",
+    "R62 QUARTZ: closest peer-reviewed conditional-quantile admission and queueing system",
+    "R56 Keel Budget Envelopes: closest documented outstanding monetary liability abstraction",
+    "R63/R71 MESS+ and SLARouter: closest online cost-optimal and SLA-constrained routers",
+    "R01 Token Budgets: closest adaptive reservation and concurrency research preprint",
+    "R61/R68 MTRouter and SeqRoute: closest global or session-budget state",
+    "R52/R06/R07 RACER, conformal routing, and LEC: closest calibrated routing-risk methods",
+    "R03/R66 R2-Router and FLARE: closest joint output-budget and length/cost routing methods",
+    "R45/R46/R49: closest generic transaction, recovery, and availability machinery"
   ],
   "approved_contributions": [
-    "Problem and safety formulation separating settled spend, unresolved liability, request under-reservation, fixed-cohort exceedance, selected-outstanding-set exceedance, and budget-window overshoot with assumption-scoped bounds and invariants.",
-    "Preregistered comparative measurement of risk-utilization, isolation, drift, faulty-event behavior, and local overhead against practical envelopes, adaptive estimators, quantiles, strict reservation, and strong routers."
+    "An assumption-scoped problem and safety formulation separating settled spend, unresolved estimated-cost liability, request under-reservation, fixed-cohort exceedance, selected-outstanding-set exceedance, and tenant-window overshoot.",
+    "A preregistered comparative measurement of risk-utilization, tenant isolation, drift, faulty-event behavior, and local overhead against practical envelopes, quantile admission, adaptive estimators, strict reservation, and strong routing baselines."
   ],
   "forbidden_claims": [
-    "first cost-aware, budget-constrained, adaptive, conformal, or risk-controlled LLM router",
-    "first joint model and token-budget router",
+    "first cost-aware, budget-constrained, online, adaptive, conformal, quantile-aware, risk-controlled, or SLA-constrained LLM router",
+    "first sparse-feedback, selected-feedback, multi-turn, global-budget, or joint model/output-budget router",
     "novel reserve-before-dispatch, budget envelope, PostgreSQL pending-spend ledger, hierarchical budget, approval workflow, provider-usage settlement, or gateway integration",
     "novel output-length prediction, chance-risk allocation, transaction, escrow, idempotence, drift adaptation, or multi-tenant fairness in isolation",
-    "deterministic hard-window safety in nonzero-risk mode"
+    "deterministic hard-window safety in nonzero-risk mode",
+    "priority wording inferred from absence in the retained search corpus"
   ],
-  "falsifier": "At matched empirical risk, an R55/R56-style atomic fixed envelope, an R01-style locked adaptive estimator, or fixed/adaptive quantile reservation matches the proposed method on utilization, quality, refusal, and fault outcomes.",
-  "gate_change_review": "approved additive tightening; post-material saturation and exact corpus-bound independent review are required without changing Q1_GATE_CONTRACT.md"
+  "saturation_assessment": "S29 and S30 are two post-refresh expanded/citation-chasing passes after material pass S28 and both found no work that changed the narrowed monetary-liability/fault-semantics boundary through 2026-07-13. The corpus is disposition-consistent after canonicalizing R69 and excluding withdrawn duplicate X22.",
+  "falsifier": "At matched empirical risk, an R55/R56-style atomic fixed envelope, an R01-style locked adaptive estimator, R62-style quantile admission, or adaptive quantile reservation matches GOV-AR on utilization, quality, refusal, isolation, and faulty-event outcomes.",
+  "note": "Approval is corpus-hash-bound and approves only the narrowed problem/formalization and comparative-measurement boundary. It does not approve a first claim or an algorithmic or systems-integration novelty claim."
 }
