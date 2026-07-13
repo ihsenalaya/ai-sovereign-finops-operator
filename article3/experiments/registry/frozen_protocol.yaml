@@ -1,0 +1,318 @@
+schema_version: 1
+protocol_id: gov-ar-article3-q1
+protocol_version: 0.3-draft-candidate
+status: draft_candidate
+created_at_utc: 2026-07-13T22:30:00Z
+freeze_authority: not_frozen
+purpose: >-
+  Pre-outcome candidate for a development-only pilot and subsequent
+  power/precision calculation. This file does not authorize frozen-test access
+  or a final campaign.
+
+hypotheses:
+  primary:
+    - id: H1
+      estimand: tenant_budget_window_overshoot_probability
+      contrast: gov_ar versus settled_only under delayed concurrent settlement
+      falsifier: GOV-AR does not reduce the frozen budget-window risk at a matched utilization operating point.
+    - id: H2
+      estimand: budget_utilization_at_matched_window_risk
+      contrast: gov_ar versus strict_max and faithful fixed-envelope controls
+      falsifier: GOV-AR is not practically superior or noninferior under the pilot-frozen margins.
+    - id: H3
+      estimand: served_deterministic_quality_at_matched_window_risk
+      contrast: gov_ar versus compatible cost-quality routers
+      falsifier: GOV-AR loses quality or fails availability at the matched-risk operating point.
+  secondary:
+    - id: H4
+      estimand: tenant_isolation_and_noisy_neighbor_impact
+    - id: H5
+      estimand: drift_detection_fallback_and_recovery_delay
+    - id: H6
+      estimand: ledger_invariant_failure_rate_under_faults
+    - id: H7
+      estimand: local_kind_decision_overhead_and_saturation
+    - id: H8
+      estimand: live_provider_quantile_coverage_and_reserve_settle_agreement
+
+primary_metrics:
+  tenant_budget_window_overshoot_probability:
+    event: >-
+      settled_spend_micros + outstanding_liability_micros +
+      carried_adjustment_micros exceeds budget_micros at an effective lifecycle
+      transition in the tenant budget window
+    unit: matched seed stream with tenant windows nested within stream
+  tenant_budget_window_overshoot_magnitude_micros:
+    formula: max(0, settled + outstanding + carried - budget)
+  budget_utilization:
+    formula: settled_spend_micros / budget_micros at window finality
+  served_deterministic_quality:
+    formula: sum of selected-feedback objective scores divided by attempted requests
+
+secondary_metrics:
+  calibration_events:
+    - request_under_reservation
+    - fixed_cohort_outstanding_liability_exceedance
+    - instantaneous_active_liability_exceedance
+  decisions: [ADMIT, QUEUE, REJECT, ABSTAIN, REQUIRE_APPROVAL]
+  operational:
+    - false_refusal
+    - over_reservation_micros
+    - queue_time
+    - decision_latency_p50
+    - decision_latency_p95
+    - decision_latency_p99
+    - throughput
+  tenant:
+    - cross_tenant_budget_leakage
+    - starvation
+    - noisy_neighbor_delta
+    - priority_service_delta
+  drift:
+    - coverage_gap
+    - detection_delay
+    - fallback_delay
+    - recalibration_delay
+    - route_churn
+  fault:
+    - double_settlement
+    - double_release
+    - negative_liability
+    - terminal_convergence
+
+estimand_separation:
+  request_under_reservation_is_not_budget_overshoot: true
+  cohort_liability_exceedance_is_not_budget_overshoot: true
+  active_liability_exceedance_is_not_budget_overshoot: true
+  nonzero_risk_mode_is_not_deterministically_budget_safe: true
+
+baselines:
+  budget_admission:
+    - no_budget
+    - settled_only
+    - mean
+    - mean_margin
+    - fixed_quantile
+    - strict_max
+    - fixed_estimate
+    - adaptive_quantile
+    - expected_cost_router
+    - oracle_future_cost
+    - gov_ar
+  practical_envelopes:
+    - faithful_r55_gateway_fixed_multiplier
+    - faithful_r56_budget_envelope
+    - r01_locked_adaptive_estimator
+  routing:
+    - always_premium
+    - always_cheapest
+    - cheapest_governance_compliant
+    - current_operator_weighted_score
+    - routellm_or_hybridllm_compatible
+    - pilot_or_closest_budget_router
+    - contextual_knn_router
+    - oracle_quality_cost
+    - gov_ar
+  compatibility_rule: >-
+    Published methods are run only where their required features and candidate
+    topology exist; every exclusion requires primary-source artifact evidence
+    and the strongest compatible alternative.
+
+ablations:
+  - no_inflight_liability
+  - no_risk_allocation
+  - mean_only
+  - no_drift_fallback
+  - no_tenant_isolation
+  - soft_governance
+  - no_atomic_transaction
+  - no_switch_penalty
+  - no_settlement_idempotence
+
+pilot:
+  authorized_splits: [train, calibration, development]
+  frozen_test_authorized: false
+  pilot_seeds: [91001, 91002, 91003, 91004, 91005]
+  purpose:
+    - runtime_and_storage_estimation
+    - independent_unit_variance_estimation
+    - tail_event_frequency_estimation
+    - development_only_margin_justification
+  forbidden_uses:
+    - frozen_test_access
+    - final_effect_claim
+    - tuning_after_frozen_outcome_access
+
+seeds:
+  final_seed_count: not_frozen
+  derivation: >-
+    low 63 bits of SHA256(protocol_sha256 || experiment || domain || index)
+  domains:
+    - request_sampling
+    - arrival
+    - settlement_delay
+    - fault
+    - method_internal
+  matched_stream_requirement: true
+
+experiments:
+  E0:
+    gate_only: true
+    path: gateway -> admission -> atomic reserve -> route -> backend -> usage -> settlement -> aggregate state
+  E1:
+    concurrency: [1, 50, 500]
+    settlement_delay_seconds: [0, 10, 60]
+    budget_levels: [restrictive, medium, unconstrained]
+    risk_targets: [0.0, 0.01, 0.05]
+    minimum_seeds: 10
+    minimum_events_per_principal_method_cell_seed: 10000
+  E2:
+    minimum_tenants: 6
+    scenarios:
+      - balanced
+      - noisy_tenant
+      - asymmetric_budgets
+      - long_output
+      - strict_governance
+      - window_renewal
+      - policy_change
+      - high_priority_capacity
+    minimum_seeds: 10
+    minimum_unique_shared_events_per_scenario_seed: 50000
+  E3:
+    injections:
+      - output_length_plus_50
+      - output_length_plus_100
+      - output_length_plus_200
+      - task_shift
+      - price_change
+      - model_removal
+      - model_addition
+      - quality_degradation
+      - latency_spike
+      - provider_region_policy_change
+      - concurrency_burst
+      - telemetry_delay
+      - joint_compound
+    minimum_seeds: 10
+    minimum_events_per_cell: 10000
+  E4:
+    scenario_count: 20
+    minimum_post_fix_repetitions_per_scenario: 100
+    independent_reset_required: true
+  E5:
+    governance_object_counts: [10, 1000, 10000]
+    replicas: [1, 3]
+    warmup_seconds: 120
+    steady_seconds: 600
+    independent_cluster_recreations: 3
+  E6:
+    minimum_deployments_when_available: 3
+    minimum_successful_requests_per_deployment: 300
+    minimum_independent_windows_per_deployment: 3
+    minimum_successful_requests_per_window: 100
+    maximum_requests_per_deployment_candidate: 600
+  E7:
+    conditions: [nominal, delayed, high_concurrency, heavy_tail, drift, noisy_neighbor, fault]
+    minimum_trace_events_per_method_cell_seed: 5000
+    minimum_seeds: 10
+    minimum_fault_repetitions_per_configuration: 100
+
+power_precision:
+  power: 0.90
+  familywise_alpha: 0.05
+  final_n_rule: max(10, n_power, n_precision)
+  paired_continuous_formula: ceil(((z_(1-alpha_family/2)+z_0.90)*s_d/delta)^2)
+  precision_formula: ceil((z_0.975*s_d/desired_half_width)^2)
+  binary_rule: seed-block or tenant-window hierarchical resampling; requests are not independent replicates
+  practical_margins: not_frozen_pending_development_pilot
+
+rare_event_stopping:
+  block_events_per_seed: 10000
+  maximum_events_per_seed_candidate: 20000
+  matched_extension: all methods in a condition extend together
+  zero_event_reporting: exact one-sided upper confidence bound
+
+invalid_run_rules:
+  - code_config_data_protocol_or_image_hash_mismatch
+  - shared_stream_hash_mismatch_between_methods
+  - duplicate_or_missing_request_identity
+  - incomplete_lifecycle_without_prespecified_fault
+  - corrupted_or_nonconservative_ledger_totals
+  - incomplete_required_diagnostics
+  - unauthorized_frozen_test_access
+  - implementation_bug_affecting_measured_path
+  - missing_selected_feedback_or_counterfactual_leakage
+
+exclusions:
+  intentionally_injected_missing_or_late_telemetry: outcome_not_exclusion
+  provider_retry: counted_attempt_not_independent_observation
+  bug_fix_after_campaign: invalidate_and_rerun_all_affected_cells
+  routereval_excluded_members:
+    - router_dataset/gsm8k_router_dataset.pkl
+    - router_dataset/arc_challenge_router_dataset.pkl
+
+statistics:
+  matched_streams: true
+  independent_units:
+    trace: seed_stream
+    multi_tenant: seed_scenario_stream
+    fault: independently_reset_trial
+    performance: cluster_recreation
+    live: deployment_window
+  confidence_intervals:
+    - paired_hierarchical_bootstrap
+    - exact_or_wilson_binomial_where_valid
+    - exact_zero_event_upper_bound
+    - clustered_quantile_bootstrap
+  multiplicity:
+    method: Holm
+    families: [primary_safety, primary_utilization_quality, secondary_operational]
+  report_effect_sizes: true
+  retain_null_and_negative_results: true
+  equivalence_requires_frozen_margin_and_interval: true
+
+azure:
+  max_usd_env: ARTICLE3_AZURE_MAX_USD
+  default_max_usd: 100
+  estimate_before_each_campaign: true
+  allowed_prompt_data: public_or_synthetic_only
+  existing_deployments_first: true
+  provisioned_throughput_forbidden: true
+  stop_rules:
+    - frozen_precision_criterion
+    - model_specific_maximum
+    - total_live_cost_cap
+  cost_term: estimated_token_cost_unless_billing_records_used
+
+software_hashes:
+  status: bind_exact_bytes_at_freeze
+  required:
+    - git_commit
+    - source_tree_sha256
+    - experiment_image_digest
+    - admission_image_digest
+    - chart_digest
+    - config_sha256
+    - pricing_sha256
+    - policy_sha256
+
+frozen_test_data_hashes:
+  status: unbound_before_freeze
+  required_keys:
+    - azure_llm_code_2024
+    - azure_llm_conversation_2023
+    - gsm8k_objective_outcomes
+    - routereval_math_outcomes
+    - routereval_math_outcomes:oracle:frozen_test
+
+freeze_requirements:
+  - development_only_pilot_complete
+  - power_and_precision_review_approved
+  - production_core_harness_and_raw_recomputation_pass
+  - all_baselines_and_ablations_validated
+  - E0_real_kind_path_pass
+  - source_code_image_config_data_pricing_policy_hashes_bound
+  - dataset_and_selected_feedback_audits_approved
+  - additive_q1_gate_review_approved
+  - protocol_freeze_record_created_atomically

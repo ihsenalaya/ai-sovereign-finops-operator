@@ -77,8 +77,11 @@ phase_b() { python3 article3/tools/validate_literature.py --live; }
 phase_c() { bash article3/formal/check.sh; }
 phase_d() { bash article3/tools/run_test_matrix.sh; }
 phase_e() { bash article3/infra/kind/validate_release.sh; }
-phase_f() { python3 article3/datasets/prepare.py --verify; }
-phase_g() { bash article3/baselines/validate.sh; }
+phase_f() {
+  python3 article3/datasets/verify_prepared.py
+  python3 -m unittest discover -s article3/datasets -p 'test_*.py' -v
+}
+phase_g() { python3 article3/tools/validate_baseline_registry.py --require-implementation-audit; }
 phase_h() { python3 article3/experiments/pilot_and_freeze.py; }
 phase_i() { bash article3/experiments/orchestrator/run_frozen.sh --resume; }
 phase_j() { python3 article3/analysis/run_final.py --from-raw; }

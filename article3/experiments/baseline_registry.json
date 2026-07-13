@@ -1,0 +1,645 @@
+{
+  "schema_version": "govar-baseline-registry-v1",
+  "status": "pre_freeze_specification",
+  "protocol": {
+    "path": "article3/experiments/registry/frozen_protocol.yaml",
+    "version": "0.3-draft-candidate",
+    "frozen_test_authorized": false
+  },
+  "method_identity": {
+    "namespace_format": "<axis>/<protocol_id>",
+    "required_raw_fields": [
+      "registry_id",
+      "protocol_method_id",
+      "production_reservation_method",
+      "effective_reservation_method",
+      "reason_code",
+      "method_config_sha256"
+    ],
+    "aliases": [
+      {
+        "protocol_id": "strict_max",
+        "accepted_alias": "strict max-token reservation",
+        "production_id": "strict_provider_cap"
+      },
+      {
+        "protocol_id": "mean_margin",
+        "accepted_alias": "mean plus fixed margin",
+        "production_id": "fixed_margin"
+      },
+      {
+        "protocol_id": "gov_ar",
+        "axis": "budget_admission",
+        "accepted_alias": "GOV-AR fixed-cohort liability",
+        "production_id": "govar_fixed_cohort"
+      },
+      {
+        "protocol_id": "gov_ar",
+        "axis": "routing",
+        "accepted_alias": "GOV-AR joint router",
+        "production_id": "comparator_adapter_plus_govar_fixed_cohort"
+      },
+      {
+        "protocol_id": "fixed_estimate",
+        "accepted_alias": "static fixed estimate",
+        "production_id": "mean_execution_primitive"
+      }
+    ]
+  },
+  "common_rules": {
+    "hard_filter_fields": [
+      "provider_availability",
+      "residency",
+      "workload_sensitivity",
+      "model_readiness",
+      "route_binding",
+      "quality_gate_freshness_and_threshold",
+      "approval_state",
+      "context_limit",
+      "pricing_completeness",
+      "configured_latency_guardrail"
+    ],
+    "online_allowed": [
+      "pre_dispatch_request_features",
+      "hard_feasible_candidate_snapshot",
+      "method_permitted_ledger_fields",
+      "pre_test_frozen_artifacts",
+      "prior_selected_usage_and_quality_feedback"
+    ],
+    "online_forbidden": [
+      "current_or_future_actual_output",
+      "current_or_future_actual_cost",
+      "unselected_model_outcomes",
+      "future_arrivals_or_settlements",
+      "future_policy_or_catalog_state",
+      "routereval_oracle_volume"
+    ],
+    "selected_feedback": {
+      "service": "article3/datasets/selected_feedback.py",
+      "release": "after_immutable_dispatch",
+      "scope": "selected_model_only",
+      "duplicate": "idempotent_replay_not_observation"
+    },
+    "offline_full_feedback_training": "allowed_only_for_published_methods_that_require_it_on_training_or_calibration_in_an_isolated_audited_trainer; never frozen_test; online router receives only the hash-bound artifact",
+    "oracle_boundary": "evaluator_only_after_nonoracle_decisions_are_immutable; never feeds a nonoracle method",
+    "comparison_axes": {
+      "liability_control": "identical shared route decision for pure liability contrasts",
+      "routing": "identical admission/reservation controller for pure routing contrasts",
+      "joint": "crossed budget_admission/gov_ar plus routing/gov_ar and labeled joint"
+    }
+  },
+  "compatibility_and_exclusion_rules": {
+    "decision_time": "before frozen-test access and before any final outcome is examined",
+    "compatibility_dimensions": [
+      "candidate_pool_cardinality_and_identity",
+      "required_request_features_and_embeddings",
+      "feedback_regime_full_training_or_selected_online",
+      "cost_and_budget_semantics",
+      "action_space_single_route_or_cascade",
+      "session_or_horizon_structure",
+      "license_and_artifact_availability",
+      "runtime_and_dependency_reproducibility"
+    ],
+    "required_exclusion_evidence": [
+      "primary_source_exact_requirement_that_is_unsatisfied",
+      "hash_bound_benchmark_or_topology_fact_showing_the_mismatch",
+      "official_artifact_retrieval_build_and_fixture_attempt_log",
+      "immutable_source_revision_or_document_version",
+      "why_an_adapter_would_change_the_published_method_rather_than_only_wrap_hard_governance_and_ledger_enforcement",
+      "prospectively_selected_strongest_compatible_alternative",
+      "independent_review_approval"
+    ],
+    "forbidden": [
+      "silent_omission",
+      "post_outcome_method_or_fallback_selection",
+      "calling_a_faithful_reproduction_official",
+      "using_incompatibility_to_replace_a_strong_method_with_an_unvalidated_home_grown_score",
+      "allowing_a_published_router_to_bypass_the_common_hard_filter"
+    ],
+    "artifact_provenance_fields": [
+      "primary_source_url",
+      "source_repository_or_archive",
+      "commit_or_version",
+      "source_sha256",
+      "license",
+      "dependency_lock_sha256",
+      "patch_set_sha256",
+      "trained_artifact_sha256",
+      "conformance_report_sha256"
+    ]
+  },
+  "budget_admission_baselines": [
+    {
+      "registry_id": "budget_admission/no_budget",
+      "protocol_id": "no_budget",
+      "role": "uncontrolled_reference",
+      "information_set": {
+        "budget_fields": [],
+        "reservation_estimate": "none",
+        "routing": "shared_frozen_route",
+        "feedback_consumed_for_future_admission": false
+      },
+      "reservation_rule": "no monetary hold; actual usage recorded observationally",
+      "admission_rule": "ADMIT iff common hard filter and approval state allow it",
+      "routing_rule": "replay the shared frozen route decision used by every pure liability comparator",
+      "production_mapping": {
+        "engine_reuse": false,
+        "adapter": "required_observational_lifecycle_adapter",
+        "production_method": null
+      },
+      "parameters": [],
+      "development_selection": "none",
+      "selected_feedback": "one dispatch-authorized selected receipt is recorded after dispatch but never changes future admission",
+      "expected_invariants": [
+        "budget_and_liability_state_cannot_change_decision",
+        "governance_and_approval_state_can_change_decision",
+        "event_identity_is_idempotent"
+      ],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["common_hard_filter", "budget_metamorphic_independence", "observational_event_idempotence", "matched_route_hash", "raw_recomputation"],
+      "blockers": ["comparator adapter and lifecycle schema not yet independently validated"],
+      "literature_refs": []
+    },
+    {
+      "registry_id": "budget_admission/settled_only",
+      "protocol_id": "settled_only",
+      "role": "posthoc_budget_control",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "carried_adjustment"],
+        "forbidden_budget_fields": ["outstanding_liability"],
+        "reservation_estimate": "zero_until_settlement",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "no pre-dispatch hold; effective settlement atomically adds frozen-price actual estimated token cost",
+      "admission_rule": "hard-feasible route and positive settled-only availability under the frozen boundary convention",
+      "routing_rule": "replay the shared frozen route decision used by every pure liability comparator",
+      "production_mapping": {
+        "engine_reuse": false,
+        "adapter": "required_settled_only_ledger_adapter",
+        "production_method": null
+      },
+      "parameters": ["boundary_convention"],
+      "development_selection": "boundary convention must be declared before pilot outcomes and is not tuned",
+      "selected_feedback": "one selected receipt is recorded after dispatch; quality is not consumed for admission and actual usage affects only settled spend after settlement",
+      "expected_invariants": [
+        "pending_requests_do_not_change_admission",
+        "one_effective_settlement_per_request",
+        "no_cross_tenant_effect",
+        "no_negative_accounting_state"
+      ],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["common_hard_filter", "outstanding_liability_metamorphic_independence", "settled_spend_sensitivity", "duplicate_settlement", "late_correction", "tenant_isolation", "raw_recomputation"],
+      "blockers": ["settled-only ledger adapter and exact rollover semantics not yet independently validated"],
+      "literature_refs": []
+    },
+    {
+      "registry_id": "budget_admission/mean",
+      "protocol_id": "mean",
+      "role": "point_estimate_reservation",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "eligible calibration arithmetic mean by frozen regime",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "integer component reservation at clipped calibrated mean output tokens",
+      "admission_rule": "atomic hold must fit budget minus settled minus outstanding minus carried",
+      "routing_rule": "replay the shared frozen route decision; a candidate/regime policy may not change that route",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "policy_per_regime_if_more_than_one_regime",
+        "production_method": "mean"
+      },
+      "parameters": ["stratum_definition", "minimum_support"],
+      "development_selection": "finite development grid; freeze stratum and support before test",
+      "selected_feedback": "selected usage and quality are recorded; neither changes the frozen mean during evaluation",
+      "expected_invariants": ["atomic_hold", "integer_component_sum", "allocated_risk_zero", "estimate_unchanged_by_test_outcomes"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["production_engine_mapping", "calibration_provenance", "component_arithmetic", "cap_clipping", "concurrent_atomicity", "matched_route_hash", "raw_recomputation"],
+      "blockers": ["regime-safe policy adapter and frozen mean artifact required"],
+      "literature_refs": ["R01"]
+    },
+    {
+      "registry_id": "budget_admission/mean_margin",
+      "protocol_id": "mean_margin",
+      "role": "point_estimate_plus_margin_reservation",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "frozen mean plus nonnegative fixed margin",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "clip mean plus margin to verified cap then price every component",
+      "admission_rule": "atomic full-liability availability check",
+      "routing_rule": "replay the shared frozen route decision",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "policy_per_regime_if_more_than_one_regime",
+        "production_method": "fixed_margin"
+      },
+      "parameters": ["mean_artifact", "margin_rule", "margin_output_tokens"],
+      "development_selection": "finite prespecified margin grid and matched risk/utilization criterion; one frozen rule",
+      "selected_feedback": "selected usage and quality are recorded; neither changes the frozen margin rule",
+      "expected_invariants": ["margin_nonnegative", "atomic_hold", "allocated_risk_zero", "no_online_margin_update"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["alias_mean_margin_to_fixed_margin", "grid_provenance", "component_arithmetic", "cap_clipping", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": ["margin grid and selection criterion are not frozen"],
+      "literature_refs": ["R01", "R55", "R56"]
+    },
+    {
+      "registry_id": "budget_admission/fixed_quantile",
+      "protocol_id": "fixed_quantile",
+      "role": "offline_tail_reservation",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "one frozen calibration order statistic per declared regime",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "fixed one-sided quantile clipped to verified cap and converted with frozen component pricing",
+      "admission_rule": "atomic full-liability availability check",
+      "routing_rule": "replay the shared frozen route decision",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "policy_per_regime_if_more_than_one_regime",
+        "production_method": "fixed_quantile"
+      },
+      "parameters": ["coverage_target_ppb", "rank_convention", "minimum_support", "stratum_definition"],
+      "development_selection": "finite target/stratum grid; select on development and freeze; no online update",
+      "selected_feedback": "selected receipts are recorded for evaluation but cannot update the fixed quantile",
+      "expected_invariants": ["no_online_update", "allocated_risk_zero", "calibration_only_estimate", "atomic_hold"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["order_statistic_fixture", "finite_support_boundary", "artifact_hash_binding", "cap_clipping", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": ["target/rank/strata and immutable artifact not frozen"],
+      "literature_refs": ["R03", "R62", "R66", "R69"]
+    },
+    {
+      "registry_id": "budget_admission/strict_max",
+      "protocol_id": "strict_max",
+      "role": "strict_component_bound_reservation",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "all verified request/provider component maxima",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "exact input or context bound plus provider-enforced output maximum and every other billable bound",
+      "admission_rule": "atomic full-liability availability check; fail closed on incomplete cap or pricing evidence",
+      "routing_rule": "replay the shared frozen route decision if its route has complete verified bounds; otherwise use the frozen non-admit fallback",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "none",
+        "production_method": "strict_provider_cap"
+      },
+      "parameters": [],
+      "development_selection": "none",
+      "selected_feedback": "selected usage/quality are recorded after dispatch and never change strict bounds",
+      "expected_invariants": ["allocated_risk_zero", "complete_component_bounds", "strict_cap_verified", "assumption_conditional_deterministic_budget_safety"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["alias_strict_max_to_strict_provider_cap", "unverified_cap_fail_closed", "unknown_input_context_bound", "component_bound_coverage", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": [],
+      "literature_refs": ["R01", "R55", "R56"]
+    },
+    {
+      "registry_id": "budget_admission/fixed_estimate",
+      "protocol_id": "fixed_estimate",
+      "role": "static_gateway_estimate_reservation",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "one global model/tenant/workload-independent E_fixed",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "global E_fixed clipped to candidate cap plus exact input and other declared component bounds",
+      "admission_rule": "atomic full-liability availability check",
+      "routing_rule": "replay the shared frozen route decision",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "identity_asserting_static_policy_adapter",
+        "production_method": "mean",
+        "semantic_protocol_id": "fixed_estimate"
+      },
+      "parameters": ["E_fixed_output_tokens"],
+      "development_selection": "prospective gateway default or one finite development grid; cannot vary by test cell or candidate",
+      "selected_feedback": "selected receipts are recorded but never update E_fixed",
+      "expected_invariants": ["E_fixed_identical_across_regimes", "atomic_hold", "allocated_risk_zero", "not_labeled_empirical_mean"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["semantic_id_distinct_from_mean", "global_constant_metamorphic", "cap_clipping", "component_arithmetic", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": ["E_fixed source/grid and adapter assertion not frozen"],
+      "literature_refs": ["R55", "R56"]
+    },
+    {
+      "registry_id": "budget_admission/adaptive_quantile",
+      "protocol_id": "adaptive_quantile",
+      "role": "selected_usage_adaptive_tail_reservation",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "digest-bound calibration plus prescheduled updates from prior selected finalized usage",
+        "routing": "shared_frozen_route"
+      },
+      "reservation_rule": "controller-published adaptive output upper estimate for exact feature/price/cap regime",
+      "admission_rule": "atomic full-liability availability check; invalid calibration enters visible frozen fallback",
+      "routing_rule": "replay the shared frozen route decision and require its calibration artifact to match that exact candidate regime",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "candidate_regime_guard",
+        "production_method": "adaptive_quantile"
+      },
+      "parameters": ["coverage_target_ppb", "update_epoch", "history_window", "minimum_support", "drift_detector", "drift_threshold_ppb", "fallback"],
+      "development_selection": "finite development grid; freeze update/detector/fallback before test",
+      "selected_feedback": "only prior finalized selected usage may enter prescheduled calibration updates; selected quality does not reveal other candidates",
+      "expected_invariants": ["allocated_risk_zero", "only_prior_selected_usage", "artifact_regime_match", "visible_conservative_fallback", "no_calibrated_label_during_invalidity"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["postgresql_v8_artifact_binding", "candidate_regime_mismatch", "selected_usage_only", "epoch_causality", "stale_low_support_drift_fallback", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": ["one policy calibration status is candidate-regime-specific; multi-candidate adapter or restriction required", "adaptive update schedule and detector grid are not frozen"],
+      "literature_refs": ["R01", "R03", "R62", "R66", "R69"]
+    },
+    {
+      "registry_id": "budget_admission/expected_cost_router",
+      "protocol_id": "expected_cost_router",
+      "role": "joint_expected_cost_quality_comparator",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "candidate expected output cost",
+        "routing": "maximize frozen expected quality-cost utility subject to expected hold"
+      },
+      "reservation_rule": "atomically hold candidate-specific expected component cost; no upper tail or cohort allocation",
+      "admission_rule": "select best hard-feasible expected-utility candidate whose expected hold fits full availability",
+      "routing_rule": "maximize the frozen expected quality-cost utility over hard-feasible candidates using a canonical model-ID tie-break",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "required_expected_cost_router_selects_singleton",
+        "production_method": "mean"
+      },
+      "parameters": ["cost_predictor", "quality_predictor", "utility_lambda", "regularization", "optional_exploration_schedule"],
+      "development_selection": "training/development only finite grid; canonical model-ID tie-break",
+      "selected_feedback": "only prior selected usage and selected quality may update predictors under the frozen schedule",
+      "expected_invariants": ["no_tail_estimate", "no_cohort_risk_allocation", "candidate_specific_mean_binding", "only_prior_selected_online_feedback", "atomic_hold"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["singleton_candidate_binding", "expected_utility_golden_fixture", "selected_feedback_only", "future_cost_denial", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": ["joint expected-cost adapter and exact utility are not implemented/frozen"],
+      "literature_refs": ["R02", "R04", "R05", "R08", "R09", "R21", "R63", "R71"]
+    },
+    {
+      "registry_id": "budget_admission/oracle_future_cost",
+      "protocol_id": "oracle_future_cost",
+      "role": "unattainable_cost_foresight_reference",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "realized future cost of already frozen paired route",
+        "routing": "immutable paired nonoracle route; no route change"
+      },
+      "reservation_rule": "hold exactly evaluator-bound final actual estimated token cost",
+      "admission_rule": "paired route is hard feasible and exact future hold fits full availability",
+      "routing_rule": "reuse the immutable paired nonoracle route; oracle cost may not select or change a model",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "evaluator_only_per_request_policy_adapter",
+        "production_method": "mean",
+        "semantic_protocol_id": "oracle_future_cost"
+      },
+      "parameters": [],
+      "development_selection": "none",
+      "selected_feedback": "ordinary selected receipt is recorded, but the evaluator-only future cost is not feedback to any online method",
+      "expected_invariants": ["paired_route_hash_equal", "reservation_equals_final_actual", "oracle_runs_after_nonoracle_commit", "oracle_never_updates_nonoracle_state"],
+      "oracle_access": "selected_route_future_cost_only",
+      "acceptance_tests": ["oracle_process_isolation", "paired_route_immutability", "exact_cost_equality", "nonoracle_state_noninterference", "excluded_from_superiority_tests", "raw_recomputation"],
+      "blockers": ["evaluator-only oracle adapter and post-commit scheduler not yet validated"],
+      "literature_refs": ["R12", "R13", "R58"]
+    },
+    {
+      "registry_id": "budget_admission/gov_ar",
+      "protocol_id": "gov_ar",
+      "role": "fixed_cohort_risk_allocated_liability",
+      "information_set": {
+        "budget_fields": ["budget", "settled_spend", "outstanding_liability", "carried_adjustment"],
+        "reservation_estimate": "slot-risk-valid candidate upper bound for frozen cohort opportunity",
+        "routing": "routing/gov_ar for joint system or shared frozen route for liability attribution"
+      },
+      "reservation_rule": "alpha_i=floor(alpha_K*weight_i/1e9); reservation bound must be valid at alpha_i for exact regimes",
+      "admission_rule": "joint hard-feasible candidate/reservation choice whose atomic hold fits full availability; invalid evidence uses visible conservative fallback",
+      "routing_rule": "use routing/gov_ar for the joint cell or the immutable shared route for liability attribution; both require candidate-specific bound and cohort binding",
+      "production_mapping": {
+        "engine_reuse": true,
+        "adapter": "required_candidate_and_slot_quantile_binding",
+        "production_method": "govar_fixed_cohort"
+      },
+      "parameters": ["tenant_risk_ppb", "cohort_weight_rule", "quantile_rule", "utility", "switch_penalty", "drift_detector", "fallback"],
+      "development_selection": "risk is a protocol factor; other finite rules selected on development and frozen; cohort membership/weights immutable before outcomes",
+      "selected_feedback": "only prior selected finalized usage and quality may update their respective artifacts under frozen schedules; no cohort membership or weight update",
+      "expected_invariants": ["signed_preoutcome_cohort", "opportunity_slot_identity", "risk_weights_sum_one", "executed_quantile_bound_to_allocated_risk", "candidate_regime_binding", "atomic_idempotent_ledger", "visible_conservative_fallback"],
+      "oracle_access": "forbidden",
+      "acceptance_tests": ["alias_gov_ar_to_govar_fixed_cohort", "cohort_authority_and_immutability", "slot_opportunity_match", "risk_quantile_binding", "candidate_regime_binding", "joint_utility_fixture", "switch_penalty_fixture", "drift_fallback", "concurrent_atomicity", "raw_recomputation"],
+      "blockers": ["production path records per-slot risk but executes one policy-level quantile and does not verify coverage_target_ppb equals one minus allocated_risk_ppb", "one adaptive status cannot represent heterogeneous candidate price/cap regimes", "production choice is lexicographic and has no specified switch penalty"],
+      "literature_refs": ["R01", "R03", "R06", "R07", "R41", "R52", "R55", "R56", "R62"]
+    }
+  ],
+  "routing_baselines": [
+    {
+      "registry_id": "routing/always_premium",
+      "protocol_id": "always_premium",
+      "rule": "one frozen premium model; no substitution when infeasible",
+      "information_set": "hard filter plus frozen premium identity",
+      "reservation_rule": "use the common crossed liability controller without changing its estimate or state",
+      "admission_rule": "common hard filter and liability controller; return frozen fallback when the designated model is infeasible",
+      "production_mapping": "pass designated singleton candidate to production engine",
+      "parameters": ["premium_model_id", "selection_rule", "tie_break"],
+      "development_selection": "training/calibration metadata and objective quality evidence only",
+      "selected_feedback": "recorded after dispatch; not consumed for routing",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["fixed_model_identity", "no_infeasible_substitution", "common_admission_policy_hash"],
+      "acceptance_tests": ["fixed_identity", "no_infeasible_substitution", "common_hard_filter", "singleton_binding", "raw_recomputation"],
+      "blockers": ["premium identity and selection artifact not frozen"],
+      "literature_refs": ["R12", "R15", "R16"]
+    },
+    {
+      "registry_id": "routing/always_cheapest",
+      "protocol_id": "always_cheapest",
+      "rule": "one frozen globally cheapest reference-mix model; no substitution when infeasible",
+      "information_set": "hard filter plus frozen cheapest identity",
+      "reservation_rule": "use the common crossed liability controller without changing its estimate or state",
+      "admission_rule": "common hard filter and liability controller; return frozen fallback when the designated model is infeasible",
+      "production_mapping": "pass designated singleton candidate to production engine",
+      "parameters": ["cheapest_model_id", "reference_mix", "tie_break"],
+      "development_selection": "training/development reference mix; immutable integer pricing",
+      "selected_feedback": "recorded after dispatch; not consumed for routing",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["fixed_model_identity", "reference_mix_identity", "no_infeasible_substitution", "common_admission_policy_hash"],
+      "acceptance_tests": ["fixed_identity", "reference_mix_cost_recomputation", "no_infeasible_substitution", "common_hard_filter", "raw_recomputation"],
+      "blockers": ["reference mix and cheapest identity not frozen"],
+      "literature_refs": ["R12", "R14", "R15"]
+    },
+    {
+      "registry_id": "routing/cheapest_governance_compliant",
+      "protocol_id": "cheapest_governance_compliant",
+      "rule": "per request choose minimum predicted integer charge among hard-feasible candidates; model-ID tie-break",
+      "information_set": "request, hard-feasible catalog, frozen prices, common reservation inputs",
+      "reservation_rule": "use the common crossed liability controller for the selected candidate",
+      "admission_rule": "select only from common hard-feasible candidates and require the common liability decision to admit",
+      "production_mapping": "adapter asserts order and passes selected singleton; production cost objective only if equivalent",
+      "parameters": ["cost_basis", "tie_break"],
+      "development_selection": "none beyond frozen common cost basis",
+      "selected_feedback": "recorded after dispatch; not consumed for routing",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["per_request_minimum_cost", "hard_feasible_only", "deterministic_tie_break", "common_admission_policy_hash"],
+      "acceptance_tests": ["per_request_minimum_cost", "hard_feasible_fallback", "integer_tie_break", "singleton_binding", "raw_recomputation"],
+      "blockers": ["router adapter equivalence test required"],
+      "literature_refs": ["R12", "R14"]
+    },
+    {
+      "registry_id": "routing/current_operator_weighted_score",
+      "protocol_id": "current_operator_weighted_score",
+      "rule": "existing routingscore.Compute with cost=.40 quality=.30 latency=.20 reliability=.10; neutral missing latency=.5; hard sovereignty",
+      "information_set": "prior selected usage telemetry, catalog quality tier, active hard feasibility",
+      "reservation_rule": "use the common crossed liability controller for the selected candidate",
+      "admission_rule": "highest production weighted score among common hard-feasible candidates, followed by the common liability decision",
+      "production_mapping": "internal/routingscore plus synchronous singleton adapter",
+      "parameters": ["fixed_default_weights", "canonical_model_id_tie_break"],
+      "development_selection": "none; production defaults are fixed",
+      "selected_feedback": "prior selected usage only; quality component remains catalog tier",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["production_default_weights", "neutral_missing_latency", "hard_sovereignty", "prior_telemetry_only", "common_admission_policy_hash"],
+      "acceptance_tests": ["production_code_direct_call", "default_weight_fixture", "missing_latency_neutrality", "hard_sovereignty", "telemetry_causality", "singleton_binding", "raw_recomputation"],
+      "blockers": ["synchronous recommendation-to-admission adapter required"],
+      "literature_refs": []
+    },
+    {
+      "registry_id": "routing/routellm_or_hybridllm_compatible",
+      "protocol_id": "routellm_or_hybridllm_compatible",
+      "rule": "official RouteLLM on compatible frozen two-model topology; otherwise faithful Hybrid LLM weak/strong difficulty router fixed before test",
+      "information_set": "request features and pre-test trained artifact; selected feedback only if official method consumes it",
+      "reservation_rule": "use the common crossed liability controller for the published router's selected singleton",
+      "admission_rule": "wrap the published route in the common hard filter and common liability decision without modifying its learned score",
+      "production_mapping": "external published router adapter selects singleton then common hard filter and ledger",
+      "parameters": ["method_choice", "model_pair", "training_artifact", "threshold_or_quality_knob", "tie_break"],
+      "development_selection": "official training on authorized training data; threshold on development; method choice frozen before test",
+      "selected_feedback": "method-specific; never unselected frozen-test outcomes",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["prospectively_fixed_method_choice", "published_score_conformance", "two_model_pair_binding", "common_hard_filter", "common_admission_policy_hash"],
+      "artifact_requirement": "RouteLLM official repository/archive revision, hash, dependency lock, trained artifact and pair mapping; or primary-equation Hybrid LLM reproduction with conformance fixtures",
+      "acceptance_tests": ["artifact_pin", "published_method_conformance", "two_model_topology", "threshold_provenance", "common_hard_filter", "oracle_denial", "raw_recomputation"],
+      "blockers": ["exact official artifact revision/dependency lock and benchmark compatibility not yet recorded"],
+      "literature_refs": ["R15", "R16"]
+    },
+    {
+      "registry_id": "routing/pilot_or_closest_budget_router",
+      "protocol_id": "pilot_or_closest_budget_router",
+      "rule": "PILOT preferred; otherwise prospectively documented MESS+-style then SLARouter-style closest compatible budget/SLA router",
+      "information_set": "training prior, current expected-cost horizon budget, and prior selected feedback only",
+      "reservation_rule": "wrap the selected singleton in the common production reserve-settle controller; published expected cost is not authoritative liability",
+      "admission_rule": "published router proposes a hard-feasible action and the common liability controller makes the final hard admission decision",
+      "production_mapping": "published comparator adapter selects singleton; production reserve-settle ledger remains hard admission authority",
+      "parameters": ["artifact_or_equation_version", "embedding", "bandit_or_virtual_queue_hyperparameters", "expected_cost_basis", "tie_break"],
+      "development_selection": "official training/development protocol only; fallback choice fixed before test with incompatibility evidence",
+      "selected_feedback": "selected-model quality and usage only after dispatch",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["published_choice_priority", "selected_feedback_only", "no_future_budget_or_cost", "common_hard_filter", "common_admission_policy_hash"],
+      "artifact_requirement": "PILOT official artifact if compatible; MESS+ and SLARouter primary equations/fixtures because no official repository was resolved in the current corpus",
+      "acceptance_tests": ["selection_priority_and_exclusion_evidence", "artifact_or_equation_pin", "selected_feedback_only", "budget_information_boundary", "published_fixture_conformance", "common_hard_filter", "raw_recomputation"],
+      "blockers": ["PILOT artifact revision and compatibility unresolved", "no official MESS+ or SLARouter repository resolved; faithful reproduction requires independent validation"],
+      "literature_refs": ["R04", "R63", "R71"]
+    },
+    {
+      "registry_id": "routing/contextual_knn_router",
+      "protocol_id": "contextual_knn_router",
+      "rule": "k-nearest authorized training-history embeddings; per-model neighbor score; frozen quality-cost choice",
+      "information_set": "request embedding, immutable training index, frozen costs, prior selected feedback if online update is enabled prospectively",
+      "reservation_rule": "use the common crossed liability controller for the selected singleton",
+      "admission_rule": "select the best KNN-scored hard-feasible candidate then require the common liability decision",
+      "production_mapping": "faithful comparator adapter selects singleton then production ledger",
+      "parameters": ["embedding_hash", "distance", "normalization", "k", "missing_model_rule", "utility_lambda", "tie_break"],
+      "development_selection": "finite k/lambda grid on development",
+      "selected_feedback": "online updates, if enabled, append selected outcome only; no unselected test outcome",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["training_only_index", "deterministic_neighbors_and_ties", "selected_feedback_only", "common_hard_filter", "common_admission_policy_hash"],
+      "artifact_requirement": "primary-equation faithful simple KNN reproduction; do not label official ContextualRouter because no official artifact was identified",
+      "acceptance_tests": ["nearest_neighbor_golden_fixture", "index_training_only", "missing_model_fixture", "deterministic_tie_break", "selected_feedback_only", "raw_recomputation"],
+      "blockers": ["embedding/index schema and finite development grid not frozen", "independent equation-conformance review required"],
+      "literature_refs": ["R60"]
+    },
+    {
+      "registry_id": "routing/oracle_quality_cost",
+      "protocol_id": "oracle_quality_cost",
+      "rule": "evaluator maximizes frozen per-request quality minus lambda times realized normalized cost among hard-feasible candidates; tie lower cost then model ID",
+      "information_set": "full current candidate outcome/cost vector in evaluator only",
+      "reservation_rule": "use the same crossed admission/reservation controller as nonoracle routing comparators after the oracle selects a route",
+      "admission_rule": "the common hard filter is applied before evaluator utility and the common liability controller decides admission afterward",
+      "production_mapping": "evaluator-only singleton route then common admission controller",
+      "parameters": ["utility_lambda", "cost_normalization", "tie_break"],
+      "development_selection": "lambda and normalization frozen from development; no test tuning",
+      "selected_feedback": "not an online learning input",
+      "oracle_access": "full current hard-feasible vector after nonoracle commitments",
+      "expected_invariants": ["post_nonoracle_execution", "hard_feasible_only", "utility_exactly_recomputed", "no_nonoracle_state_effect", "common_admission_policy_hash"],
+      "acceptance_tests": ["oracle_process_isolation", "nonoracle_commit_precedes_oracle", "utility_recomputation", "hard_filter_equivalence", "common_admission_hash", "excluded_from_superiority_tests", "raw_recomputation"],
+      "blockers": ["evaluator-only oracle adapter and post-commit scheduler not yet validated"],
+      "literature_refs": ["R12", "R13", "R58"]
+    },
+    {
+      "registry_id": "routing/gov_ar",
+      "protocol_id": "gov_ar",
+      "rule": "maximize frozen quality/cost/switch utility over hard-feasible candidates whose slot-valid upper reservation fits full production availability",
+      "information_set": "request, exact candidate regimes, current full liability, frozen cohort/quantile/quality artifacts, prior selected feedback",
+      "reservation_rule": "candidate-specific slot-risk-valid upper hold through budget_admission/gov_ar",
+      "admission_rule": "atomically admit the maximum-utility hard-feasible candidate only when its full-liability hold fits; otherwise use frozen queue/reject/abstain/approval semantics",
+      "production_mapping": "joint comparator adapter plus atomic govar_fixed_cohort production engine",
+      "parameters": ["quality_estimator", "cost_weight", "switch_penalty", "tie_break", "risk_and_quantile_binding", "fallback"],
+      "development_selection": "finite development grid; all artifacts and utility frozen before test",
+      "selected_feedback": "selected model only after immutable dispatch",
+      "oracle_access": "forbidden",
+      "expected_invariants": ["candidate_specific_risk_quantile_binding", "deterministic_joint_utility", "switch_penalty_binding", "selected_feedback_only", "atomic_govar_fixed_cohort_admission"],
+      "acceptance_tests": ["candidate_specific_risk_quantile_binding", "joint_utility_golden_fixture", "switch_penalty_golden_fixture", "selected_feedback_only", "atomic_singleton_binding", "drift_fallback", "raw_recomputation"],
+      "blockers": ["current engine uses lexicographic objective and has no switch penalty", "one adaptive status cannot bind heterogeneous candidate price/cap regimes", "per-slot allocated risk is not verified against executed quantile target"],
+      "literature_refs": ["R03", "R04", "R06", "R08", "R52", "R53", "R55", "R62", "R63", "R71", "R72"]
+    }
+  ],
+  "companion_practical_comparators": [
+    {
+      "registry_id": "practical_envelope/faithful_r55_gateway_fixed_multiplier",
+      "protocol_id": "faithful_r55_gateway_fixed_multiplier",
+      "counted_among_eleven": false,
+      "source": "day0ops/quota-management",
+      "revision": "c72d26a7f74f761a9f871b91b8c320db0825db25",
+      "reproduction": "execute pinned artifact or event-for-event validated port; preserve native expiry/late semantics and do not silently fix",
+      "blockers": ["source archive/dependency/image checksums and conformance report required"]
+    },
+    {
+      "registry_id": "practical_envelope/faithful_r56_budget_envelope",
+      "protocol_id": "faithful_r56_budget_envelope",
+      "counted_among_eleven": false,
+      "source": "Keel Budget Envelopes documentation updated 2026-06-07",
+      "revision": "documentation_only",
+      "reproduction": "integer-microdollar documentation-conformance implementation with immutable examples and boundary fixtures; never label official code",
+      "blockers": ["conformance fixtures and independent review required"]
+    },
+    {
+      "registry_id": "practical_envelope/r01_locked_adaptive_estimator",
+      "protocol_id": "r01_locked_adaptive_estimator",
+      "counted_among_eleven": false,
+      "source": "R01 Token Budgets artifact/Rust crate",
+      "revision": null,
+      "reproduction": "pin linked source/crate revision and checksum, then reproduce adaptive estimator and reservation receipt behavior",
+      "blockers": ["immutable artifact revision/checksum unresolved; comparator remains blocked"]
+    }
+  ],
+  "global_acceptance_matrix": [
+    "registry_identity_and_alias_rejection",
+    "common_hard_filter_equivalence",
+    "information_set_adversarial_denial",
+    "selected_feedback_dispatch_authorization_and_replay",
+    "matched_stream_and_axis_hashes",
+    "deterministic_trace_replay",
+    "parameter_and_dataset_access_provenance",
+    "method_specific_budget_metamorphic_tests",
+    "atomic_lifecycle_and_tenant_isolation",
+    "integer_component_reservation_recomputation",
+    "adaptive_validity_and_visible_fallback",
+    "cohort_risk_quantile_binding",
+    "published_artifact_or_equation_conformance",
+    "oracle_process_and_state_separation",
+    "raw_lifecycle_recomputation_by_q1_gate",
+    "independent_baseline_review"
+  ],
+  "freeze_blockers": [
+    "per-slot allocated risk is not bound to the executed quantile target in the current production path",
+    "candidate-specific adaptive calibration cannot be represented by one routing-policy status for heterogeneous price/cap regimes",
+    "joint GOV-AR utility and switch penalty are absent from the current production choice",
+    "comparator adapters and raw lifecycle information-set assertions are not all implemented and independently tested",
+    "published artifact revisions/checksums and faithful-reproduction conformance reports are incomplete",
+    "development-selected grids, artifacts, and all method configuration hashes are not frozen"
+  ]
+}
