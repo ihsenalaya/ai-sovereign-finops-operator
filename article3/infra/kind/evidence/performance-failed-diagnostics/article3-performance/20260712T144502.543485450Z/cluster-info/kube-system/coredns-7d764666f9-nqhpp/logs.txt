@@ -1,0 +1,2 @@
+==== START logs for container coredns of pod kube-system/coredns-7d764666f9-nqhpp ====
+==== END logs for container coredns of pod kube-system/coredns-7d764666f9-nqhpp ====

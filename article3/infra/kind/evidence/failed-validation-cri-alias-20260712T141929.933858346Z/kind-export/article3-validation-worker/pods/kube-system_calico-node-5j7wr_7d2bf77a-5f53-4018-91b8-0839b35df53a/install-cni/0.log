@@ -1,0 +1,17 @@
+2026-07-12T14:18:40.366927886Z stderr F 2026-07-12 14:18:40.364 [INFO][1] cni-installer/install.go 134: Running as a Kubernetes pod
+2026-07-12T14:18:41.232309673Z stderr F 2026-07-12 14:18:41.231 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/calico
+2026-07-12T14:18:42.130002922Z stderr F 2026-07-12 14:18:42.129 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/calico-ipam
+2026-07-12T14:18:42.171023063Z stderr F 2026-07-12 14:18:42.170 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/flannel
+2026-07-12T14:18:42.237324217Z stderr F 2026-07-12 14:18:42.235 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/host-local
+2026-07-12T14:18:42.289828691Z stderr F 2026-07-12 14:18:42.289 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/loopback
+2026-07-12T14:18:42.362169073Z stderr F 2026-07-12 14:18:42.361 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/portmap
+2026-07-12T14:18:42.412626664Z stderr F 2026-07-12 14:18:42.412 [INFO][1] cni-installer/install.go 220: Installed /host/opt/cni/bin/tuning
+2026-07-12T14:18:42.413977213Z stderr F 2026-07-12 14:18:42.413 [INFO][1] cni-installer/install.go 224: Wrote Calico CNI binaries to /host/opt/cni/bin
+2026-07-12T14:18:42.414064439Z stderr F 
+2026-07-12T14:18:42.414075677Z stderr F 2026-07-12 14:18:42.413 [INFO][1] cni-installer/install.go 229: CNI plugin version: 
+2026-07-12T14:18:42.414083313Z stderr F 2026-07-12 14:18:42.413 [INFO][1] cni-installer/install.go 181: /host/secondary-bin-dir is not writeable, skipping
+2026-07-12T14:18:42.961995217Z stderr F 2026-07-12 14:18:42.954 [INFO][1] cni-installer/install.go 314: Using CNI config template from CNI_NETWORK_CONFIG environment variable.
+2026-07-12T14:18:42.963022068Z stderr F 2026-07-12 14:18:42.958 [INFO][1] cni-installer/install.go 391: CNI config file permission is set to 0600
+2026-07-12T14:18:42.963046222Z stderr F 
+2026-07-12T14:18:42.96305272Z stderr F 2026-07-12 14:18:42.959 [INFO][1] cni-installer/install.go 411: Created /host/etc/cni/net.d/10-calico.conflist
+2026-07-12T14:18:42.963058489Z stderr F 2026-07-12 14:18:42.959 [INFO][1] cni-installer/install.go 249: Done configuring CNI.  Sleep= false

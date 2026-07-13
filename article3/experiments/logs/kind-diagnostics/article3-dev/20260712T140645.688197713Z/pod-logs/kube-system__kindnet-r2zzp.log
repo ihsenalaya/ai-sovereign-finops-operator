@@ -1,0 +1,39 @@
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:57.339205       1 main.go:390] probe TCP address article3-dev-control-plane:6443
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:57.440551       1 main.go:109] connected to apiserver: https://article3-dev-control-plane:6443
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:57.491451       1 main.go:139] hostIP = 172.18.0.5
+[pod/kindnet-r2zzp/kindnet-cni] podIP = 172.18.0.5
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:57.492856       1 main.go:148] setting mtu 1500 for CNI 
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:57.493535       1 main.go:178] kindnetd IP family: "ipv4"
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:57.493568       1 main.go:182] noMask IPv4 subnets: [10.244.0.0/16]
+[pod/kindnet-r2zzp/kindnet-cni] time="2026-07-12T14:05:58Z" level=info msg="Created plugin 10-kube-network-policies (kindnetd, handles RunPodSandbox,RemovePodSandbox)"
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:58.743056       1 controller.go:377] "Starting controller" name="kube-network-policies"
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:58.901482       1 controller.go:381] "Waiting for informer caches to sync"
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:58.995755       1 shared_informer.go:350] "Waiting for caches to sync" controller="kube-network-policies"
+[pod/kindnet-r2zzp/kindnet-cni] time="2026-07-12T14:05:59Z" level=info msg="Registering plugin 10-kube-network-policies..."
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:59.250433       1 shared_informer.go:357] "Caches are synced" controller="kube-network-policies"
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:59.250506       1 metrics.go:72] Registering metrics
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:59.250595       1 controller.go:711] "Syncing nftables rules"
+[pod/kindnet-r2zzp/kindnet-cni] time="2026-07-12T14:05:59Z" level=info msg="Configuring plugin 10-kube-network-policies for runtime containerd/v2.2.0..."
+[pod/kindnet-r2zzp/kindnet-cni] time="2026-07-12T14:05:59Z" level=info msg="Started plugin 10-kube-network-policies..."
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:05:59.841905       1 nri.go:56] Synchronized state with the runtime (6 pods, 6 containers)...
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:08.597074       1 main.go:297] Handling node with IPs: map[172.18.0.5:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:08.597454       1 main.go:301] handling current node
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:08.617986       1 main.go:297] Handling node with IPs: map[172.18.0.6:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:08.618043       1 main.go:324] Node article3-dev-worker has CIDR [10.244.1.0/24] 
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:08.621150       1 routes.go:62] Adding route {Ifindex: 0 Dst: 10.244.1.0/24 Src: <nil> Gw: 172.18.0.6 Flags: [] Table: 0 Realm: 0} 
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:18.599690       1 main.go:297] Handling node with IPs: map[172.18.0.5:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:18.600574       1 main.go:301] handling current node
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:18.601568       1 main.go:297] Handling node with IPs: map[172.18.0.6:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:18.602177       1 main.go:324] Node article3-dev-worker has CIDR [10.244.1.0/24] 
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:28.616056       1 main.go:297] Handling node with IPs: map[172.18.0.5:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:28.616337       1 main.go:301] handling current node
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:28.616415       1 main.go:297] Handling node with IPs: map[172.18.0.6:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:28.616438       1 main.go:324] Node article3-dev-worker has CIDR [10.244.1.0/24] 
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:38.612317       1 main.go:297] Handling node with IPs: map[172.18.0.6:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:38.612439       1 main.go:324] Node article3-dev-worker has CIDR [10.244.1.0/24] 
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:38.613034       1 main.go:297] Handling node with IPs: map[172.18.0.5:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:38.613092       1 main.go:301] handling current node
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:48.612389       1 main.go:297] Handling node with IPs: map[172.18.0.5:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:48.612472       1 main.go:301] handling current node
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:48.612506       1 main.go:297] Handling node with IPs: map[172.18.0.6:{}]
+[pod/kindnet-r2zzp/kindnet-cni] I0712 14:06:48.612518       1 main.go:324] Node article3-dev-worker has CIDR [10.244.1.0/24] 

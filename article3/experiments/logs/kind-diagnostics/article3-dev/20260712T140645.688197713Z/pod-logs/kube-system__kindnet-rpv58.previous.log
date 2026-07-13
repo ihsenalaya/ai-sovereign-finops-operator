@@ -1,0 +1,1 @@
+Error from server (BadRequest): previous terminated container "kindnet-cni" in pod "kindnet-rpv58" not found

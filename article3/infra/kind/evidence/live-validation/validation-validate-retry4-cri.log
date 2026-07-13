@@ -1,0 +1,12 @@
+ownership verified: article3-validation (3 nodes)
+WARNING: version difference between client (1.32) and server (1.35) exceeds the supported minor version skew of +/-1
+node/article3-validation-control-plane condition met
+node/article3-validation-worker condition met
+node/article3-validation-worker2 condition met
+daemon set "calico-node" successfully rolled out
+deployment "calico-kube-controllers" successfully rolled out
+pod/server created
+pod/client created
+pod/server condition met
+pod/client condition met
+Kind profile validated: profile=validation cluster=article3-validation nodes=3 cni=calico network_policy=PASS

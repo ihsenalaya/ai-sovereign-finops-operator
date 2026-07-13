@@ -1,0 +1,2 @@
+article3-dev-control-plane b6fd8f9e6deb9a2327768a1be70d83e8264052b24c5335eb65d0f4d707dddd01 docker_inspect_rc=1
+article3-dev-worker 5b2a6cb1ece75729195d7abcf2393ab9276b57d1daa1216929c55d426eda3249 docker_inspect_rc=1

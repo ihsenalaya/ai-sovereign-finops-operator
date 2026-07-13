@@ -1,0 +1,1 @@
+Error from server (BadRequest): previous terminated container "client" in pod "client" not found

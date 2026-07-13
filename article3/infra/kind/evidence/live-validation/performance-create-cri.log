@@ -1,0 +1,25 @@
+Creating cluster "article3-performance" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦 📦 📦 📦   ...
+ ✓ Preparing nodes 📦 📦 📦 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-article3-performance"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-article3-performance --kubeconfig /tmp/article3-kind-kubeconfig.HB4ucJ
+
+Thanks for using kind! 😊
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 11  341k   11 41553    0     0  54194      0  0:00:06 --:--:--  0:00:06 54176100  341k  100  341k    0     0   304k      0  0:00:01  0:00:01 --:--:--  305k
+/tmp/article3-calico-raw.TN541O: OK
+/tmp/article3-calico-pinned.dbtJYR: OK
+Image is up to date for sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4

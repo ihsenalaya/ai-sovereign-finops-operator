@@ -1,0 +1,1 @@
+Error from server (BadRequest): previous terminated container "calico-node" in pod "calico-node-nmr4f" not found

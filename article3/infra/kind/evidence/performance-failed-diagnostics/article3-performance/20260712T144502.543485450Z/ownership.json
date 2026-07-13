@@ -1,0 +1,38 @@
+{
+  "calico_pinned_manifest_sha256": "9af3df3e4f49e50befc3f9fb79778f41b1496c8e7ef5778f413e60d25ddf16f3",
+  "calico_version": "3.32.1",
+  "cluster": "article3-performance",
+  "cni": "calico",
+  "config_sha256": "67e52c620fddd5856e1a327b02481bb395b20c759ebfd83783325e385618cd9f",
+  "created_at_utc": "2026-07-12T14:44:58.219523+00:00",
+  "node_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+  "nodes": [
+    {
+      "cluster_label": "article3-performance",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "b5705c7238599588b22a2c9f97ec19f1e2da6f707d97d48ce6d49064dc733577",
+      "name": "article3-performance-control-plane"
+    },
+    {
+      "cluster_label": "article3-performance",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "bd4bd7403c82b5e4a49be1dad310a54f27afa63c513f8fd4fb21e0e153349f8b",
+      "name": "article3-performance-worker"
+    },
+    {
+      "cluster_label": "article3-performance",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "c1cf5ee22b3fdfe1a62657c3d3868f40f1ce57bf55cdc837c1202d0545bede63",
+      "name": "article3-performance-worker2"
+    },
+    {
+      "cluster_label": "article3-performance",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "58b02ad38088e85a35dff29491f7c28e5db56af0dc33d9269c6d7767f10877d9",
+      "name": "article3-performance-worker3"
+    }
+  ],
+  "owner": "article3-q1-recovery",
+  "profile": "performance",
+  "schema_version": 2
+}

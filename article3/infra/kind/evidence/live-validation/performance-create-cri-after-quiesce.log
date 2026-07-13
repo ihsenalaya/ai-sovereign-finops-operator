@@ -1,0 +1,97 @@
+Creating cluster "article3-performance" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦 📦 📦 📦   ...
+ ✓ Preparing nodes 📦 📦 📦 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-article3-performance"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-article3-performance --kubeconfig /tmp/article3-kind-kubeconfig.2ORfZd
+
+Thanks for using kind! 😊
+ownership verified: article3-performance (4 nodes)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 32  341k   32  111k    0     0   129k      0  0:00:02 --:--:--  0:00:02  129k100  341k  100  341k    0     0   216k      0  0:00:01  0:00:01 --:--:--  216k
+/tmp/article3-calico-raw.G2eWbk: OK
+/tmp/article3-calico-pinned.3FnMYL: OK
+Image is up to date for sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4
+Image is up to date for sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4
+Image is up to date for sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4
+Image is up to date for sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4
+E0712 14:50:12.903204     530 log.go:32] "PullImage from image service failed" err="rpc error: code = Unknown desc = failed to pull and unpack image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\": short read: expected 121488434 bytes but got 1733503: unexpected EOF" image="quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3"
+time="2026-07-12T14:50:12Z" level=fatal msg="pulling image: failed to pull and unpack image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\": short read: expected 121488434 bytes but got 1733503: unexpected EOF"
+Image is up to date for sha256:c281bc67214e2e0db59e07c5335f12ec24836dd0da397b10b1a8a68423e4a9fa
+Image is up to date for sha256:c281bc67214e2e0db59e07c5335f12ec24836dd0da397b10b1a8a68423e4a9fa
+Image is up to date for sha256:c281bc67214e2e0db59e07c5335f12ec24836dd0da397b10b1a8a68423e4a9fa
+Image is up to date for sha256:c281bc67214e2e0db59e07c5335f12ec24836dd0da397b10b1a8a68423e4a9fa
+Image is up to date for sha256:0251ba57dd671ba6be565f50721bdf229a9f1f5de40b310f42a94d72f34d9c29
+Image is up to date for sha256:0251ba57dd671ba6be565f50721bdf229a9f1f5de40b310f42a94d72f34d9c29
+Image is up to date for sha256:0251ba57dd671ba6be565f50721bdf229a9f1f5de40b310f42a94d72f34d9c29
+Image is up to date for sha256:0251ba57dd671ba6be565f50721bdf229a9f1f5de40b310f42a94d72f34d9c29
+poddisruptionbudget.policy/calico-kube-controllers serverside-applied
+serviceaccount/calico-kube-controllers serverside-applied
+serviceaccount/calico-node serverside-applied
+serviceaccount/calico-cni-plugin serverside-applied
+configmap/calico-config serverside-applied
+customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipreservations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/stagedglobalnetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/stagedkubernetesnetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/stagednetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/tiers.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/clusternetworkpolicies.policy.networking.k8s.io serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-kube-controllers serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-node serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-cni-plugin serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-tier-getter serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-node serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-cni-plugin serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-tier-getter serverside-applied
+daemonset.apps/calico-node serverside-applied
+deployment.apps/calico-kube-controllers serverside-applied
+Waiting for daemon set "calico-node" rollout to finish: 0 of 4 updated pods are available...
+Waiting for daemon set "calico-node" rollout to finish: 1 of 4 updated pods are available...
+Waiting for daemon set "calico-node" rollout to finish: 2 of 4 updated pods are available...
+Waiting for daemon set "calico-node" rollout to finish: 3 of 4 updated pods are available...
+daemon set "calico-node" successfully rolled out
+deployment "calico-kube-controllers" successfully rolled out
+ownership verified: article3-performance (4 nodes)
+node/article3-performance-control-plane condition met
+node/article3-performance-worker condition met
+node/article3-performance-worker2 condition met
+node/article3-performance-worker3 condition met
+Kubernetes control plane is running at https://127.0.0.1:40099
+CoreDNS is running at https://127.0.0.1:40099/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+NAME                                 STATUS   ROLES           AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                     CONTAINER-RUNTIME
+article3-performance-control-plane   Ready    control-plane   9m6s    v1.35.0   172.18.0.6    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+article3-performance-worker          Ready    <none>          8m52s   v1.35.0   172.18.0.5    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+article3-performance-worker2         Ready    <none>          8m52s   v1.35.0   172.18.0.8    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+article3-performance-worker3         Ready    <none>          8m52s   v1.35.0   172.18.0.7    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0

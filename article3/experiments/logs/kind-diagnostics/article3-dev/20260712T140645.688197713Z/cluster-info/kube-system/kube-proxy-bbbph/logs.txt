@@ -1,0 +1,25 @@
+==== START logs for container kube-proxy of pod kube-system/kube-proxy-bbbph ====
+I0712 14:05:58.717564       1 shared_informer.go:370] "Waiting for caches to sync"
+I0712 14:05:58.826922       1 shared_informer.go:377] "Caches are synced"
+I0712 14:05:58.827162       1 server.go:218] "Successfully retrieved NodeIPs" NodeIPs=["172.18.0.6"]
+I0712 14:05:58.828221       1 conntrack.go:115] "Set sysctl" entry="net/netfilter/nf_conntrack_tcp_timeout_established" value=86400
+I0712 14:05:58.829770       1 conntrack.go:115] "Set sysctl" entry="net/netfilter/nf_conntrack_tcp_timeout_close_wait" value=3600
+E0712 14:05:58.829928       1 server.go:255] "Kube-proxy configuration may be incomplete or incorrect" err="nodePortAddresses is unset; NodePort connections will be accepted on all local IPs. Consider using `--nodeport-addresses primary`"
+I0712 14:05:59.162531       1 server.go:264] "kube-proxy running in dual-stack mode" primary ipFamily="IPv4"
+I0712 14:05:59.162626       1 server_linux.go:136] "Using iptables Proxier"
+I0712 14:05:59.287325       1 proxier.go:242] "Setting route_localnet=1 to allow node-ports on localhost; to change this either disable iptables.localhostNodePorts (--iptables-localhost-nodeports) or set nodePortAddresses (--nodeport-addresses) to filter loopback addresses" ipFamily="IPv4"
+I0712 14:05:59.288447       1 server.go:529] "Version info" version="v1.35.0"
+I0712 14:05:59.288492       1 server.go:531] "Golang settings" GOGC="" GOMAXPROCS="" GOTRACEBACK=""
+I0712 14:05:59.310450       1 config.go:200] "Starting service config controller"
+I0712 14:05:59.310494       1 shared_informer.go:349] "Waiting for caches to sync" controller="service config"
+I0712 14:05:59.312325       1 config.go:403] "Starting serviceCIDR config controller"
+I0712 14:05:59.316409       1 shared_informer.go:349] "Waiting for caches to sync" controller="serviceCIDR config"
+I0712 14:05:59.312750       1 config.go:309] "Starting node config controller"
+I0712 14:05:59.316462       1 shared_informer.go:349] "Waiting for caches to sync" controller="node config"
+I0712 14:05:59.316472       1 shared_informer.go:356] "Caches are synced" controller="node config"
+I0712 14:05:59.312837       1 config.go:106] "Starting endpoint slice config controller"
+I0712 14:05:59.316485       1 shared_informer.go:349] "Waiting for caches to sync" controller="endpoint slice config"
+I0712 14:05:59.425288       1 shared_informer.go:356] "Caches are synced" controller="endpoint slice config"
+I0712 14:05:59.514562       1 shared_informer.go:356] "Caches are synced" controller="service config"
+I0712 14:05:59.516800       1 shared_informer.go:356] "Caches are synced" controller="serviceCIDR config"
+==== END logs for container kube-proxy of pod kube-system/kube-proxy-bbbph ====

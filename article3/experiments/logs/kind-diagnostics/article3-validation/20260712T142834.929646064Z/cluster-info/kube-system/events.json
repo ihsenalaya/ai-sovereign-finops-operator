@@ -1,0 +1,3103 @@
+{
+    "kind": "EventList",
+    "apiVersion": "v1",
+    "metadata": {
+        "resourceVersion": "1462"
+    },
+    "items": [
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd.18c191187ecb8cd6",
+                "namespace": "kube-system",
+                "uid": "dbdc06de-9d1e-4dff-8cad-30ffbf80c525",
+                "resourceVersion": "1157",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd",
+                "uid": "37496db5-166b-43a0-b1b8-3b4104f37ccc",
+                "apiVersion": "v1",
+                "resourceVersion": "1145"
+            },
+            "reason": "FailedScheduling",
+            "message": "0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd.18c1911ae97d8133",
+                "namespace": "kube-system",
+                "uid": "df16155b-d394-4fc3-9db9-39e7db0d7d1a",
+                "resourceVersion": "1267",
+                "creationTimestamp": "2026-07-12T14:27:52Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd",
+                "uid": "37496db5-166b-43a0-b1b8-3b4104f37ccc",
+                "apiVersion": "v1",
+                "resourceVersion": "1156"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/calico-kube-controllers-77bdb5dddb-mlwqd to article3-validation-worker",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:52Z",
+            "lastTimestamp": "2026-07-12T14:27:52Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd.18c1911b8f205ddc",
+                "namespace": "kube-system",
+                "uid": "ddd70a05-b2b5-402f-be7d-c69b296c10b0",
+                "resourceVersion": "1317",
+                "creationTimestamp": "2026-07-12T14:27:54Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd",
+                "uid": "37496db5-166b-43a0-b1b8-3b4104f37ccc",
+                "apiVersion": "v1",
+                "resourceVersion": "1263",
+                "fieldPath": "spec.containers{calico-kube-controllers}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/kube-controllers@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:54Z",
+            "lastTimestamp": "2026-07-12T14:27:54Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd.18c1911b9f53bf80",
+                "namespace": "kube-system",
+                "uid": "cbe43704-9a58-40de-a613-7e1d1b8dfca4",
+                "resourceVersion": "1318",
+                "creationTimestamp": "2026-07-12T14:27:55Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd",
+                "uid": "37496db5-166b-43a0-b1b8-3b4104f37ccc",
+                "apiVersion": "v1",
+                "resourceVersion": "1263",
+                "fieldPath": "spec.containers{calico-kube-controllers}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:55Z",
+            "lastTimestamp": "2026-07-12T14:27:55Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd.18c1911bb87f428a",
+                "namespace": "kube-system",
+                "uid": "ae2aeb2e-677c-4037-acda-4ba11413f63e",
+                "resourceVersion": "1319",
+                "creationTimestamp": "2026-07-12T14:27:55Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd",
+                "uid": "37496db5-166b-43a0-b1b8-3b4104f37ccc",
+                "apiVersion": "v1",
+                "resourceVersion": "1263",
+                "fieldPath": "spec.containers{calico-kube-controllers}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:55Z",
+            "lastTimestamp": "2026-07-12T14:27:55Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd.18c1911c1f1a3509",
+                "namespace": "kube-system",
+                "uid": "ce2eb296-a60a-4046-9fcc-6091c9d298c9",
+                "resourceVersion": "1327",
+                "creationTimestamp": "2026-07-12T14:27:57Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb-mlwqd",
+                "uid": "37496db5-166b-43a0-b1b8-3b4104f37ccc",
+                "apiVersion": "v1",
+                "resourceVersion": "1263",
+                "fieldPath": "spec.containers{calico-kube-controllers}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: Failed to read status file /status/status.json: unexpected end of JSON input\n",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:57Z",
+            "lastTimestamp": "2026-07-12T14:27:58Z",
+            "count": 2,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers-77bdb5dddb.18c191187d9df69a",
+                "namespace": "kube-system",
+                "uid": "def91182-2c7d-401d-a226-80ccb0c021b8",
+                "resourceVersion": "1150",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "ReplicaSet",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers-77bdb5dddb",
+                "uid": "020c7070-d3fc-4e3d-94a3-87628ae41f7e",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "1142"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: calico-kube-controllers-77bdb5dddb-mlwqd",
+            "source": {
+                "component": "replicaset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "replicaset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers.18c191183e45c50f",
+                "namespace": "kube-system",
+                "uid": "62b4064f-f186-47dc-8535-2c1b0b43335a",
+                "resourceVersion": "1057",
+                "creationTimestamp": "2026-07-12T14:27:40Z"
+            },
+            "involvedObject": {
+                "kind": "PodDisruptionBudget",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers",
+                "uid": "99750c8b-55fc-4303-bd9a-bef1825313dd",
+                "apiVersion": "policy/v1",
+                "resourceVersion": "1050"
+            },
+            "reason": "NoPods",
+            "message": "No matching pods found",
+            "source": {
+                "component": "controllermanager"
+            },
+            "firstTimestamp": "2026-07-12T14:27:40Z",
+            "lastTimestamp": "2026-07-12T14:27:40Z",
+            "count": 2,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "controllermanager",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-kube-controllers.18c191187b25a7e9",
+                "namespace": "kube-system",
+                "uid": "99f5e970-82c4-47aa-a7f3-290a13da1749",
+                "resourceVersion": "1144",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "Deployment",
+                "namespace": "kube-system",
+                "name": "calico-kube-controllers",
+                "uid": "ddae4569-f303-40dc-9aa3-a57bdfb46b3b",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "1140"
+            },
+            "reason": "ScalingReplicaSet",
+            "message": "Scaled up replica set calico-kube-controllers-77bdb5dddb from 0 to 1",
+            "source": {
+                "component": "deployment-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "deployment-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19118805ae666",
+                "namespace": "kube-system",
+                "uid": "1429a91b-14f0-4134-a02f-2a31c221459c",
+                "resourceVersion": "1164",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1149"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/calico-node-7m9ts to article3-validation-worker",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19118b2c30a52",
+                "namespace": "kube-system",
+                "uid": "4266a859-eea6-4dd1-a1ad-a0f5a48434b5",
+                "resourceVersion": "1174",
+                "creationTimestamp": "2026-07-12T14:27:42Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:42Z",
+            "lastTimestamp": "2026-07-12T14:27:42Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19118bc448458",
+                "namespace": "kube-system",
+                "uid": "1e1886ac-ce96-41e9-b347-ba15ec7c11a6",
+                "resourceVersion": "1178",
+                "creationTimestamp": "2026-07-12T14:27:42Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:42Z",
+            "lastTimestamp": "2026-07-12T14:27:42Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19118ce271fa8",
+                "namespace": "kube-system",
+                "uid": "60f87c12-a591-44c3-83d8-c949af3b4427",
+                "resourceVersion": "1182",
+                "creationTimestamp": "2026-07-12T14:27:43Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:43Z",
+            "lastTimestamp": "2026-07-12T14:27:43Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19118fd58eb3a",
+                "namespace": "kube-system",
+                "uid": "c1863ece-a079-45e4-b96e-63f5898f3fe5",
+                "resourceVersion": "1185",
+                "creationTimestamp": "2026-07-12T14:27:43Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:43Z",
+            "lastTimestamp": "2026-07-12T14:27:43Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911901205313",
+                "namespace": "kube-system",
+                "uid": "264068a2-859b-4279-b420-838af314c406",
+                "resourceVersion": "1187",
+                "creationTimestamp": "2026-07-12T14:27:43Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:43Z",
+            "lastTimestamp": "2026-07-12T14:27:43Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911911d4d791",
+                "namespace": "kube-system",
+                "uid": "7383ce62-2a95-4e3a-a4e8-5c7321afe520",
+                "resourceVersion": "1195",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19119ed793278",
+                "namespace": "kube-system",
+                "uid": "f799f818-e6e8-4afe-8568-f891d9ccd360",
+                "resourceVersion": "1205",
+                "creationTimestamp": "2026-07-12T14:27:47Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:47Z",
+            "lastTimestamp": "2026-07-12T14:27:47Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c19119f625c2ab",
+                "namespace": "kube-system",
+                "uid": "c55d4c32-69b7-460c-a59e-ea4b03ad9df2",
+                "resourceVersion": "1209",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911a08acb6ec",
+                "namespace": "kube-system",
+                "uid": "fc3c550c-70e8-414f-acd1-92b84b74e035",
+                "resourceVersion": "1215",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911a6647e649",
+                "namespace": "kube-system",
+                "uid": "667dbca3-0c90-4a0e-90c7-e6dc64240e50",
+                "resourceVersion": "1222",
+                "creationTimestamp": "2026-07-12T14:27:49Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:49Z",
+            "lastTimestamp": "2026-07-12T14:27:49Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911a6fd6bcba",
+                "namespace": "kube-system",
+                "uid": "13731b30-380b-45ed-9b13-06f6522bf4d8",
+                "resourceVersion": "1227",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911a80f8df25",
+                "namespace": "kube-system",
+                "uid": "2c3e2980-8fba-4b04-9fbb-4a266434c0a3",
+                "resourceVersion": "1232",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-7m9ts.18c1911ab1310328",
+                "namespace": "kube-system",
+                "uid": "580b3e95-eda8-4337-aa6b-81400649764b",
+                "resourceVersion": "1272",
+                "creationTimestamp": "2026-07-12T14:27:51Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-7m9ts",
+                "uid": "60a36420-35f4-4418-b5b9-a077349bf23a",
+                "apiVersion": "v1",
+                "resourceVersion": "1159",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: calico/node is not ready: BIRD is not ready: error querying BIRD: unable to connect to BIRDv4 socket: dial unix /var/run/bird/bird.ctl: connect: no such file or directory\n",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:51Z",
+            "lastTimestamp": "2026-07-12T14:27:52Z",
+            "count": 2,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911880371ed2",
+                "namespace": "kube-system",
+                "uid": "a72b4e82-85be-4255-9be4-8d683670f817",
+                "resourceVersion": "1163",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1143"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/calico-node-b9mh7 to article3-validation-control-plane",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c19118b2c30b78",
+                "namespace": "kube-system",
+                "uid": "b0cdeeaf-2420-4689-bcd4-5f364749ea95",
+                "resourceVersion": "1173",
+                "creationTimestamp": "2026-07-12T14:27:42Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:42Z",
+            "lastTimestamp": "2026-07-12T14:27:42Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c19118ba0c3bec",
+                "namespace": "kube-system",
+                "uid": "1ce3799f-dc60-4460-88c0-05827f2ec2dc",
+                "resourceVersion": "1176",
+                "creationTimestamp": "2026-07-12T14:27:42Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:42Z",
+            "lastTimestamp": "2026-07-12T14:27:42Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c19118cc9d6752",
+                "namespace": "kube-system",
+                "uid": "253bd430-861a-492f-8d80-8e770c5c10b5",
+                "resourceVersion": "1181",
+                "creationTimestamp": "2026-07-12T14:27:43Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:43Z",
+            "lastTimestamp": "2026-07-12T14:27:43Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911901dc5270",
+                "namespace": "kube-system",
+                "uid": "dfdb0ec4-ecdd-4393-95ce-bac7092d2fc2",
+                "resourceVersion": "1188",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911906e5e698",
+                "namespace": "kube-system",
+                "uid": "ddb30d76-c1e2-4667-9bd4-9ad7e6446c46",
+                "resourceVersion": "1191",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911915f1373b",
+                "namespace": "kube-system",
+                "uid": "34e53256-fee4-4083-a2f9-72ad630947e0",
+                "resourceVersion": "1196",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c19119f1ef165f",
+                "namespace": "kube-system",
+                "uid": "acf4b460-09d2-471a-9e3d-82afed19313d",
+                "resourceVersion": "1207",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c19119faab6273",
+                "namespace": "kube-system",
+                "uid": "f0c430d8-d07d-4c47-9483-ad384dbea512",
+                "resourceVersion": "1213",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911a0af03510",
+                "namespace": "kube-system",
+                "uid": "071f2393-6b53-4e89-9c0d-50cb37ae9233",
+                "resourceVersion": "1216",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911a6ad593b7",
+                "namespace": "kube-system",
+                "uid": "6c2f12c6-dca4-4918-a260-56752cdceb88",
+                "resourceVersion": "1224",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911a74b237e4",
+                "namespace": "kube-system",
+                "uid": "f053351f-5c28-45c6-8f3e-d2c8674c5948",
+                "resourceVersion": "1230",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911a84677e20",
+                "namespace": "kube-system",
+                "uid": "f91b0c89-222a-412d-bb81-1009e7585c8f",
+                "resourceVersion": "1233",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911ab5529cf6",
+                "namespace": "kube-system",
+                "uid": "1b304f3e-29ab-4d08-a39f-3985e1998845",
+                "resourceVersion": "1249",
+                "creationTimestamp": "2026-07-12T14:27:51Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: calico/node is not ready: BIRD is not ready: failed to stat() nodename file: stat /var/lib/calico/nodename: no such file or directory\n",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:51Z",
+            "lastTimestamp": "2026-07-12T14:27:51Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-b9mh7.18c1911af3f4fbf7",
+                "namespace": "kube-system",
+                "uid": "b45fbf4b-3d88-470d-b4a9-b081b5695db4",
+                "resourceVersion": "1276",
+                "creationTimestamp": "2026-07-12T14:27:52Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-b9mh7",
+                "uid": "5a44a654-5da2-4bb6-a0bb-813070d2ae63",
+                "apiVersion": "v1",
+                "resourceVersion": "1161",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: calico/node is not ready: BIRD is not ready: error querying BIRD: unable to connect to BIRDv4 socket: dial unix /var/run/bird/bird.ctl: connect: no such file or directory\n",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:27:52Z",
+            "lastTimestamp": "2026-07-12T14:27:52Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c19118805ba6ee",
+                "namespace": "kube-system",
+                "uid": "f35d7a9a-2096-4d83-a846-0c85b71cf4ae",
+                "resourceVersion": "1166",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1148"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/calico-node-kvwhb to article3-validation-worker2",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c19118b2c48816",
+                "namespace": "kube-system",
+                "uid": "6b6bcb0d-5cc3-4eeb-b3dd-39cbe4d6a8e9",
+                "resourceVersion": "1172",
+                "creationTimestamp": "2026-07-12T14:27:42Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:42Z",
+            "lastTimestamp": "2026-07-12T14:27:42Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c19118b95a590e",
+                "namespace": "kube-system",
+                "uid": "1aca3629-4d23-470d-a800-0738492a15ca",
+                "resourceVersion": "1175",
+                "creationTimestamp": "2026-07-12T14:27:42Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:42Z",
+            "lastTimestamp": "2026-07-12T14:27:42Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c19118cc98a570",
+                "namespace": "kube-system",
+                "uid": "535a1cfd-4903-467b-8dec-0e5e2cef6b05",
+                "resourceVersion": "1180",
+                "creationTimestamp": "2026-07-12T14:27:43Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{upgrade-ipam}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:43Z",
+            "lastTimestamp": "2026-07-12T14:27:43Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911909168239",
+                "namespace": "kube-system",
+                "uid": "f2abe2cd-0950-4141-bc6a-775f4c9b8dea",
+                "resourceVersion": "1192",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c191190df48448",
+                "namespace": "kube-system",
+                "uid": "0dd43c63-9ac0-4943-8122-b00e33786b67",
+                "resourceVersion": "1194",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911920331a4d",
+                "namespace": "kube-system",
+                "uid": "3d522457-703d-4419-935e-7713c472af54",
+                "resourceVersion": "1197",
+                "creationTimestamp": "2026-07-12T14:27:44Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{install-cni}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:44Z",
+            "lastTimestamp": "2026-07-12T14:27:44Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c19119f907ee0f",
+                "namespace": "kube-system",
+                "uid": "31583243-700f-4c39-b667-9f787203b5e9",
+                "resourceVersion": "1211",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911a017088cc",
+                "namespace": "kube-system",
+                "uid": "da5fcdba-c892-44a4-a8b7-4efa4ef8166f",
+                "resourceVersion": "1214",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911a10f8f94a",
+                "namespace": "kube-system",
+                "uid": "f70d18bd-39c1-4b02-8df7-6b04fa52e58a",
+                "resourceVersion": "1217",
+                "creationTimestamp": "2026-07-12T14:27:48Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.initContainers{ebpf-bootstrap}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:48Z",
+            "lastTimestamp": "2026-07-12T14:27:48Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911a71aed676",
+                "namespace": "kube-system",
+                "uid": "dba9788a-2666-428a-92d1-a56d2db2de9f",
+                "resourceVersion": "1228",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911a7912f025",
+                "namespace": "kube-system",
+                "uid": "6f46449a-11e0-4fef-823c-d076197f0380",
+                "resourceVersion": "1231",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911a895dc267",
+                "namespace": "kube-system",
+                "uid": "f9e61521-36cc-49ce-a98d-513ded3b0413",
+                "resourceVersion": "1234",
+                "creationTimestamp": "2026-07-12T14:27:50Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:50Z",
+            "lastTimestamp": "2026-07-12T14:27:50Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911abaf4ca2d",
+                "namespace": "kube-system",
+                "uid": "cbc6336b-f1a1-42d5-be24-caedc4b76a5f",
+                "resourceVersion": "1250",
+                "creationTimestamp": "2026-07-12T14:27:51Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: calico/node is not ready: BIRD is not ready: failed to stat() nodename file: stat /var/lib/calico/nodename: no such file or directory\n",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:51Z",
+            "lastTimestamp": "2026-07-12T14:27:51Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node-kvwhb.18c1911af8791dd6",
+                "namespace": "kube-system",
+                "uid": "db71c08d-e62f-4044-bb48-6349dd26bbae",
+                "resourceVersion": "1280",
+                "creationTimestamp": "2026-07-12T14:27:52Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "calico-node-kvwhb",
+                "uid": "95dd7ac6-cba5-4088-a69c-f9676ea065b3",
+                "apiVersion": "v1",
+                "resourceVersion": "1160",
+                "fieldPath": "spec.containers{calico-node}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: calico/node is not ready: BIRD is not ready: error querying BIRD: unable to connect to BIRDv4 socket: dial unix /var/run/bird/bird.ctl: connect: no such file or directory\n",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:27:52Z",
+            "lastTimestamp": "2026-07-12T14:27:52Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "calico-node.18c191187cc493e2",
+                "namespace": "kube-system",
+                "uid": "75c97689-fc85-4c2f-a8a9-275cfe049248",
+                "resourceVersion": "1147",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "DaemonSet",
+                "namespace": "kube-system",
+                "name": "calico-node",
+                "uid": "ccabb65d-1491-4955-950f-956206fe0218",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "1139"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: calico-node-b9mh7",
+            "source": {
+                "component": "daemonset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "daemonset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-node.18c191187df725d9",
+                "namespace": "kube-system",
+                "uid": "52c88215-4dcb-4d7d-b7e7-0ed5965c7f4d",
+                "resourceVersion": "1153",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "DaemonSet",
+                "namespace": "kube-system",
+                "name": "calico-node",
+                "uid": "ccabb65d-1491-4955-950f-956206fe0218",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "1139"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: calico-node-kvwhb",
+            "source": {
+                "component": "daemonset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "daemonset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "calico-node.18c191187e402cd6",
+                "namespace": "kube-system",
+                "uid": "a05e751d-a846-4b0d-9ad2-f1f91c68552d",
+                "resourceVersion": "1158",
+                "creationTimestamp": "2026-07-12T14:27:41Z"
+            },
+            "involvedObject": {
+                "kind": "DaemonSet",
+                "namespace": "kube-system",
+                "name": "calico-node",
+                "uid": "ccabb65d-1491-4955-950f-956206fe0218",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "1139"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: calico-node-7m9ts",
+            "source": {
+                "component": "daemonset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:27:41Z",
+            "lastTimestamp": "2026-07-12T14:27:41Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "daemonset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c190c1afd2f272",
+                "namespace": "kube-system",
+                "uid": "bb420f14-4375-4281-b529-542b590199b7",
+                "resourceVersion": "403",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "393"
+            },
+            "reason": "FailedScheduling",
+            "message": "0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c1910d6b9fa030",
+                "namespace": "kube-system",
+                "uid": "41f4523d-5bf1-4bce-bffa-d4ae5df3997e",
+                "resourceVersion": "979",
+                "creationTimestamp": "2026-07-12T14:26:54Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "401"
+            },
+            "reason": "FailedScheduling",
+            "message": "0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:26:54Z",
+            "lastTimestamp": "2026-07-12T14:26:54Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c1911aea824589",
+                "namespace": "kube-system",
+                "uid": "96fc4744-21c5-4ab8-8910-7125db71b24f",
+                "resourceVersion": "1268",
+                "creationTimestamp": "2026-07-12T14:27:52Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "975"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/coredns-7d764666f9-psd6t to article3-validation-worker",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:52Z",
+            "lastTimestamp": "2026-07-12T14:27:52Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c1911b7b615eef",
+                "namespace": "kube-system",
+                "uid": "0d0c6a8a-8c85-4cb2-ae09-bd31ced6e985",
+                "resourceVersion": "1315",
+                "creationTimestamp": "2026-07-12T14:27:54Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "1266",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/coredns/coredns:v1.13.1\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:54Z",
+            "lastTimestamp": "2026-07-12T14:27:54Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c1911c600e94f7",
+                "namespace": "kube-system",
+                "uid": "82a5970e-0e43-4702-b8ad-c62d2fc055cf",
+                "resourceVersion": "1329",
+                "creationTimestamp": "2026-07-12T14:27:58Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "1266",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:58Z",
+            "lastTimestamp": "2026-07-12T14:27:58Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c1911c708c5711",
+                "namespace": "kube-system",
+                "uid": "0385d23d-dfc9-4ef2-b86a-8334f91e816e",
+                "resourceVersion": "1332",
+                "creationTimestamp": "2026-07-12T14:27:58Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "1266",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:58Z",
+            "lastTimestamp": "2026-07-12T14:27:58Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-psd6t.18c1911c89b022ae",
+                "namespace": "kube-system",
+                "uid": "6bc45905-4959-4c2e-970b-00ac109d240b",
+                "resourceVersion": "1335",
+                "creationTimestamp": "2026-07-12T14:27:59Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-psd6t",
+                "uid": "f881580d-284a-43bc-835c-5149246b7f84",
+                "apiVersion": "v1",
+                "resourceVersion": "1266",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:59Z",
+            "lastTimestamp": "2026-07-12T14:27:59Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c190c1ae90001d",
+                "namespace": "kube-system",
+                "uid": "5f3c1eb4-5cd9-4b5a-a593-f387fdeadd98",
+                "resourceVersion": "395",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "390"
+            },
+            "reason": "FailedScheduling",
+            "message": "0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c1910d6b6bff2b",
+                "namespace": "kube-system",
+                "uid": "8b6e74f2-4b93-4758-8e2a-b8f62add0cd8",
+                "resourceVersion": "978",
+                "creationTimestamp": "2026-07-12T14:26:54Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "398"
+            },
+            "reason": "FailedScheduling",
+            "message": "0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:26:54Z",
+            "lastTimestamp": "2026-07-12T14:26:54Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c1911aea919217",
+                "namespace": "kube-system",
+                "uid": "773580e9-5e2e-4ea1-bfd6-8f099ac15140",
+                "resourceVersion": "1271",
+                "creationTimestamp": "2026-07-12T14:27:52Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "977"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/coredns-7d764666f9-s8thf to article3-validation-worker",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:27:52Z",
+            "lastTimestamp": "2026-07-12T14:27:52Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c1911b70726238",
+                "namespace": "kube-system",
+                "uid": "0e0e7e8a-680a-4205-aeea-c7b3ae500d58",
+                "resourceVersion": "1314",
+                "creationTimestamp": "2026-07-12T14:27:54Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "1265",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/coredns/coredns:v1.13.1\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:54Z",
+            "lastTimestamp": "2026-07-12T14:27:54Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c1911c5dcb826c",
+                "namespace": "kube-system",
+                "uid": "f0698333-0c38-4aad-a825-de000577df50",
+                "resourceVersion": "1328",
+                "creationTimestamp": "2026-07-12T14:27:58Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "1265",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:58Z",
+            "lastTimestamp": "2026-07-12T14:27:58Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c1911c70f7614c",
+                "namespace": "kube-system",
+                "uid": "4af475b6-edc4-4470-ba82-207f8d084027",
+                "resourceVersion": "1333",
+                "creationTimestamp": "2026-07-12T14:27:58Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "1265",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:58Z",
+            "lastTimestamp": "2026-07-12T14:27:58Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9-s8thf.18c1911c8a150afd",
+                "namespace": "kube-system",
+                "uid": "20ae3af8-dc5c-4823-b496-dd11cad635a3",
+                "resourceVersion": "1336",
+                "creationTimestamp": "2026-07-12T14:27:59Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9-s8thf",
+                "uid": "0d73b84e-fdc3-430d-930b-73e251897578",
+                "apiVersion": "v1",
+                "resourceVersion": "1265",
+                "fieldPath": "spec.containers{coredns}"
+            },
+            "reason": "Unhealthy",
+            "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:27:59Z",
+            "lastTimestamp": "2026-07-12T14:27:59Z",
+            "count": 1,
+            "type": "Warning",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9.18c190c1ae37caff",
+                "namespace": "kube-system",
+                "uid": "bb04baa0-14dc-4325-8d32-ebbc53b7a7ed",
+                "resourceVersion": "392",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "ReplicaSet",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9",
+                "uid": "976657fa-a621-49ce-adf9-26f0f5aeaae2",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "382"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: coredns-7d764666f9-s8thf",
+            "source": {
+                "component": "replicaset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "replicaset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns-7d764666f9.18c190c1afce435a",
+                "namespace": "kube-system",
+                "uid": "ba76a6ad-7fe7-4079-aae2-14b43e5c29e2",
+                "resourceVersion": "400",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "ReplicaSet",
+                "namespace": "kube-system",
+                "name": "coredns-7d764666f9",
+                "uid": "976657fa-a621-49ce-adf9-26f0f5aeaae2",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "382"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: coredns-7d764666f9-psd6t",
+            "source": {
+                "component": "replicaset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "replicaset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "coredns.18c190c1a8a93fa5",
+                "namespace": "kube-system",
+                "uid": "7d2c9ff7-13d3-449c-b3d0-b5394065cdb7",
+                "resourceVersion": "384",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "Deployment",
+                "namespace": "kube-system",
+                "name": "coredns",
+                "uid": "ab5eeeaf-d9f5-4472-b003-99e267981262",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "292"
+            },
+            "reason": "ScalingReplicaSet",
+            "message": "Scaled up replica set coredns-7d764666f9 from 0 to 2",
+            "source": {
+                "component": "deployment-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "deployment-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "etcd-article3-validation-control-plane.18c190bdc218f70f",
+                "namespace": "kube-system",
+                "uid": "c9093dea-1bb5-4e33-b3bb-2ce73437a380",
+                "resourceVersion": "96",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "etcd-article3-validation-control-plane",
+                "uid": "836da50a85a3551ee76d16997b96a2be",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{etcd}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/etcd:3.6.6-0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:12Z",
+            "lastTimestamp": "2026-07-12T14:21:12Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "etcd-article3-validation-control-plane.18c190beacf65b13",
+                "namespace": "kube-system",
+                "uid": "0ce090c3-72bd-43f3-b96b-7989087631df",
+                "resourceVersion": "103",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "etcd-article3-validation-control-plane",
+                "uid": "836da50a85a3551ee76d16997b96a2be",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{etcd}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:16Z",
+            "lastTimestamp": "2026-07-12T14:21:16Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "etcd-article3-validation-control-plane.18c190bec6189a42",
+                "namespace": "kube-system",
+                "uid": "695fb05f-98a0-4d6e-ae8f-9c65927420a3",
+                "resourceVersion": "104",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "etcd-article3-validation-control-plane",
+                "uid": "836da50a85a3551ee76d16997b96a2be",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{etcd}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:16Z",
+            "lastTimestamp": "2026-07-12T14:21:16Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-apiserver-article3-validation-control-plane.18c190bdbfe1aa60",
+                "namespace": "kube-system",
+                "uid": "7e7b941f-3ced-4abc-b5c5-c8447604c3ac",
+                "resourceVersion": "94",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-apiserver-article3-validation-control-plane",
+                "uid": "b7047ea8dd8015edc64db3fc8268d5bf",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-apiserver}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/kube-apiserver:v1.35.0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:12Z",
+            "lastTimestamp": "2026-07-12T14:21:12Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-apiserver-article3-validation-control-plane.18c190be83016a61",
+                "namespace": "kube-system",
+                "uid": "6d77780a-d6f0-4393-8bee-271c955c1d32",
+                "resourceVersion": "99",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-apiserver-article3-validation-control-plane",
+                "uid": "b7047ea8dd8015edc64db3fc8268d5bf",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-apiserver}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:15Z",
+            "lastTimestamp": "2026-07-12T14:21:15Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-apiserver-article3-validation-control-plane.18c190be9a077163",
+                "namespace": "kube-system",
+                "uid": "0f4ff60a-2449-40cd-ade9-bc0d1097afda",
+                "resourceVersion": "102",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-apiserver-article3-validation-control-plane",
+                "uid": "b7047ea8dd8015edc64db3fc8268d5bf",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-apiserver}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:15Z",
+            "lastTimestamp": "2026-07-12T14:21:15Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-controller-manager-article3-validation-control-plane.18c190bdbf7d18ae",
+                "namespace": "kube-system",
+                "uid": "c4424026-85d3-4fe2-b740-b3e79b6b1d49",
+                "resourceVersion": "93",
+                "creationTimestamp": "2026-07-12T14:21:19Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-controller-manager-article3-validation-control-plane",
+                "uid": "b904b0a64228b97fc70cb0ef5289d2d6",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-controller-manager}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/kube-controller-manager:v1.35.0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:12Z",
+            "lastTimestamp": "2026-07-12T14:21:12Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-controller-manager-article3-validation-control-plane.18c190be7e788537",
+                "namespace": "kube-system",
+                "uid": "d252b318-2a10-4eda-8d01-4cb73f1b93b3",
+                "resourceVersion": "98",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-controller-manager-article3-validation-control-plane",
+                "uid": "b904b0a64228b97fc70cb0ef5289d2d6",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-controller-manager}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:15Z",
+            "lastTimestamp": "2026-07-12T14:21:15Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-controller-manager-article3-validation-control-plane.18c190be94b14e23",
+                "namespace": "kube-system",
+                "uid": "d29a3236-8f54-4c01-ab30-adc39f256993",
+                "resourceVersion": "101",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-controller-manager-article3-validation-control-plane",
+                "uid": "b904b0a64228b97fc70cb0ef5289d2d6",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-controller-manager}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:15Z",
+            "lastTimestamp": "2026-07-12T14:21:15Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-controller-manager.18c190c0012342f7",
+                "namespace": "kube-system",
+                "uid": "624df665-5629-4c89-a988-fe3d497c0fa6",
+                "resourceVersion": "189",
+                "creationTimestamp": "2026-07-12T14:21:21Z"
+            },
+            "involvedObject": {
+                "kind": "Lease",
+                "namespace": "kube-system",
+                "name": "kube-controller-manager",
+                "uid": "41e2890e-fb6f-434d-bfd2-9108ea088ae0",
+                "apiVersion": "coordination.k8s.io/v1",
+                "resourceVersion": "186"
+            },
+            "reason": "LeaderElection",
+            "message": "article3-validation-control-plane_6b524d7b-b221-4074-8f1e-4c5c474636a4 became leader",
+            "source": {
+                "component": "kube-controller-manager"
+            },
+            "firstTimestamp": "2026-07-12T14:21:21Z",
+            "lastTimestamp": "2026-07-12T14:21:21Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kube-controller-manager",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-5q75v.18c190c30852a0e6",
+                "namespace": "kube-system",
+                "uid": "adc7a390-91be-4eae-824c-85589eedeecf",
+                "resourceVersion": "456",
+                "creationTimestamp": "2026-07-12T14:21:34Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-5q75v",
+                "uid": "8aedd00c-705a-4ff1-90c0-013f93b59aef",
+                "apiVersion": "v1",
+                "resourceVersion": "447"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/kube-proxy-5q75v to article3-validation-worker",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:21:34Z",
+            "lastTimestamp": "2026-07-12T14:21:34Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-5q75v.18c190c357ce1a19",
+                "namespace": "kube-system",
+                "uid": "47e3a037-9068-438c-ba15-6678ab585375",
+                "resourceVersion": "474",
+                "creationTimestamp": "2026-07-12T14:21:36Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-5q75v",
+                "uid": "8aedd00c-705a-4ff1-90c0-013f93b59aef",
+                "apiVersion": "v1",
+                "resourceVersion": "453",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/kube-proxy:v1.35.0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:21:36Z",
+            "lastTimestamp": "2026-07-12T14:21:36Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-5q75v.18c190c39ad0a75d",
+                "namespace": "kube-system",
+                "uid": "4853bf36-2b69-4feb-ada3-033ab465f704",
+                "resourceVersion": "477",
+                "creationTimestamp": "2026-07-12T14:21:37Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-5q75v",
+                "uid": "8aedd00c-705a-4ff1-90c0-013f93b59aef",
+                "apiVersion": "v1",
+                "resourceVersion": "453",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:21:37Z",
+            "lastTimestamp": "2026-07-12T14:21:37Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-5q75v.18c190c3b184a65d",
+                "namespace": "kube-system",
+                "uid": "b2776aac-7ef5-4a68-852d-f31fcf574c4f",
+                "resourceVersion": "478",
+                "creationTimestamp": "2026-07-12T14:21:37Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-5q75v",
+                "uid": "8aedd00c-705a-4ff1-90c0-013f93b59aef",
+                "apiVersion": "v1",
+                "resourceVersion": "453",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker"
+            },
+            "firstTimestamp": "2026-07-12T14:21:37Z",
+            "lastTimestamp": "2026-07-12T14:21:37Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-bs6hm.18c190c318c2fb63",
+                "namespace": "kube-system",
+                "uid": "388a7b60-f343-4c59-a767-049036d254b3",
+                "resourceVersion": "469",
+                "creationTimestamp": "2026-07-12T14:21:35Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-bs6hm",
+                "uid": "0f276871-72ff-466f-b4c9-53bfab8259f9",
+                "apiVersion": "v1",
+                "resourceVersion": "462"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/kube-proxy-bs6hm to article3-validation-worker2",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:21:35Z",
+            "lastTimestamp": "2026-07-12T14:21:35Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-bs6hm.18c190c3662d5a2a",
+                "namespace": "kube-system",
+                "uid": "8b78fdf8-16a9-4a01-a41b-96101c1ef82f",
+                "resourceVersion": "476",
+                "creationTimestamp": "2026-07-12T14:21:36Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-bs6hm",
+                "uid": "0f276871-72ff-466f-b4c9-53bfab8259f9",
+                "apiVersion": "v1",
+                "resourceVersion": "465",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/kube-proxy:v1.35.0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:21:36Z",
+            "lastTimestamp": "2026-07-12T14:21:36Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-bs6hm.18c190c3bb1fce47",
+                "namespace": "kube-system",
+                "uid": "685c8d55-0b3b-4708-85bb-c45c9c9a52cc",
+                "resourceVersion": "479",
+                "creationTimestamp": "2026-07-12T14:21:37Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-bs6hm",
+                "uid": "0f276871-72ff-466f-b4c9-53bfab8259f9",
+                "apiVersion": "v1",
+                "resourceVersion": "465",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:21:37Z",
+            "lastTimestamp": "2026-07-12T14:21:37Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-bs6hm.18c190c3c9e64f2d",
+                "namespace": "kube-system",
+                "uid": "4191cfa4-2745-45d8-9d77-97bc9c66d2fa",
+                "resourceVersion": "483",
+                "creationTimestamp": "2026-07-12T14:21:37Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-bs6hm",
+                "uid": "0f276871-72ff-466f-b4c9-53bfab8259f9",
+                "apiVersion": "v1",
+                "resourceVersion": "465",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-worker2"
+            },
+            "firstTimestamp": "2026-07-12T14:21:37Z",
+            "lastTimestamp": "2026-07-12T14:21:37Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-worker2"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-hqjn8.18c190c1a43295a0",
+                "namespace": "kube-system",
+                "uid": "b837e23f-3e01-4121-9191-5940eba5a12f",
+                "resourceVersion": "380",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-hqjn8",
+                "uid": "b4c06768-90ac-4b47-b29b-10ef5a6d2edc",
+                "apiVersion": "v1",
+                "resourceVersion": "374"
+            },
+            "reason": "Scheduled",
+            "message": "Successfully assigned kube-system/kube-proxy-hqjn8 to article3-validation-control-plane",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-hqjn8.18c190c1d13317aa",
+                "namespace": "kube-system",
+                "uid": "de375f76-0a96-407c-8624-a2f85aba2ecc",
+                "resourceVersion": "409",
+                "creationTimestamp": "2026-07-12T14:21:29Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-hqjn8",
+                "uid": "b4c06768-90ac-4b47-b29b-10ef5a6d2edc",
+                "apiVersion": "v1",
+                "resourceVersion": "378",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/kube-proxy:v1.35.0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:29Z",
+            "lastTimestamp": "2026-07-12T14:21:29Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-hqjn8.18c190c22d704d98",
+                "namespace": "kube-system",
+                "uid": "e4ffcc6b-b569-4e71-9968-feedba47b7b9",
+                "resourceVersion": "415",
+                "creationTimestamp": "2026-07-12T14:21:31Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-hqjn8",
+                "uid": "b4c06768-90ac-4b47-b29b-10ef5a6d2edc",
+                "apiVersion": "v1",
+                "resourceVersion": "378",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:31Z",
+            "lastTimestamp": "2026-07-12T14:21:31Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy-hqjn8.18c190c24394e8b4",
+                "namespace": "kube-system",
+                "uid": "94f60109-471a-477f-aab0-9ebf7e4a5353",
+                "resourceVersion": "416",
+                "creationTimestamp": "2026-07-12T14:21:31Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-proxy-hqjn8",
+                "uid": "b4c06768-90ac-4b47-b29b-10ef5a6d2edc",
+                "apiVersion": "v1",
+                "resourceVersion": "378",
+                "fieldPath": "spec.containers{kube-proxy}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:31Z",
+            "lastTimestamp": "2026-07-12T14:21:31Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy.18c190c1a07459c6",
+                "namespace": "kube-system",
+                "uid": "58784da1-e9c5-4436-8a94-6784189151e6",
+                "resourceVersion": "376",
+                "creationTimestamp": "2026-07-12T14:21:28Z"
+            },
+            "involvedObject": {
+                "kind": "DaemonSet",
+                "namespace": "kube-system",
+                "name": "kube-proxy",
+                "uid": "8920b43c-b27a-4197-b618-b4e21a72aaeb",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "297"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: kube-proxy-hqjn8",
+            "source": {
+                "component": "daemonset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:21:28Z",
+            "lastTimestamp": "2026-07-12T14:21:28Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "daemonset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy.18c190c306ded072",
+                "namespace": "kube-system",
+                "uid": "792d3903-13d6-45de-94b2-0f030b8cbbaa",
+                "resourceVersion": "451",
+                "creationTimestamp": "2026-07-12T14:21:34Z"
+            },
+            "involvedObject": {
+                "kind": "DaemonSet",
+                "namespace": "kube-system",
+                "name": "kube-proxy",
+                "uid": "8920b43c-b27a-4197-b618-b4e21a72aaeb",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "418"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: kube-proxy-5q75v",
+            "source": {
+                "component": "daemonset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:21:34Z",
+            "lastTimestamp": "2026-07-12T14:21:34Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "daemonset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-proxy.18c190c31722d828",
+                "namespace": "kube-system",
+                "uid": "1f35ecd1-d4f2-48c5-a733-8dc40dcf1e66",
+                "resourceVersion": "464",
+                "creationTimestamp": "2026-07-12T14:21:35Z"
+            },
+            "involvedObject": {
+                "kind": "DaemonSet",
+                "namespace": "kube-system",
+                "name": "kube-proxy",
+                "uid": "8920b43c-b27a-4197-b618-b4e21a72aaeb",
+                "apiVersion": "apps/v1",
+                "resourceVersion": "454"
+            },
+            "reason": "SuccessfulCreate",
+            "message": "Created pod: kube-proxy-bs6hm",
+            "source": {
+                "component": "daemonset-controller"
+            },
+            "firstTimestamp": "2026-07-12T14:21:34Z",
+            "lastTimestamp": "2026-07-12T14:21:34Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "daemonset-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "kube-scheduler-article3-validation-control-plane.18c190bdc0b0de77",
+                "namespace": "kube-system",
+                "uid": "bcacfa1d-f073-4af3-8812-b6e0a5a265f8",
+                "resourceVersion": "95",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-scheduler-article3-validation-control-plane",
+                "uid": "e165894bca000592fd08df6e147f7576",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-scheduler}"
+            },
+            "reason": "Pulled",
+            "message": "Container image \"registry.k8s.io/kube-scheduler:v1.35.0\" already present on machine and can be accessed by the pod",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:12Z",
+            "lastTimestamp": "2026-07-12T14:21:12Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-scheduler-article3-validation-control-plane.18c190be7166bf23",
+                "namespace": "kube-system",
+                "uid": "ff1aed65-6799-4dc2-9c55-5aadeeb62089",
+                "resourceVersion": "97",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-scheduler-article3-validation-control-plane",
+                "uid": "e165894bca000592fd08df6e147f7576",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-scheduler}"
+            },
+            "reason": "Created",
+            "message": "Container created",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:15Z",
+            "lastTimestamp": "2026-07-12T14:21:15Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-scheduler-article3-validation-control-plane.18c190be8e8484e7",
+                "namespace": "kube-system",
+                "uid": "1e8497bd-dcc8-4e25-980d-7a3005c12803",
+                "resourceVersion": "100",
+                "creationTimestamp": "2026-07-12T14:21:20Z"
+            },
+            "involvedObject": {
+                "kind": "Pod",
+                "namespace": "kube-system",
+                "name": "kube-scheduler-article3-validation-control-plane",
+                "uid": "e165894bca000592fd08df6e147f7576",
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{kube-scheduler}"
+            },
+            "reason": "Started",
+            "message": "Container started",
+            "source": {
+                "component": "kubelet",
+                "host": "article3-validation-control-plane"
+            },
+            "firstTimestamp": "2026-07-12T14:21:15Z",
+            "lastTimestamp": "2026-07-12T14:21:15Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "article3-validation-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "kube-scheduler.18c190c087418675",
+                "namespace": "kube-system",
+                "uid": "9ae1637f-1422-4bfa-ab03-2a50249888be",
+                "resourceVersion": "286",
+                "creationTimestamp": "2026-07-12T14:21:23Z"
+            },
+            "involvedObject": {
+                "kind": "Lease",
+                "namespace": "kube-system",
+                "name": "kube-scheduler",
+                "uid": "fd666d7a-6274-4393-845a-f02e0ae93950",
+                "apiVersion": "coordination.k8s.io/v1",
+                "resourceVersion": "284"
+            },
+            "reason": "LeaderElection",
+            "message": "article3-validation-control-plane_8da6d3cc-8ba1-4563-89c7-fab53b5d5f11 became leader",
+            "source": {
+                "component": "default-scheduler"
+            },
+            "firstTimestamp": "2026-07-12T14:21:23Z",
+            "lastTimestamp": "2026-07-12T14:21:23Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "default-scheduler",
+            "reportingInstance": ""
+        }
+    ]
+}

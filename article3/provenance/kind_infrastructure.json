@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "retrieved_at_utc": "2026-07-12T13:32:56Z",
+  "kind": {
+    "version": "v0.31.0",
+    "release_url": "https://github.com/kubernetes-sigs/kind/releases/tag/v0.31.0",
+    "kubernetes_version": "v1.35.0",
+    "node_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f"
+  },
+  "calico": {
+    "version": "v3.32.1",
+    "release_date": "2026-06-26",
+    "release_tag_commit": "0ca9d1b93644778cafdf1812f3dda02ac0c361e8",
+    "release_url": "https://github.com/projectcalico/calico/releases/tag/v3.32.1",
+    "documentation_url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/quickstart",
+    "manifest_url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.1/manifests/calico.yaml",
+    "manifest_bytes": 349572,
+    "manifest_sha256": "a1df919d9721cf667accdc3e72848911b0cb25cfab7d2478ad0c996302c95744",
+    "digest_pinned_manifest_sha256": "9af3df3e4f49e50befc3f9fb79778f41b1496c8e7ef5778f413e60d25ddf16f3",
+    "node_preload": {
+      "mechanism": "CRI pull by exact multi-architecture index digest; host resolves linux/amd64",
+      "attempts_per_node": 4,
+      "retry_seconds": [1, 2, 4, 8],
+      "verification": "crictl inspecti repoDigests contains exact reference and no generated import alias"
+    },
+    "images": {
+      "quay.io/calico/cni": "sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd",
+      "quay.io/calico/node": "sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3",
+      "quay.io/calico/kube-controllers": "sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612"
+    }
+  },
+  "network_policy_probe": {
+    "image": "docker.io/library/busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028",
+    "expected_sequence": ["allow_before_policy", "deny_with_empty_egress", "allow_after_delete"]
+  },
+  "profiles": {
+    "dev": {"cluster": "article3-dev", "nodes": 2, "cni": "kindnet"},
+    "validation": {"cluster": "article3-validation", "nodes": 3, "cni": "calico"},
+    "performance": {"cluster": "article3-performance", "nodes": 4, "cni": "calico", "minimum_available_memory_plus_swap_kib": 2097152}
+  }
+}

@@ -1,0 +1,9 @@
+ownership verified: article3-dev (2 nodes)
+WARNING: version difference between client (1.32) and server (1.35) exceeds the supported minor version skew of +/-1
+node/article3-dev-control-plane condition met
+node/article3-dev-worker condition met
+pod/server created
+pod/client created
+pod/server condition met
+pod/client condition met
+Kind profile validated: profile=dev cluster=article3-dev nodes=2 cni=kindnet network_policy=PASS

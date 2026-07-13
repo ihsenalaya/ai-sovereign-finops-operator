@@ -1,0 +1,46 @@
+LAST SEEN   TYPE      REASON              OBJECT                                                 MESSAGE
+3m30s       Normal    LeaderElection      lease/kube-controller-manager                          article3-validation-control-plane_adcc19d6-a646-4347-9941-73ddf1055a4d became leader
+3m25s       Warning   Unhealthy           pod/kube-scheduler-article3-validation-control-plane   Readiness probe failed: HTTP probe failed with statuscode: 500
+3m24s       Normal    Scheduled           pod/kube-proxy-wt4p9                                   Successfully assigned kube-system/kube-proxy-wt4p9 to article3-validation-control-plane
+3m24s       Normal    LeaderElection      lease/kube-scheduler                                   article3-validation-control-plane_89aafd33-a72e-4b5b-b083-bbec02d21e96 became leader
+3m24s       Normal    ScalingReplicaSet   deployment/coredns                                     Scaled up replica set coredns-7d764666f9 from 0 to 2
+3m24s       Normal    SuccessfulCreate    daemonset/kube-proxy                                   Created pod: kube-proxy-wt4p9
+3m23s       Normal    Pulled              pod/kube-proxy-wt4p9                                   Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+3m23s       Warning   FailedScheduling    pod/coredns-7d764666f9-4t8dj                           0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+3m23s       Normal    SuccessfulCreate    replicaset/coredns-7d764666f9                          Created pod: coredns-7d764666f9-4t8dj
+3m23s       Normal    SuccessfulCreate    replicaset/coredns-7d764666f9                          Created pod: coredns-7d764666f9-qgh7w
+3m23s       Warning   FailedScheduling    pod/coredns-7d764666f9-qgh7w                           0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+3m22s       Normal    Created             pod/kube-proxy-wt4p9                                   Container created
+3m22s       Normal    Started             pod/kube-proxy-wt4p9                                   Container started
+3m20s       Normal    Scheduled           pod/kube-proxy-mjxnf                                   Successfully assigned kube-system/kube-proxy-mjxnf to article3-validation-worker2
+3m20s       Normal    SuccessfulCreate    daemonset/kube-proxy                                   Created pod: kube-proxy-mjxnf
+3m19s       Normal    Scheduled           pod/kube-proxy-gdg9p                                   Successfully assigned kube-system/kube-proxy-gdg9p to article3-validation-worker
+3m19s       Normal    SuccessfulCreate    daemonset/kube-proxy                                   Created pod: kube-proxy-gdg9p
+3m18s       Normal    Pulled              pod/kube-proxy-mjxnf                                   Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+3m18s       Normal    Pulled              pod/kube-proxy-gdg9p                                   Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+3m17s       Normal    Started             pod/kube-proxy-mjxnf                                   Container started
+3m17s       Normal    Created             pod/kube-proxy-mjxnf                                   Container created
+3m17s       Normal    Started             pod/kube-proxy-gdg9p                                   Container started
+3m17s       Normal    Created             pod/kube-proxy-gdg9p                                   Container created
+2m2s        Normal    NoPods              poddisruptionbudget/calico-kube-controllers            No matching pods found
+2m1s        Normal    Scheduled           pod/calico-node-kwzds                                  Successfully assigned kube-system/calico-node-kwzds to article3-validation-worker
+2m1s        Warning   FailedScheduling    pod/calico-kube-controllers-77bdb5dddb-xslvd           0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
+2m1s        Normal    SuccessfulCreate    replicaset/calico-kube-controllers-77bdb5dddb          Created pod: calico-kube-controllers-77bdb5dddb-xslvd
+2m1s        Normal    SuccessfulCreate    daemonset/calico-node                                  Created pod: calico-node-26qw4
+2m1s        Normal    ScalingReplicaSet   deployment/calico-kube-controllers                     Scaled up replica set calico-kube-controllers-77bdb5dddb from 0 to 1
+2m1s        Normal    Scheduled           pod/calico-node-26qw4                                  Successfully assigned kube-system/calico-node-26qw4 to article3-validation-control-plane
+2m1s        Normal    Scheduled           pod/calico-node-xsmbp                                  Successfully assigned kube-system/calico-node-xsmbp to article3-validation-worker2
+2m1s        Normal    SuccessfulCreate    daemonset/calico-node                                  Created pod: calico-node-kwzds
+2m1s        Normal    SuccessfulCreate    daemonset/calico-node                                  Created pod: calico-node-xsmbp
+2m          Normal    Pulling             pod/calico-node-26qw4                                  Pulling image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd"
+2m          Normal    Pulling             pod/calico-node-kwzds                                  Pulling image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd"
+2m          Normal    Pulling             pod/calico-node-xsmbp                                  Pulling image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd"
+2s          Warning   Failed              pod/calico-node-xsmbp                                  Error: failed to check if this is a checkpoint image: failed to get image from containerd "sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4": image "docker.io/library/import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd": not found
+2s          Normal    Pulled              pod/calico-node-xsmbp                                  Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod
+13s         Warning   Failed              pod/calico-node-26qw4                                  Error: failed to check if this is a checkpoint image: failed to get image from containerd "sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4": image "docker.io/library/import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd": not found
+119s        Normal    Pulled              pod/calico-node-26qw4                                  Successfully pulled image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" in 1.246s (1.246s including waiting). Image size: 69661799 bytes.
+119s        Normal    Pulled              pod/calico-node-xsmbp                                  Successfully pulled image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" in 1.176s (1.176s including waiting). Image size: 69661799 bytes.
+119s        Normal    Pulled              pod/calico-node-kwzds                                  Successfully pulled image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" in 1.243s (1.243s including waiting). Image size: 69661799 bytes.
+11s         Warning   Failed              pod/calico-node-kwzds                                  Error: failed to check if this is a checkpoint image: failed to get image from containerd "sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4": image "docker.io/library/import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd": not found
+13s         Normal    Pulled              pod/calico-node-26qw4                                  Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod
+11s         Normal    Pulled              pod/calico-node-kwzds                                  Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod

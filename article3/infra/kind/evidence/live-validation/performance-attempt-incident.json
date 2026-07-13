@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "profile": "performance",
+  "cluster": "article3-performance",
+  "outcome": "invalid_infrastructure_attempt_interrupted_before_calico_apply",
+  "scientific_evidence": false,
+  "started_environment": {
+    "memory_total_gib_reported": 7.4,
+    "memory_used_gib_reported": 6.0,
+    "memory_available_gib_reported": 1.2,
+    "swap_total_gib_reported": 2.0,
+    "swap_free_gib_reported": 0.0
+  },
+  "pressure_observation": {
+    "memory_used_gib_reported": 6.5,
+    "memory_free_mib_reported": 63,
+    "memory_available_mib_reported": 640,
+    "swap_free_gib_reported": 0.0,
+    "docker_exec_responsive": false
+  },
+  "last_verified_step": "first Calico CNI CRI pull returned image config sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4",
+  "ownership_record_finalized": false,
+  "partial_log": "performance-create-cri.log",
+  "partial_log_sha256": "8c143c273704e13c7fa6456ce246524a1dde9d32a2576482f357b87364be3f84",
+  "root_cause": "insufficient Docker/WSL memory headroom while dev and validation profiles remained live; the four-node bootstrap exhausted available memory and swap during sequential CRI pulls",
+  "corrective_action": "performance creation now fails closed below 2097152 KiB MemAvailable plus SwapFree; retry only after the failed temporary cluster is removed and verified profiles are quiesced"
+}

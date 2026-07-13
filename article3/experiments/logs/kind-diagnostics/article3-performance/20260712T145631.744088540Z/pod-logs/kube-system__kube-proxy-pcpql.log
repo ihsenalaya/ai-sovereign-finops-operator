@@ -1,0 +1,23 @@
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:11.973372       1 shared_informer.go:370] "Waiting for caches to sync"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.074348       1 shared_informer.go:377] "Caches are synced"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.074452       1 server.go:218] "Successfully retrieved NodeIPs" NodeIPs=["172.18.0.6"]
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.074813       1 conntrack.go:115] "Set sysctl" entry="net/netfilter/nf_conntrack_tcp_timeout_established" value=86400
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.075048       1 conntrack.go:115] "Set sysctl" entry="net/netfilter/nf_conntrack_tcp_timeout_close_wait" value=3600
+[pod/kube-proxy-pcpql/kube-proxy] E0712 14:47:12.075151       1 server.go:255] "Kube-proxy configuration may be incomplete or incorrect" err="nodePortAddresses is unset; NodePort connections will be accepted on all local IPs. Consider using `--nodeport-addresses primary`"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.150038       1 server.go:264] "kube-proxy running in dual-stack mode" primary ipFamily="IPv4"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.150179       1 server_linux.go:136] "Using iptables Proxier"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.167229       1 proxier.go:242] "Setting route_localnet=1 to allow node-ports on localhost; to change this either disable iptables.localhostNodePorts (--iptables-localhost-nodeports) or set nodePortAddresses (--nodeport-addresses) to filter loopback addresses" ipFamily="IPv4"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.168428       1 server.go:529] "Version info" version="v1.35.0"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.168563       1 server.go:531] "Golang settings" GOGC="" GOMAXPROCS="" GOTRACEBACK=""
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.172469       1 config.go:200] "Starting service config controller"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.172869       1 config.go:106] "Starting endpoint slice config controller"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.180066       1 shared_informer.go:349] "Waiting for caches to sync" controller="endpoint slice config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.180507       1 shared_informer.go:356] "Caches are synced" controller="endpoint slice config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.172890       1 config.go:403] "Starting serviceCIDR config controller"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.181561       1 shared_informer.go:349] "Waiting for caches to sync" controller="serviceCIDR config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.173917       1 config.go:309] "Starting node config controller"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.181815       1 shared_informer.go:349] "Waiting for caches to sync" controller="node config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.181828       1 shared_informer.go:356] "Caches are synced" controller="node config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.179038       1 shared_informer.go:349] "Waiting for caches to sync" controller="service config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.184191       1 shared_informer.go:356] "Caches are synced" controller="service config"
+[pod/kube-proxy-pcpql/kube-proxy] I0712 14:47:12.282956       1 shared_informer.go:356] "Caches are synced" controller="serviceCIDR config"

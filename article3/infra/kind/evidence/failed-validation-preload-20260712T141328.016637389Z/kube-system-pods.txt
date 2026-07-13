@@ -1,0 +1,14 @@
+NAME                                                        READY   STATUS                      RESTARTS   AGE     IP           NODE                                NOMINATED NODE   READINESS GATES
+calico-kube-controllers-77bdb5dddb-xslvd                    0/1     Pending                     0          2m      <none>       <none>                              <none>           <none>
+calico-node-26qw4                                           0/1     Init:CreateContainerError   0          2m      172.18.0.9   article3-validation-control-plane   <none>           <none>
+calico-node-kwzds                                           0/1     Init:CreateContainerError   0          2m      172.18.0.7   article3-validation-worker          <none>           <none>
+calico-node-xsmbp                                           0/1     Init:CreateContainerError   0          2m      172.18.0.8   article3-validation-worker2         <none>           <none>
+coredns-7d764666f9-4t8dj                                    0/1     Pending                     0          3m22s   <none>       <none>                              <none>           <none>
+coredns-7d764666f9-qgh7w                                    0/1     Pending                     0          3m22s   <none>       <none>                              <none>           <none>
+etcd-article3-validation-control-plane                      1/1     Running                     0          3m31s   172.18.0.9   article3-validation-control-plane   <none>           <none>
+kube-apiserver-article3-validation-control-plane            1/1     Running                     0          3m31s   172.18.0.9   article3-validation-control-plane   <none>           <none>
+kube-controller-manager-article3-validation-control-plane   1/1     Running                     0          3m31s   172.18.0.9   article3-validation-control-plane   <none>           <none>
+kube-proxy-gdg9p                                            1/1     Running                     0          3m18s   172.18.0.7   article3-validation-worker          <none>           <none>
+kube-proxy-mjxnf                                            1/1     Running                     0          3m19s   172.18.0.8   article3-validation-worker2         <none>           <none>
+kube-proxy-wt4p9                                            1/1     Running                     0          3m23s   172.18.0.9   article3-validation-control-plane   <none>           <none>
+kube-scheduler-article3-validation-control-plane            1/1     Running                     0          3m31s   172.18.0.9   article3-validation-control-plane   <none>           <none>

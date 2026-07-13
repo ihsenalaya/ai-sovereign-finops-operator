@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-"${ROOT_DIR}/destroy.sh"
-"${ROOT_DIR}/create.sh"
+KIND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROFILE="${PROFILE:-validation}"
+export PROFILE
+bash "${KIND_DIR}/destroy.sh"
+bash "${KIND_DIR}/create.sh"

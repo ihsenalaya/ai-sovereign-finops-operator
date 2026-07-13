@@ -1,0 +1,60 @@
+2026-07-12T14:18:59.308265179Z stdout F 2026-07-12 14:18:59.306 [INFO][1] typha/cmdwrapper.go 56: Starting /usr/bin/kube-controllers
+2026-07-12T14:18:59.866387898Z stderr F 2026-07-12 14:18:59.863 [INFO][20] kube-controllers/main.go 113: Loaded configuration from environment config=&config.Config{LogLevel:"info", WorkloadEndpointWorkers:1, ProfileWorkers:1, PolicyWorkers:1, NodeWorkers:1, Kubeconfig:"", DatastoreType:"kubernetes"}
+2026-07-12T14:18:59.870672068Z stderr F 2026-07-12 14:18:59.867 [INFO][20] kube-controllers/discovery.go 46: No explicit Calico API group configured, attempting to auto-discover
+2026-07-12T14:18:59.937218801Z stderr F 2026-07-12 14:18:59.936 [INFO][20] kube-controllers/discovery.go 74: Auto-discovered Calico API groups v1present=true v3present=false
+2026-07-12T14:18:59.937252056Z stderr F 2026-07-12 14:18:59.936 [INFO][20] kube-controllers/client.go 85: Using API group for CRD backend apiGroup="crd.projectcalico.org/v1"
+2026-07-12T14:18:59.941780006Z stderr F 2026-07-12 14:18:59.939 [INFO][20] kube-controllers/main.go 137: Ensuring Calico datastore is initialized
+2026-07-12T14:19:00.003390801Z stderr F I0712 14:19:00.000294      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:00.017703879Z stderr F I0712 14:19:00.017389      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:00.04508948Z stderr F I0712 14:19:00.043942      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:00.045178164Z stderr F 2026-07-12 14:19:00.044 [INFO][20] kube-controllers/main.go 162: Calico datastore is initialized
+2026-07-12T14:19:00.050982039Z stderr F 2026-07-12 14:19:00.045 [INFO][20] kube-controllers/main.go 201: Getting initial config snapshot from datastore
+2026-07-12T14:19:00.129717611Z stderr F 2026-07-12 14:19:00.129 [INFO][20] kube-controllers/main.go 204: Got initial config snapshot
+2026-07-12T14:19:00.132524194Z stderr F 2026-07-12 14:19:00.132 [INFO][20] kube-controllers/resources.go 405: Main client watcher loop
+2026-07-12T14:19:00.133061942Z stderr F 2026-07-12 14:19:00.132 [INFO][20] kube-controllers/discovery.go 46: No explicit Calico API group configured, attempting to auto-discover
+2026-07-12T14:19:00.153407382Z stderr F 2026-07-12 14:19:00.152 [INFO][20] kube-controllers/discovery.go 74: Auto-discovered Calico API groups v1present=true v3present=false
+2026-07-12T14:19:00.156254213Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 218: Starting status report routine
+2026-07-12T14:19:00.156282731Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 227: Starting Prometheus metrics server on port 9094
+2026-07-12T14:19:00.156288636Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0005441e0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004e4140), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc000820480), objectType:(*v1.Pod)(0xc000850508), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(0x24b3260)}
+2026-07-12T14:19:00.156564056Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0005442a0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004e4190), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc0008204b0), objectType:(*v1.Node)(0xc000615888), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(nil)}
+2026-07-12T14:19:00.156676599Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0005442c0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004e41e0), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc0008204e0), objectType:(*v1.Service)(0xc000852288), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(nil)}
+2026-07-12T14:19:00.156684948Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0005443e0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004e4280), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc000820510), objectType:(*v1.Namespace)(0xc00083e6e0), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(nil)}
+2026-07-12T14:19:00.156689926Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="Node"
+2026-07-12T14:19:00.156694574Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="LoadBalancer"
+2026-07-12T14:19:00.156698274Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="NetworkPolicyMigrator"
+2026-07-12T14:19:00.156702115Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="DatastoreMigration"
+2026-07-12T14:19:00.156708518Z stderr F 2026-07-12 14:19:00.156 [INFO][20] kube-controllers/controller.go 169: Starting Node controller
+2026-07-12T14:19:00.156733565Z stderr F I0712 14:19:00.156111      20 shared_informer.go:349] "Waiting for caches to sync" controller="nodes"
+2026-07-12T14:19:00.156744267Z stderr F 2026-07-12 14:19:00.155 [INFO][20] kube-controllers/syncer.go 101: Starting syncer
+2026-07-12T14:19:00.157435393Z stderr F 2026-07-12 14:19:00.156 [INFO][20] kube-controllers/watchersyncer.go 118: Start called
+2026-07-12T14:19:00.157449647Z stderr F 2026-07-12 14:19:00.156 [INFO][20] kube-controllers/watchersyncer.go 158: Sending status update Status=wait-for-ready
+2026-07-12T14:19:00.157454305Z stderr F 2026-07-12 14:19:00.156 [INFO][20] kube-controllers/syncer.go 117: Node controller syncer status updated: wait-for-ready
+2026-07-12T14:19:00.157458464Z stderr F 2026-07-12 14:19:00.156 [INFO][20] kube-controllers/policy_name_migrator.go 132: Starting policy migration controller
+2026-07-12T14:19:00.158953068Z stderr F 2026-07-12 14:19:00.157 [INFO][20] kube-controllers/deferred.go 63: Waiting for CRD to become established crd="datastoremigrations.migration.projectcalico.org"
+2026-07-12T14:19:00.233752526Z stderr F I0712 14:19:00.232857      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:00.258901577Z stderr F I0712 14:19:00.258588      20 shared_informer.go:356] "Caches are synced" controller="nodes"
+2026-07-12T14:19:00.259127174Z stderr F I0712 14:19:00.259020      20 shared_informer.go:349] "Waiting for caches to sync" controller="pods"
+2026-07-12T14:19:00.259488745Z stderr F I0712 14:19:00.259225      20 shared_informer.go:356] "Caches are synced" controller="pods"
+2026-07-12T14:19:00.260100988Z stderr F 2026-07-12 14:19:00.259 [INFO][20] kube-controllers/hostendpoints.go 150: Will run periodic HostEndpoint sync every 5m0s
+2026-07-12T14:19:00.260642183Z stderr F 2026-07-12 14:19:00.260 [INFO][20] kube-controllers/ipam.go 361: Will run periodic IPAM sync every 7m30s
+2026-07-12T14:19:00.262540028Z stderr F 2026-07-12 14:19:00.260 [INFO][20] kube-controllers/loadbalancer_controller.go 249: Will run periodic IPAM sync every 5m0s
+2026-07-12T14:19:00.262561254Z stderr F 2026-07-12 14:19:00.260 [INFO][20] kube-controllers/ipam.go 2561: Upgrading any IPAM affinities from older versions.... node="load-balancer"
+2026-07-12T14:19:00.280101915Z stderr F I0712 14:19:00.279761      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:00.289332498Z stderr F 2026-07-12 14:19:00.288 [INFO][20] kube-controllers/ipam.go 2617: No affinities needed to be upgraded.
+2026-07-12T14:19:00.312915448Z stderr F I0712 14:19:00.312656      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:05.255795252Z stderr F 2026-07-12 14:19:05.249 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2
+2026-07-12T14:19:10.265396616Z stderr F 2026-07-12 14:19:10.264 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2
+2026-07-12T14:19:10.405414517Z stderr F I0712 14:19:10.404941      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:10.422953044Z stderr F I0712 14:19:10.422446      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:10.45517149Z stderr F I0712 14:19:10.453329      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:15.294769017Z stderr F 2026-07-12 14:19:15.294 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2
+2026-07-12T14:19:20.30914775Z stderr F 2026-07-12 14:19:20.308 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2
+2026-07-12T14:19:20.534165223Z stderr F I0712 14:19:20.532090      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:20.553077917Z stderr F I0712 14:19:20.552902      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:20.572516622Z stderr F I0712 14:19:20.572177      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:25.280843105Z stderr F 2026-07-12 14:19:25.279 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2
+2026-07-12T14:19:30.308074565Z stderr F 2026-07-12 14:19:30.307 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2
+2026-07-12T14:19:30.5820913Z stderr F I0712 14:19:30.581711      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:30.596601141Z stderr F I0712 14:19:30.595647      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:30.62144706Z stderr F I0712 14:19:30.621079      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12T14:19:35.371104871Z stderr F 2026-07-12 14:19:35.360 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=2

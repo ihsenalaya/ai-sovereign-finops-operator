@@ -1,0 +1,41 @@
+Creating cluster "article3-validation" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦 📦 📦   ...
+ ✓ Preparing nodes 📦 📦 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-article3-validation"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-article3-validation --kubeconfig /tmp/article3-kind-kubeconfig.1J6xFV
+
+Thanks for using kind! 😊
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0 30  341k   30  104k    0     0  56515      0  0:00:06  0:00:01  0:00:05 56498 88  341k   88  303k    0     0   104k      0  0:00:03  0:00:02  0:00:01  104k100  341k  100  341k    0     0   113k      0  0:00:03  0:00:03 --:--:--  113k
+/tmp/article3-calico-raw.NczHZq: OK
+/tmp/article3-calico-pinned.ftncJ0: OK
+import 2026 07 12@sha256:bb1567e3ed81e2e	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+Importing	elapsed: 5.8 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.10/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+creation failed; deleting only newly-created article3-validation

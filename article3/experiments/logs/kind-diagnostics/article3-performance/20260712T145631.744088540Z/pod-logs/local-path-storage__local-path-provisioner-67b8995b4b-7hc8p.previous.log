@@ -1,0 +1,1 @@
+Error from server (BadRequest): previous terminated container "local-path-provisioner" in pod "local-path-provisioner-67b8995b4b-7hc8p" not found

@@ -1,0 +1,23 @@
+ownership verified: article3-dev (2 nodes)
+600 /home/ihsen/.local/state/article3-q1-recovery/kind/article3-dev.json
+79e22a252385af59bb8daef365ee5e5f37b58c8c7bb511fb66a7f3b23e95a791  /home/ihsen/.local/state/article3-q1-recovery/kind/article3-dev.json
+ownership verified: article3-validation (3 nodes)
+600 /home/ihsen/.local/state/article3-q1-recovery/kind/article3-validation.json
+438e97e559187b7b03d3d68b08adc32de671f126f718fe8281a70965ca992f0f  /home/ihsen/.local/state/article3-q1-recovery/kind/article3-validation.json
+ownership verified: article3-performance (4 nodes)
+600 /home/ihsen/.local/state/article3-q1-recovery/kind/article3-performance.json
+bfdb330c9b16786d5381cd9e8a447a9489d1e5708809938da6b726cf2ec14097  /home/ihsen/.local/state/article3-q1-recovery/kind/article3-performance.json
+running_article3_nodes:
+article3-dev-control-plane
+article3-dev-worker
+article3-validation-control-plane
+article3-validation-worker
+article3-validation-worker2
+all_kind_clusters:
+article3-dev
+article3-performance
+article3-validation
+gov-ar
+greenops
+dev api_readyz=PASS
+validation api_readyz=PASS

@@ -1,0 +1,97 @@
+==== START logs for container calico-kube-controllers of pod kube-system/calico-kube-controllers-77bdb5dddb-mnzxq ====
+2026-07-12 14:55:56.665 [INFO][1] typha/cmdwrapper.go 56: Starting /usr/bin/kube-controllers
+2026-07-12 14:55:57.083 [INFO][20] kube-controllers/main.go 113: Loaded configuration from environment config=&config.Config{LogLevel:"info", WorkloadEndpointWorkers:1, ProfileWorkers:1, PolicyWorkers:1, NodeWorkers:1, Kubeconfig:"", DatastoreType:"kubernetes"}
+2026-07-12 14:55:57.087 [INFO][20] kube-controllers/discovery.go 46: No explicit Calico API group configured, attempting to auto-discover
+2026-07-12 14:55:57.145 [INFO][20] kube-controllers/discovery.go 74: Auto-discovered Calico API groups v1present=true v3present=false
+2026-07-12 14:55:57.146 [INFO][20] kube-controllers/client.go 85: Using API group for CRD backend apiGroup="crd.projectcalico.org/v1"
+2026-07-12 14:55:57.148 [INFO][20] kube-controllers/main.go 137: Ensuring Calico datastore is initialized
+I0712 14:55:57.200839      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:55:57.241075      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:55:57.271818      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12 14:55:57.271 [INFO][20] kube-controllers/main.go 162: Calico datastore is initialized
+2026-07-12 14:55:57.272 [INFO][20] kube-controllers/main.go 201: Getting initial config snapshot from datastore
+2026-07-12 14:55:57.374 [INFO][20] kube-controllers/main.go 204: Got initial config snapshot
+2026-07-12 14:55:57.376 [INFO][20] kube-controllers/resources.go 405: Main client watcher loop
+2026-07-12 14:55:57.377 [INFO][20] kube-controllers/discovery.go 46: No explicit Calico API group configured, attempting to auto-discover
+2026-07-12 14:55:57.385 [INFO][20] kube-controllers/discovery.go 74: Auto-discovered Calico API groups v1present=true v3present=false
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 218: Starting status report routine
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 227: Starting Prometheus metrics server on port 9094
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0001a80e0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004d6050), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc000706660), objectType:(*v1.Pod)(0xc00028c508), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(0x24b3260)}
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0001a81e0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004d60a0), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc000706690), objectType:(*v1.Node)(0xc000391508), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(nil)}
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0001a8300), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004d6410), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc0007066e0), objectType:(*v1.Service)(0xc000800a08), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(nil)}
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 628: Starting informer informer=&cache.sharedIndexInformer{indexer:(*cache.cache)(0xc0001a8be0), controller:cache.Controller(nil), processor:(*cache.sharedProcessor)(0xc0004d6460), cacheMutationDetector:cache.dummyMutationDetector{}, listerWatcher:(*cache.listWatcherWithWatchListSemanticsWrapper)(0xc000706710), objectType:(*v1.Namespace)(0xc0003dc160), objectDescription:"", resyncCheckPeriod:0, defaultEventHandlerResyncPeriod:0, clock:(*clock.RealClock)(0x4cad640), started:false, stopped:false, startedLock:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, blockDeltas:sync.Mutex{_:sync.noCopy{}, mu:sync.Mutex{state:0, sema:0x0}}, watchErrorHandler:(cache.WatchErrorHandlerWithContext)(nil), transform:(cache.TransformFunc)(nil)}
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="Node"
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="LoadBalancer"
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="NetworkPolicyMigrator"
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/main.go 634: Starting controller ControllerType="DatastoreMigration"
+2026-07-12 14:55:57.388 [INFO][20] kube-controllers/policy_name_migrator.go 132: Starting policy migration controller
+2026-07-12 14:55:57.388 [INFO][20] kube-controllers/controller.go 169: Starting Node controller
+I0712 14:55:57.388856      20 shared_informer.go:349] "Waiting for caches to sync" controller="nodes"
+2026-07-12 14:55:57.387 [INFO][20] kube-controllers/syncer.go 101: Starting syncer
+2026-07-12 14:55:57.389 [INFO][20] kube-controllers/watchersyncer.go 118: Start called
+2026-07-12 14:55:57.389 [INFO][20] kube-controllers/watchersyncer.go 158: Sending status update Status=wait-for-ready
+2026-07-12 14:55:57.389 [INFO][20] kube-controllers/syncer.go 117: Node controller syncer status updated: wait-for-ready
+2026-07-12 14:55:57.389 [INFO][20] kube-controllers/deferred.go 63: Waiting for CRD to become established crd="datastoremigrations.migration.projectcalico.org"
+I0712 14:55:57.438594      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12 14:55:57.494 [INFO][20] kube-controllers/loadbalancer_controller.go 249: Will run periodic IPAM sync every 5m0s
+2026-07-12 14:55:57.494 [INFO][20] kube-controllers/ipam.go 2561: Upgrading any IPAM affinities from older versions.... node="load-balancer"
+I0712 14:55:57.496533      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:55:57.501785      20 shared_informer.go:356] "Caches are synced" controller="nodes"
+I0712 14:55:57.501830      20 shared_informer.go:349] "Waiting for caches to sync" controller="pods"
+I0712 14:55:57.501839      20 shared_informer.go:356] "Caches are synced" controller="pods"
+2026-07-12 14:55:57.501 [INFO][20] kube-controllers/hostendpoints.go 150: Will run periodic HostEndpoint sync every 5m0s
+2026-07-12 14:55:57.501 [INFO][20] kube-controllers/ipam.go 361: Will run periodic IPAM sync every 7m30s
+2026-07-12 14:55:57.502 [INFO][20] kube-controllers/ipam.go 2617: No affinities needed to be upgraded.
+I0712 14:55:57.522002      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12 14:56:02.396 [INFO][20] kube-controllers/policy_name_migrator.go 330: Waiting for all calico-node pods to be available numberUnavailable=1
+2026-07-12 14:56:07.407 [INFO][20] kube-controllers/policy_name_migrator.go 340: All calico-node pods are up-to-date
+2026-07-12 14:56:07.407 [INFO][20] kube-controllers/policy_name_migrator.go 155: Syncer status updated: wait-for-ready
+2026-07-12 14:56:07.407 [INFO][20] kube-controllers/watchersyncer.go 177: Starting main event processing loop
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/hostendpoints"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/globalnetworkpolicies"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/stagedglobalnetworkpolicies"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../ipam/v2/assignment/"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/networkpolicies"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/nodes"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/clusterinformations"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/ippools"
+2026-07-12 14:56:07.408 [INFO][20] kube-controllers/watchercache.go 243: Full resync is required ListRoot=".../v3/pc.org/stagednetworkpolicies"
+2026-07-12 14:56:07.413 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../ipam/v2/assignment/"
+2026-07-12 14:56:07.413 [INFO][20] kube-controllers/watchersyncer.go 158: Sending status update Status=resync
+2026-07-12 14:56:07.413 [INFO][20] kube-controllers/syncer.go 117: Node controller syncer status updated: resync
+2026-07-12 14:56:07.414 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.414 [INFO][20] kube-controllers/policy_name_migrator.go 155: Syncer status updated: resync
+2026-07-12 14:56:07.414 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/stagedglobalnetworkpolicies"
+2026-07-12 14:56:07.414 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.414 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/hostendpoints"
+2026-07-12 14:56:07.415 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.415 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/networkpolicies"
+2026-07-12 14:56:07.415 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.417 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/nodes"
+2026-07-12 14:56:07.417 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.418 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/globalnetworkpolicies"
+2026-07-12 14:56:07.418 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/ippools"
+2026-07-12 14:56:07.418 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/stagednetworkpolicies"
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchercache.go 448: Sending synced update ListRoot=".../v3/pc.org/clusterinformations"
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchersyncer.go 243: Received InSync event from one of the watcher caches
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchersyncer.go 255: All watchers have sync'd data - sending data and final sync
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/watchersyncer.go 158: Sending status update Status=in-sync
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/syncer.go 117: Node controller syncer status updated: in-sync
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/policy_name_migrator.go 155: Syncer status updated: in-sync
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/hostendpoints.go 186: Syncer is InSync, kicking sync channel status=in-sync
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/hostendpoints.go 259: Syncing all HostEndpoints
+2026-07-12 14:56:07.419 [INFO][20] kube-controllers/loadbalancer_controller.go 283: Syncer is InSync, kicking sync channel status=in-sync
+I0712 14:56:07.547485      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:07.566398      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:07.583745      20 warnings.go:107] "Warning: unknown field \"status\""
+2026-07-12 14:56:08.414 [INFO][20] kube-controllers/ipam.go 428: Syncer is InSync, kicking sync channel status=in-sync
+I0712 14:56:17.615235      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:17.641543      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:17.655322      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:27.731013      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:27.745951      20 warnings.go:107] "Warning: unknown field \"status\""
+I0712 14:56:27.763490      20 warnings.go:107] "Warning: unknown field \"status\""
+==== END logs for container calico-kube-controllers of pod kube-system/calico-kube-controllers-77bdb5dddb-mnzxq ====

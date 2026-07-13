@@ -1,0 +1,4 @@
+ownership verified: article3-dev (2 nodes)
+WARNING: version difference between client (1.32) and server (1.35) exceeds the supported minor version skew of +/-1
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+/mnt/c/Users/Ihsen/Documents/kubebuilder/ai-sovereign-finops-operator-article3/article3/experiments/logs/kind-diagnostics/article3-dev/20260712T140645.688197713Z

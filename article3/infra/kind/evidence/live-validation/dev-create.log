@@ -1,0 +1,31 @@
+Creating cluster "article3-dev" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦 📦   ...
+ ✓ Preparing nodes 📦 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-article3-dev"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-article3-dev --kubeconfig /tmp/article3-kind-kubeconfig.sC48mS
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+ownership verified: article3-dev (2 nodes)
+node/article3-dev-control-plane condition met
+node/article3-dev-worker condition met
+Kubernetes control plane is running at https://127.0.0.1:33113
+CoreDNS is running at https://127.0.0.1:33113/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+NAME                         STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                     CONTAINER-RUNTIME
+article3-dev-control-plane   Ready    control-plane   37s   v1.35.0   172.18.0.5    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+article3-dev-worker          Ready    <none>          27s   v1.35.0   172.18.0.6    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0

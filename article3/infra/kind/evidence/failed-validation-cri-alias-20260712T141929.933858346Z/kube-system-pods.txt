@@ -1,0 +1,14 @@
+NAME                                                        READY   STATUS                      RESTARTS   AGE     IP             NODE                                NOMINATED NODE   READINESS GATES
+calico-kube-controllers-77bdb5dddb-2gq5m                    1/1     Running                     0          92s     192.168.59.3   article3-validation-worker          <none>           <none>
+calico-node-5j7wr                                           1/1     Running                     0          92s     172.18.0.7     article3-validation-worker          <none>           <none>
+calico-node-qzhqx                                           0/1     Init:CreateContainerError   0          92s     172.18.0.9     article3-validation-worker2         <none>           <none>
+calico-node-vqssh                                           0/1     Init:CreateContainerError   0          92s     172.18.0.8     article3-validation-control-plane   <none>           <none>
+coredns-7d764666f9-9cndd                                    1/1     Running                     0          3m1s    192.168.59.2   article3-validation-worker          <none>           <none>
+coredns-7d764666f9-ss7x2                                    1/1     Running                     0          3m1s    192.168.59.1   article3-validation-worker          <none>           <none>
+etcd-article3-validation-control-plane                      1/1     Running                     0          3m8s    172.18.0.8     article3-validation-control-plane   <none>           <none>
+kube-apiserver-article3-validation-control-plane            1/1     Running                     0          3m10s   172.18.0.8     article3-validation-control-plane   <none>           <none>
+kube-controller-manager-article3-validation-control-plane   1/1     Running                     0          3m8s    172.18.0.8     article3-validation-control-plane   <none>           <none>
+kube-proxy-n2cn9                                            1/1     Running                     0          3m      172.18.0.9     article3-validation-worker2         <none>           <none>
+kube-proxy-qvlq9                                            1/1     Running                     0          3m      172.18.0.7     article3-validation-worker          <none>           <none>
+kube-proxy-tk5xl                                            1/1     Running                     0          3m2s    172.18.0.8     article3-validation-control-plane   <none>           <none>
+kube-scheduler-article3-validation-control-plane            1/1     Running                     0          3m8s    172.18.0.8     article3-validation-control-plane   <none>           <none>

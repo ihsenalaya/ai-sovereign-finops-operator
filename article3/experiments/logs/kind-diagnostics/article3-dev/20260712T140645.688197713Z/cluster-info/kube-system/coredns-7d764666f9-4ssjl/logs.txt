@@ -1,0 +1,7 @@
+==== START logs for container coredns of pod kube-system/coredns-7d764666f9-4ssjl ====
+maxprocs: Leaving GOMAXPROCS=12: CPU quota undefined
+.:53
+[INFO] plugin/reload: Running configuration SHA512 = 1b226df79860026c6a52e67daa10d7f0d57ec5b023288ec00c5e05f93523c894564e15b91770d3a07ae1cfbe861d15b37d4a0027e69c546ab112970993a3b03b
+CoreDNS-1.13.1
+linux/amd64, go1.25.2, 1db4568
+==== END logs for container coredns of pod kube-system/coredns-7d764666f9-4ssjl ====

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "scientific_experiment_evidence": false,
+  "kubernetes_version": "v1.35.0",
+  "node_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+  "profiles": {
+    "dev": {
+      "nodes": 2,
+      "cni": "kindnet",
+      "network_policy_probe": "PASS",
+      "validation_log_sha256": "523f5f6c65a194bd8409d5067ba4d744de97e4a8b6494552ce35e978f29e5f23",
+      "diagnostics_sha256s_sha256": "533132f0f8d249d8fba58711a2f04129f007b565acd75f7a22467c8b3f6c152b"
+    },
+    "validation": {
+      "nodes": 3,
+      "cni": "calico-3.32.1",
+      "network_policy_probe": "PASS",
+      "validation_log_sha256": "4004bc171cc3dbb072aa881ef733b161038fe741f4c4dcf2a377ceff6624b615",
+      "diagnostics_sha256s_sha256": "10913e8d11e3761d0f781dd3fa5856fa2f6ce0633e0cebc91c959a4eb64699fa"
+    },
+    "performance": {
+      "nodes": 4,
+      "cni": "calico-3.32.1",
+      "network_policy_probe": "PASS",
+      "validation_log_sha256": "74cc3ae711e510ad90b4f676ba42afd21d0f5407de471c8366cb65f9fe599813",
+      "diagnostics_sha256s_sha256": "d71219660659cb74dd240dfee681ea0866a6edc441732bdd3fac09f3552b2cb5",
+      "cri_digest_bindings_checked": 12,
+      "cri_digest_bindings_log_sha256": "1e3292c9dd4ca49fdaaf894f1ed86f7e01c79d6ff8475becefb9852a26e1360e",
+      "transient_pull_failures": 1,
+      "transient_pull_failure_recovered_by_bounded_retry": true,
+      "current_runtime_state": "quiesced_after_successful_validation"
+    }
+  },
+  "source_and_negative_tests": {
+    "passed": 18,
+    "failed": 0,
+    "log_path": "article3/infra/kind/evidence/live-validation/source-negative-tests-audit-final.log",
+    "log_sha256": "024211b83d284ba796a9f1890e104b7b8e85cc3046c8bc2ccb17220c12570b4f"
+  },
+  "ownership_state": {
+    "directory_mode": "0700",
+    "record_mode": "0600",
+    "profiles_verified": 3,
+    "runtime_state_log_sha256": "a2704db1a4523061590a3c9c2bbbe1388ff1ec5986a161361448d456c1f27401"
+  },
+  "unrelated_clusters_modified": []
+}

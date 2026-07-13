@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "review_id": "kind-infrastructure-review-20260713-v1",
+  "reviewer_role": "independent Article 3 Kind infrastructure and provenance verifier",
+  "reviewed_at_utc": "2026-07-13T18:25:00Z",
+  "verdict": "pass_with_all_review_findings_resolved",
+  "branch": "article3-q1-recovery-20260711",
+  "reviewed_head": "b20ff912ee04c0e5362507187a657a2cf684fc34",
+  "pre_review_report_worktree_status_sha256": "b69184a6b909b1fe4f27946c87746ddcaed5fc49a2db1cd9fa36cd262f76aea5",
+  "scope": "Independent source, live ownership-state, immutable-pin, checksum, and recorded Kind validation audit. The audit did not infer success from filenames or prose. It recomputed source tests, state bindings, POSIX modes, registry and release pins, diagnostic checksums, captured Kubernetes state, CRI digest counts, and performance validation markers. This is a Kind-infrastructure review only and is not Article 3 scientific evidence or final release approval.",
+  "excluded": [
+    "GOV-AR implementation and workloads",
+    "greenops implementation and workloads",
+    "archived material under article3/archive/codex_20260711",
+    "ignored launcher or private logs",
+    "full Q1 gate and operator test matrix"
+  ],
+  "summary": {
+    "unresolved_critical_count": 0,
+    "unresolved_major_count": 0,
+    "unresolved_minor_count": 0,
+    "resolved_review_findings": 4,
+    "source_and_negative_tests_passed": 18,
+    "source_and_negative_tests_failed": 0,
+    "top_evidence_files_verified": 213,
+    "diagnostic_data_files_verified": 192,
+    "approval_condition_met": true,
+    "scientific_experiment_evidence": false,
+    "reason": "The active automation is bound to three exact Article 3 names, fails closed on missing or mismatched ownership, retains ownership until deletion is verified absent, restricts diagnostics to infrastructure and kube-system, uses exact release and OCI pins, and has complete recomputed checksum coverage. Recorded performance validation and diagnostics are internally consistent and hash-valid. Current Article 3 clusters are owned but quiesced, so this verdict does not claim that they are presently serving Kubernetes APIs."
+  },
+  "current_runtime_observation": {
+    "observed_at_utc": "2026-07-13T18:24:18Z",
+    "state_directory": {
+      "type": "directory",
+      "mode": "0700",
+      "symlink": false,
+      "posix_0600_round_trip": "PASS"
+    },
+    "profiles": {
+      "dev": {
+        "cluster": "article3-dev",
+        "ownership_verification": "PASS",
+        "ownership_record_type": "regular file",
+        "ownership_record_mode": "0600",
+        "nodes_bound": 2,
+        "nodes_running": 0,
+        "nodes_exited": 2,
+        "current_live_validation": "not_available_while_quiesced"
+      },
+      "validation": {
+        "cluster": "article3-validation",
+        "ownership_verification": "PASS",
+        "ownership_record_type": "regular file",
+        "ownership_record_mode": "0600",
+        "nodes_bound": 3,
+        "nodes_running": 0,
+        "nodes_exited": 3,
+        "current_live_validation": "not_available_while_quiesced"
+      },
+      "performance": {
+        "cluster": "article3-performance",
+        "ownership_verification": "PASS",
+        "ownership_record_type": "regular file",
+        "ownership_record_mode": "0600",
+        "nodes_bound": 4,
+        "nodes_running": 0,
+        "nodes_exited": 4,
+        "current_live_validation": "not_rerun"
+      }
+    },
+    "ownership_record_schema": {
+      "schema_version": 2,
+      "records_checked": 3,
+      "exact_required_key_sets": 3,
+      "config_hashes_recomputed": 3,
+      "node_sets_recomputed_from_kind_and_docker": 3,
+      "node_image_and_cluster_label_bindings_recomputed": 9,
+      "result": "PASS"
+    },
+    "performance_memory_preflight": {
+      "available_memory_plus_free_swap_kib": 4455344,
+      "minimum_kib": 2097152,
+      "result": "PASS",
+      "performance_rerun_performed": false,
+      "reason_not_rerun": "The immutable recorded performance validation and diagnostics recomputed successfully; avoiding a redundant four-node mutation preserved the quiesced state."
+    },
+    "unrelated_clusters_modified": [],
+    "explicitly_untouched_clusters": [
+      "gov-ar",
+      "greenops"
+    ]
+  },
+  "destructive_safety": {
+    "result": "PASS",
+    "exact_allowed_clusters": [
+      "article3-dev",
+      "article3-validation",
+      "article3-performance"
+    ],
+    "verified_controls": [
+      "profile and cluster names are one-to-one and arbitrary names are rejected before create or delete",
+      "existing clusters are never adopted without a regular restrictive ownership record",
+      "ownership verification recomputes profile, config hash, node image, CNI, Calico manifest hash, Docker node IDs, Kind labels, and configured node images",
+      "symlinked state directories and records, permissive records, non-POSIX state storage, stale records, and mismatched CNI bindings fail closed",
+      "failed creation cleanup retains ownership when verified deletion cannot be established",
+      "explicit destruction now retains ownership when verified deletion cannot be established",
+      "successful destruction removes ownership only after the exact cluster is verified absent",
+      "temporary kubeconfigs are mode 0600 and do not use or change the current kubectl context",
+      "legacy gov-ar and greenops aliases are absent from active cluster selection"
+    ],
+    "negative_tests": {
+      "unrelated_name_rejected_before_delete": "PASS",
+      "unowned_exact_name_rejected_before_delete": "PASS",
+      "symlinked_record_rejected": "PASS",
+      "permissive_record_rejected": "PASS",
+      "CNI_binding_mismatch_rejected": "PASS",
+      "non_POSIX_storage_rejected": "PASS",
+      "existing_cluster_not_adopted": "PASS",
+      "performance_capacity_failure_precedes_create": "PASS",
+      "deletion_non_absence_retains_record": "PASS",
+      "deletion_verified_absence_removes_record": "PASS"
+    }
+  },
+  "pin_verification": {
+    "result": "PASS",
+    "kind": {
+      "local_tool_version": "v0.31.0",
+      "official_release_api": "https://api.github.com/repos/kubernetes-sigs/kind/releases/tags/v0.31.0",
+      "official_release_tag": "v0.31.0",
+      "official_release_published_at": "2025-12-18T00:56:59Z",
+      "kubernetes_version": "v1.35.0",
+      "node_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "node_pin_present_in_official_release": true,
+      "exact_OCI_reference_resolved": true,
+      "exact_OCI_digest": "sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "OCI_platform_manifests": 2
+    },
+    "calico": {
+      "official_release_api": "https://api.github.com/repos/projectcalico/calico/releases/tags/v3.32.1",
+      "official_git_ref_api": "https://api.github.com/repos/projectcalico/calico/git/ref/tags/v3.32.1",
+      "release": "v3.32.1",
+      "published_at": "2026-06-26T20:32:43Z",
+      "release_commit": "0ca9d1b93644778cafdf1812f3dda02ac0c361e8",
+      "manifest_url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.1/manifests/calico.yaml",
+      "manifest_bytes_recomputed": 349572,
+      "manifest_sha256_recomputed": "a1df919d9721cf667accdc3e72848911b0cb25cfab7d2478ad0c996302c95744",
+      "tag_replacement_counts": {
+        "quay.io/calico/cni:v3.32.1": 2,
+        "quay.io/calico/node:v3.32.1": 2,
+        "quay.io/calico/kube-controllers:v3.32.1": 1
+      },
+      "unreplaced_v3_32_1_tags": 0,
+      "digest_pinned_manifest_sha256_recomputed": "9af3df3e4f49e50befc3f9fb79778f41b1496c8e7ef5778f413e60d25ddf16f3",
+      "unique_transformed_images": 3,
+      "all_transformed_images_digest_pinned": true,
+      "registry_digests": {
+        "quay.io/calico/cni:v3.32.1": "sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd",
+        "quay.io/calico/node:v3.32.1": "sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3",
+        "quay.io/calico/kube-controllers:v3.32.1": "sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612"
+      }
+    },
+    "network_policy_probe": {
+      "image": "docker.io/library/busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028",
+      "exact_OCI_reference_resolved": true,
+      "exact_OCI_digest": "sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028",
+      "OCI_platform_manifests": 17
+    },
+    "provenance_schema": {
+      "schema_version": 1,
+      "required_top_level_keys_exact": true,
+      "digest_shapes_valid": true,
+      "full_release_commit_required": true,
+      "profile_map_exact": true,
+      "result": "PASS"
+    }
+  },
+  "recorded_performance_evidence": {
+    "result": "PASS",
+    "validation_log": {
+      "path": "article3/infra/kind/evidence/live-validation/performance-validate-cri-after-quiesce.log",
+      "sha256": "74cc3ae711e510ad90b4f676ba42afd21d0f5407de471c8366cb65f9fe599813",
+      "summary_hash_matches": true,
+      "exact_success_markers": 1,
+      "tracebacks": 0,
+      "error_prefixes": 0,
+      "network_policy_sequence": "allow_deny_allow"
+    },
+    "diagnostics": {
+      "path": "article3/experiments/logs/kind-diagnostics/article3-performance/20260712T145631.744088540Z",
+      "SHA256SUMS_sha256": "d71219660659cb74dd240dfee681ea0866a6edc441732bdd3fac09f3552b2cb5",
+      "summary_hash_matches": true,
+      "manifest_entries_verified": 71,
+      "captured_nodes": 4,
+      "captured_ready_nodes": 4,
+      "captured_kubelet_versions": [
+        "v1.35.0"
+      ],
+      "captured_ownership_schema": 2,
+      "captured_profile": "performance",
+      "captured_Calico_references_equal_exact_pin_set": true,
+      "readyz_passed": true,
+      "livez_passed": true
+    },
+    "CRI_digest_bindings": {
+      "path": "article3/infra/kind/evidence/live-validation/performance-cri-digest-bindings.txt",
+      "sha256": "1e3292c9dd4ca49fdaaf894f1ed86f7e01c79d6ff8475becefb9852a26e1360e",
+      "summary_hash_matches": true,
+      "expected_image_node_bindings": 12,
+      "bindings_recomputed": 12,
+      "generated_import_aliases": 0
+    },
+    "bounded_retry": {
+      "successful_create_log": "article3/infra/kind/evidence/live-validation/performance-create-cri-after-quiesce.log",
+      "transient_fatal_pulls": 1,
+      "successful_exact_pull_results": 12,
+      "final_validation_passed": true
+    },
+    "invalid_first_attempt": {
+      "incident_schema_version": 1,
+      "incident_sha256": "90809c956bd04fef890019b4807b393ec9b1a7bdbda30b72e842d302fad22bc5",
+      "partial_log_hash_matches": true,
+      "scientific_evidence": false
+    }
+  },
+  "checksum_validation": {
+    "result": "PASS",
+    "top_evidence_manifest": {
+      "path": "article3/infra/kind/evidence/SHA256SUMS",
+      "sha256": "f43dd6017b3db31768cd2ad882f7077411b92f8ed748c71a2ff6d7a75915af1d",
+      "entries_verified": 213,
+      "exact_coverage_of_every_other_evidence_file": true,
+      "missing_files": 0,
+      "extra_entries": 0
+    },
+    "diagnostics_master_manifest": {
+      "path": "article3/infra/kind/evidence/KIND_DIAGNOSTICS_SHA256SUMS",
+      "sha256": "1fba55aa7c9c1b95ae51e6eb3d29fd1f0051ad714f622dee4ad7d79e0d06158b",
+      "entries_verified": 192,
+      "exact_coverage_of_diagnostic_data_files": true
+    },
+    "source_binding_manifest": {
+      "path": "article3/infra/kind/evidence/live-validation/SHA256SUMS",
+      "sha256": "b872bac1061c141534ae7fd532524b6f8d698efe9943982994c0f5c35529d820",
+      "entries_verified": 23,
+      "mismatches": 0
+    },
+    "nested_manifests_verified": 7,
+    "nested_manifest_entry_counts": [
+      56,
+      71,
+      65,
+      65,
+      45,
+      52,
+      6
+    ]
+  },
+  "resolved_findings": [
+    {
+      "id": "KIND-M1-OWNERSHIP-REMOVED-BEFORE-ABSENCE",
+      "prior_severity": "major",
+      "status": "resolved",
+      "problem": "destroy.sh removed the destructive-operation capability after a zero exit from kind delete without independently confirming that the exact cluster was absent.",
+      "repair": "Removal now requires both a successful delete and a fresh negative cluster existence check. Any non-absent or indeterminate result retains the ownership record and exits 2.",
+      "verification": "New negative and positive tests prove record retention when the fake cluster remains and removal only when the fake cluster is verified absent."
+    },
+    {
+      "id": "KIND-M2-DIAGNOSTICS-APPLICATION-SCOPE",
+      "prior_severity": "major",
+      "status": "resolved",
+      "problem": "collect-diagnostics.sh enumerated objects, events, and pod logs across every namespace, exceeding the Kind-infrastructure scope and risking capture of application data.",
+      "repair": "Namespaced diagnostics are now fixed to kube-system. Cluster-scoped collection is limited to infrastructure metadata such as nodes, CRD names, and API resources.",
+      "verification": "A source test requires kube-system scoping and rejects all-namespace pod or -A collection."
+    },
+    {
+      "id": "KIND-m1-ABBREVIATED-CALICO-COMMIT",
+      "prior_severity": "minor",
+      "status": "resolved",
+      "problem": "The provenance record used a seven-character release commit abbreviation.",
+      "repair": "The official Git ref was resolved and the provenance now records the full commit 0ca9d1b93644778cafdf1812f3dda02ac0c361e8.",
+      "verification": "The provenance schema test now requires exactly 40 lowercase hexadecimal characters."
+    },
+    {
+      "id": "KIND-m2-INCOMPLETE-AND-STALE-CHECKSUM-BINDING",
+      "prior_severity": "minor",
+      "status": "resolved",
+      "problem": "The top evidence manifest omitted the validation summary and nested manifests, while the live source manifest had three stale entries and covered only a subset of active source.",
+      "repair": "The source manifest now covers all 20 active Kind source/configuration files, provenance, POSIX evidence, and the normalized 18-test transcript. The top manifest covers every other evidence file, including all nested manifests and the summary.",
+      "verification": "Strict checksum verification reports 23 source entries and 213 top-level entries with zero mismatch, missing file, or extra entry."
+    }
+  ],
+  "bounded_execution": [
+    {
+      "command": "bash article3/infra/kind/test_source.sh",
+      "result": "PASS; 18 passed, 0 failed"
+    },
+    {
+      "command": "bash -n article3/infra/kind/*.sh and python3 -m py_compile for the two Python sources",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m json.tool on Kind provenance, validation summary, performance incident, and this review",
+      "result": "PASS for all files available before this review; this review was parsed after creation"
+    },
+    {
+      "command": "ownership.py verify for dev, validation, and performance plus independent mode/key/node checks",
+      "result": "PASS; 3 records, 9 bound nodes; all nodes currently exited"
+    },
+    {
+      "command": "strict SHA-256 validation of the top, diagnostics, source, and seven nested manifests",
+      "result": "PASS"
+    },
+    {
+      "command": "official GitHub release/ref retrieval, raw Calico manifest rehash/transform, and Docker buildx imagetools resolution of exact OCI references",
+      "result": "PASS"
+    },
+    {
+      "command": "recorded performance log, CRI binding, and captured Kubernetes JSON recomputation",
+      "result": "PASS; no performance cluster creation or validation rerun"
+    }
+  ],
+  "artifact_sha256": {
+    "article3/provenance/kind_infrastructure.json": "c9dba1ffc542257d47bcf0eed81316074ed3bd3b2b0df971ccc5e233e9f96807",
+    "article3/infra/kind/evidence/live-validation/kind-validation-summary.json": "630a04ce0300ffe654da4a2a292fd1d2ff1a00b6771091e7ea228cb8417b7986",
+    "article3/infra/kind/evidence/live-validation/performance-attempt-incident.json": "90809c956bd04fef890019b4807b393ec9b1a7bdbda30b72e842d302fad22bc5",
+    "article3/infra/kind/evidence/SHA256SUMS": "f43dd6017b3db31768cd2ad882f7077411b92f8ed748c71a2ff6d7a75915af1d",
+    "article3/infra/kind/evidence/KIND_DIAGNOSTICS_SHA256SUMS": "1fba55aa7c9c1b95ae51e6eb3d29fd1f0051ad714f622dee4ad7d79e0d06158b",
+    "article3/infra/kind/evidence/live-validation/SHA256SUMS": "b872bac1061c141534ae7fd532524b6f8d698efe9943982994c0f5c35529d820"
+  },
+  "limitations": [
+    "Current dev and validation nodes are quiesced, so this audit distinguishes valid ownership from current API readiness. The prior live validation is accepted only because its immutable logs and captured API state recompute successfully.",
+    "The performance memory preflight passed at observation time, but no redundant performance rerun was needed and none was performed.",
+    "This review does not approve GOV-AR, greenops, the Article 3 manuscript, the frozen protocol, final images/charts, or the Q1 release gate."
+  ],
+  "reviewer_changes": "Changed only Article 3 Kind infrastructure, Kind tests/documentation/wrappers, Kind evidence/checksum files, the Kind provenance record, and this review. No GOV-AR or greenops source, workload, cluster, archived evidence, protocol, manuscript, or unrelated user file was modified. No commit was created."
+}

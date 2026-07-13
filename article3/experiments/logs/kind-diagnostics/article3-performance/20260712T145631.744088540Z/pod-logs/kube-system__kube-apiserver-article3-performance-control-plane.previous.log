@@ -1,0 +1,1 @@
+Error from server (BadRequest): previous terminated container "kube-apiserver" in pod "kube-apiserver-article3-performance-control-plane" not found

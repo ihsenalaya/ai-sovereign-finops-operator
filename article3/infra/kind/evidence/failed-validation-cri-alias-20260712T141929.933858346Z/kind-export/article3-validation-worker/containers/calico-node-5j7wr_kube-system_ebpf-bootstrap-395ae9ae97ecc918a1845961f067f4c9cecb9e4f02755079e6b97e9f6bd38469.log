@@ -1,0 +1,8 @@
+2026-07-12T14:18:46.437681501Z stdout F 2026-07-12 14:18:46.423 [INFO][1] init-best-effort/startup.go 553: Early log level set to info
+2026-07-12T14:18:46.437757034Z stdout F 2026-07-12 14:18:46.431 [INFO][1] init-best-effort/calico-init_linux.go 217: Checking if BPF filesystem is mounted.
+2026-07-12T14:18:46.437766214Z stdout F 2026-07-12 14:18:46.433 [INFO][1] init-best-effort/calico-init_linux.go 238: BPF filesystem is not mounted. Trying to mount it...
+2026-07-12T14:18:46.487320838Z stdout F 2026-07-12 14:18:46.486 [INFO][1] init-best-effort/calico-init_linux.go 243: Mounted BPF filesystem.
+2026-07-12T14:18:46.503144695Z stdout F 2026-07-12 14:18:46.486 [INFO][1] init-best-effort/calico-init_linux.go 252: Checking if cgroup2 filesystem is mounted.
+2026-07-12T14:18:46.503210021Z stdout F 2026-07-12 14:18:46.495 [INFO][1] init-best-effort/calico-init_linux.go 281: Cgroup2 filesystem is not mounted. Trying to mount it...
+2026-07-12T14:18:46.503215299Z stdout F 2026-07-12 14:18:46.495 [INFO][1] init-best-effort/calico-init_linux.go 287: Mount point /run/calico/cgroup is ready for mounting root cgroup2 fs
+2026-07-12T14:18:46.554784613Z stdout F 2026-07-12 14:18:46.553 [INFO][1] init-best-effort/calico-init_linux.go 296: Mounted root cgroup2 filesystem.

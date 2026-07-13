@@ -1,0 +1,4 @@
+NAME                                STATUS   ROLES           AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                     CONTAINER-RUNTIME
+article3-validation-control-plane   Ready    control-plane   7m18s   v1.35.0   172.18.0.8    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+article3-validation-worker          Ready    <none>          7m3s    v1.35.0   172.18.0.7    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+article3-validation-worker2         Ready    <none>          7m3s    v1.35.0   172.18.0.9    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0

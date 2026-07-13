@@ -1,0 +1,78 @@
+LAST SEEN   TYPE      REASON              OBJECT                                                          MESSAGE
+3m17s       Normal    Started             pod/etcd-article3-validation-control-plane                      Container started
+3m18s       Normal    Created             pod/kube-apiserver-article3-validation-control-plane            Container created
+3m22s       Normal    Pulled              pod/kube-controller-manager-article3-validation-control-plane   Container image "registry.k8s.io/kube-controller-manager:v1.35.0" already present on machine and can be accessed by the pod
+3m18s       Normal    Started             pod/kube-scheduler-article3-validation-control-plane            Container started
+3m18s       Normal    Created             pod/kube-controller-manager-article3-validation-control-plane   Container created
+3m22s       Normal    Pulled              pod/kube-scheduler-article3-validation-control-plane            Container image "registry.k8s.io/kube-scheduler:v1.35.0" already present on machine and can be accessed by the pod
+3m18s       Normal    Started             pod/kube-controller-manager-article3-validation-control-plane   Container started
+3m22s       Normal    Pulled              pod/etcd-article3-validation-control-plane                      Container image "registry.k8s.io/etcd:3.6.6-0" already present on machine and can be accessed by the pod
+3m18s       Normal    Created             pod/kube-scheduler-article3-validation-control-plane            Container created
+3m22s       Normal    Pulled              pod/kube-apiserver-article3-validation-control-plane            Container image "registry.k8s.io/kube-apiserver:v1.35.0" already present on machine and can be accessed by the pod
+3m17s       Normal    Created             pod/etcd-article3-validation-control-plane                      Container created
+3m18s       Normal    Started             pod/kube-apiserver-article3-validation-control-plane            Container started
+3m10s       Normal    LeaderElection      lease/kube-scheduler                                            article3-validation-control-plane_236420f5-354f-4675-9580-ea393e8b2fe6 became leader
+3m8s        Normal    LeaderElection      lease/kube-controller-manager                                   article3-validation-control-plane_b6deb02d-8ed2-40b7-bbaf-1fd6f8b6a45a became leader
+3m3s        Warning   NodeNotReady        pod/kube-apiserver-article3-validation-control-plane            Node is not ready
+3m3s        Warning   NodeNotReady        pod/kube-scheduler-article3-validation-control-plane            Node is not ready
+3m2s        Warning   FailedScheduling    pod/coredns-7d764666f9-9cndd                                    0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+3m2s        Normal    SuccessfulCreate    replicaset/coredns-7d764666f9                                   Created pod: coredns-7d764666f9-ss7x2
+3m2s        Normal    Pulled              pod/kube-proxy-tk5xl                                            Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+3m2s        Normal    ScalingReplicaSet   deployment/coredns                                              Scaled up replica set coredns-7d764666f9 from 0 to 2
+3m2s        Warning   FailedScheduling    pod/coredns-7d764666f9-ss7x2                                    0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+3m2s        Normal    Scheduled           pod/kube-proxy-tk5xl                                            Successfully assigned kube-system/kube-proxy-tk5xl to article3-validation-control-plane
+3m3s        Normal    SuccessfulCreate    daemonset/kube-proxy                                            Created pod: kube-proxy-tk5xl
+3m2s        Normal    SuccessfulCreate    replicaset/coredns-7d764666f9                                   Created pod: coredns-7d764666f9-9cndd
+3m1s        Normal    SuccessfulCreate    daemonset/kube-proxy                                            Created pod: kube-proxy-qvlq9
+3m1s        Normal    Scheduled           pod/kube-proxy-n2cn9                                            Successfully assigned kube-system/kube-proxy-n2cn9 to article3-validation-worker2
+3m1s        Normal    Started             pod/kube-proxy-tk5xl                                            Container started
+3m1s        Normal    SuccessfulCreate    daemonset/kube-proxy                                            Created pod: kube-proxy-n2cn9
+3m1s        Normal    Created             pod/kube-proxy-tk5xl                                            Container created
+3m1s        Normal    Scheduled           pod/kube-proxy-qvlq9                                            Successfully assigned kube-system/kube-proxy-qvlq9 to article3-validation-worker
+3m          Normal    Pulled              pod/kube-proxy-n2cn9                                            Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+3m          Normal    Pulled              pod/kube-proxy-qvlq9                                            Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+2m58s       Normal    Started             pod/kube-proxy-n2cn9                                            Container started
+2m58s       Normal    Created             pod/kube-proxy-qvlq9                                            Container created
+2m58s       Normal    Created             pod/kube-proxy-n2cn9                                            Container created
+2m58s       Normal    Started             pod/kube-proxy-qvlq9                                            Container started
+94s         Normal    NoPods              poddisruptionbudget/calico-kube-controllers                     No matching pods found
+93s         Normal    Scheduled           pod/calico-node-qzhqx                                           Successfully assigned kube-system/calico-node-qzhqx to article3-validation-worker2
+93s         Normal    SuccessfulCreate    replicaset/calico-kube-controllers-77bdb5dddb                   Created pod: calico-kube-controllers-77bdb5dddb-2gq5m
+93s         Normal    SuccessfulCreate    daemonset/calico-node                                           Created pod: calico-node-vqssh
+93s         Normal    SuccessfulCreate    daemonset/calico-node                                           Created pod: calico-node-qzhqx
+93s         Normal    SuccessfulCreate    daemonset/calico-node                                           Created pod: calico-node-5j7wr
+93s         Normal    Scheduled           pod/calico-node-vqssh                                           Successfully assigned kube-system/calico-node-vqssh to article3-validation-control-plane
+93s         Normal    ScalingReplicaSet   deployment/calico-kube-controllers                              Scaled up replica set calico-kube-controllers-77bdb5dddb from 0 to 1
+93s         Normal    Scheduled           pod/calico-node-5j7wr                                           Successfully assigned kube-system/calico-node-5j7wr to article3-validation-worker
+93s         Warning   FailedScheduling    pod/calico-kube-controllers-77bdb5dddb-2gq5m                    0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
+2s          Normal    Pulled              pod/calico-node-vqssh                                           Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod
+2s          Warning   Failed              pod/calico-node-vqssh                                           Error: failed to check if this is a checkpoint image: failed to get image from containerd "sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4": image "docker.io/library/import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd": not found
+12s         Warning   Failed              pod/calico-node-qzhqx                                           Error: failed to check if this is a checkpoint image: failed to get image from containerd "sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4": image "docker.io/library/import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd": not found
+12s         Normal    Pulled              pod/calico-node-qzhqx                                           Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod
+66s         Warning   Failed              pod/calico-node-5j7wr                                           Error: failed to check if this is a checkpoint image: failed to get image from containerd "sha256:bd72e2bad4799344b6c8f9459b5fe01f16f43fcd3348231ff97d032f020b40f4": image "docker.io/library/import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd": not found
+55s         Normal    Pulled              pod/calico-node-5j7wr                                           Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod
+55s         Normal    Started             pod/calico-node-5j7wr                                           Container started
+55s         Normal    Created             pod/calico-node-5j7wr                                           Container created
+54s         Normal    Created             pod/calico-node-5j7wr                                           Container created
+54s         Normal    Pulled              pod/calico-node-5j7wr                                           Container image "quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd" already present on machine and can be accessed by the pod
+53s         Normal    Started             pod/calico-node-5j7wr                                           Container started
+49s         Normal    Created             pod/calico-node-5j7wr                                           Container created
+50s         Normal    Pulled              pod/calico-node-5j7wr                                           Container image "quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3" already present on machine and can be accessed by the pod
+48s         Normal    Started             pod/calico-node-5j7wr                                           Container started
+46s         Normal    Pulled              pod/calico-node-5j7wr                                           Container image "quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3" already present on machine and can be accessed by the pod
+46s         Normal    Created             pod/calico-node-5j7wr                                           Container created
+45s         Normal    Started             pod/calico-node-5j7wr                                           Container started
+43s         Warning   Unhealthy           pod/calico-node-5j7wr                                           Readiness probe failed: calico/node is not ready: BIRD is not ready: error querying BIRD: unable to connect to BIRDv4 socket: dial unix /var/run/bird/bird.ctl: connect: no such file or directory
+37s         Normal    Scheduled           pod/calico-kube-controllers-77bdb5dddb-2gq5m                    Successfully assigned kube-system/calico-kube-controllers-77bdb5dddb-2gq5m to article3-validation-worker
+37s         Normal    Scheduled           pod/coredns-7d764666f9-ss7x2                                    Successfully assigned kube-system/coredns-7d764666f9-ss7x2 to article3-validation-worker
+37s         Normal    Scheduled           pod/coredns-7d764666f9-9cndd                                    Successfully assigned kube-system/coredns-7d764666f9-9cndd to article3-validation-worker
+35s         Normal    Pulled              pod/coredns-7d764666f9-ss7x2                                    Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+35s         Normal    Pulled              pod/calico-kube-controllers-77bdb5dddb-2gq5m                    Container image "quay.io/calico/kube-controllers@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612" already present on machine and can be accessed by the pod
+35s         Normal    Created             pod/calico-kube-controllers-77bdb5dddb-2gq5m                    Container created
+35s         Normal    Pulled              pod/coredns-7d764666f9-9cndd                                    Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+34s         Warning   Unhealthy           pod/calico-kube-controllers-77bdb5dddb-2gq5m                    Readiness probe failed: Failed to read status file /status/status.json: unexpected end of JSON input
+34s         Normal    Started             pod/calico-kube-controllers-77bdb5dddb-2gq5m                    Container started
+30s         Normal    Started             pod/coredns-7d764666f9-ss7x2                                    Container started
+30s         Normal    Created             pod/coredns-7d764666f9-9cndd                                    Container created
+30s         Normal    Started             pod/coredns-7d764666f9-9cndd                                    Container started
+30s         Normal    Created             pod/coredns-7d764666f9-ss7x2                                    Container created

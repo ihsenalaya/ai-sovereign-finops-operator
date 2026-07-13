@@ -1,0 +1,1 @@
+Error from server (BadRequest): previous terminated container "coredns" in pod "coredns-7d764666f9-psd6t" not found

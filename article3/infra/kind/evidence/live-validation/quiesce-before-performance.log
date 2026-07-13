@@ -1,0 +1,11 @@
+ownership verified: article3-dev (2 nodes)
+stopping verified node article3-dev-control-plane
+stopping verified node article3-dev-worker
+ownership verified: article3-validation (3 nodes)
+stopping verified node article3-validation-control-plane
+stopping verified node article3-validation-worker
+stopping verified node article3-validation-worker2
+running Article3 containers after quiesce:
+               total        used        free      shared  buff/cache   available
+Mem:         7752908     4567844      869060       14412     2316004     2975288
+Swap:        2097152     1933580      163572

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-CLUSTER_NAME="${CLUSTER_NAME:-gov-ar}"
-kind delete cluster --name "${CLUSTER_NAME}"
+KIND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec bash "${KIND_DIR}/destroy.sh"

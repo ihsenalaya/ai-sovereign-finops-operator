@@ -1,0 +1,8 @@
+ownership verified: article3-performance (4 nodes)
+stopping verified node article3-performance-control-plane
+stopping verified node article3-performance-worker
+stopping verified node article3-performance-worker2
+stopping verified node article3-performance-worker3
+starting recorded node article3-dev-control-plane
+starting recorded node article3-dev-worker
+ownership verified: article3-dev (2 nodes)

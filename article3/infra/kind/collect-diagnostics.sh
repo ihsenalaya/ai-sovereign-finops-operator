@@ -1,44 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OUTPUT_DIR="${OUTPUT_DIR:-${ROOT_DIR}/experiments/logs/kind-diagnostics}"
-TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-CLUSTER_NAME="${CLUSTER_NAME:-article3-validation}"
-NAMESPACE="${NAMESPACE:-gov-ar}"
-KUBECONFIG_CONTEXT="kind-${CLUSTER_NAME}"
+KIND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=common.sh
+source "${KIND_DIR}/common.sh"
+resolve_profile
+require_tools kind kubectl docker python3 sha256sum
+prepare_state_dir
+cluster_exists || { echo "cluster does not exist: ${CLUSTER_NAME}" >&2; exit 1; }
+verify_owned
+make_kubeconfig
+trap cleanup_kubeconfig EXIT
 
-if [[ "${CLUSTER_NAME}" == "article3-validation" ]] && ! kind get clusters | grep -Fxq "${CLUSTER_NAME}" && kind get clusters | grep -Fxq "gov-ar"; then
-  CLUSTER_NAME="gov-ar"
-  KUBECONFIG_CONTEXT="kind-${CLUSTER_NAME}"
-fi
+timestamp="$(date -u +%Y%m%dT%H%M%S.%NZ)"
+output_root="${OUTPUT_DIR:-${ARTICLE3_DIR}/experiments/logs/kind-diagnostics}"
+run_dir="${output_root}/${CLUSTER_NAME}/${timestamp}"
+mkdir -p "${run_dir}/pod-logs"
+chmod 700 "${run_dir}"
 
-if ! kind get clusters | grep -Fxq "${CLUSTER_NAME}"; then
-  echo "kind cluster ${CLUSTER_NAME} does not exist" >&2
-  exit 1
-fi
+cp "${STATE_FILE}" "${run_dir}/ownership.json"
+chmod 600 "${run_dir}/ownership.json"
+kind version >"${run_dir}/kind-version.txt"
+kubectl version -o yaml >"${run_dir}/kubernetes-version.yaml"
+docker version --format '{{json .}}' >"${run_dir}/docker-version.json"
+kubectl cluster-info dump --namespaces='kube-system' --output-directory="${run_dir}/cluster-info" >/dev/null 2>&1 || true
+kubectl get nodes -o wide >"${run_dir}/nodes.txt"
+kubectl get nodes -o yaml >"${run_dir}/nodes.yaml"
+kubectl -n kube-system get deployments,statefulsets,daemonsets,replicasets,pods,services,endpoints,networkpolicies,jobs,cronjobs -o yaml \
+  >"${run_dir}/objects-no-secrets.yaml"
+kubectl -n kube-system get events --sort-by=.metadata.creationTimestamp >"${run_dir}/events.txt" || true
+kubectl get crds -o name >"${run_dir}/crds.txt" || true
+kubectl api-resources >"${run_dir}/api-resources.txt"
+kubectl get --raw='/readyz?verbose' >"${run_dir}/readyz.txt" || true
+kubectl get --raw='/livez?verbose' >"${run_dir}/livez.txt" || true
 
-mkdir -p "${OUTPUT_DIR}/${TIMESTAMP}"
+while IFS= read -r pod; do
+  [[ -z "${pod}" ]] && continue
+  safe="kube-system__${pod}"
+  kubectl -n kube-system logs "${pod}" --all-containers=true --prefix=true \
+    >"${run_dir}/pod-logs/${safe}.log" 2>&1 || true
+  kubectl -n kube-system logs "${pod}" --all-containers=true --prefix=true --previous \
+    >"${run_dir}/pod-logs/${safe}.previous.log" 2>&1 || true
+done < <(kubectl -n kube-system get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
 
-kubectl --context "${KUBECONFIG_CONTEXT}" get nodes -o wide > "${OUTPUT_DIR}/${TIMESTAMP}/nodes.txt"
-kubectl --context "${KUBECONFIG_CONTEXT}" -n "${NAMESPACE}" get all -o wide > "${OUTPUT_DIR}/${TIMESTAMP}/workloads.txt"
-kubectl --context "${KUBECONFIG_CONTEXT}" -n "${NAMESPACE}" describe jobs,pods > "${OUTPUT_DIR}/${TIMESTAMP}/describe.txt"
-job_names="$(
-  kubectl --context "${KUBECONFIG_CONTEXT}" -n "${NAMESPACE}" get jobs -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true
-)"
-if [[ -n "${job_names}" ]]; then
-  : > "${OUTPUT_DIR}/${TIMESTAMP}/job-logs.txt"
-  while IFS= read -r job_name; do
-    [[ -z "${job_name}" ]] && continue
-    {
-      echo "## ${job_name}"
-      kubectl --context "${KUBECONFIG_CONTEXT}" -n "${NAMESPACE}" logs "job/${job_name}" --all-containers=true
-      echo
-    } >> "${OUTPUT_DIR}/${TIMESTAMP}/job-logs.txt" || true
-  done <<< "${job_names}"
-else
-  echo "No jobs found in namespace ${NAMESPACE}" > "${OUTPUT_DIR}/${TIMESTAMP}/job-logs.txt"
-fi
-helm list -n "${NAMESPACE}" > "${OUTPUT_DIR}/${TIMESTAMP}/helm-list.txt" || true
-
-echo "${OUTPUT_DIR}/${TIMESTAMP}"
+(
+  cd "${run_dir}"
+  find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum >SHA256SUMS
+)
+echo "${run_dir}"

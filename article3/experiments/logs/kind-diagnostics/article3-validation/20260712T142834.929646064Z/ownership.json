@@ -1,0 +1,32 @@
+{
+  "calico_pinned_manifest_sha256": "9af3df3e4f49e50befc3f9fb79778f41b1496c8e7ef5778f413e60d25ddf16f3",
+  "calico_version": "3.32.1",
+  "cluster": "article3-validation",
+  "cni": "calico",
+  "config_sha256": "e006e5bc1e0dd3d97c6d4f49630fa9b082577e2388cdf63f726901e07645631f",
+  "created_at_utc": "2026-07-12T14:28:09.278773+00:00",
+  "node_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+  "nodes": [
+    {
+      "cluster_label": "article3-validation",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "9ecefd0a9053d9891b87d7a46abd2e08a137b950d9cf0d7c0dcd781e5c7ab4d2",
+      "name": "article3-validation-control-plane"
+    },
+    {
+      "cluster_label": "article3-validation",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "90d7a57f719fb24840a21d394d7b9920be98b5a4979827586f07a1328b1eb57d",
+      "name": "article3-validation-worker"
+    },
+    {
+      "cluster_label": "article3-validation",
+      "configured_image": "kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f",
+      "container_id": "91401d7313220d2363e35d6ec2c4bfcea12ed82681713ab52ca314f737375823",
+      "name": "article3-validation-worker2"
+    }
+  ],
+  "owner": "article3-q1-recovery",
+  "profile": "validation",
+  "schema_version": 2
+}

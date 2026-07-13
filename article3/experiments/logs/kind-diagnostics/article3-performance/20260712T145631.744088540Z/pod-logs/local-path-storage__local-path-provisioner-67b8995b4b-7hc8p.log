@@ -1,0 +1,4 @@
+[pod/local-path-provisioner-67b8995b4b-7hc8p/local-path-provisioner] time="2026-07-12T14:56:00Z" level=debug msg="Applied config: {\"nodePathMap\":[{\"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\"paths\":[\"/var/local-path-provisioner\"]}],\"storageClassConfigs\":null}"
+[pod/local-path-provisioner-67b8995b4b-7hc8p/local-path-provisioner] time="2026-07-12T14:56:00Z" level=debug msg="Provisioner started"
+[pod/local-path-provisioner-67b8995b4b-7hc8p/local-path-provisioner] I0712 14:56:00.665040       1 controller.go:838] "Starting provisioner controller" component="rancher.io/local-path_local-path-provisioner-67b8995b4b-7hc8p_b671ecee-96ef-4d86-aaae-81e743687320"
+[pod/local-path-provisioner-67b8995b4b-7hc8p/local-path-provisioner] I0712 14:56:00.766051       1 controller.go:887] "Started provisioner controller" component="rancher.io/local-path_local-path-provisioner-67b8995b4b-7hc8p_b671ecee-96ef-4d86-aaae-81e743687320"

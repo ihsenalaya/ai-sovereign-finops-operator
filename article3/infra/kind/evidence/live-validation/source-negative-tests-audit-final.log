@@ -1,0 +1,25 @@
+command: bash article3/infra/kind/test_source.sh
+format: normalized unittest transcript; nondeterministic duration omitted
+test_absent_cluster_destroy_is_idempotent (__main__.DestructiveNegativeTests) ... ok
+test_create_does_not_adopt_existing_cluster (__main__.DestructiveNegativeTests) ... ok
+test_destroy_removes_record_after_absence_is_verified (__main__.DestructiveNegativeTests) ... ok
+test_destroy_retains_record_until_absence_is_verified (__main__.DestructiveNegativeTests) ... ok
+test_performance_capacity_preflight_fails_before_create (__main__.DestructiveNegativeTests) ... ok
+test_rejects_cni_binding_mismatch (__main__.DestructiveNegativeTests) ... ok
+test_rejects_exact_but_unowned_existing_cluster (__main__.DestructiveNegativeTests) ... ok
+test_rejects_non_posix_state_storage (__main__.DestructiveNegativeTests) ... ok
+test_rejects_permissive_ownership_record (__main__.DestructiveNegativeTests) ... ok
+test_rejects_symlinked_ownership_record (__main__.DestructiveNegativeTests) ... ok
+test_rejects_unrelated_name_before_delete (__main__.DestructiveNegativeTests) ... ok
+test_application_deployment_is_closed (__main__.SourceTests) ... ok
+test_diagnostics_are_infrastructure_scoped (__main__.SourceTests) ... ok
+test_exact_profiles (__main__.SourceTests) ... ok
+test_no_legacy_cluster_alias_in_active_scripts (__main__.SourceTests) ... ok
+test_pins_match_common (__main__.SourceTests) ... ok
+test_provenance_schema (__main__.SourceTests) ... ok
+test_shell_syntax (__main__.SourceTests) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests
+
+OK

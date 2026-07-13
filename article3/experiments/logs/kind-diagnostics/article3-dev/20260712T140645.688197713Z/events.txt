@@ -1,0 +1,70 @@
+NAMESPACE            LAST SEEN   TYPE      REASON                    OBJECT                                          MESSAGE
+kube-system          68s         Normal    LeaderElection            lease/kube-controller-manager                   article3-dev-control-plane_1b33e053-b2b7-4b5b-a815-2adc04b23ec0 became leader
+default              66s         Normal    Starting                  node/article3-dev-control-plane                 Starting kubelet.
+default              66s         Normal    NodeAllocatableEnforced   node/article3-dev-control-plane                 Updated Node Allocatable limit across pods
+default              65s         Normal    NodeHasSufficientPID      node/article3-dev-control-plane                 Node article3-dev-control-plane status is now: NodeHasSufficientPID
+default              65s         Normal    NodeHasNoDiskPressure     node/article3-dev-control-plane                 Node article3-dev-control-plane status is now: NodeHasNoDiskPressure
+default              65s         Normal    NodeHasSufficientMemory   node/article3-dev-control-plane                 Node article3-dev-control-plane status is now: NodeHasSufficientMemory
+kube-system          63s         Warning   Unhealthy                 pod/kube-scheduler-article3-dev-control-plane   Readiness probe failed: HTTP probe failed with statuscode: 500
+kube-system          63s         Normal    LeaderElection            lease/kube-scheduler                            article3-dev-control-plane_85fb2ce5-1922-4434-bedf-5147ae030952 became leader
+default              63s         Normal    RegisteredNode            node/article3-dev-control-plane                 Node article3-dev-control-plane event: Registered Node article3-dev-control-plane in Controller
+kube-system          62s         Normal    Scheduled                 pod/kube-proxy-mgwnn                            Successfully assigned kube-system/kube-proxy-mgwnn to article3-dev-control-plane
+kube-system          62s         Normal    Scheduled                 pod/kindnet-r2zzp                               Successfully assigned kube-system/kindnet-r2zzp to article3-dev-control-plane
+kube-system          62s         Normal    SuccessfulCreate          daemonset/kube-proxy                            Created pod: kube-proxy-mgwnn
+kube-system          62s         Normal    ScalingReplicaSet         deployment/coredns                              Scaled up replica set coredns-7d764666f9 from 0 to 2
+kube-system          62s         Normal    SuccessfulCreate          daemonset/kindnet                               Created pod: kindnet-r2zzp
+local-path-storage   61s         Warning   FailedScheduling          pod/local-path-provisioner-67b8995b4b-m982w     0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system          61s         Normal    SuccessfulCreate          replicaset/coredns-7d764666f9                   Created pod: coredns-7d764666f9-4ssjl
+local-path-storage   61s         Normal    SuccessfulCreate          replicaset/local-path-provisioner-67b8995b4b    Created pod: local-path-provisioner-67b8995b4b-m982w
+kube-system          61s         Warning   FailedScheduling          pod/coredns-7d764666f9-4ssjl                    0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system          61s         Normal    SuccessfulCreate          replicaset/coredns-7d764666f9                   Created pod: coredns-7d764666f9-26k4d
+local-path-storage   61s         Normal    ScalingReplicaSet         deployment/local-path-provisioner               Scaled up replica set local-path-provisioner-67b8995b4b from 0 to 1
+kube-system          61s         Warning   FailedScheduling          pod/coredns-7d764666f9-26k4d                    0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kube-system          60s         Normal    Pulled                    pod/kube-proxy-mgwnn                            Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+kube-system          60s         Normal    Pulled                    pod/kindnet-r2zzp                               Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system          58s         Normal    Created                   pod/kube-proxy-mgwnn                            Container created
+default              58s         Normal    NodeHasNoDiskPressure     node/article3-dev-worker                        Node article3-dev-worker status is now: NodeHasNoDiskPressure
+kube-system          58s         Normal    SuccessfulCreate          daemonset/kube-proxy                            Created pod: kube-proxy-bbbph
+default              58s         Normal    RegisteredNode            node/article3-dev-worker                        Node article3-dev-worker event: Registered Node article3-dev-worker in Controller
+default              58s         Normal    NodeAllocatableEnforced   node/article3-dev-worker                        Updated Node Allocatable limit across pods
+default              58s         Normal    NodeHasSufficientMemory   node/article3-dev-worker                        Node article3-dev-worker status is now: NodeHasSufficientMemory
+default              58s         Normal    NodeHasSufficientPID      node/article3-dev-worker                        Node article3-dev-worker status is now: NodeHasSufficientPID
+kube-system          57s         Normal    Scheduled                 pod/kindnet-rpv58                               Successfully assigned kube-system/kindnet-rpv58 to article3-dev-worker
+default              57s         Normal    CIDRAssignmentFailed      node/article3-dev-worker                        Node article3-dev-worker status is now: CIDRAssignmentFailed
+kube-system          58s         Normal    SuccessfulCreate          daemonset/kindnet                               Created pod: kindnet-rpv58
+kube-system          57s         Normal    Started                   pod/kube-proxy-mgwnn                            Container started
+kube-system          57s         Normal    Scheduled                 pod/kube-proxy-bbbph                            Successfully assigned kube-system/kube-proxy-bbbph to article3-dev-worker
+default              56s         Normal    Starting                  node/article3-dev-control-plane                 
+kube-system          54s         Normal    Created                   pod/kindnet-r2zzp                               Container created
+kube-system          51s         Normal    Started                   pod/kindnet-r2zzp                               Container started
+kube-system          55s         Normal    Pulled                    pod/kube-proxy-bbbph                            Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on machine and can be accessed by the pod
+kube-system          54s         Normal    Pulled                    pod/kindnet-rpv58                               Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system          50s         Normal    Started                   pod/kube-proxy-bbbph                            Container started
+kube-system          51s         Normal    Created                   pod/kube-proxy-bbbph                            Container created
+default              49s         Normal    Starting                  node/article3-dev-worker                        
+kube-system          46s         Normal    Created                   pod/kindnet-rpv58                               Container created
+kube-system          44s         Normal    Started                   pod/kindnet-rpv58                               Container started
+kube-system          40s         Normal    Scheduled                 pod/coredns-7d764666f9-4ssjl                    Successfully assigned kube-system/coredns-7d764666f9-4ssjl to article3-dev-control-plane
+local-path-storage   40s         Normal    Scheduled                 pod/local-path-provisioner-67b8995b4b-m982w     Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-m982w to article3-dev-control-plane
+kube-system          40s         Normal    Scheduled                 pod/coredns-7d764666f9-26k4d                    Successfully assigned kube-system/coredns-7d764666f9-26k4d to article3-dev-control-plane
+default              40s         Normal    NodeReady                 node/article3-dev-control-plane                 Node article3-dev-control-plane status is now: NodeReady
+kube-system          38s         Normal    Pulled                    pod/coredns-7d764666f9-26k4d                    Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+kube-system          38s         Normal    Pulled                    pod/coredns-7d764666f9-4ssjl                    Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present on machine and can be accessed by the pod
+local-path-storage   37s         Normal    Pulled                    pod/local-path-provisioner-67b8995b4b-m982w     Container image "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88" already present on machine and can be accessed by the pod
+kube-system          35s         Normal    Created                   pod/coredns-7d764666f9-4ssjl                    Container created
+kube-system          35s         Normal    Created                   pod/coredns-7d764666f9-26k4d                    Container created
+kube-system          34s         Normal    Started                   pod/coredns-7d764666f9-26k4d                    Container started
+kube-system          34s         Normal    Started                   pod/coredns-7d764666f9-4ssjl                    Container started
+default              33s         Normal    NodeReady                 node/article3-dev-worker                        Node article3-dev-worker status is now: NodeReady
+local-path-storage   31s         Normal    Started                   pod/local-path-provisioner-67b8995b4b-m982w     Container started
+local-path-storage   31s         Normal    Created                   pod/local-path-provisioner-67b8995b4b-m982w     Container created
+article3-cni-check   23s         Normal    Scheduled                 pod/server                                      Successfully assigned article3-cni-check/server to article3-dev-worker
+article3-cni-check   22s         Normal    Scheduled                 pod/client                                      Successfully assigned article3-cni-check/client to article3-dev-worker
+article3-cni-check   21s         Normal    Pulling                   pod/server                                      Pulling image "docker.io/library/busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028"
+article3-cni-check   20s         Normal    Pulling                   pod/client                                      Pulling image "docker.io/library/busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028"
+article3-cni-check   13s         Normal    Pulled                    pod/server                                      Successfully pulled image "docker.io/library/busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028" in 7.947s (7.947s including waiting). Image size: 2222111 bytes.
+article3-cni-check   13s         Normal    Created                   pod/server                                      Container created
+article3-cni-check   13s         Normal    Started                   pod/server                                      Container started
+article3-cni-check   11s         Normal    Created                   pod/client                                      Container created
+article3-cni-check   11s         Normal    Pulled                    pod/client                                      Successfully pulled image "docker.io/library/busybox@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028" in 2.732s (9.728s including waiting). Image size: 2222111 bytes.
+article3-cni-check   10s         Normal    Started                   pod/client                                      Container started

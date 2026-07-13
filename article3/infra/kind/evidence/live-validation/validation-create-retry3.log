@@ -1,0 +1,109 @@
+Creating cluster "article3-validation" ...
+ • Ensuring node image (kindest/node:v1.35.0) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.35.0) 🖼
+ • Preparing nodes 📦 📦 📦   ...
+ ✓ Preparing nodes 📦 📦 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+Set kubectl context to "kind-article3-validation"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-article3-validation --kubeconfig /tmp/article3-kind-kubeconfig.o6bA12
+
+Have a nice day! 👋
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  341k  100  341k    0     0   549k      0 --:--:-- --:--:-- --:--:--  548k100  341k  100  341k    0     0   548k      0 --:--:-- --:--:-- --:--:--  548k
+/tmp/article3-calico-raw.KN5mim: OK
+/tmp/article3-calico-pinned.si6UFp: OK
+import 2026 07 12@sha256:bb1567e3ed81e2e	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+Importing	elapsed: 6.0 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import 2026 07 12@sha256:bb1567e3ed81e2e	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+Importing	elapsed: 6.0 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import 2026 07 12@sha256:bb1567e3ed81e2e	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+Importing	elapsed: 5.9 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/cni@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import-2026-07-12@sha256:bb1567e3ed81e2e8414e9a68f186e1f7ffd4067a4871a9ae90896793af0190dd
+import 2026 07 12@sha256:7f874b3f0b540c2	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+Importing	elapsed: 11.9s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+import-2026-07-12@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+import 2026 07 12@sha256:7f874b3f0b540c2	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+Importing	elapsed: 13.8s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+import-2026-07-12@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+import 2026 07 12@sha256:7f874b3f0b540c2	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+Importing	elapsed: 9.8 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/node@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+import-2026-07-12@sha256:7f874b3f0b540c2b523aea9961ef5e2f43b0af9056a47874c916d6cf348168d3
+import 2026 07 12@sha256:18008f781c86937	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+Importing	elapsed: 4.5 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/kube-controllers@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+import-2026-07-12@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+import 2026 07 12@sha256:18008f781c86937	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+Importing	elapsed: 4.8 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/kube-controllers@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+import-2026-07-12@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+import 2026 07 12@sha256:18008f781c86937	saved	
+application/vnd.docker.distribution.manifest.list.v2+json sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+Importing	elapsed: 5.0 s	total:   0.0 B	(0.0 B/s)	
+quay.io/calico/kube-controllers@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+import-2026-07-12@sha256:18008f781c869376dbbc4dfb1ffe3afb46f7897887d4f20e080c420ac44a6612
+poddisruptionbudget.policy/calico-kube-controllers serverside-applied
+serviceaccount/calico-kube-controllers serverside-applied
+serviceaccount/calico-node serverside-applied
+serviceaccount/calico-cni-plugin serverside-applied
+configmap/calico-config serverside-applied
+customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/ipreservations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/stagedglobalnetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/stagedkubernetesnetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/stagednetworkpolicies.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/tiers.crd.projectcalico.org serverside-applied
+customresourcedefinition.apiextensions.k8s.io/clusternetworkpolicies.policy.networking.k8s.io serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-kube-controllers serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-node serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-cni-plugin serverside-applied
+clusterrole.rbac.authorization.k8s.io/calico-tier-getter serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-node serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-cni-plugin serverside-applied
+clusterrolebinding.rbac.authorization.k8s.io/calico-tier-getter serverside-applied
+daemonset.apps/calico-node serverside-applied
+deployment.apps/calico-kube-controllers serverside-applied
+Waiting for daemon set "calico-node" rollout to finish: 0 of 3 updated pods are available...
+Waiting for daemon set "calico-node" rollout to finish: 1 of 3 updated pods are available...
