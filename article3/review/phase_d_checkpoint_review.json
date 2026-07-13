@@ -1,0 +1,411 @@
+{
+  "schema_version": 1,
+  "review_id": "phase-d-checkpoint-95d9c5c-red-team-20260713",
+  "reviewer_role": "fresh independent source-bound Phase D red-team",
+  "reviewed_at_utc": "2026-07-13T19:51:52Z",
+  "verdict": "changes_required",
+  "branch": "article3-q1-recovery-20260711",
+  "reviewed_commit": "95d9c5c5439f8267b011a803701b4c27f757fc5e",
+  "reviewed_tree": "89d049aa3cdc3719ca41310b9d2a458cc6993415",
+  "reviewed_parent": "f77d4f11d5201774bfda558880a36138db2781ed",
+  "reviewed_commit_subject": "feat(article3): harden GOV-AR admission and liability ledger",
+  "reviewed_commit_author_time": "2026-07-13T20:32:51+01:00",
+  "scope": "Read-only source and bounded execution audit of M4 pricing/cap/settlement, M5 calibration/leakage/drift, reusable approval and the no-per-request-CRD requirement, PostgreSQL audit and role separation, traces, Docker pinning, generated CRDs, RBAC, Helm, and tests against the immutable Q1 contract and phase_d_remaining_systems.md. M7/M8 production integration gaps are distinguished from completed libraries. This is not release approval and is not experimental evidence.",
+  "source_snapshot": {
+    "method": "The reviewer created a detached Git worktree at the exact reviewed commit. Source hashes were computed from git show reviewed_commit:path, not from the concurrently changing primary worktree.",
+    "primary_worktree_treatment": "No implementation file, archived measurement, propmt.txt, or unrelated dirty file was modified by this review. The only primary-worktree output is this JSON review.",
+    "archive_treatment": "No measurement under article3/archive/codex_20260711 was read into this review.",
+    "kind_treatment": "No Kind cluster or external resource was created, changed, or treated as evidence by this reviewer."
+  },
+  "authoritative_contracts": [
+    {
+      "path": "article3/Q1_GATE_CONTRACT.md",
+      "sha256": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620"
+    },
+    {
+      "path": "article3/design/phase_d_remaining_systems.md",
+      "sha256": "9e78f2db43f600ffef8e1e2df0d88744d4dba1e7855e8c39457a06bc7d3274b9"
+    }
+  ],
+  "summary": {
+    "critical_count": 7,
+    "major_count": 8,
+    "minor_count": 0,
+    "unresolved_critical_or_major_count": 15,
+    "approval_condition_met": false,
+    "reason": "The checkpoint materially improves typed pricing, reserve/settle persistence, reusable approval, audit chaining, trace plumbing, Docker pins, and isolated tests, but it is not Phase-D complete. Concrete counterexamples can omit liability, round request bounds down, reuse a request ID with changed liability inputs, and regenerate an invalid CRD. The non-strict calibration evidence is not durably bound to authoritative ledger observations or frozen splits and advertises no finite-sample coverage interval. Provider/path adapters, worker/metric/audit/trace production integration, release image evidence, and clean Helm/Kind lifecycle evidence remain incomplete."
+  },
+  "completed_items": [
+    {
+      "id": "DONE-M4-TYPED-ARITHMETIC",
+      "claim": "A closed ten-basis pricing vocabulary, exact integer-micro conversion, checked ceiling multiplication, frozen price/component vectors, and provisional missing-usage holds are implemented and covered by focused unit/PostgreSQL tests.",
+      "boundary": "The included-parent, request-bound decoding, path-specific adapter, and complete provider-usage findings below prevent complete-liability approval."
+    },
+    {
+      "id": "DONE-APPROVAL-REUSE",
+      "claim": "The former per-request AIAdmissionApproval API/controllers/CRDs are absent. A reusable AIChangeRequest scope binds policy/model/provider UID and generation, route snapshot digest, canonical scope digest, and absolute expiry; admission revalidates the live scope for every request without creating a request CRD.",
+      "boundary": "The checkpoint does not source-bind the approval transition to an independently authenticated reviewer or enforce two-person role separation."
+    },
+    {
+      "id": "DONE-AUDIT-CORE",
+      "claim": "Reserve, dispatch, settle, cancel, expiry, rollover, budget adjustment, and cohort registration append same-transaction, per-tenant hash-chained audit rows. The production constructor selects a distinct constrained runtime role; mutation triggers and an independent chain verifier are present.",
+      "boundary": "Calibration/drift/reconciliation publication and periodic trusted checkpoint integration remain absent, and readiness does not continuously revalidate these properties."
+    },
+    {
+      "id": "DONE-TRACE-CORE",
+      "claim": "Pinned OpenTelemetry dependencies, W3C extraction/injection, real recording trace IDs, bounded attributes, Envoy/admission/provider/settlement-side spans, disabled-mode behavior, and exporter-outage readiness behavior are implemented in isolated paths.",
+      "boundary": "No test joins the actual ext_proc, actual admission ledger transaction, selected backend, settlement, and reconciliation spans in one trace."
+    },
+    {
+      "id": "DONE-DOCKER-PINS",
+      "claim": "The GOV-AR Dockerfile uses digest-pinned Go 1.26.5 and distroless nonroot bases, deterministic build flags, and a nonroot runtime user; the pin checker passed.",
+      "boundary": "This is pin evidence, not a clean source-bound release build, SBOM, vulnerability result, secret scan, or runtime hardening result."
+    },
+    {
+      "id": "DONE-CRD-CHART-COPIES",
+      "claim": "At the reviewed commit, base and chart copies of the four reviewed CRDs are byte-identical, and Helm lint plus development/production/negative renders pass.",
+      "boundary": "The Go marker is malformed, so regeneration changes the committed AIModel CRD into invalid CEL; no values schema or Kind lifecycle evidence was produced."
+    },
+    {
+      "id": "DONE-M7-LIBRARY",
+      "claim": "A pure lease-worker library provides closed work kinds, renewals, bounded retry/backoff, dead-letter preservation, fake-clock tests, heartbeat state, and bounded shutdown.",
+      "boundary": "There is no PostgreSQL implementation of its ClaimWork/RenewWork/CompleteWork interface and the production service does not run it."
+    },
+    {
+      "id": "DONE-M8-METRIC-LIBRARY",
+      "claim": "An isolated bounded-cardinality govarobservability registry and unit tests define the requested monetary, transition, worker, calibration, drift, and failure metrics.",
+      "boundary": "The production binary does not construct or inject that registry and instead registers a smaller package-global metric set on Prometheus' default registry."
+    }
+  ],
+  "critical_findings": [
+    {
+      "id": "PDC-C1-INCLUDED-CHARGE-GRAPH",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "Included-charge validation permits a cycle or an inapplicable parent, after which reservation and settlement skip every included row.",
+      "evidence": "operateur/internal/govarpricing/pricing.go Normalize lines 155-203 records charged and inapplicable bases in the same seen map and checks only that IncludedIn names a seen basis. ValidateSnapshotIntegrity lines 247-280 likewise has no charged-parent or acyclicity check. ReserveComponents lines 291-310 and SettleComponents lines 396-415 skip all rows with IncludedIn != nil. Two zero-price rows A includedIn B and B includedIn A, or A included in a basis declared inapplicable, can therefore pass the closed-basis partition while neither parent liability is reserved.",
+      "impact": "The supposedly complete price snapshot can omit a provider-billable component before dispatch, invalidating strict-mode deterministic budget safety and complete reserve-settle accounting.",
+      "required_repair": "Require every included row to reach one existing non-included charged root, reject inapplicable parents and cycles, define legal detail/base pairs, and add normalization, integrity, digest, reservation, and PostgreSQL counterexample tests."
+    },
+    {
+      "id": "PDC-C2-REQUEST-BOUND-ROUND-DOWN",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "The Envoy adapter silently rounds JSON request charge bounds down.",
+      "evidence": "operateur/internal/govarextproc/server.go admitAndClaim lines 215-250 decodes request JSON into map[string]any, so numbers become float64. int64Value lines 646-657 converts float64 with int64(n), with no integrality, sign, finite, or exact-range validation. timeout_seconds, tool/media counts, retry attempts, cached/reasoning bounds, and output caps use this conversion. For example timeout_seconds=1.9 is reserved as 1 while parseUsage derives billable elapsed seconds using an upward duration calculation.",
+      "impact": "A client-visible request can be dispatched with a pre-dispatch upper bound below its declared/provider-observed liability; large JSON integers can also lose precision.",
+      "required_repair": "Decode with UseNumber or typed provider schemas, reject non-integral/non-finite/negative/out-of-range values, use exact checked conversion, and add fractional, overflow, precision-boundary, negative, null, string, and scientific-notation tests for every request-bound field."
+    },
+    {
+      "id": "PDC-C3-PATH-AND-USAGE-ADAPTERS",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "Verified output-cap evidence and settlement parsing are not bound to a provider/path-specific request and response adapter.",
+      "evidence": "operateur/internal/controller/aimodel_controller.go lines 102-120 and internal/govar/snapshot.go lines 166-173 accept only the generic literal requestParameter=max_output_tokens for every path. ext_proc admitAndClaim accepts either max_tokens or max_output_tokens, while rewriteRequestForRoute changes model/path but does not canonicalize or prove the enforced output-cap field. govarpricing.Adapter exposes Normalize and ApplicableCharges but no ParseUsage; ForProviderType returns the same closedAdapter for OpenAI, Azure OpenAI, Mistral, Anthropic, Vertex, self-hosted, and custom. ext_proc parseUsage is one OpenAI-shaped response parser and locally invents several quantities; media remains absent.",
+      "impact": "The source does not mechanically establish that the exact forwarded provider request is capped by the evidence, or that all supported provider families yield authoritative complete usage. Holds may remain safe when a field is absent, but strict safety and provider-family settlement claims are unsupported where locally derived zero/time/retry/cancellation fields are treated as authoritative.",
+      "required_repair": "Implement closed path/provider adapters that validate and rewrite the exact cap parameter and parse provider-specific authoritative usage/finality. Bind adapter/schema version into route, cap, pricing, reservation, and audit digests; make unsupported combinations infeasible and add golden public/synthetic fixtures."
+    },
+    {
+      "id": "PDC-C4-ADMISSION-FINGERPRINT-INCOMPLETE",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "The duplicate-request fingerprint omits monetary liability and approval inputs.",
+      "evidence": "operateur/internal/govar/engine.go admissionFingerprint lines 1113 onward includes InputTokens and MaxOutputTokens but omits InputTokensExact, MaxToolCalls, MaxMediaUnits, TimeoutSeconds, MaxRetryAttempts, CancellationPossible, the canonical ChargeBounds vector, and RequireApproval. Both in-memory and PostgreSQL admission use this fingerprint for existing request IDs.",
+      "impact": "A replay using the same request_id but changed non-token charge bounds or exact-token authority can match the original fingerprint and receive the persisted ADMIT result instead of an immutable-request conflict. The ext_proc caller has an additional response check, but the stable admission API and other compatible clients cannot rely on that caller-local defense.",
+      "required_repair": "Version and canonically hash every admission-semantic field, including sorted charge bounds and approval requirement, and add memory/PostgreSQL/API replay tests for one-field changes, ordering equivalence, and exact duplicates."
+    },
+    {
+      "id": "PDC-C5-CALIBRATION-PROVENANCE-AND-LEAKAGE",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "The M5 producer trusts mutable-policy-referenced ConfigMap rows rather than authoritative ledger observations and frozen split authority.",
+      "evidence": "operateur/internal/controller/airoutingpolicy_govar_calibration.go reads calibration.json and monitoring.json from ConfigMaps named in AIRoutingPolicy spec and publishes status. operateur/internal/govarcalibration/calibration.go validates Selected, AuthoritativeFinal, Excluded, Split, and regime strings supplied inside those JSON rows, but there is no join to the selected attempt and authoritative-final ledger state, dataset/split registry, or hidden outcome matrix. The reviewed schema contains no govar_usage_observations, govar_calibration_artifacts, govar_drift_windows, or govar_policy_evidence_publications tables. The general controller identity may also create/update ConfigMaps and policy status.",
+      "impact": "An authorized policy/ConfigMap writer can construct rows marked selected, authoritative_final, and calibration, then provide matching mutable hashes. Source-bound no-test-leakage and immutable calibration-publication claims do not hold, so adaptive/GOV-AR non-strict experiments cannot use this producer as scientific evidence.",
+      "required_repair": "Persist append-only observations from ledger-authoritative selected attempts, resolve split membership from immutable dataset/frozen registries, build immutable artifacts/drift windows/publication mappings under PostgreSQL lock plus Kubernetes resourceVersion CAS, and give the producer a separate least-privilege identity. Add adversarial leakage and two-producer race tests."
+    },
+    {
+      "id": "PDC-C6-CALIBRATION-COVERAGE-BOUND",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "The artifact advertises a target/empirical quantile without a finite-sample coverage interval or upper-tail bound.",
+      "evidence": "operateur/internal/govarcalibration/calibration.go BuildArtifact lines 129-193 chooses the nearest-rank empirical quantile and stores CoverageTargetPPB and EmpiricalCoveragePPB. Artifact and AIRoutingPolicy status contain no coverage interval/confidence level. For n=5 and target 0.99, choosing the sample maximum yields empirical coverage 1.0, but without stronger assumptions the next exchangeable sample lies below that maximum with probability only 5/6.",
+      "impact": "The status can advertise calibration compatible with a 0.99 risk target when the finite sample does not support that claim. The conditional in-flight risk statement lacks the required per-request upper-tail evidence.",
+      "required_repair": "Use a prespecified finite-sample conformal/order-statistic or other defensible bound with an explicit confidence/coverage interval and minimum support, persist those fields, reject insufficient support, and test small-n/heavy-tail/zero-violation cases. Until then label outputs empirical only and prohibit calibrated-risk advertising."
+    },
+    {
+      "id": "PDC-C7-CRD-REGENERATION-INVALID",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "A malformed Go marker regenerates invalid AIModel CEL and breaks clean source reproduction.",
+      "evidence": "operateur/api/v1alpha1/aimodel_types.go line 80 contains self.routeBindingRef != ” with a smart closing quote. The reviewed committed CRD contains a valid empty-string CEL expression, so envtest on the committed YAML passed. Running make manifests changes operateur/config/crd/bases/aiops.imperium.io_aimodels.yaml to the invalid smart-quote expression; a subsequent API-server envtest rejects the CRD during CEL compilation and runs zero controller specs.",
+      "impact": "Committed generated output is not reproducible from source, and the required clean generation/rebuild path produces an uninstallable CRD. A clean release verifier must fail.",
+      "required_repair": "Replace the marker with a valid CEL string literal, regenerate base and chart CRDs/deepcopy/RBAC, enforce zero generation diff, and run actual API-server envtest plus Helm install/upgrade/rollback tests."
+    }
+  ],
+  "major_findings": [
+    {
+      "id": "PDC-M1-APPROVAL-ACTOR-SEPARATION",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Reusable scope validation is strong, but the approval transition is not cryptographically or admission-control bound to an independent reviewer.",
+      "evidence": "AIChangeRequestSpec.Approval is an ordinary mutable spec field. The controller treats Approved as sufficient after scope/reference validation. The manager ClusterRole can create/update/patch all AIChangeRequests; the unbound reviewer ClusterRole can update/patch the entire object, not a restricted approval subresource. Kubernetes RBAC cannot limit that verb to spec.approval, and the CRD has no actor/proposer separation or reviewer identity evidence.",
+      "impact": "The chart suggests independent human review but source policy permits an identity with ordinary manager or broad object-update authority to author and approve the same reusable governance scope.",
+      "required_repair": "Define and enforce proposer/reviewer identities and a restricted immutable decision record or validating admission policy; bind reviewer identity/time/signature or auditable authorization evidence to the approved scope, and test self-approval, full-spec patch, stale reviewer, and escalation paths."
+    },
+    {
+      "id": "PDC-M2-M5-REGIME-AND-FEATURE-BINDING",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Calibration evidence is only marginally bound and the cap-regime digest is not canonically derived from the effective cap/path.",
+      "evidence": "snapshot.go assigns Candidate.CapEvidenceDigest from the administrator evidence SHA and validateCalibrationEvidence compares that raw value. The artifact does not canonically commit the effective maximum tokens, provider/deployment, route/path adapter, request feature vector, or immutable opportunity identity. A reused evidence hash after a semantic cap/path change can therefore appear regime-compatible.",
+      "impact": "Even after durable storage is added, a marginal artifact can be applied outside the cohort/feature/cap regime for which its empirical coverage was measured.",
+      "required_repair": "Define canonical price, cap/path, feature, cohort/opportunity, split, and software regime digests and require exact atomic matches at admission and publication."
+    },
+    {
+      "id": "PDC-M3-M7-PRODUCTION-INTEGRATION",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The lease-worker core has no PostgreSQL implementation or production service integration.",
+      "evidence": "git grep at the reviewed commit finds ClaimWork, RenewWork, CompleteWork, lease state, and dead-letter semantics only in internal/govarworker and its in-memory tests. No worker_postgres.go or FOR UPDATE SKIP LOCKED implementation exists. cmd/gov-ar-admission starts a simple ticker that calls ReconcileExpired and PendingReconciliation; it does not run the five worker kinds, renew leases, provide bounded drain, or include worker heartbeat in readiness.",
+      "impact": "Delivery ambiguity, outbox repair, calibration/drift, audit checkpointing, poison work, and multi-replica takeover are not durably operated on the measured path.",
+      "required_repair": "Implement the production PG ledger interface and handlers, start only after full readiness, integrate heartbeat/backlog/dead-letter conditions and bounded shutdown, and add two-process PG/crash/takeover tests before M7 approval."
+    },
+    {
+      "id": "PDC-M4-M8-METRICS-UNWIRED",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The requested isolated metric registry is unused by the production binary.",
+      "evidence": "internal/govarobservability.New builds the requested private registry, but no production source calls it. cmd/gov-ar-admission/metrics.go instead uses package-global collectors, init-time prometheus.MustRegister, fewer/different labels, and default buckets; main.go serves promhttp.Handler on the default registry. Ledger commit paths do not invoke govarobservability's committed snapshots or transitions.",
+      "impact": "SQL-versus-scrape accounting, component liability, worker/calibration/drift metrics, duplicate-effective-transition semantics, and bounded registry isolation are not observable on the real service path.",
+      "required_repair": "Inject the private registry into HTTP, ledger post-commit hooks, worker, and calibration producer; remove duplicate globals; add a synchronized SQL-versus-scrape lifecycle test and cardinality checks on the actual binary."
+    },
+    {
+      "id": "PDC-M5-M8-AUDIT-INTEGRATION",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The audit core is strong but does not cover every required state change or trusted checkpoint lifecycle.",
+      "evidence": "The schema enum names CALIBRATION_PUBLICATION, DRIFT_CHANGE, and RECONCILIATION, but no production append path for those events was found. No periodic trusted checkpoint/anchor producer consumes the verifier, and Ready calls only pool.Ping after startup instead of revalidating exact schema/audit protections and worker checkpoint freshness. appendAuditTx samples clock_timestamp before the containing transaction commits, so committed_at is server-sourced but not the actual commit instant.",
+      "impact": "Claims must remain limited to append-only hash chaining for currently integrated ledger transitions under role separation. Full policy-evidence provenance, reconciliation audit, and periodic tamper detection are unsupported.",
+      "required_repair": "Append calibration/drift/reconciliation events in the same transactions as their durable changes, implement verified trusted checkpoints with explicit assumptions, monitor schema/role/chain health in readiness, and describe timestamp semantics precisely."
+    },
+    {
+      "id": "PDC-M6-M8-TRACE-INTEGRATION",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Trace plumbing passes isolated tests but no joined actual-ledger path or reconciliation trace is proven.",
+      "evidence": "The ext_proc trace test uses a stub admission client and joins only ext_proc-side spans. No test shows actual govar.feasibility_filter and govar.reservation_transaction spans, selected backend/provider attempt, committed settlement, and reconciliation in one trace. The production M7 reconciliation span is absent. The exporter-outage test checks readiness but not a complete reserve/dispatch/settle safety lifecycle during outage.",
+      "impact": "The required E0 joined-trace evidence and the claim that trace exporter failure cannot alter complete ledger safety are not yet established.",
+      "required_repair": "Run an in-process or Kind test with real admission/PostgreSQL, real Envoy, selected backend, settlement and worker reconciliation under one W3C trace, then repeat with exporter loss and recompute ledger facts."
+    },
+    {
+      "id": "PDC-M7-M12-RELEASE-EVIDENCE",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Docker pins pass, but source-bound image, SBOM, vulnerability, secret, and runtime evidence required by M12 is absent.",
+      "evidence": "build_base_images.json records resolved base digests and Go versions but does not bind the Dockerfile hash or reviewed source commit. check_govar_dockerfile_pins.py checks pins/platform/provenance correspondence but lacks the required source-mismatch and EOL negative-fixture suite. No final clean binary/image hash, image config digest, go version -m reconciliation, nonroot/read-only runtime execution, SBOM schema result, Trivy image/module scan, or secret scan was provided for 95d9c5c.",
+      "impact": "A pinned builder is not evidence that the released binary is the reviewed source or free of blocking findings. M12 and release gates remain red.",
+      "required_repair": "Bind provenance to commit and Dockerfile hashes, add every required negative fixture, build from a clean commit, record binary/image/config/runtime facts, generate SBOM, scan immutable digest and embedded Go modules, and rerun after every source/module/base change."
+    },
+    {
+      "id": "PDC-M8-HELM-AND-CLEAN-LIFECYCLE",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "Helm static rendering passes, but schema, immutable release references, and cluster lifecycle evidence are absent.",
+      "evidence": "The chart has no values.schema.json. Chart/app version remains 0.5.11 rather than an Article 3 prerelease, and the image helper renders a tag rather than an immutable digest. No clean Kind install, upgrade, rollback, uninstall, admission RBAC authorization, PostgreSQL runtime-role startup, or E0 evidence was run in this review. The invalid regeneration marker separately blocks clean CRD reproduction.",
+      "impact": "Static Helm lint does not prove installability, least privilege, upgrade/rollback compatibility, or the measured real request path.",
+      "required_repair": "Add values schema/negative checks, prerelease immutable image/chart references, regenerate valid CRDs, and execute recorded clean install/upgrade/rollback/uninstall plus E0 on the pinned validation cluster."
+    }
+  ],
+  "m7_m8_integration_gaps": [
+    "M7 pure lease/heartbeat/backoff logic is implemented and unit/race tested, but durable PostgreSQL claims, renewals, completions, handlers, multi-process takeover, production startup/drain, and readiness are absent.",
+    "M8 bounded private metrics and collectors are implemented and unit tested, but the production binary uses an unrelated global default registry and no SQL commit integration.",
+    "M8 W3C/OTel plumbing is implemented and a pinned real Envoy route test passes, but the joined actual admission-ledger-backend-settlement-reconciliation trace and complete exporter-outage lifecycle are absent.",
+    "M8 append-only transactional audit is implemented for core ledger transitions under tested role separation, but calibration publication, drift, general reconciliation, periodic trusted checkpoints, and continuous readiness verification are absent."
+  ],
+  "tests": [
+    {
+      "command": "go test -p1 -count=1 for api/v1alpha1, govarpricing, govarcalibration, govar, govaraudit, govarobservability, govarworker, govarextproc, cmd/gov-ar-admission",
+      "cwd": "operateur detached worktree",
+      "result": "passed"
+    },
+    {
+      "command": "GOMAXPROCS=2 go test -p1 -count=1 -run 'Test(Pricing|Provider|Calibration|AIChangeRequest|GOVAR)' ./internal/controller",
+      "cwd": "operateur detached worktree",
+      "result": "passed"
+    },
+    {
+      "command": "bash article3/tools/run_test_matrix.sh --internal-envtest",
+      "result": "passed on the committed CRDs before regeneration; internal/controller passed with downloaded envtest assets in 9.330s"
+    },
+    {
+      "command": "GOVAR_REAL_ENVOY=1 GOMAXPROCS=2 go test -p1 -count=1 -v -run '^TestRealEnvoyRoutesOnlyToAdmissionSelectedBackend$' ./internal/govarextproc",
+      "cwd": "operateur detached worktree",
+      "result": "passed with the pinned real Envoy in 4.65s"
+    },
+    {
+      "command": "bash article3/tools/run_test_matrix.sh --internal-helm-lint",
+      "result": "passed Helm lint, development and production renders, and prespecified negative renders"
+    },
+    {
+      "command": "python3 article3/tools/check_govar_dockerfile_pins.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 article3/tools/test_verify_govar_audit.py",
+      "result": "passed 1 test including tamper/delete/reorder/wrong-checkpoint fixtures"
+    },
+    {
+      "command": "go test -race -p1 -count=1 for govarpricing, govarcalibration, govaraudit, govarobservability, govarworker, govarextproc, cmd/gov-ar-admission",
+      "cwd": "operateur detached worktree",
+      "result": "passed"
+    },
+    {
+      "command": "go vet on the selected Phase D packages; gofmt -l on selected Go sources",
+      "cwd": "operateur detached worktree",
+      "result": "passed; gofmt produced no paths"
+    },
+    {
+      "command": "GOVAR_TEST_DATABASE_URL=<redacted disposable postgres:16 URL> go test -p1 -count=1 ./internal/govar",
+      "cwd": "operateur detached worktree",
+      "result": "passed against postgres:16@sha256:be01... in 16.548s; credential and private endpoint were not recorded"
+    },
+    {
+      "command": "GOVAR_TEST_DATABASE_URL=<redacted disposable postgres:16 URL> go test -race -p1 -count=1 ./internal/govar",
+      "cwd": "operateur detached worktree",
+      "result": "passed in 29.517s"
+    },
+    {
+      "command": "make manifests generate followed by git diff --exit-code on generated API/RBAC artifacts",
+      "cwd": "operateur detached worktree",
+      "result": "failed: regeneration changed the committed AIModel CEL from a valid empty string to the invalid smart-quote marker"
+    },
+    {
+      "command": "KUBEBUILDER_ASSETS=<downloaded assets> go test -p1 -count=1 ./... after the failed generation-diff check",
+      "cwd": "operateur detached worktree",
+      "result": "failed in controller BeforeSuite because the regenerated AIModel CRD CEL could not compile; all other reported packages passed. This derivative failure is attributed to PDC-C7, not to the earlier committed-CRD envtest."
+    },
+    {
+      "command": "Kind Helm install/upgrade/rollback/uninstall, combined E0, SBOM, vulnerability scan, image secret scan, and clean immutable image rebuild",
+      "result": "not run and not inferred from file existence"
+    }
+  ],
+  "source_hash_algorithm": "Each reviewed_source_hashes value is SHA-256 of exact bytes from git show reviewed_commit:path. source_corpus_digest is SHA-256 over the ordered source_corpus_paths sequence encoded as path, NUL, lowercase file SHA-256, newline.",
+  "source_corpus_digest": "96b815cad804459f43db768de16742d6a36c3b68887153f6f6a465e6f8466295",
+  "source_corpus_count": 46,
+  "source_corpus_paths": [
+    "article3/Q1_GATE_CONTRACT.md",
+    "article3/design/phase_d_remaining_systems.md",
+    "article3/infra/postgres/init.sql",
+    "article3/provenance/build_base_images.json",
+    "article3/tools/check_govar_dockerfile_pins.py",
+    "article3/tools/run_test_matrix.sh",
+    "article3/tools/verify_govar_audit.py",
+    "operateur/Dockerfile.gov-ar-admission",
+    "operateur/go.mod",
+    "operateur/go.sum",
+    "operateur/api/v1alpha1/aichangerequest_types.go",
+    "operateur/api/v1alpha1/aimodel_types.go",
+    "operateur/api/v1alpha1/aiprovider_types.go",
+    "operateur/api/v1alpha1/airoutingpolicy_types.go",
+    "operateur/config/crd/bases/aiops.imperium.io_aichangerequests.yaml",
+    "operateur/config/crd/bases/aiops.imperium.io_aimodels.yaml",
+    "operateur/config/crd/bases/aiops.imperium.io_aiproviders.yaml",
+    "operateur/config/crd/bases/aiops.imperium.io_airoutingpolicies.yaml",
+    "operateur/charts/ai-sovereign-finops-operator/templates/rbac.yaml",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-admission-deployment.yaml",
+    "operateur/charts/ai-sovereign-finops-operator/values.yaml",
+    "operateur/cmd/gov-ar-admission/main.go",
+    "operateur/cmd/gov-ar-admission/metrics.go",
+    "operateur/cmd/gov-ar-admission/reconciliation_worker.go",
+    "operateur/cmd/gov-ar-admission/tracing.go",
+    "operateur/internal/controller/aichangerequest_controller.go",
+    "operateur/internal/controller/aimodel_controller.go",
+    "operateur/internal/controller/aiprovider_controller.go",
+    "operateur/internal/controller/airoutingpolicy_govar_calibration.go",
+    "operateur/internal/govar/admission_policy.go",
+    "operateur/internal/govar/engine.go",
+    "operateur/internal/govar/postgres_engine.go",
+    "operateur/internal/govar/postgres_audit.go",
+    "operateur/internal/govar/snapshot.go",
+    "operateur/internal/govaraudit/chain.go",
+    "operateur/internal/govarcalibration/calibration.go",
+    "operateur/internal/govarextproc/server.go",
+    "operateur/internal/govarobservability/metrics.go",
+    "operateur/internal/govarpricing/pricing.go",
+    "operateur/internal/govarworker/worker.go",
+    "operateur/internal/govarextproc/real_envoy_test.go",
+    "operateur/internal/govar/postgres_engine_test.go",
+    "operateur/internal/govarpricing/pricing_test.go",
+    "operateur/internal/govarcalibration/calibration_test.go",
+    "operateur/internal/govarworker/worker_test.go",
+    "operateur/docs/gov-ar-operations.md"
+  ],
+  "reviewed_source_hashes": {
+    "article3/Q1_GATE_CONTRACT.md": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+    "article3/design/phase_d_remaining_systems.md": "9e78f2db43f600ffef8e1e2df0d88744d4dba1e7855e8c39457a06bc7d3274b9",
+    "article3/infra/postgres/init.sql": "015a3727c6870ffd6b097380f7a4d8bcb1a83c157160d4a3a7a763a3eba23a38",
+    "article3/provenance/build_base_images.json": "2a7edb5d3d1cfebb7e9c6a699e5df83d05480ff6046a0da8aa4f833fba87842a",
+    "article3/tools/check_govar_dockerfile_pins.py": "6b4aa7da797a3e135b2312f4c205787dee6f62ff19e96688aa296c2e75a1d45d",
+    "article3/tools/run_test_matrix.sh": "9767775209148362bf9b106e636f9e93c1e6ee057a5be2e98b612ec3899c1213",
+    "article3/tools/verify_govar_audit.py": "f460702b0fd36c35e401db3649006f059c4f1f0ca192c74683ea4ea85f13131e",
+    "operateur/Dockerfile.gov-ar-admission": "dd742175124047107410ae5c62d215bc4511a141d1410d32290cda3a7b38c3c7",
+    "operateur/go.mod": "7629751a294ba3e6ae0f0f4b1286ca7d37cb4b9612fb0a9b625e8835394a5942",
+    "operateur/go.sum": "28339cfcb918cd3bde44ceafddc5650da7e3c8e8d33f7ff233c584d934b709c7",
+    "operateur/api/v1alpha1/aichangerequest_types.go": "160ed24a3c92d35d4552bcb1818caab11f08d9ac6559ef2020a53ed79863cb7b",
+    "operateur/api/v1alpha1/aimodel_types.go": "055d9b76d4ba5c894a2d606f2da7d0ec82b48d3e0f5821b402345352090784e5",
+    "operateur/api/v1alpha1/aiprovider_types.go": "01c365004fde2b8b37ac37a5181590ec159cba8becdaba08209e9bbe1a453e97",
+    "operateur/api/v1alpha1/airoutingpolicy_types.go": "e867285569f87b7f519b9fde61f00f8106abd9bdf0bde8e4fbb2f0a2c10ed0b3",
+    "operateur/config/crd/bases/aiops.imperium.io_aichangerequests.yaml": "9dc34a4a901825b957f04f35c2cb2915a53d54d28d223639b92cf8a425b32813",
+    "operateur/config/crd/bases/aiops.imperium.io_aimodels.yaml": "261855f2f31e782b0cb7a518a7c4b8adc0f418bf4543bf6667cd49f4e1d4c392",
+    "operateur/config/crd/bases/aiops.imperium.io_aiproviders.yaml": "48d5db2994634e2b98c139f2a23b3ac5eb16ec98a90c7fad1875d8d1b003839b",
+    "operateur/config/crd/bases/aiops.imperium.io_airoutingpolicies.yaml": "de8d6dacb99aaea633209ca00a760771c9e20f56247a845814ef8b957f737f2d",
+    "operateur/charts/ai-sovereign-finops-operator/templates/rbac.yaml": "b6a10ede9d88eed0d79ce7b1502a7bc1ed3f79dbcb61a3ec3584d0fe8d088028",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-admission-deployment.yaml": "75183c50024d7934b4981d2a71eab38134bad45784e40054ad3da0ffbfbf2bff",
+    "operateur/charts/ai-sovereign-finops-operator/values.yaml": "0bf9435a3367b414bf0886c6b6778b578901e24765f3f791939bb027e4422511",
+    "operateur/cmd/gov-ar-admission/main.go": "8f64a6157077850d6e3dab48f3393e1fd97db33f1bb99b7a749053bb72af4c62",
+    "operateur/cmd/gov-ar-admission/metrics.go": "17b32e41adc54f42e7939626d0adf71878f13ad84db9d4e2e27da2a87dcefb2e",
+    "operateur/cmd/gov-ar-admission/reconciliation_worker.go": "5f19e6aad5a5f42e75e44ff78a58fef8a81327616080f06328d03ffabe501332",
+    "operateur/cmd/gov-ar-admission/tracing.go": "cbf6c735e4359f14874ef95425634b837b75cd0d60fe86a10fb328803dd822d7",
+    "operateur/internal/controller/aichangerequest_controller.go": "73fe6a5636a747b9f036da7fcc12e5af14c98b2504e1e367ec276d2a92278153",
+    "operateur/internal/controller/aimodel_controller.go": "8afe8c8af568161304c95c57508b6c0af93009aa8797c54e60f4ca0eefbedb60",
+    "operateur/internal/controller/aiprovider_controller.go": "e9030eaae6bea5f458925f0200c3881b4dce3423566cabf728d3b44cb5325fdc",
+    "operateur/internal/controller/airoutingpolicy_govar_calibration.go": "61ea09e441fbc4d42933ab8201c715f25768162aa568b1ce1ec6a4f1f0f05eb4",
+    "operateur/internal/govar/admission_policy.go": "907f9843f38db4c5ce0ebaa45f037cf7f44d9acd17d18c4c9ce9b4a48d698a5b",
+    "operateur/internal/govar/engine.go": "a8272d017387b6668db172f14b6b8082c0562630ea828eae413fa67db4be9e28",
+    "operateur/internal/govar/postgres_engine.go": "50e902f473bc50c61a3e17bc53a04538f20d62c16e60871c12c59f9cf1cce7ab",
+    "operateur/internal/govar/postgres_audit.go": "4a84d022f689ac467c0a5456fe745eb90a484aeedccd4e92c59ca28d934d1813",
+    "operateur/internal/govar/snapshot.go": "e0e6560500c4f9eb50dff5af5b26cf49e64b3553eda55af5c0d9c3942f1fa5ce",
+    "operateur/internal/govaraudit/chain.go": "0bc723abf3c93fa76ca036b605aff98388a55a0efa4578a41559e985bb0cc20d",
+    "operateur/internal/govarcalibration/calibration.go": "065dffc7a57da84eeaa405e2c87cc8f222c6596defc85e8148a68179e28235ca",
+    "operateur/internal/govarextproc/server.go": "abe7af9712a0bcca6dcff5a83c4fe8c9e9e2a1f77ffe88be6bca6b0acffc15f0",
+    "operateur/internal/govarobservability/metrics.go": "a9882cf0911d2a02c13ae945835949d8a84d1fe99ea6961fe1c39dd53cd12f09",
+    "operateur/internal/govarpricing/pricing.go": "adfe41937b4216d357b1c2a00edb956ca3c846b777c831a9b012b04b0489fc68",
+    "operateur/internal/govarworker/worker.go": "6442928210878bb044dd5574a9305faf69d6c52bacd95ec65b5de719fe23a20c",
+    "operateur/internal/govarextproc/real_envoy_test.go": "dc49a45ab8ac11fe4cd54c6acffc6f8e24cf5044b043ebaa6e27090336d3c722",
+    "operateur/internal/govar/postgres_engine_test.go": "8d1887f043d1fae0221f120c775ac836175b07f52efe464be26439e25996ae9f",
+    "operateur/internal/govarpricing/pricing_test.go": "9a5138c3c06573b406d99fb35ac7a2ed01a1ab875459382098a1746b8f4ed8d5",
+    "operateur/internal/govarcalibration/calibration_test.go": "005e56fcb6422e7ec46712c2b4042e69f053b7dd488a0c5e3143bf5d501e71f0",
+    "operateur/internal/govarworker/worker_test.go": "868f73030074bbd70ca7557c43efc987642e86069eee443d3f2e42c7376241ab",
+    "operateur/docs/gov-ar-operations.md": "66e3da8b3767e960f6b701fb43adb840bd30d6f82fcaf18e66b90ea36e9fe657"
+  },
+  "unresolved_critical_major": [
+    "PDC-C1-INCLUDED-CHARGE-GRAPH",
+    "PDC-C2-REQUEST-BOUND-ROUND-DOWN",
+    "PDC-C3-PATH-AND-USAGE-ADAPTERS",
+    "PDC-C4-ADMISSION-FINGERPRINT-INCOMPLETE",
+    "PDC-C5-CALIBRATION-PROVENANCE-AND-LEAKAGE",
+    "PDC-C6-CALIBRATION-COVERAGE-BOUND",
+    "PDC-C7-CRD-REGENERATION-INVALID",
+    "PDC-M1-APPROVAL-ACTOR-SEPARATION",
+    "PDC-M2-M5-REGIME-AND-FEATURE-BINDING",
+    "PDC-M3-M7-PRODUCTION-INTEGRATION",
+    "PDC-M4-M8-METRICS-UNWIRED",
+    "PDC-M5-M8-AUDIT-INTEGRATION",
+    "PDC-M6-M8-TRACE-INTEGRATION",
+    "PDC-M7-M12-RELEASE-EVIDENCE",
+    "PDC-M8-HELM-AND-CLEAN-LIFECYCLE"
+  ],
+  "archive_measurements_used": false,
+  "implementation_modified_by_reviewer": false,
+  "release_approved": false
+}
