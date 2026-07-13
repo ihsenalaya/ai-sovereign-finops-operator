@@ -1,142 +1,358 @@
 {
-  "review_id": "scientific-red-team-20260712-v5",
-  "reviewer_role": "fresh-context scientific red-team reviewer",
-  "reviewed_at_utc": "2026-07-12T07:20:35Z",
-  "corpus_sha256": "6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a",
+  "review_id": "scientific-red-team-literature-20260713-v6",
+  "reviewer_role": "fresh-context independent scientific red-team reviewer for the active Article 3 literature corpus and novelty boundary",
+  "reviewed_at_utc": "2026-07-13T22:46:18Z",
+  "corpus_sha256": "f1281929d9c90ec7938b286ebf1a6407267ee7264753568bb65a0a13008b0bd8",
   "verdict": "approved",
-  "scope": "Active non-archive literature, decisions, design, formal model, statistical plan, reviews, execution plan, and Q1 gate after RACER, CONCUR, Selective Deferred Routing, Solo.io quota-management, Keel Budget Envelopes, and AgentBudget updates.",
-  "reviewed_artifact_sha256": {
-    "article3/analysis/statistical_plan.md": "b1cbddf8ad64a260f4e4f44036dfaa1c5e303e9641c76194aaf6f1a4c81e4db2",
-    "article3/design/gov_ar_algorithm.md": "1e3d78cdf349f8302bbdfb7429c89d815bf177ffe9f5ead5d8943cec3a92c8e0",
-    "article3/design/invariants.md": "02fae1755dc6b9b95eb405a0b729172842015ebcd30a388facfed1f358bec9b1",
-    "article3/design/problem_formulation.md": "47ce90df6c7dbe66cfa6c366e88b522c978940318b9fc261c22525a1c76ea330",
-    "article3/design/state_machine.md": "66a549527b04b5ac9fca64bd56fed60dd42d80b9423176d75f8db8e5f3a79fae",
-    "article3/design/threat_model.md": "44a4f29bfb30ee42907d4df4b19f757abcdf653605bee1bb12dc66a4a33d1650",
-    "article3/formal/README.md": "dcfc59efca96246c3b76eff79f71d69b43143d0e29054ade97677d57c9371537",
-    "article3/formal/check.sh": "0ebb1af5d08aefb51dfe7cacbe084c8aaf694ad3bfc68aaf0d16b5d6348c3db7",
-    "article3/formal/ledger_model.py": "37a380a8533bc52a64fd98e07d181706cd5701dd124e86f8947b673788d43273",
-    "article3/literature/r55_source_audit.md": "044379b3554f85efb2faaff5529efc7bf1e12ef869e2d5bda042494736cff466",
-    "article3/tools/audit_r55_prior_art.py": "60b6bffb51498dfaf5cef014a685eded9a74848d0f2760d2fb3c481ae6ef2e42",
-    "article3/tools/q1_gate.py": "66346676dccdf15903656ebde48cc50c0c23d26b51028c1b64b63bb05e88892c",
-    "article3/tools/validate_literature.py": "35456c11ba40e5a5171a538b6cdae6227af77b7ed8043204ff8b0b82f9f7a92b"
+  "scope": {
+    "included": [
+      "article3/Q1_GATE_CONTRACT.md section 2 literature and novelty requirements",
+      "the exact six active literature files hashed by article3/tools/validate_literature.py",
+      "article3/reviews/bibliography_verification.json as a review input",
+      "article3/reviews/literature_novelty_audit.json as a review input",
+      "current public primary records for the highest-overlap prior work"
+    ],
+    "excluded": [
+      "article3/archive/codex_20260711 and all archived measurements",
+      "implementation, datasets, protocol, experiment data, statistical outcomes, manuscript results, and release readiness"
+    ],
+    "frozen_or_final_test_outcomes_reviewed": false,
+    "claim_cutoff": "2026-07-13"
   },
+  "authoritative_inputs": {
+    "article3/Q1_GATE_CONTRACT.md": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+    "article3/tools/validate_literature.py": "35456c11ba40e5a5171a538b6cdae6227af77b7ed8043204ff8b0b82f9f7a92b",
+    "article3/reviews/bibliography_verification.json": "4322926c3a944b05169bfaa623df6d0a3ceb715bd982eb20770f677f50fad610",
+    "article3/reviews/literature_novelty_audit.json": "943db6a697b6a85e0b48b8739c37321227f5c89e83c9cb05676e6ee35a13a195"
+  },
+  "corpus_binding": {
+    "hash_algorithm": "SHA-256 over each UTF-8 filename, NUL, exact file bytes, NUL, in the listed order",
+    "corpus_sha256": "f1281929d9c90ec7938b286ebf1a6407267ee7264753568bb65a0a13008b0bd8",
+    "files_in_hash_order": [
+      {
+        "path": "article3/literature/search_log.csv",
+        "bytes": 10056,
+        "sha256": "efcd8009e46938c5fff854597d726d771ccf2d854ae3adf26dfe36a86ea1086c"
+      },
+      {
+        "path": "article3/literature/screening.csv",
+        "bytes": 17079,
+        "sha256": "effaa30389997b1de47fb28ca1b6d032cbcd903660cae32a8635ae8b2b08c605"
+      },
+      {
+        "path": "article3/literature/related_work_matrix.csv",
+        "bytes": 84531,
+        "sha256": "456cddb57e7b859b38768a3ec145afe847264c095359f63e09c44994e78dfddc"
+      },
+      {
+        "path": "article3/literature/novelty_assessment.md",
+        "bytes": 18942,
+        "sha256": "9bb55f4fd1d742232268768af54932fa1365b95a5715e6f4a69329002ce73a9b"
+      },
+      {
+        "path": "article3/literature/references.bib",
+        "bytes": 33592,
+        "sha256": "59103450e89b28b156f608b877656a8720ce628af4a7e30e089b6e421bc09bc6"
+      },
+      {
+        "path": "article3/literature/rejected_references.csv",
+        "bytes": 4349,
+        "sha256": "d326823d587ab4902ed577a1bdd5df294be5ca71be0a563bf12e257c203d6afa"
+      }
+    ]
+  },
+  "independent_recomputation": {
+    "search_rows": 30,
+    "screening_rows": 96,
+    "retained_records": 77,
+    "rejected_records": 19,
+    "peer_reviewed_records": 65,
+    "non_peer_reviewed_records": 12,
+    "non_peer_reviewed_breakdown": {
+      "preprints": 7,
+      "workshop_records": 1,
+      "industry_or_product_records": 3,
+      "whitepapers": 1
+    },
+    "related_work_matrix_rows": 77,
+    "bibtex_entries": 77,
+    "rejected_registry_rows": 19,
+    "set_checks": {
+      "screening_ids_unique": true,
+      "retained_screening_ids_equal_matrix_ids": true,
+      "retained_screening_ids_equal_bibtex_keys": true,
+      "rejected_screening_ids_equal_rejected_registry_ids": true,
+      "all_required_matrix_fields_nonempty": true,
+      "screening_and_matrix_primary_urls_equal": true
+    },
+    "deduplication_checks": {
+      "duplicate_bibtex_keys": [],
+      "duplicate_retained_primary_urls": [],
+      "duplicate_rejected_primary_urls": [],
+      "duplicate_normalized_retained_titles": [],
+      "duplicate_normalized_rejected_titles": [],
+      "duplicate_bibtex_dois": [],
+      "duplicate_bibtex_arxiv_eprints": [],
+      "duplicate_bibtex_urls": [],
+      "equivalent_record_link_form_differences": [
+        "R52 uses the same OpenReview record as a PDF URL in the matrix and a forum URL in BibTeX",
+        "R54 uses the same OpenReview record as a PDF URL in the matrix and a forum URL in BibTeX"
+      ]
+    },
+    "saturation": {
+      "last_material_search": "S28",
+      "post_material_nonmaterial_passes": [
+        "S29",
+        "S30"
+      ],
+      "assessment": "Two qualifying passes follow the last material pass. This supports only a search-saturation statement through 2026-07-13, not exhaustive or universal coverage."
+    }
+  },
+  "independent_primary_source_spot_checks": [
+    {
+      "ids": [
+        "R55"
+      ],
+      "primary_source_url": "https://www.solo.io/blog/building-real-time-ai-cost-controls-with-agentgateway",
+      "result": "The current public article explicitly documents trusted gateway identity, hierarchical budgets, estimated-cost reservation before provider dispatch, provider-usage settlement, PostgreSQL, prices, periods, approvals, and orphan handling. It defeats novelty in the reserve-settle gateway integration."
+    },
+    {
+      "ids": [
+        "R56"
+      ],
+      "primary_source_url": "https://docs.keelapi.com/budget-envelopes",
+      "result": "The current documentation explicitly defines remaining budget as total minus reserved minus spent, uses integer microdollars, locks estimated cost before dispatch, and reconciles actual cost afterward. It defeats novelty in the outstanding monetary envelope abstraction."
+    },
+    {
+      "ids": [
+        "R62"
+      ],
+      "primary_source_url": "https://aclanthology.org/2026.findings-acl.1888/",
+      "result": "The ACL record and abstract identify conservative quantile-based request-cost proxies, backlog-aware routing, and admission decisions under uncertain decode length. It defeats novelty in quantile-aware cost admission, although its target is TTFT rather than monetary liability."
+    },
+    {
+      "ids": [
+        "R01"
+      ],
+      "primary_source_url": "https://arxiv.org/abs/2606.04056",
+      "result": "The current arXiv record describes estimator-conditional dollar-cap arithmetic, an affine budget mitigation, concurrency-related budget failures, and adaptive rather than static over-reservation. It defeats novelty in generic pre-flight budget reservation and adaptive estimation, while remaining a preprint with an in-process boundary."
+    },
+    {
+      "ids": [
+        "R61"
+      ],
+      "primary_source_url": "https://aclanthology.org/2026.acl-long.2045/",
+      "result": "The ACL record and abstract explicitly study selecting a model at each turn under a fixed cost budget and analyze model switching. It defeats novelty in generic multi-turn budget state."
+    },
+    {
+      "ids": [
+        "R63"
+      ],
+      "primary_source_url": "https://papers.neurips.cc/paper_files/paper/2025/hash/4dd1d9b841712bd37b833559f041530c-Abstract-Conference.html",
+      "result": "The NeurIPS record describes cost-optimal request routing with learned satisfaction probabilities, virtual queues, and SLA constraints. It defeats generic cost-optimal online/SLA and virtual-queue novelty."
+    },
+    {
+      "ids": [
+        "R71"
+      ],
+      "primary_source_url": "https://arxiv.org/abs/2606.19376",
+      "result": "The current arXiv record describes online cost-optimal routing from sparse one-sided feedback with SLA guarantees. It defeats sparse-feedback, online adaptation, and SLA-routing novelty, while remaining a preprint and addressing time-average satisfaction rather than a monetary cap."
+    }
+  ],
+  "closest_prior_work": [
+    {
+      "rank": 1,
+      "ids": [
+        "R55"
+      ],
+      "work": "Solo.io agentgateway quota-management reference implementation",
+      "exact_overlap": "Gateway-side trusted identity, hierarchical and atomic pre-dispatch monetary reservations, outstanding pending spend, provider-usage settlement, PostgreSQL, pricing, periods, approvals, and operational cleanup.",
+      "remaining_boundary": "No demonstrated calibrated monetary tail allocation, joint quality routing, conservative late or missing liability semantics, or matched scientific risk-utilization and fault comparison. This is the closest implemented predecessor and must be a faithful practical comparator."
+    },
+    {
+      "rank": 2,
+      "ids": [
+        "R62"
+      ],
+      "work": "QUARTZ",
+      "exact_overlap": "Conservative conditional request-cost quantiles, online calibration, backlog-aware routing, queueing, and admission under uncertain output length.",
+      "remaining_boundary": "The constrained outcome is TTFT/service time rather than priced provider-token liability, and the system has no tenant monetary ledger or faulty usage-event semantics."
+    },
+    {
+      "rank": 3,
+      "ids": [
+        "R56"
+      ],
+      "work": "Keel Budget Envelopes",
+      "exact_overlap": "Integer-microdollar outstanding-liability arithmetic, estimate locking before dispatch, denial on insufficient remaining budget, and actual-cost reconciliation.",
+      "remaining_boundary": "The public documentation provides no probabilistic calibration, joint routing, formal event model, faulty settlement semantics, or comparative scientific evidence."
+    },
+    {
+      "rank": 4,
+      "ids": [
+        "R01"
+      ],
+      "work": "Token Budgets",
+      "exact_overlap": "Pre-flight reservation, reconciliation/refund, cap arithmetic, concurrency and delegation hazards, adaptive estimation, and explicit estimator assumptions.",
+      "remaining_boundary": "The artifact is single-process and does not provide a distributed tenant-window ledger, joint model routing, or delayed and faulty settlement processing."
+    },
+    {
+      "rank": 5,
+      "ids": [
+        "R63",
+        "R71"
+      ],
+      "work": "MESS+ and SLARouter",
+      "exact_overlap": "Cost-optimal online model routing, learned satisfaction probabilities, virtual queues, time-average SLA constraints, and sparse selected feedback.",
+      "remaining_boundary": "The constrained outcome is quality satisfaction with modeled action cost, not concurrent uncertain monetary liability or a reserve-settle ledger."
+    },
+    {
+      "rank": 6,
+      "ids": [
+        "R61",
+        "R68"
+      ],
+      "work": "MTRouter and SeqRoute",
+      "exact_overlap": "Global or session cost-budget state, sequential routing, switching or delayed-gratification behavior, and budget-bankruptcy outcomes.",
+      "remaining_boundary": "These use sequential fixed or modeled action costs rather than concurrent unresolved provider bills and faulty settlement events."
+    },
+    {
+      "rank": 7,
+      "ids": [
+        "R52",
+        "R06",
+        "R07"
+      ],
+      "work": "RACER, conformal LLM routing, and LEC",
+      "exact_overlap": "Finite-sample or selection-conditioned calibration and risk-controlled model routing or abstention.",
+      "remaining_boundary": "The controlled event is answer correctness or selected-set inclusion, not aggregate outstanding monetary liability."
+    },
+    {
+      "rank": 8,
+      "ids": [
+        "R03",
+        "R66"
+      ],
+      "work": "R2-Router and FLARE",
+      "exact_overlap": "Joint model and output-budget selection plus output-length-sensitive per-query latency and cost prediction.",
+      "remaining_boundary": "They control or predict output-related cost rather than transactionally reserving and settling stochastic tenant liability."
+    },
+    {
+      "rank": 9,
+      "ids": [
+        "R45",
+        "R46",
+        "R49"
+      ],
+      "work": "Escrow, transactional streams, and highly available transactions",
+      "exact_overlap": "Reservation, duplicate and reordered event processing, recovery, and availability limits for numeric invariants.",
+      "remaining_boundary": "These are general transaction mechanisms, not an LLM-specific probabilistic cost contribution."
+    }
+  ],
+  "six_novelty_gate_answers": {
+    "1_which_exact_element_is_new": "None is established as individually new. The only defensible candidate scientific contribution is an evaluated problem and metric formulation that separates request under-reservation, prespecified fixed-cohort exceedance, selected-outstanding-set exceedance, and tenant-window overshoot for priced output-token liabilities under delayed, duplicate, missing, late, and reordered settlement. The corpus supports only an absence-of-found-evidence statement for this exact comparative evaluation, not priority.",
+    "2_which_elements_are_known_individually": "Cost-quality and budget-constrained routing; joint model and output-budget choice; multi-turn and global budget state; output-length, latency, and cost prediction; conditional quantile admission; conformal and selection-conditioned risk control; sparse or selected-only feedback; online and virtual-queue SLA routing; drift adaptation; dynamic pools; multi-tenant fairness; escrow, idempotence, and transaction recovery; hard policy filtering; pre-dispatch monetary reservation; hierarchical isolation; provider-usage reconciliation; PostgreSQL pending-spend accounting; pricing, periods, approvals, and gateway enforcement are all known individually.",
+    "3_what_is_the_closest_prior_work": "R55 is the closest implemented reserve-settle gateway, R62 the closest peer-reviewed quantile-aware admission system, R56 the closest documented outstanding monetary envelope, and R01 the closest adaptive reservation and concurrency research preprint. R63/R71, R61/R68, R52/R06/R07, R03/R66, and R45/R46/R49 close the online-SLA, session-budget, calibrated-risk, length-cost, and transaction dimensions respectively.",
+    "4_is_the_contribution_more_than_systems_integration": "No. Gateway, PostgreSQL, pending liability, reserve-settle, hierarchy, pricing, approvals, quantile admission, online routing, and budget state all have direct predecessors. The work is scientifically defensible only as an assumption-scoped problem formulation plus preregistered comparative measurement with strong practical and academic comparators, leakage-controlled feedback, explicit fault semantics, and retained null or negative results. The operator is an experimental vehicle, not a novelty claim.",
+    "5_what_experiment_would_falsify_the_claimed_advantage": "At matched empirical overshoot risk on identical concurrent delayed-settlement streams, an R55/R56-style atomic fixed-estimate envelope, an R01-style locked adaptive estimator, an R62-style monetary quantile admission policy, or adaptive-quantile reservation plus the cheapest governance-compliant router matches GOV-AR on utilization, served quality, refusal, isolation, and faulty-event outcomes. Advantage language must also be removed if risk allocation does not move the frontier, if full counterfactual leakage is necessary, or if drift and faulty events erase the claimed behavior.",
+    "6_which_claim_must_be_removed_or_narrowed": "Remove every first-of-kind, universal, integration, and algorithmic claim for cost-aware, budget-constrained, adaptive, conformal, quantile-aware, SLA, sparse-feedback, global-budget, joint model/output-budget, multi-tenant, reserve-settle, budget-envelope, transaction, gateway, governance, or risk-allocation functionality. Do not claim deterministic hard-window safety in nonzero-risk mode. Any probability statement must name its event, cohort, conditioning and selection assumptions, pricing and billing scope, and cannot be generalized to tenant windows or arbitrary selected outstanding sets."
+  },
+  "claim_policy": {
+    "approved_only_if_supported_by_future_frozen_evidence": [
+      "An assumption-scoped problem and safety formulation separating settled spend, unresolved estimated-cost liability, request under-reservation, fixed-cohort exceedance, selected-outstanding-set exceedance, and tenant-window overshoot.",
+      "A comparative measurement of risk-utilization, tenant isolation, drift, faulty-event behavior, and local overhead against faithful practical envelopes, quantile admission, adaptive estimators, strict reservation, and strong routing baselines."
+    ],
+    "forbidden": [
+      "Any first, earliest, unique, unprecedented, universal, or exhaustive priority statement inferred from this corpus",
+      "Any independent algorithmic novelty claim for risk allocation, quantile or conformal calibration, online routing, sparse feedback, or joint model and output-budget selection",
+      "Any systems-integration novelty claim for reserve-before-dispatch, outstanding budget envelopes, PostgreSQL pending spend, provider-usage reconciliation, hierarchy, approvals, pricing, periods, gateway enforcement, or Kubernetes integration",
+      "Any deterministic hard-budget claim for nonzero-risk mode",
+      "Any transfer of a fixed-cohort probability bound to tenant-window overshoot or an adaptively selected outstanding set without additional valid assumptions and proof"
+    ]
+  },
+  "red_team_challenges": [
+    {
+      "id": "SRT-LIT-20260713-C1",
+      "severity": "critical",
+      "status": "resolved",
+      "challenge": "The prior scientific red-team file was bound to stale corpus SHA-256 6711d84b6430d0b271191332c7667e5ab2197b84fa5ed40a2e941f22f8a2b71a and did not cover material additions R58-R77.",
+      "resolution": "This replacement review independently reads and binds the exact current six-file corpus at f1281929d9c90ec7938b286ebf1a6407267ee7264753568bb65a0a13008b0bd8."
+    },
+    {
+      "id": "SRT-LIT-20260713-M1",
+      "severity": "major",
+      "status": "resolved",
+      "challenge": "Quantile-aware admission, online cost and SLA routing, multi-turn budget state, selected-only feedback, reserve-settle integration, and outstanding monetary envelopes could be misrepresented as GOV-AR innovations.",
+      "resolution": "R55, R56, R58, R61-R63, R65, R68, and R71 directly block those claims; the current novelty assessment explicitly removes them."
+    },
+    {
+      "id": "SRT-LIT-20260713-M2",
+      "severity": "major",
+      "status": "resolved",
+      "challenge": "A broad combination claim could reintroduce priority through the phrase 'novel systems integration.'",
+      "resolution": "The current corpus answers 'No' to whether the contribution is more than systems integration and approves only a problem/formulation and comparative-measurement boundary."
+    },
+    {
+      "id": "SRT-LIT-20260713-M3",
+      "severity": "major",
+      "status": "resolved",
+      "challenge": "An algorithmic claim could survive by renaming known chance-risk allocation, conformal calibration, or quantile admission.",
+      "resolution": "The corpus states that optimized risk allocation is known chance-constraint machinery and that no algorithmic novelty is approved."
+    },
+    {
+      "id": "SRT-LIT-20260713-M4",
+      "severity": "major",
+      "status": "resolved",
+      "challenge": "Duplicate or contradictory records could inflate the corpus and the apparent saturation basis.",
+      "resolution": "Retained, matrix, and BibTeX ID sets are identical at 77; rejected sets are identical at 19; BibTeX keys, DOI, eprint, URL, and normalized-title checks found no counted duplicate. The withdrawn R69 duplicate remains rejected as X22 rather than counted twice."
+    },
+    {
+      "id": "SRT-LIT-20260713-M5",
+      "severity": "major",
+      "status": "resolved",
+      "challenge": "Search saturation could be overstated as a universal absence or proof of priority.",
+      "resolution": "The assessment limits saturation to S29 and S30 after material pass S28 and through 2026-07-13, and explicitly labels the residual boundary an absence-of-found-evidence statement."
+    }
+  ],
   "findings": [
     {
-      "id": "RT3-C1",
+      "id": "SRT-LIT-20260713-C1",
       "severity": "critical",
       "status": "resolved",
-      "summary": "Dispatched expiry, timeout, disconnect, missing usage, and ambiguous delivery retain unresolved liability across rollover; release requires atomic pending-outbox cancellation or authoritative unbilled proof."
+      "summary": "The stale predecessor review has been replaced by an exact current-corpus-bound review."
     },
     {
-      "id": "RT3-C2",
-      "severity": "critical",
-      "status": "resolved",
-      "summary": "The current corpus and all independent reviews are bound to the exact literature corpus hash after R52-R57 removed algorithmic and systems-integration novelty."
-    },
-    {
-      "id": "RT3-C3",
-      "severity": "critical",
-      "status": "resolved",
-      "summary": "Review gates require critical and major findings to be resolved, not merely accepted, and validate all required review artifacts against the current corpus."
-    },
-    {
-      "id": "RT3-C4",
-      "severity": "critical",
-      "status": "resolved",
-      "summary": "The Q1 gate reruns the committed formal checker, verifies the model hash, required semantic invariants, transition coverage, and empty failure set rather than trusting a stale results label."
-    },
-    {
-      "id": "RT3-M1",
+      "id": "SRT-LIT-20260713-M1",
       "severity": "major",
       "status": "resolved",
-      "summary": "ADR 0003 and the active design remove new-router and integration novelty; the implementation is an experimental vehicle for only the problem formulation and comparative measurement study."
+      "summary": "Current prior work removes quantile-admission, online-SLA, multi-turn-budget, selected-feedback, envelope, and reserve-settle novelty."
     },
     {
-      "id": "RT3-M2",
+      "id": "SRT-LIT-20260713-M2",
       "severity": "major",
       "status": "resolved",
-      "summary": "Request, fixed-opportunity-cohort, selected-outstanding-set, and tenant-window events are defined separately; the common-G theorem uses predictable admission indicators and selected-route bounds, follows by conditional union bound and iterated expectation, and does not transfer to selected sets or windows."
+      "summary": "No systems-integration novelty claim survives; only a conditional formulation and comparative measurement boundary is approved."
     },
     {
-      "id": "RT3-M3",
+      "id": "SRT-LIT-20260713-M3",
       "severity": "major",
       "status": "resolved",
-      "summary": "Strict safety is labeled conditional ledger feasibility and enumerates provider-cap, billable-category, finality, pricing, serialization, and gateway-bypass assumptions."
+      "summary": "No algorithmic novelty claim survives, including renamed risk allocation, conformal calibration, or quantile admission."
     },
     {
-      "id": "RT3-M4",
+      "id": "SRT-LIT-20260713-M4",
       "severity": "major",
       "status": "resolved",
-      "summary": "The pre-outcome statistical plan uses hierarchical independent units, matched streams, faithful practical and academic comparators, exact rare-event bounds, multiplicity control, and explicit null-result retention."
+      "summary": "Independent counts, set equality, and identifier, URL, key, and title deduplication found no retained-corpus inflation."
     },
     {
-      "id": "RT3-M5",
+      "id": "SRT-LIT-20260713-M5",
       "severity": "major",
       "status": "resolved",
-      "summary": "The operational falsifier requires frozen matched-risk rules, equivalence or noninferiority margins, Pareto or scalar decisions, and removal of advantage language when practical envelopes or adaptive quantiles match."
-    },
-    {
-      "id": "RT3-M6",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "Pinned R55 source facts are reproducibly hash-checked, while the possible concurrent-settlement double-charge race is explicitly an inference pending a faithful pinned-code test."
-    },
-    {
-      "id": "RT3-M7",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "The literature validator requires resolved-only corpus-bound bibliography, novelty, and scientific reviews, post-material saturation, named closest work, unique verified IDs, and at least 40 live-reachable primary records."
-    },
-    {
-      "id": "RT3R-M1",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "Explicit outbox pending, claimed, delivered, and canceled states make claim and cancellation mutually exclusive; a late claim after atomic expiry cancellation is rejected."
-    },
-    {
-      "id": "RT3R-M2",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "Provisional settlement retains residual correction exposure until authoritative finality; after rollover a temporary guard keeps exposure at the original reservation, carried debt remains non-negative, and historical downward-correction credit is audit-only."
-    },
-    {
-      "id": "RT3R-M3",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "The schema-v4 bounded formal model uses explicit effect counters, tenant and workload identities, representative wrong-principal actions for every mutating API shape, same-tenant concurrency traces, nine required scenarios, and required transition coverage."
-    },
-    {
-      "id": "RT3R-M4",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "A historical downward correction changes origin-window audit credit only; it cannot offset carried debt or increase admission availability in the current or a later budget window."
-    },
-    {
-      "id": "RT3R-M5",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "The theorem indexes a pre-outcome arrival-opportunity cohort, makes admission and route choice predictable, assigns a pathwise capped risk allocation without redistributing rejected-slot weight, and gives dynamic active-set allocation no fixed-cohort theorem."
-    },
-    {
-      "id": "RT3R-M6",
-      "severity": "major",
-      "status": "resolved",
-      "summary": "Correction inbox entries bind event ID to immutable request, version, and value payload; an exact replay is acknowledged without a second posting even after later correction versions, while conflicting or stale payloads are rejected."
+      "summary": "Search saturation remains explicitly cutoff-scoped and cannot support a first, universal, or exhaustive claim."
     }
   ],
   "unresolved_critical_major": [],
-  "closest_work": [
-    "R55 Solo.io quota-management",
-    "R56 Keel Budget Envelopes",
-    "R01 Token Budgets",
-    "R52 RACER",
-    "R53 CONCUR",
-    "R54 Selective Deferred Routing",
-    "R57 AgentBudget"
-  ],
-  "approved_contribution_boundary": [
-    "Problem and safety formulation separating non-equivalent monetary risk events with assumption-scoped ledger invariants and the common-G fixed-cohort union bound.",
-    "Preregistered comparative measurement of risk-utilization, isolation, drift, faulty-event behavior, liveness cost, and local overhead against faithful practical envelopes and strong academic baselines."
-  ],
-  "progression_verdict": "Phase B literature and novelty and Phase C formulation/theory are approved for progression. This is not approval of implementation, protocol freeze, experiments, manuscript, or release; their Q1 gate obligations remain pending."
+  "unresolved_minor": [],
+  "progression_verdict": "The current literature corpus and novelty boundary satisfy the Article 3 literature red-team condition only. This verdict does not approve implementation, data, protocol freeze, experiments, statistical results, manuscript claims, artifacts, or release. Any corpus-byte change invalidates this approval and requires a fresh source-bound review."
 }
