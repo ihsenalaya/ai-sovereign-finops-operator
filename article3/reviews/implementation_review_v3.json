@@ -1,0 +1,410 @@
+{
+  "schema_version": 1,
+  "review_id": "phase-d-implementation-review-20260713-v3",
+  "reviewer_role": "fresh independent Phase D checkpoint auditor",
+  "reviewed_at_utc": "2026-07-13T18:28:20Z",
+  "verdict": "failed",
+  "branch": "article3-q1-recovery-20260711",
+  "reviewed_head": "b20ff912ee04c0e5362507187a657a2cf684fc34",
+  "reviewed_tree": "c54d4cadb527c13a30e0aa8050f880f91bb53e93",
+  "reviewed_parent": "a355b339c785442abce4406a4318effc9f5f815f",
+  "reviewed_commit_subject": "feat(article3): bind governance liability and immutable dispatch",
+  "reviewed_commit_author_time": "2026-07-12T15:48:56+01:00",
+  "tracked_manifest_sha256": "16cccef7f7c17c2511c6e2fff33dfed896562b6df472b3022ecd1c0b7e0b507e",
+  "source_snapshot": {
+    "method": "A detached clean Git worktree was created at the exact reviewed commit under /tmp and was clean before review execution. All hashes in reviewed_source_hashes were recomputed from git show reviewed_head:path, not from the mutable primary worktree.",
+    "primary_worktree_treatment": "The primary worktree contained unrelated concurrent changes. They were neither read as checkpoint evidence nor modified, except for adding this review file.",
+    "archive_treatment": "No measurement under article3/archive/codex_20260711 was read into this analysis.",
+    "kind_treatment": "No Kind cluster was created, modified, reset, or used by this reviewer."
+  },
+  "authoritative_contract": {
+    "path": "article3/Q1_GATE_CONTRACT.md",
+    "sha256": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+    "execution_plan_sha256": "a3cc1a113d58bb065c0190301a0eb2733e7d6e936500ed52a78d9320fd8354ca"
+  },
+  "scope": "Independent source and bounded execution review of approval/RBAC, trusted workload binding, immutable provider route selection and Envoy actuation, ledger atomicity/idempotence/window rollover/migration, Kubernetes API compatibility, formal-to-code alignment, and test gaps at the exact committed checkpoint. This is not a Phase D approval, a release review, or experimental evidence.",
+  "summary": {
+    "critical_count": 2,
+    "major_count": 9,
+    "minor_count": 0,
+    "unresolved_critical_or_major_count": 11,
+    "approval_condition_met": false,
+    "reason": "The shared settlement function can erase part of already-carried debt after a late-final upward correction, and configured non-token billable categories are hashed but never reserved or settled. The AIModel CRD also contains invalid CEL, request approvals violate the no-per-request-CRD contract and are consumed outside the ledger transaction, required M5/M7/M8/M11 systems remain absent, the controller/envtest gate is red, and the claimed v3-to-v4 compatibility path lacks a source-bound v3 fixture and migration test. M4, M5, M7, M8, and M11 are therefore not approved."
+  },
+  "critical_findings": [
+    {
+      "id": "V3-C1-LATE-FINAL-CORRECTION-DEBT",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "An upward correction after a late final settlement can reduce carried debt instead of recording the full external debt.",
+      "evidence": "At operateur/internal/govar/engine.go:640-664, the finalized branch computes targetDebt=actual-baseActual and then applies targetDebt-carryEffect. For a request first finalized late at 2000 micros, baseActual=2000 and carryEffect=2000. A version-2 correction to 2700 computes targetDebt=700 and applies -1300, leaving only 700 carried instead of 2700. Both the memory and PostgreSQL engines use this shared applySettlement function. article3/design/state_machine.md:54-56 and article3/design/invariants.md:14 require an upward post-final violation to remain visible as external debt.",
+      "impact": "Current/future availability can be overstated by the erased debt. If the earlier debt was already paid, the memory ledger can become negative and the PostgreSQL nonnegative constraint can make the correction unrecordable. Record/aggregate equality and visible-debt semantics fail.",
+      "coverage_gap": "The bounded formal model rejects corrections unless the record is provisional at article3/formal/ledger_model.py:525 and results.json explicitly excludes post-finality upward corrections. Existing tests cover on-time final-to-post-final debt and late provisional corrections, but not late-final-to-post-final correction.",
+      "required_repair": "Define the late-final post-final delta explicitly, preserve already-carried base cost, add memory and PostgreSQL counterexample tests including debt-payment ordering, and extend the formal model or reject the transition atomically rather than accepting it with incorrect accounting."
+    },
+    {
+      "id": "V3-C2-M4-COMPLETE-PRICING-NOT-EXECUTABLE",
+      "severity": "critical",
+      "status": "unresolved",
+      "summary": "M4 billable categories and output-cap evidence are typed but do not participate in reservation or settlement.",
+      "evidence": "ProviderBillableCategory is declared at operateur/api/v1alpha1/aiprovider_types.go:39-53 and its values enter PricingComplianceHash, but operateur/internal/govar/snapshot.go:38-62 carries only input/output prices in Candidate. operateur/internal/govar/admission_policy.go:91-104 reserves only costFromPriceMicros(input,output), and operateur/internal/govar/engine.go:623-629 settles only input/output usage. A provider can therefore be marked completeness=complete while declaring a per-request, cached-token, reasoning, tool, media, time, cancellation, or per-unit charge that is never charged. No production controller produces or verifies complete pricing or verified output-cap status. The checkpoint's article3/design/phase_d_remaining_systems.md:18-20 independently acknowledges these exact M4 gaps.",
+      "impact": "The atomic ledger can be internally consistent yet reserve and settle less than the provider bill, invalidating the conditional budget inequality and any strict-safety manuscript claim.",
+      "required_repair": "Carry a closed, immutable per-category price snapshot and conservative applicability bounds into Candidate and Reservation; accept authoritative typed per-category usage; reserve and settle every category with integer arithmetic; and add production pricing/cap producers plus provider-adapter and PostgreSQL tests."
+    }
+  ],
+  "major_findings": [
+    {
+      "id": "V3-M1-AIMODEL-CRD-CEL-INVALID",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The generated AIModel CRD contains a syntactically invalid CEL rule.",
+      "evidence": "operateur/api/v1alpha1/aimodel_types.go:80 uses self.routeBindingRef != ” with a curly quotation mark and no CEL string literal. The identical invalid expression is committed at operateur/config/crd/bases/aiops.imperium.io_aimodels.yaml:121 and the chart CRD at the same line. The two generated files have the same SHA-256, 2357212ed37ae22f8a1e436e6681473fe76b528fd676c4c760c48a2a68b18255.",
+      "impact": "A Kubernetes API server cannot compile the validation rule, so CRD install/upgrade and API compatibility are blocked before any governed object can be exercised. The broken envtest harness did not compile the CRD and therefore did not catch this.",
+      "required_repair": "Use a valid empty CEL string literal, regenerate every CRD copy, and prove server-side CRD creation and old-object/new-object compatibility in envtest and Helm upgrade tests."
+    },
+    {
+      "id": "V3-M2-PER-REQUEST-APPROVAL-CRDS",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The approval design creates request-scoped CRDs despite the explicit contract prohibition.",
+      "evidence": "article3/Q1_GATE_CONTRACT.md:26 says no CRD is created per request. operateur/cmd/gov-ar-admission/main.go:331-353 creates one AIAdmissionApproval for a canary request, the human creates a same-request AIAdmissionApprovalDecision, and consumption creates a request-specific Lease at lines 385-397.",
+      "impact": "The measured data-plane path depends on Kubernetes control-plane object creation per request, violating the authoritative architecture and creating scalability, retention, and API-server-availability coupling not represented in the claimed mechanism.",
+      "required_repair": "Move approval proposals, immutable decisions, and one-use consumption into a bounded durable approval store/API that is not a per-request CRD, while retaining separate reviewer authority and exact request/policy/route binding."
+    },
+    {
+      "id": "V3-M3-APPROVAL-CONSUMPTION-NOT-ATOMIC-WITH-RESERVE",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "One-use approval consumption is neither atomic nor replay-stable with the monetary reservation.",
+      "evidence": "validateAndConsumeAdmissionApproval creates the Kubernetes Lease at operateur/cmd/gov-ar-admission/main.go:385-397 and returns the candidate. handleAdmit calls engine.Admit only later at line 316. A crash, timeout, or admission failure after Lease creation burns the approval without a reservation. Conversely, response loss after a successful reservation makes a retry encounter Lease AlreadyExists and return errApprovalReplayed instead of the persisted duplicate Admit response.",
+      "impact": "Approval consumption and reserve do not form one transaction, so crash recovery and idempotent request replay can strand authorized work or hide a committed decision from the caller.",
+      "required_repair": "Bind approval consumption to the same durable transaction/idempotency record as reservation, and make exact replay return the persisted decision without redispatch. Add crash-point, response-loss, concurrent consume, and reserve-failure tests."
+    },
+    {
+      "id": "V3-M4-M5-TYPED-CALIBRATION-IGNORED",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "M5 typed reservation, calibration, drift, cohort, and risk APIs are not executable authority.",
+      "evidence": "operateur/internal/govar/admission_policy.go:55-59 selects the reservation method from AIRoutingPolicy annotations and lines 141-187 read token estimates, support, and drift from annotations. AIRoutingPolicy.spec.govar and status.govar are not consumed. operateur/internal/controller/airoutingpolicy_controller.go:59-154 writes legacy recommendations/Ready status but never produces calibration artifacts, support, coverage, drift, or conservative-mode GOV-AR status. The checkpoint self-audit records the same gap at article3/design/phase_d_remaining_systems.md:21-22.",
+      "impact": "Mutable annotation state can determine monetary reservations while the typed, controller-owned evidence advertised by the API is ignored. Adaptive and fixed-cohort risk claims have no online calibration/drift producer.",
+      "required_repair": "Make typed spec/status the sole executable authority, reject or strictly fail closed on legacy annotations, implement the frozen calibration/drift producer and revalidation state machine, and add no-leakage, staleness, drift, fallback, and concurrency tests."
+    },
+    {
+      "id": "V3-M5-M7-DURABLE-WORKERS-ABSENT",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "M7 durable dispatch/expiry/unresolved/correction/rollover workers are absent from the service.",
+      "evidence": "ReconcileExpired and PendingReconciliation helpers exist, but operateur/cmd/gov-ar-admission/main.go:94-184 starts only the HTTP and ext_proc servers and no durable worker. The PostgreSQL expiry helper at operateur/internal/govar/ledger_extensions_postgres.go:168-248 marks expiry scan tasks COMPLETED immediately; it does not claim work, consult a provider resolver, ingest late authoritative usage/corrections, or retry crash-safely. The synchronous ext_proc path cannot replace the required durable worker boundary.",
+      "impact": "Expired, ambiguous, disconnected, and missing-usage records are not automatically driven through the documented liveness-safe states, so backlog and finality behavior required by E0/E4/E5 are not implemented.",
+      "required_repair": "Implement leased, idempotent PostgreSQL workers with crash recovery for pending dispatch, expiry CAS, unresolved provider resolution, correction/finality, rollover, and debt/audit handling, then test multi-worker races and restarts."
+    },
+    {
+      "id": "V3-M6-M8-OBSERVABILITY-AUDIT-ABSENT",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "M8 mechanism metrics, distributed traces, and immutable transition audit are absent.",
+      "evidence": "operateur/cmd/gov-ar-admission/main.go:172-180 exposes the default Prometheus handler, but the checkpoint registers no GOV-AR decision, ledger, worker, calibration, drift, or latency collectors. Repository search finds no OpenTelemetry/W3C propagation in the service and no append-only transition record with before/after state digest, actor class, policy/pricing digest, and chain verification. Inbox/outbox idempotency rows are not such an audit chain.",
+      "impact": "The measured mechanism cannot support E0/E4/E5 observability claims, joined request traces, SQL-versus-metrics reconciliation, or tamper-evident transition reconstruction.",
+      "required_repair": "Implement cardinality-bounded mechanism metrics, W3C/OpenTelemetry propagation, and an append-only hash-chained transition audit with verifier/checkpoints; then reconcile all three against PostgreSQL in tests."
+    },
+    {
+      "id": "V3-M7-M11-COMBINED-MEASURED-PATH-ABSENT",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "M11 has no combined real Envoy, actual admission service, PostgreSQL, controller status, and selected-backend test.",
+      "evidence": "The opt-in TestRealEnvoyRoutesOnlyToAdmissionSelectedBackend passed and proved a pinned real Envoy rewrote the provider deployment/path and reached the selected synthetic backend. However operateur/internal/govarextproc/real_envoy_test.go uses a stub admission HTTP server and one synthetic backend. operateur/test/e2e/e2e_test.go remains an operator smoke test and does not deploy PostgreSQL or drive reserve/dispatch/usage/settle. No Kind path was used by this reviewer, and the checkpoint has no source-bound combined E0 evidence.",
+      "impact": "No test proves the contract path gateway -> actual admission -> atomic PostgreSQL reservation -> immutable selected provider -> authoritative usage -> idempotent settlement, or its negative/bypass decisions.",
+      "required_repair": "After M4/M5/M7/M8 are implemented, add the dedicated PostgreSQL plus pinned real Envoy Kind E0 test and have an independent verifier recompute backend, ledger, metrics, trace, and audit facts from a clean checkout."
+    },
+    {
+      "id": "V3-M8-REQUIRED-TEST-GATE-RED",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The exact checkpoint does not pass the required controller/envtest and format gates.",
+      "evidence": "bash article3/tools/run_test_matrix.sh --internal-envtest exited 1. TestAIAdmissionApprovalControllerBoundaries/approved_proposal_becomes_consumed_after_lease expected Approved but received Failed because the fixture freezes observations at 2026-07-12 while BuildCandidates uses wall-clock time.Since rather than the reconciler's injected clock. The envtest BeforeSuite then failed to execute the existing etcd asset through relative BinaryAssetsDirectory bin/k8s/1.31.0-linux-amd64, and AfterSuite panicked after failed startup; all 17 specs were skipped. The format command also listed nine Go files. Those formatting defects predate this checkpoint diff, but the authoritative acceptance command evaluates the exact tree and is still red.",
+      "impact": "Existing tests do not all pass, controller approval evidence is calendar-dependent, no API server validates the new CRDs, and Phase D acceptance cannot be claimed.",
+      "required_repair": "Use one injected clock throughout candidate/reference validation, construct deterministic fresh fixtures, honor an absolute KUBEBUILDER_ASSETS path and make teardown safe after startup failure, fix the repository format gate, and rerun the full controller/envtest matrix."
+    },
+    {
+      "id": "V3-M9-V3-V4-MIGRATION-NOT-SOURCE-REPRODUCIBLE",
+      "severity": "major",
+      "status": "unresolved",
+      "summary": "The claimed v3-to-v4 compatibility path lacks an immutable exact-v3 fixture and executable migration test.",
+      "evidence": "Fresh article3/infra/postgres/init.sql was applied to the pinned PostgreSQL image and accepted by TestPostgresEngineLifecycle, and runtime startup correctly fails closed on incompatible layouts. But migrate_v3_to_v4.sql requires layout govar-v3-20260712-final while no exact v3 schema/fixture is committed at reviewed_head, and no test invokes migrate_v3_to_v4.sh/sql then validates the resulting schema with the v4 engine. clean_migrate_v4.sh delegates to the destructive empty-ledger clean migration and is not evidence for v3 upgrade compatibility.",
+      "impact": "An independent verifier cannot reconstruct and prove the stated API/database upgrade path from this checkpoint. Migration behavior, constraint equivalence, evidence files, and rollback refusal remain partly asserted rather than source-bound.",
+      "required_repair": "Commit the immutable exact v3 DDL/fixture and expected hashes, exercise the empty v3-to-v4 script against the pinned PostgreSQL image, compare fresh-v4 and migrated-v4 constraints/schema, validate runtime startup, and add nonempty-refusal/evidence-integrity tests."
+    }
+  ],
+  "prior_finding_reassessment": [
+    {
+      "id": "V2-C1-AUTHORITATIVE-USAGE",
+      "status": "resolved_in_code_pending_combined_e2e",
+      "evidence": "Projected workload tokens are role ADMISSION_ONLY; dispatch, usage/finality, and cancellation require role GATEWAY. Gateway settlement cannot submit a caller-computed actual cost, and gateway cancellation cannot assert authoritative unbilled release."
+    },
+    {
+      "id": "V2-C2-TENANT-BINDING",
+      "status": "resolved_in_code_pending_combined_e2e",
+      "evidence": "Admission now resolves an operator-owned AIWorkloadBinding by the live Pod ServiceAccount, checks ServiceAccount UID and policy UID/generation/readiness, binds Pod UID, and rejects conflicting Pod-authored governance metadata."
+    },
+    {
+      "id": "V2-C3-ROUTE-ACTUATION",
+      "status": "resolved_for_bounded_route_test_not_M11",
+      "evidence": "Provider-owned route bindings are frozen in the reservation, dispatch requires the snapshot hash, and the opt-in pinned real Envoy test observed the selected synthetic backend, authority, path, and provider model. The full actual-admission/PostgreSQL path remains V3-M7."
+    },
+    {
+      "id": "V2-C4-BYPASS",
+      "status": "code_controls_added_pending_negative_e2e",
+      "evidence": "Namespace-required governance can no longer be opted out by a Pod, production Helm rendering requires namespace-wide egress NetworkPolicy, and the legacy proxy denies governed CONNECT/direct proxy/unknown shapes. Bypass closure has not been demonstrated in M11."
+    },
+    {
+      "id": "POSTFIX-M1",
+      "status": "substantially_resolved",
+      "evidence": "Signed frozen-cohort registry, slot binding, opportunity digest, risk allocation, immutability, PostgreSQL constraints, and race/counterexample tests are present and passed in the full PostgreSQL race suite."
+    },
+    {
+      "id": "POSTFIX-M2",
+      "status": "implemented_but_nonconformant",
+      "evidence": "Versioned request approval and RBAC separation were added, but V3-M2 and V3-M3 prevent approval."
+    },
+    {
+      "id": "POSTFIX-M3",
+      "status": "partially_resolved_with_critical_counterexample",
+      "evidence": "Server-clock windows, rollover guards, carried debt, historical credit, and signed adjustment APIs exist, but V3-C1 breaks late-final post-final correction accounting."
+    },
+    {
+      "id": "POSTFIX-M4",
+      "status": "unresolved",
+      "evidence": "See V3-C2."
+    },
+    {
+      "id": "POSTFIX-M5",
+      "status": "unresolved",
+      "evidence": "See V3-M4."
+    },
+    {
+      "id": "POSTFIX-M6",
+      "status": "typed_surfaces_added_but_not_approved",
+      "evidence": "Typed GOV-AR model/provider/routing/workload/approval surfaces and generated schemas were added; V3-M1, V3-C2, and V3-M4 show they are invalid or not executable in critical places."
+    },
+    {
+      "id": "POSTFIX-M7",
+      "status": "partially_resolved_helpers_only",
+      "evidence": "Ledger helpers and durable tables exist; the required workers remain absent under V3-M5."
+    },
+    {
+      "id": "POSTFIX-M8",
+      "status": "unresolved",
+      "evidence": "See V3-M6."
+    },
+    {
+      "id": "POSTFIX-M9",
+      "status": "resolved_by_bounded_fail_closed_behavior",
+      "evidence": "Request/response buffers are bounded and streaming requests are rejected until authoritative streaming settlement exists."
+    },
+    {
+      "id": "POSTFIX-M10",
+      "status": "partially_resolved",
+      "evidence": "Integer v4 schema, constraint/startup validation, clean migration and v3-to-v4 scripts exist and the full PostgreSQL suite passed; source-bound migration compatibility remains V3-M9."
+    },
+    {
+      "id": "POSTFIX-M11",
+      "status": "unresolved",
+      "evidence": "See V3-M7."
+    },
+    {
+      "id": "V2-M12-EXT-PROC-IDENTITY",
+      "status": "resolved_with_trusted_gateway_scope",
+      "evidence": "The ext_proc transport verifies an allowed gateway SPIFFE URI, XFCC requires a single SANITIZE_SET record, XFCC By must match the authenticated Envoy identity, and the client-certificate hash has SHA-256 shape."
+    },
+    {
+      "id": "V2-M13-DOCKER-PINNING",
+      "status": "resolved",
+      "evidence": "Dockerfile.gov-ar-admission pins both builder and runtime images by digest, and the committed pin checker passed."
+    }
+  ],
+  "positive_controls": [
+    "The admission ServiceAccount can create/read proposals and one-use Leases but cannot create decisions or write approval status; the reviewer role is intentionally unbound and can read proposals/create decisions; the controller reads decisions and is the sole approval-status writer.",
+    "Trusted workload resolution binds live Pod UID, ServiceAccount name and UID, AIWorkloadBinding UID/generation/resourceVersion, and exact budget/routing policy UID/generation/readiness. Application-authored conflicting governance metadata fails closed.",
+    "A model references a named binding inside its declared provider; the immutable reservation stores model/provider UID, generation, resourceVersion, pricing hash, route binding, deployment, cluster, authority, path mode, and snapshot hash in the same PostgreSQL reservation transaction.",
+    "Dispatch requires the reserved provider-attempt ID and route-snapshot hash. Ext_proc uses the persisted snapshot to rewrite the provider model/path and dynamic cluster/authority without rereading the mutable catalog.",
+    "The memory ledger is mutex-serialized. PostgreSQL uses serializable transactions, tenant/request row locks, unique-key retries for duplicate admission, inbox payload hashes, immutable outbox identities, compare-and-swap outbox transitions, integer micros, foreign keys, startup aggregate recomputation, and fail-closed schema identity checks.",
+    "The complete race-enabled PostgreSQL ledger suite passed on a synthetic pinned PostgreSQL container, including exact duplicate admission, boundary ordering, authority/cohort counterexamples, startup tamper detection, migration refusal, lifecycle, cohort concurrency, rollover, late correction, debt payoff, and expiry CAS.",
+    "The formal checker reran successfully with the recorded model hash, 5706 states, 89284 transitions, 14 named invariants, 14 scenario traces, and 12 route-negative checks. Its exclusions and abstraction boundary are reported below rather than treated as universal proof."
+  ],
+  "formal_to_code_alignment": {
+    "formal_check_result": "passed within declared scope",
+    "model_sha256": "039820b27595045ebf192fc1d2fc1589fae3857f22725298d48c21681168c825",
+    "states_checked": 5706,
+    "transitions_checked": 89284,
+    "invariants_checked": 14,
+    "scenario_traces_checked": 14,
+    "route_snapshot_negative_checks": 12,
+    "alignment": "The abstract route ownership, immutable snapshot, duplicate replay, outbox, residual hold, rollover, and provisional correction semantics have recognizable Go/PostgreSQL counterparts and bounded tests.",
+    "limits": "There is no refinement proof or extraction from Python to Go/SQL/Envoy. The model assumes every billable category is reserved, excludes upward post-finality correction, and does not cover CRD CEL compilation, Kubernetes approval/Lease-to-PostgreSQL atomicity, M4/M5 producers, M7 workers, M8 observability/audit, database migration scripts, or M11. Therefore the formal pass neither detects V3-C1/V3-C2 nor supports Phase D approval."
+  },
+  "api_and_migration_assessment": {
+    "kubernetes_api": "Most new fields are optional and legacy model-owned route data remains decodable but intentionally non-authoritative. That is a reasonable compatibility posture. V3-M1 blocks actual CRD server compatibility, and the broken envtest means this posture is not verified.",
+    "ledger_schema": "Fresh v4 init and runtime lifecycle passed; version/layout, aggregate, route-shape, FK, and rollback refusal controls are strong and fail closed. V3-M9 prevents independent approval of the stated v3 migration path.",
+    "frozen_protocol": "article3/experiments/registry/frozen_protocol.yaml is absent at reviewed_head. No final-test or manuscript mechanism claim may be accepted until it is frozen and source-bound as required by the contract."
+  },
+  "test_evidence": [
+    {
+      "command": "git worktree add --detach /tmp/article3-review-b20ff912 b20ff912ee04c0e5362507187a657a2cf684fc34; git status --short --branch; git rev-parse HEAD^{tree}",
+      "result": "passed; detached exact commit, initially clean; tree c54d4cadb527c13a30e0aa8050f880f91bb53e93"
+    },
+    {
+      "command": "packages=$(go list ./... | rg -v '/(test/e2e|internal/controller)$'); go test -count=1 $packages",
+      "cwd": "operateur",
+      "result": "passed; deliberately excludes controller and Kind E2E packages"
+    },
+    {
+      "command": "go test -count=1 -race ./internal/govar/...",
+      "cwd": "operateur",
+      "result": "passed"
+    },
+    {
+      "command": "go vet ./...",
+      "cwd": "operateur",
+      "result": "passed"
+    },
+    {
+      "command": "bash article3/tools/run_test_matrix.sh --internal-postgres",
+      "result": "passed against postgres:16@sha256:be01cf82fc7dbba824acf0a82e150b4b360f3ff93c6631d7844af431e841a95c; the harness's three selected startup/lifecycle tests passed"
+    },
+    {
+      "command": "start the same pinned synthetic local PostgreSQL container; GOVAR_TEST_DATABASE_URL=<redacted synthetic localhost URL> go test -count=1 -race -v ./internal/govar",
+      "cwd": "operateur",
+      "result": "passed; every PostgreSQL-gated and memory ledger test in the package executed under the race detector"
+    },
+    {
+      "command": "apply article3/infra/postgres/init.sql to the same pinned synthetic PostgreSQL container; GOVAR_TEST_DATABASE_URL=<redacted synthetic localhost URL> go test -count=1 -v -run '^TestPostgresEngineLifecycle$' ./internal/govar",
+      "result": "passed; fresh committed v4 init is accepted by runtime lifecycle"
+    },
+    {
+      "command": "GOVAR_REAL_ENVOY=1 go test -count=1 -v -run '^TestRealEnvoyRoutesOnlyToAdmissionSelectedBackend$' ./internal/govarextproc",
+      "cwd": "operateur",
+      "result": "passed; 8.43 seconds; real pinned Envoy with stub admission and synthetic backend, not M11"
+    },
+    {
+      "command": "bash article3/tools/run_test_matrix.sh --internal-helm-lint",
+      "result": "passed; chart lint, development/production renders, and invalid production/in-memory replica negative renders behaved as expected"
+    },
+    {
+      "command": "python3 -m unittest article3.tools.test_check_govar_dockerfile_pins",
+      "result": "passed; 2 tests"
+    },
+    {
+      "command": "bash article3/formal/check.sh",
+      "result": "passed; model hash 039820b27595045ebf192fc1d2fc1589fae3857f22725298d48c21681168c825, 5706 states, 89284 transitions, recorded result unchanged"
+    },
+    {
+      "command": "go test -count=1 -v -run '^TestAIAdmissionApprovalControllerBoundaries$' ./internal/controller",
+      "cwd": "operateur",
+      "result": "failed; approved_proposal_becomes_consumed_after_lease received first phase Failed"
+    },
+    {
+      "command": "bash article3/tools/run_test_matrix.sh --internal-envtest",
+      "result": "failed; the same approval unit failure occurred, envtest could not execute the relative etcd path, teardown panicked, and all 17 Ginkgo specs were skipped"
+    },
+    {
+      "command": "files=$(gofmt -l $(find . -type f -name '*.go' -not -path './bin/*')); test -z \"$files\"; git diff --check -- .",
+      "cwd": "operateur",
+      "result": "failed format check with nine listed Go files; git diff --check passed"
+    },
+    {
+      "command": "python3 article3/tools/q1_gate.py",
+      "result": "failed as expected at a pre-release checkpoint; relevant failures include missing/failed implementation evidence, missing full E0 path, unfrozen protocol, and absent immutable release digests. The detached-worktree branch-name failure is a review-isolation artifact and was not treated as a source finding. No archived measurement result was used."
+    },
+    {
+      "command": "Kind/Helm lifecycle and combined Kind GOV-AR path",
+      "result": "not run; reviewer was explicitly instructed not to modify or use Kind, and no checkpoint artifact satisfies M11"
+    }
+  ],
+  "source_hash_algorithm": "SHA-256 of the exact blob bytes returned by git show b20ff912ee04c0e5362507187a657a2cf684fc34:path",
+  "reviewed_source_hashes": {
+    "AGENTS.md": "f1899faedeb51ed6ea4d973c787a3d673fc321c85c99766114ec4cff1ecf16f1",
+    "article3/Q1_GATE_CONTRACT.md": "df051734ab98a221a19d4961ba198480fd142a438fe68863a795c02ca9326620",
+    "article3/EXECUTION_PLAN.md": "a3cc1a113d58bb065c0190301a0eb2733e7d6e936500ed52a78d9320fd8354ca",
+    "article3/design/problem_formulation.md": "47ce90df6c7dbe66cfa6c366e88b522c978940318b9fc261c22525a1c76ea330",
+    "article3/design/gov_ar_algorithm.md": "1e3d78cdf349f8302bbdfb7429c89d815bf177ffe9f5ead5d8943cec3a92c8e0",
+    "article3/design/invariants.md": "02fae1755dc6b9b95eb405a0b729172842015ebcd30a388facfed1f358bec9b1",
+    "article3/design/state_machine.md": "66a549527b04b5ac9fca64bd56fed60dd42d80b9423176d75f8db8e5f3a79fae",
+    "article3/design/threat_model.md": "44a4f29bfb30ee42907d4df4b19f757abcdf653605bee1bb12dc66a4a33d1650",
+    "article3/design/phase_d_remaining_systems.md": "9e78f2db43f600ffef8e1e2df0d88744d4dba1e7855e8c39457a06bc7d3274b9",
+    "article3/formal/ledger_model.py": "039820b27595045ebf192fc1d2fc1589fae3857f22725298d48c21681168c825",
+    "article3/formal/results.json": "bd5ff33a6037d90f42598935c537aab9f2c824b84a84ec4ba0a824a90603e87f",
+    "article3/formal/check.sh": "7bb0b199f02cfff000951dccef5a6563eff15b584da82e0414415be0e39a29bf",
+    "article3/tools/run_test_matrix.sh": "c5277dc8ec0f1389ef365723f352799805786e27938bb3ea82dc021c515cc069",
+    "article3/infra/postgres/init.sql": "67b1e2898bf0c42da9eb222b95e951f88313998a5647f29dcc1d9bd537e653c0",
+    "article3/infra/postgres/clean_migrate_v4.sh": "348fc03974334de27de828254d315ac980485ee89386495ea20d5ed777c381d3",
+    "article3/infra/postgres/migrate_v3_to_v4.sh": "4bcc0cf9d463ef06567ff5137ce5d5cc4acfa26549fcc67225364edaf230ba91",
+    "article3/infra/postgres/migrate_v3_to_v4.sql": "7a2139bfcb750824a62cee259a19e04a5411557e0a37a082bb8e1f47370f419c",
+    "operateur/api/v1alpha1/aimodel_types.go": "f344697410b43474036c2ccd3811c0a2291ea4dc39b6718c312d09380e2522a5",
+    "operateur/api/v1alpha1/aiprovider_types.go": "4b174a6931c78562709cc9f8982434636dcb724ae439de180ac927ed98e88481",
+    "operateur/api/v1alpha1/airoutingpolicy_types.go": "6587d15cb907a48e5c9860623f76760c6552a1fb4aab0101a2ea7e7cafcd52c1",
+    "operateur/api/v1alpha1/aiadmissionapproval_types.go": "5fd248d8a7ac56098a2ce4ea8f7f05a020c4d00e71c38b76d5e905c984ac0700",
+    "operateur/api/v1alpha1/aiworkloadbinding_types.go": "581f446aec73e2bbe7f739b7598f38bfb23e3ec5f8f8f9bda0af52dadfb26db5",
+    "operateur/config/crd/bases/aiops.imperium.io_aimodels.yaml": "2357212ed37ae22f8a1e436e6681473fe76b528fd676c4c760c48a2a68b18255",
+    "operateur/charts/ai-sovereign-finops-operator/crds/aiops.imperium.io_aimodels.yaml": "2357212ed37ae22f8a1e436e6681473fe76b528fd676c4c760c48a2a68b18255",
+    "operateur/cmd/gov-ar-admission/main.go": "7e3f1a1ad5119b451d5f657e41560c9e588cc403e4d81b6d7c8dafcaeb392d19",
+    "operateur/cmd/gov-ar-admission/main_test.go": "10916a23f310c4550d3c86c6b78c8b6d83007845910f86dcb54f39435c40b894",
+    "operateur/internal/controller/aiadmissionapproval_controller.go": "1079294cb61a80a7855769f4d1faa47a670d61869a0f8a13b67f3d90b4fb18e7",
+    "operateur/internal/controller/aiadmissionapproval_controller_test.go": "f46039b5f8cb6d30b41a0d627c5a307f0fe28ea0148f00eac4e1c32b99fa0d04",
+    "operateur/internal/controller/aiworkloadbinding_controller.go": "f77b70638b59dfe4c45a957e39d355bba0ce59ce9be150c018bebe226585364b",
+    "operateur/internal/controller/airoutingpolicy_controller.go": "0b14e2a16e71fd13982fce1d5bae993efd0eb44e53ea5761a8721defe37df645",
+    "operateur/internal/controller/suite_test.go": "3f4addf143606dbdfdf40362ba43e1cd83e4ebcb4e2b8836e1a28709a6fb78f7",
+    "operateur/internal/govar/MIGRATIONS.md": "c92caa2d82c7d24a9f619d9db92b286f3478cf2977ca583de2f0425d9dec3b9a",
+    "operateur/internal/govar/admission_policy.go": "be3d1d998227c685bd7d5245c3ac912b44c80e3fa5e18630a94eff580902ce51",
+    "operateur/internal/govar/engine.go": "9a841a595081978a75a5994916877099f1188b382f1bab1db3f89b456496b801",
+    "operateur/internal/govar/engine_test.go": "045d7a9b8e71ec93dd7d3bc8f9b84b802231a328cfe42dd6688c0c0626dbd82a",
+    "operateur/internal/govar/ledger_extensions.go": "cf5d63502e9e3a3e9ef2ca4f73100e1732c59aacafe4d8ad6e3449d8bc0aacb9",
+    "operateur/internal/govar/ledger_extensions_postgres.go": "a685f6423f020b0094a61ab1ef102aa25d1e2e6beb00231268bdc80b4367dc68",
+    "operateur/internal/govar/ledger_extensions_test.go": "4226004a60681e8e6e8dacb867e1f97f8a054ea4750abb10c8ebf849607d10f9",
+    "operateur/internal/govar/ledger_review_regression_test.go": "bfdc284e16bf9bf44b1be9449b006946f44331426cdf02b762dbcf15bde588fa",
+    "operateur/internal/govar/postgres_engine.go": "cca0d50c2e378678ab2c88acfabc324e3f57306017c8dfa9a2de584fc2b748b6",
+    "operateur/internal/govar/postgres_engine_test.go": "a34b56d95b2656c653d68929c935cd8bf443c036a040d6638e210fd00f5fce76",
+    "operateur/internal/govar/snapshot.go": "c5577736d818fcd826fb09547c77b06042be3f887f331528d5667c8bf0a88aab",
+    "operateur/internal/govar/snapshot_test.go": "f1a64f3d17dd47dd1e5de495b732869b5bb308b38e24fc24d0c2a2db9acbf8d5",
+    "operateur/internal/govarextproc/server.go": "a575e2d552823fb1aaa1497d6d5aa7ff862660d1634eb755c7de9edc4fe78f4e",
+    "operateur/internal/govarextproc/server_test.go": "e4074832de0ac2f270b3d96cd164ee93929e181556138ebd0992d365e4f73ae5",
+    "operateur/internal/govarextproc/real_envoy_test.go": "dc49a45ab8ac11fe4cd54c6acffc6f8e24cf5044b043ebaa6e27090336d3c722",
+    "operateur/internal/webhook/podinjector/injector.go": "278481c7151d5404add94e8daa541858eb573f0ce56415ed046faac1dd039b11",
+    "operateur/internal/sidecarproxy/proxy.go": "ee1b6f7bca189d6b91cd46041b7b73d1820f8d4d03d9e9c0b71e21a4cbfdf831",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-networkpolicy.yaml": "8490e4a011b3a56ded466e7ff3a2f016cceafe66a8cdbe03161b6b9b55089570",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-envoy-example-configmap.yaml": "5a60cc6a88bf32fc246ffa913efdb9c8328b41c3c2b8f27e77d9b4bdb43cf31d",
+    "operateur/charts/ai-sovereign-finops-operator/templates/gov-ar-admission-deployment.yaml": "179051a9563cb8f498b0c2b2f98b2a7ef46c2195334e3d96e3cc8a4ee5a47dff",
+    "operateur/charts/ai-sovereign-finops-operator/templates/rbac.yaml": "fa3200185a13533311729651a5890208b7b412c30e561360d729bbe91e43633c",
+    "operateur/charts/ai-sovereign-finops-operator/values.yaml": "76b77f3e6533c436dec488251c02648879cc3601705f8fa5508690890b57043f",
+    "operateur/test/e2e/e2e_test.go": "6bfe25014b33732e403b9144f2ca18ebc3a988b5fd7eea2a8c399d99f9f076ea",
+    "operateur/Dockerfile.gov-ar-admission": "dd742175124047107410ae5c62d215bc4511a141d1410d32290cda3a7b38c3c7",
+    "operateur/go.mod": "ad0c5f172a0929257aa2ef1d51062561f47daafff08234faba6bbbecdc9ce728",
+    "operateur/go.sum": "f97c89b0e302baa813db8ecf8b83cc4292fa3965096f6bee718bc49cba545165"
+  },
+  "absent_at_reviewed_head": [
+    "article3/experiments/registry/frozen_protocol.yaml",
+    "an immutable exact-v3 PostgreSQL DDL/fixture consumed by the v3-to-v4 migration test",
+    "a combined PostgreSQL plus real Envoy plus actual admission Kind E0 evidence artifact"
+  ],
+  "unresolved_critical_or_major_findings": [
+    "V3-C1-LATE-FINAL-CORRECTION-DEBT",
+    "V3-C2-M4-COMPLETE-PRICING-NOT-EXECUTABLE",
+    "V3-M1-AIMODEL-CRD-CEL-INVALID",
+    "V3-M2-PER-REQUEST-APPROVAL-CRDS",
+    "V3-M3-APPROVAL-CONSUMPTION-NOT-ATOMIC-WITH-RESERVE",
+    "V3-M4-M5-TYPED-CALIBRATION-IGNORED",
+    "V3-M5-M7-DURABLE-WORKERS-ABSENT",
+    "V3-M6-M8-OBSERVABILITY-AUDIT-ABSENT",
+    "V3-M7-M11-COMBINED-MEASURED-PATH-ABSENT",
+    "V3-M8-REQUIRED-TEST-GATE-RED",
+    "V3-M9-V3-V4-MIGRATION-NOT-SOURCE-REPRODUCIBLE"
+  ],
+  "repair_priority": [
+    "Correct or reject late-final upward corrections, add memory/PostgreSQL/formal counterexamples, and prove record/aggregate equality after debt payment and replay.",
+    "Implement M4 complete per-category reserve/settle and production cap/pricing evidence before any measured traffic.",
+    "Fix and server-validate the AIModel CRD CEL; repair deterministic controller/envtest/format gates.",
+    "Replace per-request CRDs and make approval consumption atomic/idempotent with reserve.",
+    "Implement typed-only M5 calibration/drift, M7 durable workers, and M8 metrics/traces/audit.",
+    "Commit and test the exact v3 migration fixture, then execute M11 from a clean source-bound Kind environment with an independent verifier."
+  ],
+  "reviewer_changes": "Added only article3/reviews/implementation_review_v3.json. No implementation, design, protocol, test, chart, migration, Kind, prior review, or evidence file was edited by this reviewer."
+}
