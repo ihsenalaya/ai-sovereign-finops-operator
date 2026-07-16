@@ -1,0 +1,24 @@
+# Operator-owned workload identity. GOV-AR resolves the binding from the
+# authenticated Pod's namespace + serviceAccountName; the binding name MUST
+# equal the ServiceAccount name and the spec is update-immutable.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-api
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIWorkloadBinding
+metadata:
+  name: payments-api
+spec:
+  serviceAccountName: payments-api
+  tenantID: tenant-payments
+  team: payments
+  application: payments-api
+  budgetPolicyRef: demo-budget
+  routingPolicyRef: demo-routing
+  sensitivity: high
+  allowedZones:
+    - eu
+    - francecentral
+  requireGateway: true

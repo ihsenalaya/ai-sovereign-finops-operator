@@ -1,0 +1,17 @@
+apiVersion: v2
+name: ai-govar-operator
+description: AI GOV-AR Operator — standalone governed-admission control plane for AI inference (workload identity bindings, Envoy ext_proc admission, durable PostgreSQL reservation/liability ledger, calibration evidence, fail-closed change approval).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - governance
+  - admission
+  - ai
+  - kubernetes-operator
+  - finops
+home: https://github.com/ihsenalaya/ai-sovereign-finops-operator
+sources:
+  - https://github.com/ihsenalaya/ai-sovereign-finops-operator
+maintainers:
+  - name: ihsenalaya

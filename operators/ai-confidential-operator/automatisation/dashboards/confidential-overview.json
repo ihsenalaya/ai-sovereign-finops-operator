@@ -1,0 +1,556 @@
+{
+ "annotations": {
+  "list": []
+ },
+ "editable": true,
+ "schemaVersion": 39,
+ "title": "AI Confidential Operator \u2014 Attestation & Placement",
+ "tags": [
+  "ai-confidential",
+  "attestation",
+  "sev-snp"
+ ],
+ "templating": {
+  "list": [
+   {
+    "name": "datasource",
+    "type": "datasource",
+    "query": "prometheus",
+    "current": {}
+   }
+  ]
+ },
+ "time": {
+  "from": "now-1h",
+  "to": "now"
+ },
+ "refresh": "1m",
+ "panels": [
+  {
+   "type": "row",
+   "title": "Confidential Governance \u2014 Attestation & Key Release",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   },
+   "collapsed": false,
+   "id": 60
+  },
+  {
+   "type": "stat",
+   "title": "Attestation Evidence (active)",
+   "id": 61,
+   "gridPos": {
+    "x": 0,
+    "y": 1,
+    "w": 6,
+    "h": 6
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    },
+    "colorMode": "background",
+    "graphMode": "area",
+    "justifyMode": "center"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 1
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     },
+     "unit": "short"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum(aiops_attestation_evidence_total)",
+     "legendFormat": "active evidences",
+     "refId": "A"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Placement Decisions (allowed)",
+   "id": 62,
+   "gridPos": {
+    "x": 6,
+    "y": 1,
+    "w": 6,
+    "h": 6
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    },
+    "colorMode": "background",
+    "graphMode": "area",
+    "justifyMode": "center"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     },
+     "unit": "short"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum(aiops_placement_decisions_total{allowed=\"true\"})",
+     "legendFormat": "allowed",
+     "refId": "A"
+    },
+    {
+     "expr": "sum(aiops_placement_decisions_total{allowed=\"false\"})",
+     "legendFormat": "denied",
+     "refId": "B"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "gauge",
+   "title": "Key Release \u2014 Allow Rate (%)",
+   "id": 63,
+   "gridPos": {
+    "x": 12,
+    "y": 1,
+    "w": 6,
+    "h": 6
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    },
+    "showThresholdLabels": false,
+    "showThresholdMarkers": true
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 50
+       },
+       {
+        "color": "green",
+        "value": 80
+       }
+      ]
+     },
+     "unit": "percent",
+     "min": 0,
+     "max": 100
+    }
+   },
+   "targets": [
+    {
+     "expr": "100 * sum(aiops_key_release_requests_total{result=\"allow\"}) / (sum(aiops_key_release_requests_total) > 0)",
+     "legendFormat": "allow rate",
+     "refId": "A"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "piechart",
+   "title": "Evidence \u2014 Simulated vs Real TEE",
+   "id": 64,
+   "gridPos": {
+    "x": 18,
+    "y": 1,
+    "w": 6,
+    "h": 6
+   },
+   "options": {
+    "pieType": "donut",
+    "displayLabels": [
+     "name",
+     "percent"
+    ],
+    "legend": {
+     "displayMode": "table",
+     "placement": "right"
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     }
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum(aiops_attestation_evidence_total{simulated=\"true\"})",
+     "legendFormat": "simulated (kind)",
+     "refId": "A"
+    },
+    {
+     "expr": "sum(aiops_attestation_evidence_total{simulated=\"false\"})",
+     "legendFormat": "real TEE",
+     "refId": "B"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "Placement Decisions over time",
+   "id": 65,
+   "gridPos": {
+    "x": 0,
+    "y": 7,
+    "w": 12,
+    "h": 8
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "unit": "short"
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "denied"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "red",
+         "mode": "fixed"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "targets": [
+    {
+     "expr": "rate(aiops_placement_decisions_total{allowed=\"true\"}[5m])",
+     "legendFormat": "allowed",
+     "refId": "A"
+    },
+    {
+     "expr": "rate(aiops_placement_decisions_total{allowed=\"false\"}[5m])",
+     "legendFormat": "denied",
+     "refId": "B"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "bargauge",
+   "title": "Key Release \u2014 Deny Reasons",
+   "id": 66,
+   "gridPos": {
+    "x": 12,
+    "y": 7,
+    "w": 12,
+    "h": 8
+   },
+   "options": {
+    "orientation": "horizontal",
+    "displayMode": "gradient",
+    "reduceOptions": {
+     "calcs": [
+      "sum"
+     ]
+    }
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 1
+       },
+       {
+        "color": "red",
+        "value": 10
+       }
+      ]
+     },
+     "unit": "short"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum by (reason) (aiops_key_release_deny_reason_total)",
+     "legendFormat": "{{reason}}",
+     "refId": "A"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "table",
+   "title": "Revocation Events",
+   "id": 67,
+   "gridPos": {
+    "x": 0,
+    "y": 15,
+    "w": 12,
+    "h": 8
+   },
+   "options": {
+    "frameIndex": 0,
+    "showHeader": true
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "thresholds"
+     },
+     "unit": "short"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum by (namespace, node, action) (aiops_revocation_events_total)",
+     "legendFormat": "{{namespace}}/{{node}} \u2014 {{action}}",
+     "refId": "A",
+     "instant": true,
+     "format": "table"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "stat",
+   "title": "Audit Chain \u2014 Checkpoint Age",
+   "id": 68,
+   "gridPos": {
+    "x": 12,
+    "y": 15,
+    "w": 12,
+    "h": 8
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    },
+    "colorMode": "background",
+    "graphMode": "area",
+    "justifyMode": "center",
+    "text": {}
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 300
+       },
+       {
+        "color": "red",
+        "value": 900
+       }
+      ]
+     },
+     "unit": "s",
+     "displayName": "Checkpoint Age"
+    }
+   },
+   "targets": [
+    {
+     "expr": "max(aiops_audit_anchor_checkpoint_age_seconds)",
+     "legendFormat": "age (seconds)",
+     "refId": "A"
+    }
+   ],
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${datasource}"
+   }
+  },
+  {
+   "type": "row",
+   "title": "Environnement d'ex\u00e9cution",
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 23
+   },
+   "collapsed": false,
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "title": "Simulated runtimeclass in use",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 0,
+    "y": 24
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "max(ai_simulated_runtimeclass_in_use)",
+     "refId": "A"
+    }
+   ],
+   "description": "1 = the cluster is running the SIMULATED confidential runtime classes (kind/dev). 0 = real TEE runtime."
+  },
+  {
+   "type": "stat",
+   "title": "Evidence expiring < 10 min",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 6,
+    "y": 24
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "count(aiops_attestation_evidence_expires_in_seconds < 600) or vector(0)",
+     "refId": "A"
+    }
+   ],
+   "description": "AttestationEvidence records that will expire within 10 minutes (renewal pressure)."
+  },
+  {
+   "type": "timeseries",
+   "title": "Attestation evidence over time",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 24
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "sum(aiops_attestation_evidence_total)",
+     "refId": "A",
+     "legendFormat": "evidence (total)"
+    },
+    {
+     "expr": "sum(aiops_attestation_evidence_total{simulated=\"true\"})",
+     "refId": "B",
+     "legendFormat": "simulated"
+    },
+    {
+     "expr": "sum(aiops_attestation_evidence_total{simulated=\"false\"})",
+     "refId": "C",
+     "legendFormat": "real TEE"
+    }
+   ],
+   "description": "Volume of appraised evidence by nature."
+  }
+ ],
+ "uid": "ai-confidential-operator-v01",
+ "version": 1
+}

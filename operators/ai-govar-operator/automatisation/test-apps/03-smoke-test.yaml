@@ -1,0 +1,43 @@
+# Smoke test: the admission service must expose liveness, readiness and
+# Prometheus metrics. Runs as a Job so `kubectl wait --for=condition=complete`
+# gives a binary verdict.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: govar-smoke-test
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: govar-smoke-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: smoke
+          image: curlimages/curl:8.10.1
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              BASE="http://govar-ai-govar-operator-gov-ar-admission.govar-system.svc.cluster.local:8084"
+              echo "== /healthz =="
+              curl -fsS "${BASE}/healthz"
+              echo ""
+              echo "== /readyz =="
+              curl -fsS "${BASE}/readyz"
+              echo ""
+              echo "== /metrics (govar_* families) =="
+              curl -fsS "${BASE}/metrics" | grep -c '^govar_' || { echo "no govar_ metrics"; exit 1; }
+              echo "SMOKE TEST OK"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault

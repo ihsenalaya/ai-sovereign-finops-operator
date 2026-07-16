@@ -43,6 +43,16 @@ Les entreprises utilisent des LLM via plusieurs fournisseurs (Azure OpenAI, Mist
 
 Toutes les décisions sont auditables dans Kubernetes (status des CRs, Events) et dans Grafana via des métriques Prometheus.
 
+> **🧩 Décomposition en 3 opérateurs indépendants** — le monolithe est désormais décliné en
+> trois opérateurs spécialisés, installables et opérables séparément :
+> [`operators/ai-finops-operator`](operators/ai-finops-operator/) (FinOps & souveraineté, 11 CRDs),
+> [`operators/ai-confidential-operator`](operators/ai-confidential-operator/) (attestation TEE & placement, 7 CRDs),
+> [`operators/ai-govar-operator`](operators/ai-govar-operator/) (admission gouvernée GOV-AR).
+> Chacun a son chart Helm, sa doc par CRD, son automatisation kind avec applications de test
+> et son dashboard Grafana. Vue d'ensemble et matrice d'indépendance :
+> [`operators/README.md`](operators/README.md). Le chart monolithe reste fonctionnel (ne pas
+> mélanger les deux approches sur un même cluster).
+
 ---
 
 ## Architecture

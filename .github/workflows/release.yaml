@@ -90,6 +90,39 @@ jobs:
             ${{ env.REGISTRY }}/thesis-bench:${{ steps.v.outputs.version }}
             ${{ env.REGISTRY }}/thesis-bench:latest
 
+      # finops-operator (standalone FinOps manager)
+      - name: Build and push finops-operator
+        uses: docker/build-push-action@v6
+        with:
+          context: ./operateur
+          file: ./operateur/Dockerfile.finops-operator
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/finops-operator:${{ steps.v.outputs.version }}
+            ${{ env.REGISTRY }}/finops-operator:latest
+
+      # confidential-operator (standalone confidential manager)
+      - name: Build and push confidential-operator
+        uses: docker/build-push-action@v6
+        with:
+          context: ./operateur
+          file: ./operateur/Dockerfile.confidential-operator
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/confidential-operator:${{ steps.v.outputs.version }}
+            ${{ env.REGISTRY }}/confidential-operator:latest
+
+      # govar-operator (standalone GOV-AR manager)
+      - name: Build and push govar-operator
+        uses: docker/build-push-action@v6
+        with:
+          context: ./operateur
+          file: ./operateur/Dockerfile.govar-operator
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/govar-operator:${{ steps.v.outputs.version }}
+            ${{ env.REGISTRY }}/govar-operator:latest
+
       # gov-ar-admission
       - name: Build and push gov-ar-admission
         uses: docker/build-push-action@v6

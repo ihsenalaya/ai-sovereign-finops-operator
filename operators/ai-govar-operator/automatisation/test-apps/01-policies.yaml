@@ -1,0 +1,30 @@
+# Policies referenced by the demo workload binding (same namespace).
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIBudgetPolicy
+metadata:
+  name: demo-budget
+spec:
+  target:
+    namespace: govar-demo
+    team: payments
+    application: payments-api
+  period: daily
+  budgetEUR: "100"
+  warningThresholdPercent: 70
+  criticalThresholdPercent: 90
+  hardLimitPercent: 100
+  actions:
+    onWarning:
+      - alert
+    onCritical:
+      - routeToCheaperModel
+    onHardLimit:
+      - blockOrRequireApproval
+  enforcementMode: reportOnly
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIRoutingPolicy
+metadata:
+  name: demo-routing
+spec:
+  objective: cost

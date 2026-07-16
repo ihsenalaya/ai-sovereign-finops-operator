@@ -1,0 +1,192 @@
+{{- if .Values.govArAdmission.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-admission
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-admission
+spec:
+  {{- if and .Values.govArAdmission.devInMemory (ne (int .Values.govArAdmission.replicaCount) 1) }}
+  {{- fail "govArAdmission.devInMemory requires replicaCount=1" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.postgres.enabled) (not .Values.govArAdmission.postgres.existingSecret)) }}
+  {{- fail "production GOV-AR admission requires postgres.enabled=true and postgres.existingSecret" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (not (regexMatch "^[0-9a-f]{64}$" .Values.govArAdmission.softwareSHA256)) }}
+  {{- fail "production GOV-AR admission requires softwareSHA256 as a lowercase SHA-256 digest" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (not (regexMatch "^sha256:[0-9a-f]{64}$" .Values.govArAdmission.image.digest)) }}
+  {{- fail "production GOV-AR admission requires an immutable image.digest" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.extProc.tls.serverExistingSecret) (not .Values.govArAdmission.extProc.tls.clientCAExistingSecret) (not .Values.govArAdmission.extProc.gatewaySPIFFEID)) }}
+  {{- fail "production GOV-AR ext_proc requires tls.serverExistingSecret, tls.clientCAExistingSecret, and gatewaySPIFFEID" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.enforcement.networkPolicy.enabled) (not .Values.govArAdmission.enforcement.networkPolicy.governedNamespace)) }}
+  {{- fail "production GOV-AR requires enforcement.networkPolicy.enabled=true and a dedicated governedNamespace" }}
+  {{- end }}
+  {{- if and (not .Values.govArAdmission.devInMemory) (or (not .Values.govArAdmission.tracing.enabled) (not .Values.govArAdmission.tracing.endpoint)) }}
+  {{- fail "production GOV-AR requires tracing.enabled=true and an OTLP endpoint" }}
+  {{- end }}
+  replicas: {{ .Values.govArAdmission.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "operator.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: gov-ar-admission
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "operator.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: gov-ar-admission
+    spec:
+      serviceAccountName: {{ include "operator.govArAdmissionServiceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: gov-ar-admission
+          image: {{ include "operator.govArAdmissionImage" . | quote }}
+          imagePullPolicy: {{ .Values.govArAdmission.image.pullPolicy }}
+          command: ["/gov-ar-admission"]
+          env:
+            - name: GOV_AR_ADMISSION_ADDR
+              value: ":8084"
+            - name: GOV_AR_EXT_PROC_ADDR
+              {{- if .Values.govArAdmission.devInMemory }}
+              value: "127.0.0.1:{{ .Values.govArAdmission.extProc.port }}"
+              {{- else }}
+              value: ":{{ .Values.govArAdmission.extProc.port }}"
+              {{- end }}
+            - name: GOV_AR_INTERNAL_ADMISSION_URL
+              value: "http://127.0.0.1:8084"
+            {{- if .Values.govArAdmission.devInMemory }}
+            - name: GOV_AR_EXT_PROC_DEV_INSECURE
+              value: "true"
+            {{- else }}
+            - name: GOV_AR_EXT_PROC_TLS_CERT_FILE
+              value: "/var/run/gov-ar/ext-proc-server/{{ .Values.govArAdmission.extProc.tls.serverCertKey }}"
+            - name: GOV_AR_EXT_PROC_TLS_KEY_FILE
+              value: "/var/run/gov-ar/ext-proc-server/{{ .Values.govArAdmission.extProc.tls.serverPrivateKeyKey }}"
+            - name: GOV_AR_EXT_PROC_CLIENT_CA_FILE
+              value: "/var/run/gov-ar/ext-proc-client-ca/{{ .Values.govArAdmission.extProc.tls.clientCAKey }}"
+            - name: GOV_AR_EXT_PROC_GATEWAY_SPIFFE_ID
+              value: {{ .Values.govArAdmission.extProc.gatewaySPIFFEID | quote }}
+            {{- end }}
+            - name: GOV_AR_DEV_IN_MEMORY
+              value: {{ .Values.govArAdmission.devInMemory | quote }}
+            - name: GOV_AR_RECONCILIATION_INTERVAL
+              value: {{ .Values.govArAdmission.reconciliation.interval | quote }}
+            - name: GOV_AR_RECONCILIATION_QUERY_LIMIT
+              value: {{ .Values.govArAdmission.reconciliation.queryLimit | quote }}
+            - name: GOV_AR_WORKER_LEASE
+              value: {{ .Values.govArAdmission.reconciliation.lease | quote }}
+            - name: GOV_AR_WORKER_RENEW_EVERY
+              value: {{ .Values.govArAdmission.reconciliation.renewEvery | quote }}
+            - name: GOV_AR_WORKER_MAX_ATTEMPTS
+              value: {{ .Values.govArAdmission.reconciliation.maxAttempts | quote }}
+            - name: GOV_AR_WORKER_BASE_BACKOFF
+              value: {{ .Values.govArAdmission.reconciliation.baseBackoff | quote }}
+            - name: GOV_AR_WORKER_MAX_BACKOFF
+              value: {{ .Values.govArAdmission.reconciliation.maxBackoff | quote }}
+            - name: GOV_AR_WORKER_HEARTBEAT_TTL
+              value: {{ .Values.govArAdmission.reconciliation.heartbeatTTL | quote }}
+            - name: GOV_AR_WORKER_PERIODIC_INTERVAL
+              value: {{ .Values.govArAdmission.reconciliation.periodicInterval | quote }}
+            - name: GOV_AR_SOFTWARE_VERSION
+              value: {{ default .Chart.AppVersion .Values.govArAdmission.image.tag | quote }}
+            {{- if .Values.govArAdmission.softwareSHA256 }}
+            - name: GOV_AR_SOFTWARE_SHA256
+              value: {{ .Values.govArAdmission.softwareSHA256 | quote }}
+            {{- end }}
+            {{- if .Values.govArAdmission.selectedFeedback.existingConfigMap }}
+            - name: GOV_AR_SELECTED_FEEDBACK_RUN_ID
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: run_id}}
+            - name: GOV_AR_SELECTED_FEEDBACK_SPLIT
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: split}}
+            - name: GOV_AR_SELECTED_FEEDBACK_PROTOCOL_SHA256
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: protocol_sha256}}
+            - name: GOV_AR_SELECTED_FEEDBACK_ORACLE_SHA256
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: oracle_artifact_sha256}}
+            - name: GOV_AR_SELECTED_FEEDBACK_CONFIG_SHA256
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: config_sha256}}
+            - name: GOV_AR_SELECTED_FEEDBACK_MODEL_MAP_SHA256
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: model_map_sha256}}
+            - name: GOV_AR_SELECTED_FEEDBACK_MODEL_MAP_JSON
+              valueFrom: {configMapKeyRef: {name: {{ .Values.govArAdmission.selectedFeedback.existingConfigMap }}, key: model_map_json}}
+            {{- end }}
+            - name: GOV_AR_TRACING_ENABLED
+              value: {{ .Values.govArAdmission.tracing.enabled | quote }}
+            {{- if .Values.govArAdmission.tracing.enabled }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ required "govArAdmission.tracing.endpoint is required when tracing is enabled" .Values.govArAdmission.tracing.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              value: {{ .Values.govArAdmission.tracing.insecure | quote }}
+            - name: GOV_AR_TRACE_SAMPLE_RATIO
+              value: {{ .Values.govArAdmission.tracing.sampleRatio | quote }}
+            {{- end }}
+            - name: GOV_AR_IDENTITY_MASTER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "govArAdmission.identity.masterExistingSecret is required when GOV-AR admission is enabled" .Values.govArAdmission.identity.masterExistingSecret }}
+                  key: {{ .Values.govArAdmission.identity.masterSecretKey }}
+            {{- if and .Values.govArAdmission.postgres.enabled .Values.govArAdmission.postgres.existingSecret }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.govArAdmission.postgres.existingSecret }}
+                  key: {{ .Values.govArAdmission.postgres.secretKey }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8084
+              protocol: TCP
+            {{- if not .Values.govArAdmission.devInMemory }}
+            - name: ext-proc
+              containerPort: {{ .Values.govArAdmission.extProc.port }}
+              protocol: TCP
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if not .Values.govArAdmission.devInMemory }}
+            - name: ext-proc-server-tls
+              mountPath: /var/run/gov-ar/ext-proc-server
+              readOnly: true
+            - name: ext-proc-client-ca
+              mountPath: /var/run/gov-ar/ext-proc-client-ca
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml .Values.govArAdmission.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if not .Values.govArAdmission.devInMemory }}
+        - name: ext-proc-server-tls
+          secret:
+            secretName: {{ .Values.govArAdmission.extProc.tls.serverExistingSecret }}
+        - name: ext-proc-client-ca
+          secret:
+            secretName: {{ .Values.govArAdmission.extProc.tls.clientCAExistingSecret }}
+        {{- end }}
+{{- end }}

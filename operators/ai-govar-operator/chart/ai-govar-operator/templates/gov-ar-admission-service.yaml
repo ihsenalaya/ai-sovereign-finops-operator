@@ -1,0 +1,27 @@
+{{- if .Values.govArAdmission.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-admission
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-admission
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "operator.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: gov-ar-admission
+  ports:
+    - name: http
+      port: 8084
+      targetPort: http
+      protocol: TCP
+    {{- if not .Values.govArAdmission.devInMemory }}
+    - name: ext-proc
+      port: {{ .Values.govArAdmission.extProc.port }}
+      targetPort: ext-proc
+      protocol: TCP
+    {{- end }}
+{{- end }}

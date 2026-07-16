@@ -1,0 +1,349 @@
+{
+ "annotations": {
+  "list": []
+ },
+ "editable": true,
+ "schemaVersion": 39,
+ "title": "AI GOV-AR Operator \u2014 Governed Admission",
+ "tags": [
+  "ai-govar",
+  "governance",
+  "admission"
+ ],
+ "templating": {
+  "list": [
+   {
+    "name": "datasource",
+    "type": "datasource",
+    "query": "prometheus",
+    "current": {}
+   }
+  ]
+ },
+ "time": {
+  "from": "now-1h",
+  "to": "now"
+ },
+ "refresh": "1m",
+ "panels": [
+  {
+   "type": "row",
+   "title": "GOV-AR \u2014 D\u00e9cisions d'admission",
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 0
+   },
+   "collapsed": false,
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "title": "Admission decisions (rate 5m)",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 0,
+    "y": 1
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(govar_admission_decisions_total[5m]))",
+     "refId": "A"
+    }
+   ],
+   "description": "Total admission decision throughput."
+  },
+  {
+   "type": "stat",
+   "title": "Deny ratio (5m)",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 6,
+    "y": 1
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(govar_admission_decisions_total{decision!=\"admit\"}[5m])) / sum(rate(govar_admission_decisions_total[5m]))",
+     "refId": "A"
+    }
+   ],
+   "description": "Share of non-admit decisions. Sustained growth means callers are being throttled or misconfigured."
+  },
+  {
+   "type": "stat",
+   "title": "HTTP p95 latency",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 12,
+    "y": 1
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    }
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(govar_http_request_duration_seconds_bucket[5m])))",
+     "refId": "A"
+    }
+   ],
+   "description": "Decision-path latency, 95th percentile."
+  },
+  {
+   "type": "stat",
+   "title": "HTTP p99 latency",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 18,
+    "y": 1
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    }
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(govar_http_request_duration_seconds_bucket[5m])))",
+     "refId": "A"
+    }
+   ],
+   "description": "Decision-path latency, 99th percentile."
+  },
+  {
+   "type": "timeseries",
+   "title": "Decisions by outcome",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 7
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum by (decision) (rate(govar_admission_decisions_total[5m]))",
+     "refId": "A",
+     "legendFormat": "{{decision}}"
+    }
+   ],
+   "description": "Admission decisions by closed decision enum."
+  },
+  {
+   "type": "bargauge",
+   "title": "Deny reasons (top)",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 7
+   },
+   "options": {
+    "displayMode": "gradient",
+    "orientation": "horizontal",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    }
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "sum by (reason) (rate(govar_admission_decisions_total{decision!=\"admit\"}[5m]))",
+     "refId": "A",
+     "legendFormat": "{{reason}}"
+    }
+   ],
+   "description": "Bounded reason codes of non-admit decisions \u2014 labels never carry tenant/workload identity."
+  },
+  {
+   "type": "row",
+   "title": "Ledger \u2014 r\u00e9servation / liability",
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 15
+   },
+   "collapsed": false,
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "title": "Ledger transitions",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 16
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ops"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum by (transition, outcome) (rate(govar_ledger_transitions_total[5m]))",
+     "refId": "A",
+     "legendFormat": "{{transition}}/{{outcome}}"
+    }
+   ],
+   "description": "Dispatch, settlement and cancellation attempts and outcomes."
+  },
+  {
+   "type": "timeseries",
+   "title": "HTTP requests by endpoint / status class",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 16
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    }
+   },
+   "targets": [
+    {
+     "expr": "sum by (endpoint, status_class) (rate(govar_http_requests_total[5m]))",
+     "refId": "A",
+     "legendFormat": "{{endpoint}} {{status_class}}"
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "title": "R\u00e9conciliation durable",
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 24
+   },
+   "collapsed": false,
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "title": "Pending records",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 0,
+    "y": 25
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "max(govar_reconciliation_pending_records)",
+     "refId": "A"
+    }
+   ],
+   "description": "Pending rows in the bounded observation scan. Sustained growth means the worker is behind."
+  },
+  {
+   "type": "stat",
+   "title": "Last successful pass age",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 6,
+    "w": 6,
+    "x": 6,
+    "y": 25
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    }
+   },
+   "targets": [
+    {
+     "expr": "time() - max(govar_reconciliation_last_success_unixtime)",
+     "refId": "A"
+    }
+   ],
+   "description": "Seconds since the last successful reconciliation pass. Alert if above several intervals."
+  },
+  {
+   "type": "timeseries",
+   "title": "Reconciliation runs (success / failure)",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 25
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "sum by (result) (rate(govar_reconciliation_runs_total[5m]))",
+     "refId": "A",
+     "legendFormat": "{{result}}"
+    }
+   ],
+   "description": "Worker pass outcomes. Repeated failures keep ambiguous holds charged."
+  },
+  {
+   "type": "timeseries",
+   "title": "Records changed by reconciliation",
+   "datasource": "${datasource}",
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 31
+   },
+   "fieldConfig": {
+    "defaults": {}
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(govar_reconciliation_records_total[5m]))",
+     "refId": "A",
+     "legendFormat": "records"
+    }
+   ]
+  }
+ ],
+ "uid": "ai-govar-operator-v01",
+ "version": 1
+}

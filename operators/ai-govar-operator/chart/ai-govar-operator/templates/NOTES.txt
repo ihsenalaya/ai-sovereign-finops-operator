@@ -1,0 +1,29 @@
+AI GOV-AR Operator installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+This operator owns AIWorkloadBinding and the fail-closed AIChangeRequest
+approval webhooks. The runtime admission service and the calibration producer
+are dedicated deployments enabled through values.
+
+1. Check the controller is running:
+   kubectl -n {{ .Release.Namespace }} get deploy {{ include "operator.fullname" . }}
+
+{{- if .Values.govArAdmission.enabled }}
+2. The GOV-AR admission service is enabled:
+   kubectl -n {{ .Release.Namespace }} get deploy -l app.kubernetes.io/component=gov-ar-admission
+{{- else }}
+2. The GOV-AR admission service is disabled. For production:
+   --set govArAdmission.enabled=true --set govArAdmission.postgres.enabled=true
+   (development only: --set govArAdmission.devInMemory=true, single replica)
+{{- end }}
+
+3. Bind workloads (see the test-apps samples in
+   operators/ai-govar-operator/automatisation/test-apps):
+   kubectl apply -f test-apps/
+   kubectl get aiwb -A
+
+4. Metrics (Prometheus govar_*):
+   the admission service exposes /metrics on its own service; see
+   docs/gov-ar-operations.md for the metric families and label bounds.
+
+Import automatisation/dashboards/govar-overview.json into Grafana for the
+governed-admission dashboard.

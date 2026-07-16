@@ -19,6 +19,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// RuleScope selects which admission rules a bootstrapped webhook
+// configuration carries. The zero value keeps the historical monolith
+// behavior (pods + change requests) so existing callers are unaffected.
+type RuleScope int
+
+const (
+	// ScopeAll registers both the pod-injection and the change-approval
+	// rules on the same configuration (single-manager deployments).
+	ScopeAll RuleScope = iota
+	// ScopePods registers only the confidential pod rules
+	// (ai-confidential-operator).
+	ScopePods
+	// ScopeChangeRequests registers only the AIChangeRequest approval
+	// rules (ai-govar-operator).
+	ScopeChangeRequests
+)
+
 // Options defines how the operator self-registers its mutating webhook.
 type Options struct {
 	Client           client.Client
@@ -28,6 +45,7 @@ type Options struct {
 	Path             string
 	CertDir          string
 	FailurePolicy    admissionregv1.FailurePolicyType
+	Scope            RuleScope
 }
 
 // excludeSystemNamespaces returns a NamespaceSelector that keeps the pod webhooks
@@ -101,7 +119,7 @@ func Ensure(ctx context.Context, opts Options) error {
 		timeout := int32(5)
 		matchPolicy := admissionregv1.Equivalent
 		reinvocation := admissionregv1.NeverReinvocationPolicy
-		cfg.Webhooks = []admissionregv1.MutatingWebhook{{
+		podWebhook := admissionregv1.MutatingWebhook{
 			Name:                    "sidecar-injection.aiops.imperium.io",
 			AdmissionReviewVersions: []string{"v1"},
 			SideEffects:             &sideEffects,
@@ -127,7 +145,8 @@ func Ensure(ctx context.Context, opts Options) error {
 					Resources:   []string{"pods"},
 				},
 			}},
-		}, {
+		}
+		changeWebhook := admissionregv1.MutatingWebhook{
 			Name:                    "govar-change-approval-stamping.aiops.imperium.io",
 			AdmissionReviewVersions: []string{"v1"},
 			SideEffects:             &sideEffects,
@@ -152,7 +171,15 @@ func Ensure(ctx context.Context, opts Options) error {
 					Resources:   []string{"aichangerequests"},
 				},
 			}},
-		}}
+		}
+		switch opts.Scope {
+		case ScopePods:
+			cfg.Webhooks = []admissionregv1.MutatingWebhook{podWebhook}
+		case ScopeChangeRequests:
+			cfg.Webhooks = []admissionregv1.MutatingWebhook{changeWebhook}
+		default:
+			cfg.Webhooks = []admissionregv1.MutatingWebhook{podWebhook, changeWebhook}
+		}
 		return nil
 	})
 	if err != nil {
@@ -196,7 +223,7 @@ func EnsureValidation(ctx context.Context, opts Options) error {
 		sideEffects := admissionregv1.SideEffectClassNone
 		timeout := int32(5)
 		matchPolicy := admissionregv1.Equivalent
-		cfg.Webhooks = []admissionregv1.ValidatingWebhook{{
+		podWebhook := admissionregv1.ValidatingWebhook{
 			Name:                    "confidential-pod-validation.aiops.imperium.io",
 			AdmissionReviewVersions: []string{"v1"},
 			SideEffects:             &sideEffects,
@@ -221,7 +248,8 @@ func EnsureValidation(ctx context.Context, opts Options) error {
 					Resources:   []string{"pods"},
 				},
 			}},
-		}, {
+		}
+		changeWebhook := admissionregv1.ValidatingWebhook{
 			Name:                    "govar-change-approval-validation.aiops.imperium.io",
 			AdmissionReviewVersions: []string{"v1"},
 			SideEffects:             &sideEffects,
@@ -245,7 +273,15 @@ func EnsureValidation(ctx context.Context, opts Options) error {
 					Resources:   []string{"aichangerequests"},
 				},
 			}},
-		}}
+		}
+		switch opts.Scope {
+		case ScopePods:
+			cfg.Webhooks = []admissionregv1.ValidatingWebhook{podWebhook}
+		case ScopeChangeRequests:
+			cfg.Webhooks = []admissionregv1.ValidatingWebhook{changeWebhook}
+		default:
+			cfg.Webhooks = []admissionregv1.ValidatingWebhook{podWebhook, changeWebhook}
+		}
 		return nil
 	})
 	if err != nil {
