@@ -112,6 +112,40 @@ Transverse :
 - **Réconciliation native** : `observedGeneration`, conditions standard, events, logs structurés ; les
   `AIModel` re-réconcilient sur changement de leur `AIProvider`.
 
+### 3.1 GOV-AR — admission gouvernée (article 3)
+
+**GOV-AR** est le plan d'**admission gouverné** de l'inférence : un service d'admission branché sur le
+gateway (**Envoy `ext_proc`**) qui décide d'admettre, réserver ou refuser chaque requête à partir de
+**champs typés** (et non d'annotations mutables, conservées seulement par compatibilité). Voir
+[`docs/crds/govar-safety-fields.md`](docs/crds/govar-safety-fields.md).
+
+- **Identité par workload** — chaque décision résout un [`AIWorkloadBinding`](docs/crds/aiworkloadbinding.md)
+  à partir du `namespace` et du `spec.serviceAccountName` du Pod **authentifié** (TokenReview) ; ni une
+  requête ni une annotation ne peuvent choisir le binding. Son `metadata.name` doit égaler le
+  ServiceAccount et sa spec est **immuable** (tout changement d'identité/politique = remplacement).
+- **Route close & prix versionné** — `AIModel.spec.govar.route` fournit la route (déploiement/clé
+  provider, cluster Envoy, autorité HTTP, `pathMode`) renvoyée **en un seul bloc** ; `AIProvider.spec.pricing`
+  est un snapshot **versionné** avec assertion de `completeness` ; `AIRoutingPolicy.spec.govar` porte la
+  méthode de réservation, l'artefact de **calibration** immuable, le détecteur de drift + repli
+  conservateur, la cohorte figée et un **budget de risque** en parties par milliard.
+- **Registre de réservation/liability durable** — l'admission de production exige **PostgreSQL** ; la
+  réconciliation d'expiration est **idempotente** (verrous de lignes, préconditions de transition, IDs
+  d'événements déterministes, unicité d'inbox) et ne libère jamais une requête potentiellement
+  facturable. Le ledger in-memory est **dev-only** (un seul replica imposé par le chart).
+- **Autorisation de route** — via `AIChangeRequest` action `authorize-gov-ar-route` (UIDs/générations
+  exacts, hash du route-snapshot, `scopeDigest`, `validUntil`) approuvée par un reviewer distinct
+  (`approvedScopeDigest`, `expiresAt`). Ceci **remplace** les anciennes API expérimentales
+  `AIAdmissionApproval*` — migration décrite dans
+  [`docs/gov-ar-approval-migration.md`](docs/gov-ar-approval-migration.md).
+- **Observabilité dédiée** — métriques `govar_*` (décisions, transitions du ledger, passes de
+  réconciliation, latence), **traces OTLP** W3C Trace Context propagées via `ext_proc`, `/healthz` et
+  `/readyz` séparés. Aucun label ne porte d'identité tenant/workload/requête/prompt. Détails
+  opérationnels : [`docs/gov-ar-operations.md`](docs/gov-ar-operations.md).
+- **Binaires/images dédiés** — `gov-ar-admission` (service d'admission, SA **lecture seule** distincte
+  du manager) et `gov-ar-calibration-producer`, publiés comme images séparées (§8). Les outils
+  d'expérimentation `gov-ar-experiment` / `gov-ar-experiment-v2` servent la reproductibilité de
+  l'article 3.
+
 ---
 
 ## 4. Avantages
@@ -134,10 +168,12 @@ Transverse :
 
 ## 5. Les CRDs (`aiops.imperium.io/v1alpha1`)
 
-Le groupe `aiops.imperium.io/v1alpha1` expose **18 CRDs**, réconciliées par un **opérateur unique**
-(un seul controller-manager, [`cmd/main.go`](cmd/main.go)) enregistrant **17 controllers**. Elles se
+Le groupe `aiops.imperium.io/v1alpha1` expose **19 CRDs**, réconciliées par un **opérateur unique**
+(un seul controller-manager, [`cmd/main.go`](cmd/main.go)) enregistrant **18 controllers**. Elles se
 répartissent en deux domaines : (a) **FinOps & souveraineté** (plan de contrôle des coûts/routage) et
-(b) **gouvernance confidentielle & attestation** (placement vérifiable sur nœuds SEV-SNP).
+(b) **gouvernance confidentielle & attestation** (placement vérifiable sur nœuds SEV-SNP). Le plan
+d'admission gouverné **GOV-AR** (§3.1) s'appuie en plus sur `AIWorkloadBinding` et sur des champs de
+sécurité typés portés par `AIModel`, `AIProvider`, `AIRoutingPolicy` et `AIChangeRequest`.
 
 ### 5.1 FinOps & souveraineté
 
@@ -153,7 +189,8 @@ répartissent en deux domaines : (a) **FinOps & souveraineté** (plan de contrô
 | **AIQualityGate** | `aiqgate` | Validation qualité par application avant changement de modèle | `target`, `sourceModel`, `candidateModel`, `goldenDatasetRef`, `evidenceRef`, `evaluation`, `requiredChecks`, `canary`, `rollback` | `phase`, `verdict`, `qualityScore`, `evaluationJobPhase`, `source/candidateObservation` |
 | **AIRoutingPolicy** | `airpolicy` | Politique de routage inter-modèles/providers | `target`, `rules`, `enforcementMode` | conditions, décisions de routage |
 | **AIRouteOverride** | `airoverride` | Override ponctuel d'une route gateway | `routeRef`, `override` | `applied`, conditions |
-| **AIChangeRequest** | `aicrq` | Demande de changement gouvernée (workflow d'approbation) | `target`, `change`, `approval` | `phase`, `verdict` |
+| **AIChangeRequest** | `aicrq` | Demande de changement gouvernée (workflow d'approbation, dont `authorize-gov-ar-route`) | `target`, `change`, `approval` | `phase`, `verdict`, `approvedScopeDigest`, `expiresAt` |
+| **AIWorkloadBinding** | `aiwb` | Identité GOV-AR d'un ServiceAccount → tenant / budget / routage / sensibilité / résidence | `serviceAccountName`, `tenantID`, `team`, `application`, `budgetPolicyRef`, `routingPolicyRef`, `sensitivity`, `allowedZones`, `requireGateway` | conditions (spec immuable, résolue par admission) |
 
 ### 5.2 Gouvernance confidentielle & attestation (SEV-SNP)
 
@@ -184,6 +221,9 @@ Documentation détaillée par CRD : [`docs/crds/`](docs/crds/) · par moteur : [
 - *Optionnel* : **Prometheus** (collecteur de télémétrie + scraping), **Grafana** (dashboard fourni),
   **Prometheus Operator** (`ServiceMonitor`), une **gateway IA** (Envoy AI Gateway, LiteLLM, Gateway
   API…) comme plan de données.
+- *Pour GOV-AR (§3.1)* : **PostgreSQL** requis par le service d'admission `gov-ar-admission` **en
+  production** (registre de réservation/liability durable) ; le ledger in-memory est réservé au
+  développement (un seul replica). Un **collecteur OTLP/HTTP** est requis si le tracing est activé.
 
 **Build / développement :** Go 1.25 · Kubebuilder 3.14 · controller-gen v0.18.0 · kustomize v5.4.3 ·
 kind 0.31 (k8s 1.35) · envtest k8s 1.31 · Helm.
@@ -220,6 +260,11 @@ Métriques exposées (`/metrics`, par défaut `:8080`) :
 Dashboard Grafana prêt à l'emploi : [`dashboards/ai-finops-overview.json`](dashboards/ai-finops-overview.json)
 (inclut le tableau **Enforcement actions** et la dépense par zone de souveraineté).
 
+> **GOV-AR (§3.1)** — le service d'admission expose une **famille distincte** `govar_*`
+> (`govar_admission_decisions_total`, `govar_ledger_transitions_total`, `govar_reconciliation_*`,
+> `govar_http_request_duration_seconds`…) sur son propre `/metrics`, **sans** aucun label
+> d'identité tenant/workload/requête/prompt. Détails : [`docs/gov-ar-operations.md`](docs/gov-ar-operations.md).
+
 ---
 
 ## 8. Démarrage rapide
@@ -245,6 +290,23 @@ helm install greenops charts/ai-sovereign-finops-operator \
 
 Le chart installe CRDs, Deployment (non-root, sécurisé), RBAC, Service métriques et `ServiceMonitor`
 optionnel. Valeurs : [`charts/ai-sovereign-finops-operator/values.yaml`](charts/ai-sovereign-finops-operator/values.yaml).
+
+**Admission GOV-AR (§3.1)** — désactivée par défaut. On l'active avec ses composants dédiés et, en
+production, PostgreSQL :
+
+```bash
+helm install greenops charts/ai-sovereign-finops-operator \
+  --namespace greenops-system --create-namespace \
+  --set govArAdmission.enabled=true \
+  --set govArAdmission.postgres.enabled=true \
+  --set govArCalibrationProducer.enabled=true
+```
+
+Cela déploie le service `gov-ar-admission` (image `…/gov-ar-admission`), le
+`gov-ar-calibration-producer` (image `…/gov-ar-calibration-producer`), leur `NetworkPolicy` et le
+ConfigMap d'exemple Envoy `ext_proc`. Le schéma des valeurs est validé par
+[`values.schema.json`](charts/ai-sovereign-finops-operator/values.schema.json). Exploitation :
+[`docs/gov-ar-operations.md`](docs/gov-ar-operations.md).
 
 Guide de démo détaillé : [`docs/DEMO_KIND.md`](docs/DEMO_KIND.md).
 
@@ -328,10 +390,13 @@ Conventions et architecture : [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) ·
 ## 11. Statut & limites
 
 MVP complet (Sprints 1→6) **validé de bout en bout sur kind via l'image déployée par Helm**. Le repo
-compte désormais **18 CRDs** et **17 controllers** pilotés par un **opérateur unique**, plus 6 moteurs
+compte désormais **19 CRDs** et **18 controllers** pilotés par un **opérateur unique**, plus 6 moteurs
 purs, collecteurs, observabilité, reporting, chart et automatisation. S'y ajoute la brique de
 gouvernance confidentielle (chaîne d'attestation SEV-SNP, scheduler attestation-aware,
 central-verifier, node-attestation-agent, verify-placement) livrée en binaires de service distincts.
+S'y ajoute enfin le plan d'**admission gouvernée GOV-AR** (§3.1) — service `gov-ar-admission`
+(ledger de réservation/liability sur PostgreSQL), `gov-ar-calibration-producer`, CRD `AIWorkloadBinding`
+et champs de sécurité typés — livré comme images de service distinctes (article 3).
 
 **Enforcement livré (slices 1, 2 et budget fallback managé)** : l'opérateur **agit** selon l'`enforcementMode`
 — Events Kubernetes différenciés et métrique `ai_finops_enforcement_actions`, validés en réel sur les

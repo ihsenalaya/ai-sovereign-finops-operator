@@ -29,7 +29,7 @@ Un opérateur Kubernetes qui observe le trafic vers les LLM, calcule les coûts 
 
 Les entreprises utilisent des LLM via plusieurs fournisseurs (Azure OpenAI, Mistral, Anthropic...) sans visibilité consolidée sur les coûts, la latence ou la conformité réglementaire (RGPD, AI Act). L'**AI Sovereign FinOps Operator** résout ce problème en :
 
-> **Version 0.5.11** — inclut le module de gouvernance confidentielle (attestation TEE, planificateur, key-release gateway, platform-api/ui, thesis-bench), les mesures scheduler haute résolution, le respect des contraintes `RuntimeClass.scheduling` par le scheduler custom, le patch webhook de hash de politique, et le fail-closed Confidential GPU tant que l'attestation GPU réelle n'existe pas.
+> **Version 0.5.18** — inclut le module de gouvernance confidentielle (attestation TEE, planificateur, key-release gateway, platform-api/ui, thesis-bench), le workflow gouverné `AIRoutingPolicy -> AIChangeRequest`, l'admission signée Ed25519 pour `AIChangeRequest`, la protection opt-in des ConfigMaps d'évidence, les quality gates par application, le shadow-AI via Tetragon/eBPF, et les chart/images locaux alignés sur `0.5.18`.
 
 > **Article 1 — règle d'évaluation** : les résultats du papier principal doivent venir d'AKS réel SEV-SNP. Les runs `kind`/`kwok` servent uniquement à la CI, au debug et aux tests de régression. Les images de reproduction sont publiées sur GHCR (`ghcr.io/ihsenalaya/ai-sovereign-finops-operator`) ; ne pas utiliser ACR. Sur `Standard_DC8as_v6`, les résultats sont du **node-level SEV-SNP** avec `runtimeClassName=runc`; AKS refuse Pod Sandboxing/Kata sur ce SKU faute de nested virtualization, donc ne pas présenter ces lignes comme pod-level `kata-vm-isolation`.
 
@@ -140,7 +140,7 @@ kind create cluster --config automatisation/kind/kind-config.yaml --name greenop
 
 # 3. Construire et charger les 6 images (séquentiel pour éviter l'OOM)
 IMAGE_REPO=ghcr.io/ihsenalaya/ai-sovereign-finops-operator \
-IMAGE_TAG=0.5.11 \
+IMAGE_TAG=0.5.18 \
 CLUSTER_NAME=greenops \
   ./automatisation/scripts/02-build-load-image.sh
 
@@ -199,8 +199,7 @@ L'opérateur lit les métriques de l'Envoy AI Gateway. Celui-ci doit déjà êtr
 ### 2. Installer l'opérateur depuis le chart OCI GHCR
 
 ```bash
-helm install greenops oci://ghcr.io/ihsenalaya/ai-sovereign-finops-operator/charts/ai-sovereign-finops-operator \
-  --version 0.5.11 \
+helm install greenops operateur/charts/ai-sovereign-finops-operator \
   --namespace greenops-system \
   --create-namespace
 ```
@@ -227,7 +226,7 @@ kubectl apply -f https://raw.githubusercontent.com/.../config/crd/bases/
 
 ## CRDs — référence complète
 
-La plateforme expose 17 CRDs dans le groupe `aiops.imperium.io/v1alpha1`.
+La plateforme expose 19 CRDs dans le groupe `aiops.imperium.io/v1alpha1`.
 
 ### FinOps CRDs
 
@@ -243,12 +242,14 @@ La plateforme expose 17 CRDs dans le groupe `aiops.imperium.io/v1alpha1`.
 | AIBreakEvenAnalysis | `aibreak` | Comparaison managé vs auto-hébergé |
 | AIRoutingPolicy | `airpol` | Optimisation continue du routage |
 | AIRouteOverride | `airoverride` | Reroute manuel immédiat |
-| AIChangeRequest | `aicrq` | Approbation humaine d'un changement de routage |
+| AIChangeRequest | `aicrq` | Approbation humaine d'un changement de routage (dont `authorize-gov-ar-route`) |
+| AIWorkloadBinding | `aiwb` | Identité GOV-AR d'un ServiceAccount (tenant, budget, routage, sensibilité, résidence) |
 
 ### Confidential CRDs
 
 | CRD | Rôle |
 |-----|------|
+| RawAttestationReport | Rapport brut non appraisé émis par le node-attestation-agent (source du central-verifier) |
 | AttestationEvidence | Preuve d'attestation TEE d'un nœud (remplie par l'attestation-scheduler ou simulée en kind) |
 | AIEvidenceRecord | Archive immuable d'une décision d'attestation (audit trail) |
 | AIKeyReleasePolicy | Politique déclarant sous quelles conditions une clé peut être libérée |
@@ -886,7 +887,7 @@ L'opérateur expose les métriques suivantes sur le port `8080` (chemin `/metric
 | `ai_finops_sovereignty_requests` | namespace, application, zone | Requêtes par zone |
 | `ai_finops_shadow_ai_egress` | namespace | Trafic IA non-gouverné (eBPF) |
 
-### Gouvernance confidentielle (v0.5.11+)
+### Gouvernance confidentielle (v0.5.18+)
 
 | Métrique | Labels | Description |
 |----------|--------|-------------|
