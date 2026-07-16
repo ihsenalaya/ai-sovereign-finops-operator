@@ -17,15 +17,11 @@ limitations under the License.
 package controller
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"crypto/sha1"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"strings"
@@ -93,7 +89,6 @@ type qualityEvidenceSample struct {
 	ExpectedFields          map[string]string `json:"expectedFields,omitempty"`
 	ActualFields            map[string]string `json:"actualFields,omitempty"`
 	Fields                  map[string]string `json:"fields,omitempty"`
-	CorrectnessScore        *float64          `json:"correctnessScore,omitempty"`
 	SemanticScore           *float64          `json:"semanticScore,omitempty"`
 	JudgedScore             *float64          `json:"judgedScore,omitempty"`
 	SchemaValid             *bool             `json:"schemaValid,omitempty"`
@@ -762,32 +757,10 @@ func (r *AIQualityGateReconciler) evaluationJobEvidence(ctx context.Context, nam
 			if strings.TrimSpace(terminated.Message) == "" {
 				return nil, fmt.Errorf("quality evaluation pod %s/%s completed without evidence in termination message", namespace, pod.Name)
 			}
-			return decodeEvaluationEvidencePayload([]byte(terminated.Message))
+			return []byte(terminated.Message), nil
 		}
 	}
 	return nil, fmt.Errorf("quality evaluation job %s/%s succeeded but no completed evaluator pod was found", namespace, jobName)
-}
-
-func decodeEvaluationEvidencePayload(raw []byte) ([]byte, error) {
-	const prefix = "gzip+base64:"
-	text := strings.TrimSpace(string(raw))
-	if !strings.HasPrefix(text, prefix) {
-		return raw, nil
-	}
-	blob, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(text, prefix))
-	if err != nil {
-		return nil, fmt.Errorf("decode base64 quality evaluation evidence: %w", err)
-	}
-	gzr, err := gzip.NewReader(bytes.NewReader(blob))
-	if err != nil {
-		return nil, fmt.Errorf("open gzip quality evaluation evidence: %w", err)
-	}
-	defer func() { _ = gzr.Close() }()
-	decoded, err := io.ReadAll(gzr)
-	if err != nil {
-		return nil, fmt.Errorf("read gzip quality evaluation evidence: %w", err)
-	}
-	return decoded, nil
 }
 
 func validateEvaluationEvidence(raw []byte) error {
@@ -1035,7 +1008,6 @@ func buildQualitySamples(prompts []goldenPrompt, evidence []qualityEvidenceSampl
 			MustBeJSON:              p.Expected.MustBeJSON,
 			ExpectedFields:          expectedFields,
 			ActualFields:            actualFields,
-			CorrectnessScore:        ev.CorrectnessScore,
 			SemanticScore:           ev.SemanticScore,
 			JudgedScore:             ev.JudgedScore,
 			RequiredKeywordsPresent: ev.RequiredKeywordsPresent,

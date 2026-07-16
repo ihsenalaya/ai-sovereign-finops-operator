@@ -2,6 +2,23 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{- define "operator.govArCalibrationProducerServiceAccountName" -}}
+{{- if .Values.govArCalibrationProducer.serviceAccount.create -}}
+{{- default (printf "%s-gov-ar-calibration-producer" (include "operator.fullname" .)) .Values.govArCalibrationProducer.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- required "govArCalibrationProducer.serviceAccount.name is required when serviceAccount.create=false" .Values.govArCalibrationProducer.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "operator.govArCalibrationProducerImage" -}}
+{{- if .Values.govArCalibrationProducer.image.digest -}}
+{{- printf "%s@%s" .Values.govArCalibrationProducer.image.repository .Values.govArCalibrationProducer.image.digest -}}
+{{- else -}}
+{{- $tag := .Values.govArCalibrationProducer.image.tag | default .Chart.AppVersion -}}
+{{- printf "%s:%s" .Values.govArCalibrationProducer.image.repository $tag -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "operator.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
@@ -34,7 +51,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{- define "operator.govArAdmissionServiceAccountName" -}}
+{{- if .Values.govArAdmission.serviceAccount.create -}}
+{{- default (printf "%s-gov-ar-admission" (include "operator.fullname" .)) .Values.govArAdmission.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- required "govArAdmission.serviceAccount.name is required when serviceAccount.create=false" .Values.govArAdmission.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "operator.image" -}}
 {{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
 {{- printf "%s:%s" .Values.image.repository $tag -}}
+{{- end -}}
+
+{{- define "operator.govArAdmissionImage" -}}
+{{- if .Values.govArAdmission.image.digest -}}
+{{- printf "%s@%s" .Values.govArAdmission.image.repository .Values.govArAdmission.image.digest -}}
+{{- else -}}
+{{- $tag := .Values.govArAdmission.image.tag | default .Chart.AppVersion -}}
+{{- printf "%s:%s" .Values.govArAdmission.image.repository $tag -}}
+{{- end -}}
 {{- end -}}

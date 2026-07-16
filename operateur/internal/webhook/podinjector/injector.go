@@ -5,24 +5,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"net/url"
 	"strings"
 	"sync"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"github.com/imperium/ai-sovereign-finops-operator/internal/webhook/changeapproval"
 )
 
 const (
-	InjectKey            = "aiops.imperium.io/sidecar-injection"
-	ApplicationKey       = "aiops.imperium.io/application"
-	TargetHostsKey       = "aiops.imperium.io/target-hosts"
-	InjectedProxyKey     = "aiops.imperium.io/sidecar-injected"
-	SidecarContainerName = "greenops-header-proxy"
-	ProxyURL             = "http://127.0.0.1:15088"
+	InjectKey                     = "aiops.imperium.io/sidecar-injection"
+	ApplicationKey                = "aiops.imperium.io/application"
+	TargetHostsKey                = "aiops.imperium.io/target-hosts"
+	InjectedProxyKey              = "aiops.imperium.io/sidecar-injected"
+	GOVAREnabledKey               = "aiops.imperium.io/govar-enabled"
+	GOVAREndpointKey              = "aiops.imperium.io/govar-endpoint"
+	GOVARTenantKey                = "aiops.imperium.io/govar-tenant"
+	GOVARBudgetPolicyKey          = "aiops.imperium.io/govar-budget-policy"
+	GOVARRoutingKey               = "aiops.imperium.io/govar-routing-policy"
+	GOVARZonesKey                 = "aiops.imperium.io/govar-allowed-zones"
+	GOVARSensitiveKey             = "aiops.imperium.io/govar-sensitive-data"
+	GOVAREgressRestrictedLabel    = "aiops.imperium.io/govar-egress-restricted"
+	GOVARNativeGatewayRequiredKey = "aiops.imperium.io/govar-native-gateway-required"
+	SidecarContainerName          = "greenops-header-proxy"
+	ProxyURL                      = "http://127.0.0.1:15088"
+	GOVARTokenVolumeName          = "govar-bound-token"
+	GOVARTokenMountPath           = "/var/run/secrets/govar"
+	GOVARTokenAudience            = "gov-ar-admission"
 )
 
 // ImageResolver resolves the image used for the injected sidecar.
@@ -87,6 +103,7 @@ type Handler struct {
 	client        client.Reader
 	decoder       *admission.Decoder
 	imageResolver ImageResolver
+	approvals     *changeapproval.MutationHandler
 }
 
 // New returns a mutating Pod webhook handler.
@@ -95,11 +112,15 @@ func New(c client.Reader, scheme *runtime.Scheme, resolver ImageResolver) *Handl
 		client:        c,
 		decoder:       admission.NewDecoder(scheme),
 		imageResolver: resolver,
+		approvals:     changeapproval.NewMutation(scheme),
 	}
 }
 
 // Handle mutates Pods that opt into sidecar injection.
 func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.Response {
+	if changeapproval.Matches(req) {
+		return h.approvals.Handle(ctx, req)
+	}
 	var pod corev1.Pod
 	if err := h.decoder.Decode(req, &pod); err != nil {
 		return admission.Errored(400, err)
@@ -120,6 +141,10 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 	}
 
 	enabled, err := h.shouldInject(ctx, namespace, &pod)
+	if err != nil {
+		return admission.Errored(500, err)
+	}
+	govarRequired, err := h.namespaceRequiresGOVAR(ctx, namespace)
 	if err != nil {
 		return admission.Errored(500, err)
 	}
@@ -148,7 +173,19 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 		applySimulatedRuntimeMetric(namespace, confidentialMutation.policy.Name, confidentialMutation.appliedRuntime, confidentialMutation.simulated)
 	}
 
-	if enabled {
+	if govarRequired {
+		if mutated.Labels == nil {
+			mutated.Labels = map[string]string{}
+		}
+		if mutated.Annotations == nil {
+			mutated.Annotations = map[string]string{}
+		}
+		mutated.Labels[GOVAREgressRestrictedLabel] = "true"
+		mutated.Annotations[GOVARNativeGatewayRequiredKey] = "true"
+		changed = true
+	}
+
+	if enabled && !govarRequired {
 		if !hasContainer(mutated, SidecarContainerName) {
 			if h.imageResolver == nil {
 				return admission.Errored(500, fmt.Errorf("no sidecar image resolver configured"))
@@ -159,7 +196,18 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 			}
 			app := resolveApplication(mutated)
 			targetHosts := parseCSV(mutated.Annotations[TargetHostsKey])
-			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts))
+			govarCfg := resolveGOVARConfig(mutated)
+			if err := validateGOVARConfig(govarCfg); err != nil {
+				return admission.Denied(err.Error())
+			}
+			if govarCfg.Enabled {
+				ensureGOVARTokenVolume(mutated)
+				if mutated.Labels == nil {
+					mutated.Labels = map[string]string{}
+				}
+				mutated.Labels[GOVAREgressRestrictedLabel] = "true"
+			}
+			mutated.Spec.Containers = append(mutated.Spec.Containers, sidecarContainer(image, app, targetHosts, govarCfg))
 			for i := range mutated.Spec.Containers {
 				if mutated.Spec.Containers[i].Name == SidecarContainerName {
 					continue
@@ -187,7 +235,10 @@ func (h *Handler) Handle(ctx context.Context, req admission.Request) admission.R
 
 func (h *Handler) shouldInject(ctx context.Context, namespace string, pod *corev1.Pod) (bool, error) {
 	if v, ok := pod.Annotations[InjectKey]; ok {
-		return isEnabled(v), nil
+		if isEnabled(v) {
+			return true, nil
+		}
+		// An explicit Pod opt-out cannot override namespace-required injection.
 	}
 	if h.client == nil || namespace == "" {
 		return false, nil
@@ -196,10 +247,34 @@ func (h *Handler) shouldInject(ctx context.Context, namespace string, pod *corev
 	if err := h.client.Get(ctx, types.NamespacedName{Name: namespace}, &ns); err != nil {
 		return false, fmt.Errorf("read namespace %q for sidecar injection: %w", namespace, err)
 	}
-	return isEnabled(ns.Labels[InjectKey]), nil
+	return isEnabled(ns.Labels[InjectKey]) || isEnabled(ns.Labels[GOVAREnabledKey]) || isEnabled(ns.Annotations[GOVAREnabledKey]), nil
 }
 
-func sidecarContainer(image, app string, targetHosts []string) corev1.Container {
+func (h *Handler) namespaceRequiresGOVAR(ctx context.Context, namespace string) (bool, error) {
+	if h.client == nil || namespace == "" {
+		return false, nil
+	}
+	var ns corev1.Namespace
+	if err := h.client.Get(ctx, types.NamespacedName{Name: namespace}, &ns); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("read namespace %q for GOV-AR enforcement: %w", namespace, err)
+	}
+	return isEnabled(ns.Labels[GOVAREnabledKey]) || isEnabled(ns.Annotations[GOVAREnabledKey]), nil
+}
+
+type govarConfig struct {
+	Enabled          bool
+	Endpoint         string
+	TenantID         string
+	BudgetPolicyName string
+	RoutingPolicy    string
+	AllowedZones     []string
+	SensitiveData    bool
+}
+
+func sidecarContainer(image, app string, targetHosts []string, govarCfg govarConfig) corev1.Container {
 	env := []corev1.EnvVar{
 		{
 			Name: "GREENOPS_NAMESPACE",
@@ -212,7 +287,32 @@ func sidecarContainer(image, app string, targetHosts []string) corev1.Container 
 	if len(targetHosts) > 0 {
 		env = append(env, corev1.EnvVar{Name: "GREENOPS_TARGET_HOSTS", Value: strings.Join(targetHosts, ",")})
 	}
-	return corev1.Container{
+	if govarCfg.Enabled {
+		env = append(env, corev1.EnvVar{Name: "GOVAR_ENABLED", Value: "true"})
+		env = append(env, corev1.EnvVar{Name: "GOVAR_WORKLOAD_UID", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.uid"},
+		}})
+		env = append(env, corev1.EnvVar{Name: "GOVAR_TOKEN_FILE", Value: GOVARTokenMountPath + "/token"})
+		if govarCfg.Endpoint != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_ENDPOINT", Value: govarCfg.Endpoint})
+		}
+		if govarCfg.TenantID != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_TENANT_ID", Value: govarCfg.TenantID})
+		}
+		if govarCfg.BudgetPolicyName != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_BUDGET_POLICY", Value: govarCfg.BudgetPolicyName})
+		}
+		if govarCfg.RoutingPolicy != "" {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_ROUTING_POLICY", Value: govarCfg.RoutingPolicy})
+		}
+		if len(govarCfg.AllowedZones) > 0 {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_ALLOWED_ZONES", Value: strings.Join(govarCfg.AllowedZones, ",")})
+		}
+		if govarCfg.SensitiveData {
+			env = append(env, corev1.EnvVar{Name: "GOVAR_SENSITIVE_DATA", Value: "true"})
+		}
+	}
+	container := corev1.Container{
 		Name:            SidecarContainerName,
 		Image:           image,
 		ImagePullPolicy: corev1.PullIfNotPresent,
@@ -232,11 +332,61 @@ func sidecarContainer(image, app string, targetHosts []string) corev1.Container 
 			Limits:   corev1.ResourceList{},
 		},
 	}
+	if govarCfg.Enabled {
+		container.VolumeMounts = []corev1.VolumeMount{{Name: GOVARTokenVolumeName, MountPath: GOVARTokenMountPath, ReadOnly: true}}
+	}
+	return container
+}
+
+func validateGOVARConfig(cfg govarConfig) error {
+	if !cfg.Enabled {
+		return nil
+	}
+	missing := make([]string, 0, 5)
+	if cfg.Endpoint == "" {
+		missing = append(missing, GOVAREndpointKey)
+	}
+	if cfg.TenantID == "" {
+		missing = append(missing, GOVARTenantKey)
+	}
+	if cfg.BudgetPolicyName == "" {
+		missing = append(missing, GOVARBudgetPolicyKey)
+	}
+	if cfg.RoutingPolicy == "" {
+		missing = append(missing, GOVARRoutingKey)
+	}
+	if len(missing) != 0 {
+		return fmt.Errorf("GOV-AR enabled but required trusted configuration is incomplete: %s", strings.Join(missing, ","))
+	}
+	endpoint, err := url.Parse(cfg.Endpoint)
+	if err != nil || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") {
+		return fmt.Errorf("%s must be a trusted in-cluster HTTP(S) service URL", GOVAREndpointKey)
+	}
+	host := strings.ToLower(endpoint.Hostname())
+	if !strings.HasSuffix(host, ".svc") && !strings.HasSuffix(host, ".svc.cluster.local") {
+		return fmt.Errorf("%s must target an in-cluster Kubernetes Service", GOVAREndpointKey)
+	}
+	return nil
+}
+
+func ensureGOVARTokenVolume(pod *corev1.Pod) {
+	for _, volume := range pod.Spec.Volumes {
+		if volume.Name == GOVARTokenVolumeName {
+			return
+		}
+	}
+	expiration := int64(3600)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: GOVARTokenVolumeName, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: []corev1.VolumeProjection{{ServiceAccountToken: &corev1.ServiceAccountTokenProjection{Audience: GOVARTokenAudience, ExpirationSeconds: &expiration, Path: "token"}}}}}})
 }
 
 func injectProxyEnv(envs *[]corev1.EnvVar) {
 	upsertEnv(envs, corev1.EnvVar{Name: "HTTP_PROXY", Value: ProxyURL})
 	upsertEnv(envs, corev1.EnvVar{Name: "http_proxy", Value: ProxyURL})
+	// CONNECT cannot expose an encrypted LLM request for synchronous admission;
+	// the proxy fails governed CONNECT closed and HTTPS services must use the
+	// native gateway integration.
+	upsertEnv(envs, corev1.EnvVar{Name: "HTTPS_PROXY", Value: ProxyURL})
+	upsertEnv(envs, corev1.EnvVar{Name: "https_proxy", Value: ProxyURL})
 }
 
 func upsertEnv(envs *[]corev1.EnvVar, env corev1.EnvVar) {
@@ -284,6 +434,33 @@ func parseCSV(v string) []string {
 		}
 	}
 	return out
+}
+
+func resolveGOVARConfig(pod *corev1.Pod) govarConfig {
+	if pod == nil || pod.Annotations == nil {
+		return govarConfig{}
+	}
+
+	cfg := govarConfig{
+		Enabled:          isEnabled(pod.Annotations[GOVAREnabledKey]),
+		Endpoint:         strings.TrimSpace(pod.Annotations[GOVAREndpointKey]),
+		TenantID:         strings.TrimSpace(pod.Annotations[GOVARTenantKey]),
+		BudgetPolicyName: strings.TrimSpace(pod.Annotations[GOVARBudgetPolicyKey]),
+		RoutingPolicy:    strings.TrimSpace(pod.Annotations[GOVARRoutingKey]),
+		AllowedZones:     parseCSV(pod.Annotations[GOVARZonesKey]),
+		SensitiveData:    isEnabled(pod.Annotations[GOVARSensitiveKey]),
+	}
+	if !cfg.Enabled {
+		return govarConfig{}
+	}
+	if cfg.TenantID == "" {
+		if team := strings.TrimSpace(pod.Labels["aiops.imperium.io/team"]); team != "" {
+			cfg.TenantID = team
+		} else if app := strings.TrimSpace(resolveApplication(pod)); app != "" {
+			cfg.TenantID = app
+		}
+	}
+	return cfg
 }
 
 func hasContainer(pod *corev1.Pod, name string) bool {

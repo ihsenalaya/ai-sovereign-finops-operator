@@ -73,20 +73,6 @@ func (r *AIKeyReleasePolicyReconciler) resolveEvidenceState(ctx context.Context,
 	return evidence.Status.Verified, evidence.Status.Revoked, nil
 }
 
-func (r *AIKeyReleasePolicyReconciler) hasValidPlacement(ctx context.Context, policy *aiopsv1alpha1.AIKeyReleasePolicy) (bool, error) {
-	var decisions aiopsv1alpha1.AIPlacementDecisionList
-	if err := r.List(ctx, &decisions, client.InNamespace(policy.Namespace)); err != nil {
-		return false, err
-	}
-	for i := range decisions.Items {
-		decision := decisions.Items[i]
-		if decision.Status.Decision == "allow" && decision.Status.PlacementTokenDigest != "" {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 func (r *AIKeyReleasePolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&aiopsv1alpha1.AIKeyReleasePolicy{}).

@@ -21,6 +21,7 @@ import (
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/webhook/changeapproval"
 	platformcrypto "github.com/imperium/ai-sovereign-finops-operator/pkg/crypto"
 )
 
@@ -48,18 +49,23 @@ type confidentialMutation struct {
 }
 
 type ValidationHandler struct {
-	client  client.Reader
-	decoder *admission.Decoder
+	client    client.Reader
+	decoder   *admission.Decoder
+	approvals *changeapproval.ValidationHandler
 }
 
 func NewValidation(c client.Reader, scheme *runtime.Scheme) *ValidationHandler {
 	return &ValidationHandler{
-		client:  c,
-		decoder: admission.NewDecoder(scheme),
+		client:    c,
+		decoder:   admission.NewDecoder(scheme),
+		approvals: changeapproval.NewValidation(scheme),
 	}
 }
 
 func (h *ValidationHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
+	if changeapproval.Matches(req) {
+		return h.approvals.Handle(ctx, req)
+	}
 	var pod corev1.Pod
 	if err := h.decoder.Decode(req, &pod); err != nil {
 		return admission.Errored(400, err)

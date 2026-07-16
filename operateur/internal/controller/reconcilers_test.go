@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -32,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 	"github.com/imperium/ai-sovereign-finops-operator/pkg/attestation/maa"
 )
 
@@ -77,6 +80,8 @@ var _ = Describe("aiops reconcilers", func() {
 
 	Context("AIProvider", func() {
 		It("registers and becomes Ready", func() {
+			now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+			observed, validUntil := metav1.NewTime(now.Add(-time.Hour)), metav1.NewTime(now.Add(time.Hour))
 			provider := &aiopsv1alpha1.AIProvider{
 				ObjectMeta: metav1.ObjectMeta{Name: "prov-ready", Namespace: testNamespace},
 				Spec: aiopsv1alpha1.AIProviderSpec{
@@ -87,13 +92,17 @@ var _ = Describe("aiops reconcilers", func() {
 						Currency:                   "EUR",
 						InputTokenPricePerMillion:  resource.MustParse("2.5"),
 						OutputTokenPricePerMillion: resource.MustParse("10"),
+						Version:                    "catalog-v1",
+						ObservedAt:                 &observed,
+						Completeness:               aiopsv1alpha1.ProviderPricingComplete,
 					},
+					GOVAR: &aiopsv1alpha1.AIProviderGOVARSpec{Pricing: &aiopsv1alpha1.AIProviderGOVARPricingSpec{Evidence: aiopsv1alpha1.AIProviderPricingEvidenceSpec{Mode: aiopsv1alpha1.ProviderEvidenceAdminAttested, SourceVersion: "catalog-v1", EvidenceSHA256: strings.Repeat("a", 64), ValidUntil: validUntil, AdapterVersion: govarpricing.CurrentAdapterVersion}, InapplicableBases: []aiopsv1alpha1.ProviderBillableBasis{aiopsv1alpha1.ProviderBasisCachedInputTokens, aiopsv1alpha1.ProviderBasisReasoningTokens, aiopsv1alpha1.ProviderBasisRequest, aiopsv1alpha1.ProviderBasisToolCall, aiopsv1alpha1.ProviderBasisMediaUnit, aiopsv1alpha1.ProviderBasisBillableSecond, aiopsv1alpha1.ProviderBasisCancellation, aiopsv1alpha1.ProviderBasisRetryAttempt}}},
 				},
 			}
 			Expect(k8sClient.Create(ctx, provider)).To(Succeed())
 			DeferCleanup(func() { _ = k8sClient.Delete(ctx, provider) })
 
-			r := &AIProviderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
+			r := &AIProviderReconciler{Client: k8sClient, Scheme: k8sClient.Scheme(), Now: func() time.Time { return now }}
 			_, err := r.Reconcile(ctx, reqFor("prov-ready"))
 			Expect(err).NotTo(HaveOccurred())
 

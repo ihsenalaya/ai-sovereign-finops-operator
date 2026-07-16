@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -49,6 +50,7 @@ type AIChangeRequestReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	Now      func() time.Time
 }
 
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aichangerequests,verbs=get;list;watch;create;update;patch;delete
@@ -66,13 +68,16 @@ func (r *AIChangeRequestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	crq.Status.ObservedGeneration = crq.Generation
 
-	// Compute/ensure expiry time.
-	if crq.Status.ExpiresAt == nil {
-		dur, err := time.ParseDuration(crq.Spec.ExpiresAfter)
-		if err != nil || dur <= 0 {
-			dur = defaultExpiresAfter
-		}
-		t := metav1.NewTime(crq.CreationTimestamp.Add(dur))
+	// Compute/ensure expiry time. Policy-level route approval has an absolute
+	// reviewer-selected expiry; legacy reroutes retain their relative TTL.
+	expiresAt := crq.CreationTimestamp.Add(defaultExpiresAfter)
+	if crq.Spec.Action == aiopsv1alpha1.AIChangeRequestActionAuthorizeGOVARRoute && crq.Spec.GOVARRouteApproval != nil {
+		expiresAt = crq.Spec.GOVARRouteApproval.ValidUntil.Time
+	} else if dur, err := time.ParseDuration(crq.Spec.ExpiresAfter); err == nil && dur > 0 {
+		expiresAt = crq.CreationTimestamp.Add(dur)
+	}
+	if crq.Status.ExpiresAt == nil || !crq.Status.ExpiresAt.Equal(&metav1.Time{Time: expiresAt}) {
+		t := metav1.NewTime(expiresAt)
 		crq.Status.ExpiresAt = &t
 		if err := r.Status().Update(ctx, &crq); err != nil {
 			return ctrl.Result{}, err
@@ -87,11 +92,15 @@ func (r *AIChangeRequestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, nil
 	}
 
-	// Check expiry before looking at approval.
-	if time.Now().After(crq.Status.ExpiresAt.Time) &&
-		crq.Spec.Approval == aiopsv1alpha1.AIChangeRequestApprovalPending {
+	// Check expiry before looking at approval. Reusable route approvals also
+	// become visibly unusable at their absolute ValidUntil boundary.
+	if !r.now().Before(crq.Status.ExpiresAt.Time) {
 		r.setPhase(&crq, aiopsv1alpha1.AIChangeRequestPhaseExpired,
-			fmt.Sprintf("change request expired at %s without approval", crq.Status.ExpiresAt.Format(time.RFC3339)))
+			fmt.Sprintf("change request authorization expired at %s", crq.Status.ExpiresAt.Format(time.RFC3339)))
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
 		if r.Recorder != nil {
 			r.Recorder.Eventf(&crq, corev1.EventTypeWarning, "ChangeRequestExpired",
 				"Change request %s/%s expired without approval", crq.Namespace, crq.Name)
@@ -101,8 +110,22 @@ func (r *AIChangeRequestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	switch crq.Spec.Approval {
 	case aiopsv1alpha1.AIChangeRequestApprovalRejected:
+		if crq.Spec.Action == aiopsv1alpha1.AIChangeRequestActionAuthorizeGOVARRoute {
+			if err := crq.ValidateGOVARDecision(r.now()); err != nil {
+				r.setPhase(&crq, aiopsv1alpha1.AIChangeRequestPhaseFailed, "GOV-AR authenticated rejection decision is invalid: "+err.Error())
+				crq.Status.ApprovedAt = nil
+				crq.Status.ApprovedScopeDigest = ""
+				crq.Status.ApprovedDecisionDigest = ""
+				crq.Status.ApprovedBy = ""
+				return ctrl.Result{}, r.Status().Update(ctx, &crq)
+			}
+		}
 		r.setPhase(&crq, aiopsv1alpha1.AIChangeRequestPhaseRejected,
 			"change request rejected by reviewer")
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
 		if r.Recorder != nil {
 			r.Recorder.Eventf(&crq, corev1.EventTypeNormal, "ChangeRequestRejected",
 				"Change %s → %s rejected", crq.Spec.SourceModel, crq.Spec.TargetModel)
@@ -110,18 +133,124 @@ func (r *AIChangeRequestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, r.Status().Update(ctx, &crq)
 
 	case aiopsv1alpha1.AIChangeRequestApprovalApproved:
+		if crq.Spec.Action == aiopsv1alpha1.AIChangeRequestActionAuthorizeGOVARRoute {
+			return r.approveGOVARRoute(ctx, &crq)
+		}
 		return r.actuate(ctx, &crq)
 
 	default:
 		// Still pending — update phase and requeue until expiry.
 		r.setPhase(&crq, aiopsv1alpha1.AIChangeRequestPhasePending,
 			fmt.Sprintf("waiting for approval; expires at %s", crq.Status.ExpiresAt.Format(time.RFC3339)))
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
 		if err := r.Status().Update(ctx, &crq); err != nil {
 			return ctrl.Result{}, err
 		}
 		logger.V(1).Info("AIChangeRequest pending approval", "name", crq.Name)
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
+}
+
+func (r *AIChangeRequestReconciler) now() time.Time {
+	if r.Now != nil {
+		return r.Now().UTC()
+	}
+	return time.Now().UTC()
+}
+
+var sha256Lower = regexp.MustCompile(`^[a-f0-9]{64}$`)
+
+// approveGOVARRoute verifies the bounded policy/model/provider identities and
+// writes controller-owned approval evidence. It deliberately performs no route
+// actuation and creates no request-level object.
+func (r *AIChangeRequestReconciler) approveGOVARRoute(ctx context.Context, crq *aiopsv1alpha1.AIChangeRequest) (ctrl.Result, error) {
+	scope := crq.Spec.GOVARRouteApproval
+	if scope == nil || !sha256Lower.MatchString(scope.RouteSnapshotDigest) || !sha256Lower.MatchString(scope.ScopeDigest) || scope.ScopeDigest != scope.ComputeDigest() {
+		r.setPhase(crq, aiopsv1alpha1.AIChangeRequestPhaseFailed, "GOV-AR route approval scope or digest is invalid")
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
+		return ctrl.Result{}, r.Status().Update(ctx, crq)
+	}
+	if err := crq.ValidateGOVARDecision(r.now()); err != nil {
+		r.setPhase(crq, aiopsv1alpha1.AIChangeRequestPhaseFailed, "GOV-AR authenticated approval decision is invalid: "+err.Error())
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
+		return ctrl.Result{}, r.Status().Update(ctx, crq)
+	}
+	if !r.now().Before(scope.ValidUntil.Time) {
+		r.setPhase(crq, aiopsv1alpha1.AIChangeRequestPhaseExpired, "GOV-AR route approval scope has expired")
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
+		return ctrl.Result{}, r.Status().Update(ctx, crq)
+	}
+	if err := r.validateGOVARRouteReferences(ctx, crq.Namespace, scope); err != nil {
+		r.setPhase(crq, aiopsv1alpha1.AIChangeRequestPhaseFailed, err.Error())
+		crq.Status.ApprovedAt = nil
+		crq.Status.ApprovedScopeDigest = ""
+		crq.Status.ApprovedDecisionDigest = ""
+		crq.Status.ApprovedBy = ""
+		return ctrl.Result{}, r.Status().Update(ctx, crq)
+	}
+	approvedAt := metav1.NewTime(r.now())
+	decision := crq.Spec.GOVARDecision
+	if crq.Status.Phase == aiopsv1alpha1.AIChangeRequestPhaseApproved && crq.Status.ApprovedAt != nil && crq.Status.ObservedGeneration == crq.Generation &&
+		crq.Status.ApprovedScopeDigest == scope.ScopeDigest && crq.Status.ApprovedDecisionDigest == decision.DecisionDigest && crq.Status.ApprovedBy == decision.ReviewerIdentity {
+		approvedAt = *crq.Status.ApprovedAt
+	}
+	crq.Status.ApprovedAt = &approvedAt
+	crq.Status.ApprovedScopeDigest = scope.ScopeDigest
+	crq.Status.ApprovedDecisionDigest = decision.DecisionDigest
+	crq.Status.ApprovedBy = decision.ReviewerIdentity
+	r.setPhase(crq, aiopsv1alpha1.AIChangeRequestPhaseApproved, "bounded GOV-AR route scope approved; admission revalidates every request without consuming this object")
+	if r.Recorder != nil {
+		r.Recorder.Eventf(crq, corev1.EventTypeNormal, "GOVARRouteApproved", "Approved policy %s model %s provider %s route snapshot %s until %s",
+			scope.RoutingPolicy.Name, scope.Model.Name, scope.Provider.Name, scope.RouteSnapshotDigest, scope.ValidUntil.Format(time.RFC3339))
+	}
+	remaining := scope.ValidUntil.Sub(r.now())
+	if remaining > 30*time.Second {
+		remaining = 30 * time.Second
+	}
+	return ctrl.Result{RequeueAfter: remaining}, r.Status().Update(ctx, crq)
+}
+
+func (r *AIChangeRequestReconciler) validateGOVARRouteReferences(ctx context.Context, namespace string, scope *aiopsv1alpha1.GOVARRouteApprovalScope) error {
+	validRef := func(ref aiopsv1alpha1.AIWorkloadBindingResolvedReference) bool {
+		return ref.Name != "" && ref.UID != "" && ref.Generation > 0
+	}
+	if !validRef(scope.RoutingPolicy) || !validRef(scope.Model) || !validRef(scope.Provider) {
+		return fmt.Errorf("GOV-AR route approval contains an empty or invalid object reference")
+	}
+	var routing aiopsv1alpha1.AIRoutingPolicy
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: scope.RoutingPolicy.Name}, &routing); err != nil {
+		return fmt.Errorf("resolve approved routing policy: %w", err)
+	}
+	if routing.UID != scope.RoutingPolicy.UID || routing.Generation != scope.RoutingPolicy.Generation {
+		return fmt.Errorf("approved routing policy UID/generation is stale")
+	}
+	var model aiopsv1alpha1.AIModel
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: scope.Model.Name}, &model); err != nil {
+		return fmt.Errorf("resolve approved model: %w", err)
+	}
+	if model.UID != scope.Model.UID || model.Generation != scope.Model.Generation {
+		return fmt.Errorf("approved model UID/generation is stale")
+	}
+	var provider aiopsv1alpha1.AIProvider
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: scope.Provider.Name}, &provider); err != nil {
+		return fmt.Errorf("resolve approved provider: %w", err)
+	}
+	if provider.UID != scope.Provider.UID || provider.Generation != scope.Provider.Generation || model.Spec.ProviderRef != provider.Name {
+		return fmt.Errorf("approved provider UID/generation or model ownership is stale")
+	}
+	return nil
 }
 
 func (r *AIChangeRequestReconciler) actuate(ctx context.Context, crq *aiopsv1alpha1.AIChangeRequest) (ctrl.Result, error) {

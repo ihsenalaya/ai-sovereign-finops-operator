@@ -82,7 +82,7 @@ func (r *AttestationEvidenceReconciler) isEvidenceRevoked(ctx context.Context, e
 		if policy.Spec.EvidenceRef == nil || policy.Spec.EvidenceRef.Name != evidence.Name {
 			continue
 		}
-		if policy.Status.ExpiresAt != nil && policy.Status.ExpiresAt.Time.Before(now) {
+		if policy.Status.ExpiresAt != nil && policy.Status.ExpiresAt.Before(&metav1.Time{Time: now}) {
 			continue
 		}
 		return true, nil

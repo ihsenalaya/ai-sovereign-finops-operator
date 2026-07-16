@@ -127,6 +127,31 @@ func Ensure(ctx context.Context, opts Options) error {
 					Resources:   []string{"pods"},
 				},
 			}},
+		}, {
+			Name:                    "govar-change-approval-stamping.aiops.imperium.io",
+			AdmissionReviewVersions: []string{"v1"},
+			SideEffects:             &sideEffects,
+			FailurePolicy:           ptrFailurePolicy(admissionregv1.Fail),
+			TimeoutSeconds:          &timeout,
+			MatchPolicy:             &matchPolicy,
+			ReinvocationPolicy:      &reinvocation,
+			ClientConfig: admissionregv1.WebhookClientConfig{
+				CABundle: caPEM,
+				Service: &admissionregv1.ServiceReference{
+					Name:      opts.ServiceName,
+					Namespace: opts.ServiceNamespace,
+					Path:      &path,
+					Port:      &port,
+				},
+			},
+			Rules: []admissionregv1.RuleWithOperations{{
+				Operations: []admissionregv1.OperationType{admissionregv1.Create, admissionregv1.Update},
+				Rule: admissionregv1.Rule{
+					APIGroups:   []string{"aiops.imperium.io"},
+					APIVersions: []string{"v1alpha1"},
+					Resources:   []string{"aichangerequests"},
+				},
+			}},
 		}}
 		return nil
 	})
@@ -196,6 +221,30 @@ func EnsureValidation(ctx context.Context, opts Options) error {
 					Resources:   []string{"pods"},
 				},
 			}},
+		}, {
+			Name:                    "govar-change-approval-validation.aiops.imperium.io",
+			AdmissionReviewVersions: []string{"v1"},
+			SideEffects:             &sideEffects,
+			FailurePolicy:           ptrFailurePolicy(admissionregv1.Fail),
+			TimeoutSeconds:          &timeout,
+			MatchPolicy:             &matchPolicy,
+			ClientConfig: admissionregv1.WebhookClientConfig{
+				CABundle: caPEM,
+				Service: &admissionregv1.ServiceReference{
+					Name:      opts.ServiceName,
+					Namespace: opts.ServiceNamespace,
+					Path:      &path,
+					Port:      &port,
+				},
+			},
+			Rules: []admissionregv1.RuleWithOperations{{
+				Operations: []admissionregv1.OperationType{admissionregv1.Create, admissionregv1.Update},
+				Rule: admissionregv1.Rule{
+					APIGroups:   []string{"aiops.imperium.io"},
+					APIVersions: []string{"v1alpha1"},
+					Resources:   []string{"aichangerequests"},
+				},
+			}},
 		}}
 		return nil
 	})
@@ -203,6 +252,10 @@ func EnsureValidation(ctx context.Context, opts Options) error {
 		return fmt.Errorf("upsert validating webhook configuration: %w", err)
 	}
 	return nil
+}
+
+func ptrFailurePolicy(value admissionregv1.FailurePolicyType) *admissionregv1.FailurePolicyType {
+	return &value
 }
 
 func generateServingBundle(serviceName, namespace string) (caPEM, certPEM, keyPEM []byte, err error) {

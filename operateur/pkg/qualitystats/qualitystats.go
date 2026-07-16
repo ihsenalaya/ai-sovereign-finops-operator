@@ -110,7 +110,7 @@ func RequiredSampleSize(cfg NonInferiorityConfig) int {
 	p := clamp01(cfg.BaselineSuccessRate)
 	zAlpha := zForConfidence(cfg.ConfidenceLevel)
 	zBeta := zForPower(cfg.Power)
-	n := 2 * math.Pow(zAlpha+zBeta, 2) * p * (1 - p) / math.Pow(cfg.Delta, 2)
+	n := 2 * (zAlpha + zBeta) * (zAlpha + zBeta) * p * (1 - p) / (cfg.Delta * cfg.Delta)
 	return int(math.Ceil(n))
 }
 

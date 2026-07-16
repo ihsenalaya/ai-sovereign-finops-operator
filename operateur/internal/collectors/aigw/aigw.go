@@ -25,12 +25,6 @@ limitations under the License.
 // model, so the collector attributes each model's usage to the workload that
 // consumes it via the AIModel catalog (providerRef + serves{Namespace,
 // Application,Team}).
-//
-// Request-count semantics: Requests counts SUCCESSFUL, billed calls (the ones the
-// token metric is emitted for). Duration series carrying an error_type label
-// (e.g. upstream 429 throttling, which return no tokens) are accumulated into
-// Errors and never inflate Requests or the latency mean. Cost therefore reflects
-// only successful token usage, while the success/error split stays auditable.
 package aigw
 
 import (
@@ -193,7 +187,7 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 			if h == nil || h.GetSampleCount() == 0 {
 				continue
 			}
-			var model, provider, hdrNS, hdrApp, errorType string
+			var model, provider, hdrNS, hdrApp string
 			for _, l := range m.GetLabel() {
 				switch l.GetName() {
 				case "gen_ai_request_model":
@@ -204,11 +198,6 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 					hdrNS = l.GetValue()
 				case "k8s_app":
 					hdrApp = l.GetValue()
-				case "error_type":
-					// Envoy AI Gateway sets error_type (e.g. "_OTHER") on responses
-					// that did not complete successfully (upstream 4xx/5xx, including
-					// 429 throttling). These carry no billed tokens.
-					errorType = l.GetValue()
 				}
 			}
 			if model == "" {
@@ -231,15 +220,6 @@ func (c *Collector) Collect(ctx context.Context, _ time.Duration) ([]collectors.
 			}
 			s := getSample(ns, app, team, prov, model)
 			count := int64(h.GetSampleCount())
-			if errorType != "" {
-				// Error responses are counted separately and never inflate the
-				// successful-request count or the latency mean (which must reflect
-				// billed, successful calls). Cost/tokens come only from the token
-				// metric, which the gateway emits solely for successful responses.
-				s.Errors += count
-				continue
-			}
-			// Successful series: Requests is the count of successful, billed calls.
 			if count > s.Requests {
 				s.Requests = count
 			}

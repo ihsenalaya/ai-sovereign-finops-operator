@@ -1,5 +1,6 @@
 ## Append samples of your project ##
 resources:
+- aiops_v1alpha1_aiworkloadbinding.yaml
 - aiops_v1alpha1_aigateway.yaml
 - aiops_v1alpha1_aiprovider_cohere.yaml
 - aiops_v1alpha1_aiprovider_openai_us.yaml

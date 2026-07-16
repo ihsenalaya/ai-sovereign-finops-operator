@@ -21,9 +21,11 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -34,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	aiopsv1alpha1 "github.com/imperium/ai-sovereign-finops-operator/api/v1alpha1"
+	"github.com/imperium/ai-sovereign-finops-operator/internal/govarpricing"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/metrics"
 	"github.com/imperium/ai-sovereign-finops-operator/internal/sovereigntyengine"
 )
@@ -47,6 +50,7 @@ type AIModelReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	Now      func() time.Time
 }
 
 //+kubebuilder:rbac:groups=aiops.imperium.io,resources=aimodels,verbs=get;list;watch;create;update;patch;delete
@@ -93,8 +97,32 @@ func (r *AIModelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	model.Status.ResolvedProvider = provider.Spec.Type
-	meta.SetStatusCondition(&model.Status.Conditions,
-		readyTrue(model.Generation, "AIModel catalogued and provider resolved"))
+	model.Status.GOVAR = nil // stale cap evidence must never survive a failed refresh.
+	if model.Spec.GOVAR != nil && model.Spec.GOVAR.Routable {
+		capEvidence := model.Spec.GOVAR.OutputCapEvidence
+		binding, bindingErr := modelProviderRoute(provider, model.Spec.GOVAR.RouteBindingRef)
+		expectedCapParameter, adapterSupported := govarpricing.OutputCapRequestParameter(provider.Spec.Type, binding.PathMode)
+		if capEvidence == nil || bindingErr != nil || provider.Status.GOVAR == nil || provider.Status.GOVAR.PricingSnapshot == nil {
+			meta.SetStatusCondition(&model.Status.Conditions, readyFalse(model.Generation, "OutputCapEvidenceInvalid", "routable model lacks current provider-bound pricing/cap evidence"))
+		} else if !adapterSupported || capEvidence.CapabilityAdapterVersion != govarpricing.CurrentAdapterVersion || !capEvidence.EnforcedByPathAdapter || capEvidence.RequestParameter != expectedCapParameter || !capEvidence.ValidUntil.After(r.evaluationTime()) || capEvidence.Mode != aiopsv1alpha1.ProviderEvidenceAdminAttested || !govarpricing.ValidSHA256(capEvidence.EvidenceSHA256) {
+			meta.SetStatusCondition(&model.Status.Conditions, readyFalse(model.Generation, "OutputCapEvidenceInvalid", "output cap is stale, unbound, or not enforced by the selected path adapter"))
+		} else if provider.Status.ObservedGeneration != provider.Generation || provider.Status.GOVAR.PricingSnapshot.SpecGeneration != provider.Generation {
+			meta.SetStatusCondition(&model.Status.Conditions, readyFalse(model.Generation, "ProviderPricingStale", "provider pricing snapshot does not match current generation"))
+		} else {
+			observed := metav1.Now()
+			model.Status.GOVAR = &aiopsv1alpha1.AIModelGOVARStatus{VerifiedOutputCap: &aiopsv1alpha1.AIModelVerifiedOutputCapStatus{
+				Verified: true, MaxOutputTokens: capEvidence.MaxOutputTokens, ObservedAt: observed,
+				SourceVersion: capEvidence.SourceVersion, ProviderUID: string(provider.UID), ProviderGeneration: provider.Generation,
+				ProviderDeployment: binding.ProviderDeployment, ModelVersion: model.Spec.ModelName,
+				CapabilityAdapterVersion: capEvidence.CapabilityAdapterVersion, EvidenceMode: capEvidence.Mode,
+				EvidenceSHA256: capEvidence.EvidenceSHA256, PricingSnapshotSHA256: provider.Status.GOVAR.PricingSnapshot.SnapshotSHA256, ValidUntil: capEvidence.ValidUntil,
+				RequestParameter: capEvidence.RequestParameter, EnforcedByPathAdapter: capEvidence.EnforcedByPathAdapter,
+			}}
+			meta.SetStatusCondition(&model.Status.Conditions, readyTrue(model.Generation, "provider-bound output cap evidence is current"))
+		}
+	} else {
+		meta.SetStatusCondition(&model.Status.Conditions, readyTrue(model.Generation, "AIModel catalogued and provider resolved"))
+	}
 
 	if err := r.Status().Update(ctx, &model); err != nil {
 		return ctrl.Result{}, err
@@ -107,6 +135,26 @@ func (r *AIModelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.V(1).Info("reconciled AIModel", "model", model.Spec.ModelName, "provider", provider.Spec.Type)
 	return ctrl.Result{}, nil
+}
+
+func modelProviderRoute(provider aiopsv1alpha1.AIProvider, name string) (aiopsv1alpha1.AIProviderGatewayRouteBinding, error) {
+	if provider.Spec.GOVAR == nil || strings.TrimSpace(name) == "" {
+		return aiopsv1alpha1.AIProviderGatewayRouteBinding{}, fmt.Errorf("route binding is absent")
+	}
+	var found *aiopsv1alpha1.AIProviderGatewayRouteBinding
+	for i := range provider.Spec.GOVAR.GatewayRoutes {
+		if provider.Spec.GOVAR.GatewayRoutes[i].Name == name {
+			if found != nil {
+				return aiopsv1alpha1.AIProviderGatewayRouteBinding{}, fmt.Errorf("duplicate route binding")
+			}
+			candidate := provider.Spec.GOVAR.GatewayRoutes[i]
+			found = &candidate
+		}
+	}
+	if found == nil || strings.TrimSpace(found.ProviderDeployment) == "" {
+		return aiopsv1alpha1.AIProviderGatewayRouteBinding{}, fmt.Errorf("route binding is missing")
+	}
+	return *found, nil
 }
 
 // emitCatalogMetrics publishes sovereignty_score for the model.
@@ -144,6 +192,13 @@ func (r *AIModelReconciler) modelsForProvider(ctx context.Context, obj client.Ob
 		}
 	}
 	return reqs
+}
+
+func (r *AIModelReconciler) evaluationTime() time.Time {
+	if r.Now != nil {
+		return r.Now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -92,7 +92,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-	if testEnv == nil {
+	if testEnv == nil || cfg == nil {
 		return
 	}
 	err := testEnv.Stop()

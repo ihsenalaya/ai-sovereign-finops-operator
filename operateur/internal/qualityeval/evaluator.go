@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -72,9 +71,10 @@ type GoldenPrompt struct {
 type EvidenceSample struct {
 	ID                      string            `json:"id"`
 	Model                   string            `json:"model,omitempty"`
+	Reference               string            `json:"reference,omitempty"`
+	Actual                  string            `json:"actual,omitempty"`
 	ExpectedFields          map[string]string `json:"expectedFields,omitempty"`
 	ActualFields            map[string]string `json:"actualFields,omitempty"`
-	CorrectnessScore        *float64          `json:"correctnessScore,omitempty"`
 	SemanticScore           *float64          `json:"semanticScore,omitempty"`
 	SchemaValid             *bool             `json:"schemaValid,omitempty"`
 	UnexpectedRefusal       *bool             `json:"unexpectedRefusal,omitempty"`
@@ -183,29 +183,17 @@ func LoadPrompts(dir, file string) ([]GoldenPrompt, error) {
 }
 
 func callGateway(ctx context.Context, client *http.Client, opts Options, prompt GoldenPrompt, model string) (string, error) {
-	if opts.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
-		defer cancel()
-	}
 	var lastErr error
-	for attempt := 1; attempt <= 8; attempt++ {
-		content, retryAfter, retryable, err := callGatewayOnce(ctx, client, opts, prompt, model)
+	for attempt := 1; attempt <= 5; attempt++ {
+		content, err := callGatewayOnce(ctx, client, opts, prompt, model)
 		if err == nil {
 			return content, nil
 		}
 		lastErr = err
-		if !retryable || attempt == 8 {
+		if attempt == 5 {
 			break
 		}
-		wait := retryAfter
-		if wait <= 0 {
-			wait = time.Duration(attempt*5) * time.Second
-		}
-		if wait > 45*time.Second {
-			wait = 45 * time.Second
-		}
-		timer := time.NewTimer(wait)
+		timer := time.NewTimer(time.Duration(attempt*2) * time.Second)
 		select {
 		case <-ctx.Done():
 			timer.Stop()
@@ -216,7 +204,7 @@ func callGateway(ctx context.Context, client *http.Client, opts Options, prompt 
 	return "", lastErr
 }
 
-func callGatewayOnce(ctx context.Context, client *http.Client, opts Options, prompt GoldenPrompt, model string) (string, time.Duration, bool, error) {
+func callGatewayOnce(ctx context.Context, client *http.Client, opts Options, prompt GoldenPrompt, model string) (string, error) {
 	maxTokens := opts.MaxTokens
 	if prompt.Expected.MaxTokens > 0 {
 		maxTokens = int(prompt.Expected.MaxTokens)
@@ -232,11 +220,11 @@ func callGatewayOnce(ctx context.Context, client *http.Client, opts Options, pro
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return "", 0, false, fmt.Errorf("marshal request for prompt %q model %q: %w", prompt.ID, model, err)
+		return "", fmt.Errorf("marshal request for prompt %q model %q: %w", prompt.ID, model, err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, opts.Endpoint, bytes.NewReader(body))
 	if err != nil {
-		return "", 0, false, fmt.Errorf("build request for prompt %q model %q: %w", prompt.ID, model, err)
+		return "", fmt.Errorf("build request for prompt %q model %q: %w", prompt.ID, model, err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-ai-eg-model", model)
@@ -249,38 +237,19 @@ func callGatewayOnce(ctx context.Context, client *http.Client, opts Options, pro
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", 0, true, fmt.Errorf("gateway call failed for prompt %q model %q: %w", prompt.ID, model, err)
+		return "", fmt.Errorf("gateway call failed for prompt %q model %q: %w", prompt.ID, model, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		retryAfter := retryAfterDuration(resp.Header.Get("Retry-After"))
-		retryable := resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500
-		return "", retryAfter, retryable, fmt.Errorf("gateway call for prompt %q model %q returned HTTP %d: %s", prompt.ID, model, resp.StatusCode, strings.TrimSpace(string(raw)))
+		return "", fmt.Errorf("gateway call for prompt %q model %q returned HTTP %d: %s", prompt.ID, model, resp.StatusCode, strings.TrimSpace(string(raw)))
 	}
 
 	content, err := extractChatContent(raw)
 	if err != nil {
-		return "", 0, false, fmt.Errorf("parse gateway response for prompt %q model %q: %w", prompt.ID, model, err)
+		return "", fmt.Errorf("parse gateway response for prompt %q model %q: %w", prompt.ID, model, err)
 	}
-	return truncateForEvidence(content), 0, false, nil
-}
-
-func retryAfterDuration(raw string) time.Duration {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return 0
-	}
-	if seconds, err := strconv.Atoi(raw); err == nil && seconds > 0 {
-		return time.Duration(seconds) * time.Second
-	}
-	if when, err := http.ParseTime(raw); err == nil {
-		wait := time.Until(when)
-		if wait > 0 {
-			return wait
-		}
-	}
-	return 0
+	return truncateForEvidence(content), nil
 }
 
 func extractChatContent(raw []byte) (string, error) {
@@ -320,10 +289,7 @@ func evidenceFor(prompt GoldenPrompt, model, actual string) EvidenceSample {
 		}
 	}
 	var semanticScore *float64
-	var correctnessScore *float64
 	if strings.TrimSpace(reference) != "" {
-		correctness := qualityengine.ReferenceCorrectnessScore(reference, actual)
-		correctnessScore = &correctness
 		semantic := qualityengine.SemanticSimilarityScore(reference, actual)
 		if len(prompt.Expected.RequiredKeywords) > 0 {
 			semantic = 0.75*semantic + 0.25*keywordCoverageScore(actual, prompt.Expected.RequiredKeywords)
@@ -336,9 +302,10 @@ func evidenceFor(prompt GoldenPrompt, model, actual string) EvidenceSample {
 	return EvidenceSample{
 		ID:                      prompt.ID,
 		Model:                   model,
+		Reference:               reference,
+		Actual:                  actual,
 		ExpectedFields:          prompt.Expected.Fields,
 		ActualFields:            actualFields,
-		CorrectnessScore:        correctnessScore,
 		SemanticScore:           semanticScore,
 		SchemaValid:             &schemaValid,
 		UnexpectedRefusal:       &unexpectedRefusal,

@@ -1,0 +1,70 @@
+{{- if .Values.govArCalibrationProducer.enabled }}
+{{- if not (regexMatch "^sha256:[0-9a-f]{64}$" .Values.govArCalibrationProducer.image.digest) }}
+{{- fail "govArCalibrationProducer requires an immutable image.digest" }}
+{{- end }}
+{{- if not (regexMatch "^[0-9a-f]{64}$" .Values.govArCalibrationProducer.softwareSHA256) }}
+{{- fail "govArCalibrationProducer requires softwareSHA256 as a lowercase SHA-256 digest" }}
+{{- end }}
+{{- if not .Values.govArCalibrationProducer.postgres.existingSecret }}
+{{- fail "govArCalibrationProducer requires postgres.existingSecret" }}
+{{- end }}
+{{- if or (not .Values.govArCalibrationProducer.tenantID) (not .Values.govArCalibrationProducer.policyNamespace) (not .Values.govArCalibrationProducer.policyName) }}
+{{- fail "govArCalibrationProducer requires tenantID, policyNamespace, and policyName" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-calibration-producer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-calibration-producer
+spec:
+  replicas: {{ .Values.govArCalibrationProducer.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "operator.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: gov-ar-calibration-producer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "operator.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: gov-ar-calibration-producer
+    spec:
+      serviceAccountName: {{ include "operator.govArCalibrationProducerServiceAccountName" . }}
+      terminationGracePeriodSeconds: 30
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: gov-ar-calibration-producer
+          image: {{ include "operator.govArCalibrationProducerImage" . | quote }}
+          imagePullPolicy: {{ .Values.govArCalibrationProducer.image.pullPolicy }}
+          env:
+            - name: GOVAR_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.govArCalibrationProducer.postgres.existingSecret }}
+                  key: {{ .Values.govArCalibrationProducer.postgres.secretKey }}
+            - name: GOVAR_SOFTWARE_SHA256
+              value: {{ .Values.govArCalibrationProducer.softwareSHA256 | quote }}
+            - name: GOVAR_CALIBRATION_TENANT_ID
+              value: {{ .Values.govArCalibrationProducer.tenantID | quote }}
+            - name: GOVAR_CALIBRATION_POLICY_NAMESPACE
+              value: {{ .Values.govArCalibrationProducer.policyNamespace | quote }}
+            - name: GOVAR_CALIBRATION_POLICY_NAME
+              value: {{ .Values.govArCalibrationProducer.policyName | quote }}
+            - name: GOVAR_CALIBRATION_INTERVAL
+              value: {{ .Values.govArCalibrationProducer.interval | quote }}
+            - name: GOVAR_CALIBRATION_QUERY_LIMIT
+              value: {{ .Values.govArCalibrationProducer.queryLimit | quote }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.govArCalibrationProducer.resources | nindent 12 }}
+{{- end }}

@@ -44,11 +44,23 @@ func TestInjectsSidecarForAnnotatedPod(t *testing.T) {
 	if got := envValue(mutated.Spec.Containers[0].Env, "HTTP_PROXY"); got != ProxyURL {
 		t.Fatalf("HTTP_PROXY = %q, want %q", got, ProxyURL)
 	}
-	if got := envValue(findContainer(t, mutated, SidecarContainerName).Env, "GREENOPS_APPLICATION"); got != "risk-assistant" {
+	if got := envValue(mutated.Spec.Containers[0].Env, "HTTPS_PROXY"); got != ProxyURL {
+		t.Fatalf("HTTPS_PROXY = %q, want %q", got, ProxyURL)
+	}
+	if got := envValue(findSidecarContainer(t, mutated).Env, "GREENOPS_APPLICATION"); got != "risk-assistant" {
 		t.Fatalf("GREENOPS_APPLICATION = %q, want risk-assistant", got)
 	}
 	if mutated.Annotations[InjectedProxyKey] != "true" {
 		t.Fatalf("%s annotation missing", InjectedProxyKey)
+	}
+	sidecar := findSidecarContainer(t, mutated)
+	if len(sidecar.VolumeMounts) != 0 {
+		t.Fatalf("non-GOV-AR sidecar has dangling token mount: %+v", sidecar.VolumeMounts)
+	}
+	for _, volume := range mutated.Spec.Volumes {
+		if volume.Name == GOVARTokenVolumeName {
+			t.Fatal("non-GOV-AR Pod unexpectedly received projected GOV-AR token")
+		}
 	}
 }
 
@@ -73,9 +85,137 @@ func TestInjectsFromNamespaceLabel(t *testing.T) {
 	}
 
 	mutated := runMutation(t, h, original)
-	sidecar := findContainer(t, mutated, SidecarContainerName)
+	sidecar := findSidecarContainer(t, mutated)
 	if got := envValue(sidecar.Env, "GREENOPS_APPLICATION"); got != "contract-review" {
 		t.Fatalf("GREENOPS_APPLICATION = %q, want contract-review", got)
+	}
+}
+
+func TestNamespaceRequiredGOVARCannotBeOptedOutAndUsesNativeGateway(t *testing.T) {
+	scheme := newScheme(t)
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "measured", Labels: map[string]string{GOVAREnabledKey: "true"}}}
+	h := New(fakeClient(t, scheme, ns), scheme, StaticImageResolver("controller:test"))
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "worker", Namespace: "measured", Annotations: map[string]string{InjectKey: "false", GOVAREnabledKey: "false"}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "app", Image: "busybox"}}}}
+	mutated := runMutation(t, h, pod)
+	if hasContainer(mutated, SidecarContainerName) {
+		t.Fatal("namespace-governed Pod received legacy direct-provider sidecar")
+	}
+	if got := envValue(mutated.Spec.Containers[0].Env, "HTTP_PROXY"); got != "" {
+		t.Fatalf("namespace-governed Pod was forced through legacy proxy: %q", got)
+	}
+	if mutated.Labels[GOVAREgressRestrictedLabel] != "true" || mutated.Annotations[GOVARNativeGatewayRequiredKey] != "true" {
+		t.Fatalf("native gateway enforcement markers missing: labels=%v annotations=%v", mutated.Labels, mutated.Annotations)
+	}
+}
+
+func TestInjectsGOVAREnvWhenAnnotated(t *testing.T) {
+	scheme := newScheme(t)
+	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))
+
+	original := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "finance-agent",
+			Namespace: "finance",
+			Labels: map[string]string{
+				"app":                    "finance-agent",
+				"aiops.imperium.io/team": "team-finance",
+			},
+			Annotations: map[string]string{
+				InjectKey:            "true",
+				GOVAREnabledKey:      "true",
+				GOVAREndpointKey:     "http://gov-ar-admission.finance.svc.cluster.local:8084",
+				GOVARBudgetPolicyKey: "finance-budget",
+				GOVARRoutingKey:      "finance-routing",
+				GOVARZonesKey:        "francecentral,westeurope",
+				GOVARSensitiveKey:    "true",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "app", Image: "curlimages/curl:latest"}},
+		},
+	}
+
+	mutated := runMutation(t, h, original)
+	sidecar := findSidecarContainer(t, mutated)
+	if got := envValue(sidecar.Env, "GOVAR_ENDPOINT"); got != "http://gov-ar-admission.finance.svc.cluster.local:8084" {
+		t.Fatalf("GOVAR_ENDPOINT = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_ENABLED"); got != "true" {
+		t.Fatalf("GOVAR_ENABLED=%q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_TENANT_ID"); got != "team-finance" {
+		t.Fatalf("GOVAR_TENANT_ID = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_BUDGET_POLICY"); got != "finance-budget" {
+		t.Fatalf("GOVAR_BUDGET_POLICY = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_ROUTING_POLICY"); got != "finance-routing" {
+		t.Fatalf("GOVAR_ROUTING_POLICY = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_ALLOWED_ZONES"); got != "francecentral,westeurope" {
+		t.Fatalf("GOVAR_ALLOWED_ZONES = %q", got)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_SENSITIVE_DATA"); got != "true" {
+		t.Fatalf("GOVAR_SENSITIVE_DATA = %q", got)
+	}
+	workloadEnv := findEnv(t, sidecar.Env, "GOVAR_WORKLOAD_UID")
+	if workloadEnv.ValueFrom == nil || workloadEnv.ValueFrom.FieldRef == nil || workloadEnv.ValueFrom.FieldRef.FieldPath != "metadata.uid" {
+		t.Fatalf("GOVAR_WORKLOAD_UID is not bound to metadata.uid: %+v", workloadEnv)
+	}
+	if got := envValue(sidecar.Env, "GOVAR_TOKEN_FILE"); got != GOVARTokenMountPath+"/token" {
+		t.Fatalf("token file=%q", got)
+	}
+	foundTokenVolume := false
+	for _, volume := range mutated.Spec.Volumes {
+		if volume.Name == GOVARTokenVolumeName && volume.Projected != nil && volume.Projected.Sources[0].ServiceAccountToken.Audience == GOVARTokenAudience {
+			foundTokenVolume = true
+		}
+	}
+	if !foundTokenVolume {
+		t.Fatal("bound projected GOV-AR token volume missing")
+	}
+}
+
+func TestGOVARTenantFallsBackToApplication(t *testing.T) {
+	scheme := newScheme(t)
+	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))
+
+	original := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "support-bot",
+			Namespace: "support",
+			Labels:    map[string]string{"app": "support-bot"},
+			Annotations: map[string]string{
+				InjectKey:            "true",
+				GOVAREnabledKey:      "true",
+				GOVAREndpointKey:     "http://gov-ar-admission.support.svc.cluster.local:8084",
+				GOVARBudgetPolicyKey: "support-budget",
+				GOVARRoutingKey:      "support-routing",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "app", Image: "busybox"}},
+		},
+	}
+
+	mutated := runMutation(t, h, original)
+	sidecar := findSidecarContainer(t, mutated)
+	if got := envValue(sidecar.Env, "GOVAR_TENANT_ID"); got != "support-bot" {
+		t.Fatalf("GOVAR_TENANT_ID fallback = %q", got)
+	}
+}
+
+func TestRejectsIncompleteEnabledGOVARAnnotations(t *testing.T) {
+	scheme := newScheme(t)
+	h := New(fakeClient(t, scheme), scheme, StaticImageResolver("controller:test"))
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "unsafe", Namespace: "finance", Annotations: map[string]string{
+		InjectKey: "true", GOVAREnabledKey: "true", GOVAREndpointKey: "http://govar:8084",
+	}}, Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "app", Image: "busybox"}}}}
+	raw, _ := json.Marshal(pod)
+	resp := h.Handle(context.Background(), admission.Request{AdmissionRequest: admissionv1.AdmissionRequest{Operation: admissionv1.Create, Namespace: "finance", Resource: metav1.GroupVersionResource{Version: "v1", Resource: "pods"}, Object: runtime.RawExtension{Raw: raw}}})
+	if resp.Allowed || !strings.Contains(resp.Result.Message, "configuration is incomplete") {
+		t.Fatalf("response=%+v", resp)
 	}
 }
 
@@ -438,14 +578,14 @@ func newScheme(t *testing.T) *runtime.Scheme {
 	return scheme
 }
 
-func findContainer(t *testing.T, pod *corev1.Pod, name string) corev1.Container {
+func findSidecarContainer(t *testing.T, pod *corev1.Pod) corev1.Container {
 	t.Helper()
 	for _, c := range pod.Spec.Containers {
-		if c.Name == name {
+		if c.Name == SidecarContainerName {
 			return c
 		}
 	}
-	t.Fatalf("container %q not found", name)
+	t.Fatalf("container %q not found", SidecarContainerName)
 	return corev1.Container{}
 }
 
@@ -456,6 +596,17 @@ func envValue(envs []corev1.EnvVar, name string) string {
 		}
 	}
 	return ""
+}
+
+func findEnv(t *testing.T, envs []corev1.EnvVar, name string) corev1.EnvVar {
+	t.Helper()
+	for _, env := range envs {
+		if env.Name == name {
+			return env
+		}
+	}
+	t.Fatalf("env %q not found", name)
+	return corev1.EnvVar{}
 }
 
 func ptr[T any](v T) *T { return &v }

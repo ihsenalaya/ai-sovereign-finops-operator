@@ -2,8 +2,11 @@ apiVersion: v2
 name: ai-sovereign-finops-operator
 description: AI Sovereign FinOps Operator — FinOps & sovereignty control plane for enterprise AI (CNCF/OSS stack).
 type: application
-version: 0.5.17
-appVersion: "0.5.17"
+version: 0.5.12-article3.20260713
+appVersion: "0.5.12-article3.20260713"
+annotations:
+  aiops.imperium.io/article3-base-version: "0.5.11"
+  aiops.imperium.io/release-channel: "article3-experimental"
 keywords:
   - finops
   - ai

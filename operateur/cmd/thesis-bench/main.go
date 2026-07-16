@@ -131,10 +131,10 @@ func writeMarkdown(path string, result thesisbench.BenchResult) error {
 	var sb strings.Builder
 
 	sb.WriteString("# Thesis Bench Report\n\n")
-	sb.WriteString(fmt.Sprintf("**Timestamp:** %s  \n", result.Timestamp))
-	sb.WriteString(fmt.Sprintf("**Mode:** `%s`  \n", result.Mode))
-	sb.WriteString(fmt.Sprintf("**Baselines passed:** %d/%d  \n", result.Summary.BaselinesPassed, result.Summary.TotalBaselines))
-	sb.WriteString(fmt.Sprintf("**Attacks blocked:** %d/%d  \n\n", result.Summary.AttacksBlocked, result.Summary.TotalAttacks))
+	fmt.Fprintf(&sb, "**Timestamp:** %s  \n", result.Timestamp)
+	fmt.Fprintf(&sb, "**Mode:** `%s`  \n", result.Mode)
+	fmt.Fprintf(&sb, "**Baselines passed:** %d/%d  \n", result.Summary.BaselinesPassed, result.Summary.TotalBaselines)
+	fmt.Fprintf(&sb, "**Attacks blocked:** %d/%d  \n\n", result.Summary.AttacksBlocked, result.Summary.TotalAttacks)
 
 	if result.Mode == "simulated-kind" {
 		sb.WriteString("> **SIMULATED:** All TEE, GPU and Confidential Container results in this run are simulated.\n")
@@ -145,24 +145,24 @@ func writeMarkdown(path string, result thesisbench.BenchResult) error {
 	sb.WriteString("| ID | Name | Pass | Simulated | Detail |\n")
 	sb.WriteString("|---|---|---|---|---|\n")
 	for _, b := range result.Baselines {
-		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
-			b.ID, b.Name, passEmoji(b.Pass), boolStr(b.Simulated), b.Detail))
+		fmt.Fprintf(&sb, "| %s | %s | %s | %s | %s |\n",
+			b.ID, b.Name, passEmoji(b.Pass), boolStr(b.Simulated), b.Detail)
 	}
 
 	sb.WriteString("\n## Attack Scenarios\n\n")
 	sb.WriteString("| ID | Name | Expected | Observed | Pass | Simulated | Detail |\n")
 	sb.WriteString("|---|---|---|---|---|---|---|\n")
 	for _, a := range result.Attacks {
-		sb.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s | %s | %s |\n",
+		fmt.Fprintf(&sb, "| %d | %s | %s | %s | %s | %s | %s |\n",
 			a.ID, a.Name, a.Expected, a.Observed, passEmoji(a.Pass),
-			boolStr(a.Simulated), a.Detail))
+			boolStr(a.Simulated), a.Detail)
 	}
 
 	sb.WriteString("\n## Definition of Done Status\n\n")
-	sb.WriteString(fmt.Sprintf("- [ ] Real GPU confidential validation — **Future AKS validation** (planned)\n"))
-	sb.WriteString(fmt.Sprintf("- [ ] Non-simulated TEE (TDX/SEV-SNP real hardware) — **Future AKS validation** (planned)\n"))
-	sb.WriteString(fmt.Sprintf("- [x] Simulated kind path — **validated** (%d/%d attacks blocked)\n",
-		result.Summary.AttacksBlocked, result.Summary.TotalAttacks))
+	sb.WriteString("- [ ] Real GPU confidential validation — **Future AKS validation** (planned)\n")
+	sb.WriteString("- [ ] Non-simulated TEE (TDX/SEV-SNP real hardware) — **Future AKS validation** (planned)\n")
+	fmt.Fprintf(&sb, "- [x] Simulated kind path — **validated** (%d/%d attacks blocked)\n",
+		result.Summary.AttacksBlocked, result.Summary.TotalAttacks)
 
 	_, err = f.WriteString(sb.String())
 	return err

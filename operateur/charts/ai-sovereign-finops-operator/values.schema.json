@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$comment": "This schema closes the Article 3 GOV-AR surface while retaining established operator values outside that surface.",
+  "type": "object",
+  "properties": {
+    "govArCalibrationProducer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled", "replicaCount", "image", "softwareSHA256", "postgres", "tenantID",
+        "policyNamespace", "policyName", "interval", "queryLimit", "serviceAccount", "rbac", "resources"
+      ],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "replicaCount": {"type": "integer", "minimum": 1, "maximum": 10},
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "tag", "digest", "pullPolicy"],
+          "properties": {
+            "repository": {"type": "string", "minLength": 1},
+            "tag": {"type": "string"},
+            "digest": {"type": "string", "pattern": "^$|^sha256:[0-9a-f]{64}$"},
+            "pullPolicy": {"enum": ["Always", "IfNotPresent", "Never"]}
+          }
+        },
+        "softwareSHA256": {"type": "string", "pattern": "^$|^[0-9a-f]{64}$"},
+        "postgres": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["existingSecret", "secretKey"],
+          "properties": {
+            "existingSecret": {"type": "string"},
+            "secretKey": {"type": "string", "minLength": 1}
+          }
+        },
+        "tenantID": {"type": "string"},
+        "policyNamespace": {"type": "string"},
+        "policyName": {"type": "string"},
+        "interval": {"type": "string", "pattern": "^[1-9][0-9]*(ms|s|m|h)$"},
+        "queryLimit": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "serviceAccount": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["create", "name", "annotations"],
+          "properties": {
+            "create": {"type": "boolean"},
+            "name": {"type": "string"},
+            "annotations": {"type": "object"}
+          }
+        },
+        "rbac": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["create"],
+          "properties": {"create": {"type": "boolean"}}
+        },
+        "resources": {"type": "object"}
+      }
+    },
+    "govArAdmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled", "devInMemory", "replicaCount", "serviceAccount", "rbac", "image",
+        "softwareSHA256", "selectedFeedback", "resources", "identity", "extProc", "postgres", "reconciliation",
+        "tracing", "enforcement"
+      ],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "devInMemory": {"type": "boolean"},
+        "replicaCount": {"type": "integer", "minimum": 1, "maximum": 100},
+        "softwareSHA256": {"type": "string", "pattern": "^$|^[0-9a-f]{64}$"},
+        "selectedFeedback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["existingConfigMap"],
+          "properties": {"existingConfigMap": {"type": "string"}}
+        },
+        "serviceAccount": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["create", "name", "annotations"],
+          "properties": {
+            "create": {"type": "boolean"},
+            "name": {"type": "string"},
+            "annotations": {"type": "object"}
+          }
+        },
+        "rbac": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["create"],
+          "properties": {"create": {"type": "boolean"}}
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "tag", "digest", "pullPolicy"],
+          "properties": {
+            "repository": {"type": "string", "minLength": 1},
+            "tag": {"type": "string"},
+            "digest": {"type": "string", "pattern": "^$|^sha256:[0-9a-f]{64}$"},
+            "pullPolicy": {"enum": ["Always", "IfNotPresent", "Never"]}
+          }
+        },
+        "resources": {"type": "object"},
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["masterExistingSecret", "masterSecretKey"],
+          "properties": {
+            "masterExistingSecret": {"type": "string"},
+            "masterSecretKey": {"type": "string", "minLength": 1}
+          }
+        },
+        "extProc": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["port", "gatewaySPIFFEID", "tls", "envoyExample"],
+          "properties": {
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "gatewaySPIFFEID": {"type": "string"},
+            "tls": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["serverExistingSecret", "serverCertKey", "serverPrivateKeyKey", "clientCAExistingSecret", "clientCAKey"],
+              "properties": {
+                "serverExistingSecret": {"type": "string"},
+                "serverCertKey": {"type": "string", "minLength": 1},
+                "serverPrivateKeyKey": {"type": "string", "minLength": 1},
+                "clientCAExistingSecret": {"type": "string"},
+                "clientCAKey": {"type": "string", "minLength": 1}
+              }
+            },
+            "envoyExample": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled", "listenerPort", "backendAddress", "backendPort", "downstreamTLSCertPath",
+                "downstreamTLSKeyPath", "downstreamClientCAPath", "upstreamClientCertPath",
+                "upstreamClientKeyPath", "upstreamServerCAPath"
+              ],
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "listenerPort": {"type": "integer", "minimum": 1, "maximum": 65535},
+                "backendAddress": {"type": "string", "minLength": 1},
+                "backendPort": {"type": "integer", "minimum": 1, "maximum": 65535},
+                "downstreamTLSCertPath": {"type": "string", "minLength": 1},
+                "downstreamTLSKeyPath": {"type": "string", "minLength": 1},
+                "downstreamClientCAPath": {"type": "string", "minLength": 1},
+                "upstreamClientCertPath": {"type": "string", "minLength": 1},
+                "upstreamClientKeyPath": {"type": "string", "minLength": 1},
+                "upstreamServerCAPath": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "postgres": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "existingSecret", "secretKey"],
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "existingSecret": {"type": "string"},
+            "secretKey": {"type": "string", "minLength": 1}
+          }
+        },
+        "reconciliation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "interval", "queryLimit", "lease", "renewEvery", "maxAttempts", "baseBackoff",
+            "maxBackoff", "heartbeatTTL", "periodicInterval"
+          ],
+          "properties": {
+            "interval": {"$ref": "#/definitions/duration"},
+            "queryLimit": {"type": "integer", "minimum": 1, "maximum": 10000},
+            "lease": {"$ref": "#/definitions/duration"},
+            "renewEvery": {"$ref": "#/definitions/duration"},
+            "maxAttempts": {"type": "integer", "minimum": 1, "maximum": 100},
+            "baseBackoff": {"$ref": "#/definitions/duration"},
+            "maxBackoff": {"$ref": "#/definitions/duration"},
+            "heartbeatTTL": {"$ref": "#/definitions/duration"},
+            "periodicInterval": {"$ref": "#/definitions/duration"}
+          }
+        },
+        "tracing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "endpoint", "insecure", "sampleRatio"],
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "endpoint": {"type": "string"},
+            "insecure": {"type": "boolean"},
+            "sampleRatio": {"type": "string", "pattern": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"}
+          }
+        },
+        "enforcement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["networkPolicy"],
+          "properties": {
+            "networkPolicy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["enabled", "governedNamespace", "gatewayPort", "gatewayNamespaceSelector", "gatewayPodSelector"],
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "governedNamespace": {"type": "string"},
+                "gatewayPort": {"type": "integer", "minimum": 1, "maximum": 65535},
+                "gatewayNamespaceSelector": {"type": "object"},
+                "gatewayPodSelector": {"type": "object"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "duration": {"type": "string", "pattern": "^[1-9][0-9]*(ms|s|m|h)$"}
+  }
+}

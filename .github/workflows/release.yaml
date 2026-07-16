@@ -90,6 +90,28 @@ jobs:
             ${{ env.REGISTRY }}/thesis-bench:${{ steps.v.outputs.version }}
             ${{ env.REGISTRY }}/thesis-bench:latest
 
+      # gov-ar-admission
+      - name: Build and push gov-ar-admission
+        uses: docker/build-push-action@v6
+        with:
+          context: ./operateur
+          file: ./operateur/Dockerfile.gov-ar-admission
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/gov-ar-admission:${{ steps.v.outputs.version }}
+            ${{ env.REGISTRY }}/gov-ar-admission:latest
+
+      # gov-ar-calibration-producer
+      - name: Build and push gov-ar-calibration-producer
+        uses: docker/build-push-action@v6
+        with:
+          context: ./operateur
+          file: ./operateur/Dockerfile.gov-ar-calibration-producer
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/gov-ar-calibration-producer:${{ steps.v.outputs.version }}
+            ${{ env.REGISTRY }}/gov-ar-calibration-producer:latest
+
       # platform-ui
       - name: Build and push platform-ui
         uses: docker/build-push-action@v6

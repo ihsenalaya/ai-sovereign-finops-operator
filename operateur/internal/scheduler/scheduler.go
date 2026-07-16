@@ -477,7 +477,7 @@ func (s *Scheduler) reserveTimed(
 		decision.Status.Simulated = selected.Evidence != nil && selected.Evidence.Spec.Simulated
 	}
 
-	decision, _, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+	decision, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
 		applyBaseDecision(decision)
 		if decision.Annotations != nil {
 			delete(decision.Annotations, PlacementTokenAnnotation)
@@ -505,7 +505,7 @@ func (s *Scheduler) reserveTimed(
 	tPreBind := time.Now()
 	if err := s.preBind(ctx, pod, decision, selected); err != nil {
 		prebindUS := time.Since(tPreBind).Microseconds()
-		_, _, _ = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+		_, _ = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
 			applyBaseDecision(decision)
 			if decision.Annotations != nil {
 				delete(decision.Annotations, PlacementTokenAnnotation)
@@ -540,7 +540,7 @@ func (s *Scheduler) reserveTimed(
 
 	tokenDigest := platformcrypto.SHA256Hex([]byte(tokenStr))
 
-	decision, _, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
+	decision, err = createOrUpdatePlacementDecision(ctx, s.client, decision, func(decision *aiopsv1alpha1.AIPlacementDecision) {
 		applyBaseDecision(decision)
 		if tokenStr != "" {
 			if decision.Annotations == nil {
@@ -644,24 +644,24 @@ func createOrUpdatePlacementDecision(
 	c client.Client,
 	decision *aiopsv1alpha1.AIPlacementDecision,
 	mutate func(*aiopsv1alpha1.AIPlacementDecision),
-) (*aiopsv1alpha1.AIPlacementDecision, string, error) {
+) (*aiopsv1alpha1.AIPlacementDecision, error) {
 	var existing aiopsv1alpha1.AIPlacementDecision
 	err := c.Get(ctx, types.NamespacedName{Name: decision.Name, Namespace: decision.Namespace}, &existing)
 	if apierrors.IsNotFound(err) {
 		mutate(decision)
 		if err := c.Create(ctx, decision); err != nil {
-			return nil, "", err
+			return nil, err
 		}
-		return decision, "created", nil
+		return decision, nil
 	}
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	mutate(&existing)
 	if err := c.Update(ctx, &existing); err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	return &existing, "updated", nil
+	return &existing, nil
 }
 
 func (s *Scheduler) preBind(

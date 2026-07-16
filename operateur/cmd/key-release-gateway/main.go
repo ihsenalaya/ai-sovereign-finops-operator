@@ -86,11 +86,11 @@ type releaseRequest struct {
 }
 
 type releaseResponse struct {
-	Allowed        bool                `json:"allowed"`
+	Allowed        bool                  `json:"allowed"`
 	Reason         keyrelease.DenyReason `json:"reason"`
-	KeyMaterialRef string              `json:"keyMaterialRef,omitempty"`
-	TTLSeconds     int32               `json:"ttlSeconds,omitempty"`
-	EvidenceRecord string              `json:"evidenceRecord,omitempty"`
+	KeyMaterialRef string                `json:"keyMaterialRef,omitempty"`
+	TTLSeconds     int32                 `json:"ttlSeconds,omitempty"`
+	EvidenceRecord string                `json:"evidenceRecord,omitempty"`
 }
 
 // --- in-memory key store (kind/dev backend) ---

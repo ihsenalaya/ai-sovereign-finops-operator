@@ -23,7 +23,7 @@ type AnchorBackend interface {
 // MemoryAnchorBackend stores checkpoints in-process. Suitable for kind/dev only.
 // It is NOT durable across process restarts.
 type MemoryAnchorBackend struct {
-	mu     sync.RWMutex
+	mu      sync.RWMutex
 	history []Checkpoint
 }
 

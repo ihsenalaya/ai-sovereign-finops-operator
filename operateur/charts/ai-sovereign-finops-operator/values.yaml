@@ -68,3 +68,142 @@ affinity: {}
 
 # Extra args appended to the manager command.
 extraArgs: []
+
+govArAdmission:
+  # The injected proxy fails governed HTTPS CONNECT closed because it cannot
+  # inspect encrypted request/usage payloads. Actual HTTPS LLM service traffic
+  # must use the native synchronous gateway integration.
+  enabled: false
+  # Development-only single-process ledger. Production must keep this false and configure PostgreSQL.
+  devInMemory: false
+  replicaCount: 1
+  # Admission uses a dedicated least-privilege identity; it must never inherit
+  # the controller-manager's write-capable ClusterRole.
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+  rbac:
+    create: true
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-admission
+    tag: ""
+    # Release manifests set this immutable digest. Development may retain an
+    # explicit non-stable tag while this field is empty.
+    digest: ""
+    pullPolicy: IfNotPresent
+  # SHA-256 of the immutable admission-service image/software artifact. It is
+  # embedded into every production audit transition and is required outside
+  # explicit in-memory development mode.
+  softwareSHA256: ""
+  # Optional experiment-authority ConfigMap. It must contain run_id, split,
+  # protocol_sha256, oracle_artifact_sha256, config_sha256, model_map_sha256,
+  # and model_map_json. The map binds each eligible deployment to the public
+  # benchmark catalog model identity. The service fails closed on a partial or
+  # mismatched binding; per-request item_id is supplied before admission.
+  selectedFeedback:
+    existingConfigMap: ""
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  identity:
+    # Server-only master used for the ext_proc-to-ledger authenticated loopback.
+    # Injected Pods use Pod-bound projected service-account tokens, never this secret.
+    masterExistingSecret: ""
+    masterSecretKey: GOVAR_IDENTITY_MASTER_SECRET
+  extProc:
+    # Official Envoy ext_proc gRPC service. Production requires mutual TLS on
+    # this hop as well as downstream mTLS and SANITIZE_SET XFCC at Envoy.
+    port: 9002
+    gatewaySPIFFEID: ""
+    tls:
+      serverExistingSecret: ""
+      serverCertKey: tls.crt
+      serverPrivateKeyKey: tls.key
+      clientCAExistingSecret: ""
+      clientCAKey: ca.crt
+    envoyExample:
+      enabled: false
+      listenerPort: 8443
+      backendAddress: llm-backend.default.svc.cluster.local
+      backendPort: 443
+      downstreamTLSCertPath: /etc/envoy/tls/tls.crt
+      downstreamTLSKeyPath: /etc/envoy/tls/tls.key
+      downstreamClientCAPath: /etc/envoy/client-ca/ca.crt
+      upstreamClientCertPath: /etc/envoy/ext-proc-client/tls.crt
+      upstreamClientKeyPath: /etc/envoy/ext-proc-client/tls.key
+      upstreamServerCAPath: /etc/envoy/ext-proc-server-ca/ca.crt
+  postgres:
+    enabled: false
+    existingSecret: ""
+    secretKey: DATABASE_URL
+  reconciliation:
+    # Production replicas execute the same lease-based, PostgreSQL-serialized
+    # worker queues. At-least-once execution retains ambiguous billable holds.
+    interval: 5s
+    queryLimit: 100
+    lease: 30s
+    renewEvery: 10s
+    maxAttempts: 8
+    baseBackoff: 1s
+    maxBackoff: 5m
+    heartbeatTTL: 1m
+    periodicInterval: 1m
+  tracing:
+    # Required in production GOV-AR mode. The endpoint is an OTLP/HTTP
+    # collector base URL (for example http://otel-collector:4318).
+    enabled: false
+    endpoint: ""
+    insecure: false
+    sampleRatio: "1"
+  enforcement:
+    # Required outside explicit single-replica development mode. Governed Pods
+    # receive the selector label from the injector and may egress only to DNS
+    # and the authenticated gateway selected here.
+    networkPolicy:
+      enabled: false
+      # Dedicated measured workload namespace. Namespace-wide default-deny
+      # egress is intentional; do not place the operator/database here.
+      governedNamespace: ""
+      gatewayPort: 8443
+      gatewayNamespaceSelector: {}
+      gatewayPodSelector:
+        aiops.imperium.io/govar-gateway: "true"
+
+# Optional deployment for the independently authenticated authoritative
+# calibration producer. Its database credential must map to the least-
+# privilege govar_calibration_producer role created by migration v8.
+govArCalibrationProducer:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-calibration-producer
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  softwareSHA256: ""
+  postgres:
+    existingSecret: ""
+    secretKey: DATABASE_URL
+  tenantID: ""
+  policyNamespace: ""
+  policyName: ""
+  interval: 1m
+  queryLimit: 1000
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+  rbac:
+    create: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
