@@ -4,6 +4,11 @@
 # two demo applications: an EU-compliant HR chatbot on Mistral and a
 # US-routed marketing assistant on GPT-4o (which triggers sovereignty
 # findings under the FR/EU policy).
+#
+# The HR chatbot also carries a small canary share on mistral-small-latest:
+# the quality gate in 04-quality-gate.yaml evaluates that downgrade, and it
+# needs measured reliability and latency for the candidate model, not only for
+# the source.
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIGateway
 metadata:
@@ -48,6 +53,18 @@ data:
         "OutputTokens": 720000,
         "LatencyMillis": 890,
         "Errors": 12
+      },
+      {
+        "Namespace": "finops-demo",
+        "Application": "chatbot-rh",
+        "Team": "rh",
+        "Provider": "mistral-eu",
+        "Model": "mistral-small-latest",
+        "Requests": 140,
+        "InputTokens": 190000,
+        "OutputTokens": 62000,
+        "LatencyMillis": 430,
+        "Errors": 1
       },
       {
         "Namespace": "finops-demo",

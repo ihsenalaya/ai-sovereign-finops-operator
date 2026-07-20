@@ -1,110 +1,69 @@
-# Quality gate for the cost + sovereignty migration the rest of the demo argues
-# for: marketing-assistant runs on gpt-4o (US, high cost tier) and drives both
-# the budget overrun and the sovereignty findings. Moving it to
-# mistral-large-latest (EU, medium tier) is only defensible if quality holds, so
-# the gate scores the candidate against the source before any switch.
+# Quality gate for a cost-reduction migration inside the compliant EU zone:
+# the HR chatbot runs on mistral-large-latest (medium cost tier) and could move
+# to mistral-small-latest (low tier). The gate decides whether quality survives
+# the downgrade before any switch.
 #
-# EXPECTED OUTCOME IN KIND: phase Pending, verdict insufficient-data.
-# This is the operator behaving correctly, not a broken sample. The evidence
-# below is a hand-written golden run, and the operator refuses to derive a
-# quality score from it:
+# WHY NOT THE gpt-4o MIGRATION: the operator refuses to run the evaluation Job
+# when a model sits in a non-compliant zone —
+#   "quality evaluation blocked: model gpt-4o on provider openai-us is in
+#    non-compliant zone US for AISovereigntyPolicy demo-sovereignty"
+# It will not send golden prompts to a zone the sovereignty policy forbids, so a
+# gate spanning US and EU cannot execute. Both models here are mistral-eu.
 #
-#   "ConfigMap ... is not live evidence from a quality evaluation job"
-#   "no telemetry observed for candidate model mistral-large-latest"
+# HOW THE EVIDENCE IS PRODUCED: evidenceRef is a destination, not an input. The
+# operator creates its own evaluation Job, which calls the endpoint below,
+# scores the responses and writes the results ConfigMap with the provenance
+# labels the controller verifies. A hand-written evidence ConfigMap is rejected:
+# a quality score is a promotion decision and is fail-closed by design.
 #
-# A quality score is a promotion decision, so it is fail-closed: it requires
-# evidence produced by the real evaluation Job against a live gateway
-# (spec.evaluation.endpoint) plus measured telemetry for the candidate model,
-# neither of which exists in kind without provider API keys.
-#
-# The gate still publishes truthful metrics while pending —
-# ai_finops_quality_gate_passed=0, ai_finops_quality_gate_failed_checks=0,
-# ai_quality_gate_score=0 — so the dashboard shows "not passed" rather than a
-# fabricated green. The radar panels stay empty because ai_finops_quality_score
-# is only emitted once real scoring happens.
+# The endpoint is the local stub from 06-eval-gateway.yaml, because kind has no
+# provider API keys. The evaluation, scoring and provenance are the operator's
+# real code paths; only the model answering is a stub.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: marketing-golden-prompts
+  name: rh-golden-prompts
 data:
   prompts.yaml: |
-    - id: campaign
-      prompt: "Write a short compliant campaign summary for an EU banking product."
+    - id: leave-policy
+      prompt: "Explique la politique de congés en une phrase."
       expected:
-        reference: "The answer should be concise, mention compliance review and avoid guaranteed returns."
-        requiredKeywords: ["compliance", "review", "returns"]
-        maxTokens: 200
-    - id: rgpd
-      prompt: "List privacy checks before launching a lead-generation form."
+        reference: "La réponse doit expliquer la demande de congé, la validation manager et le solde disponible."
+        requiredKeywords: ["congé", "manager", "solde"]
+        maxTokens: 160
+    - id: expense-note
+      prompt: "Comment soumettre une note de frais ?"
       expected:
-        reference: "The answer should mention consent, retention, minimization and privacy notice."
-        requiredKeywords: ["consent", "retention", "privacy"]
-        maxTokens: 220
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: marketing-quality-evidence
-data:
-  results.yaml: |
-    - id: campaign
-      model: gpt-4o
-      reference: "The answer should be concise, mention compliance review and avoid guaranteed returns."
-      actual: "Campaign copy should pass compliance review, stay concise and avoid any promise of guaranteed returns."
-      semanticScore: 95
-      schemaValid: true
-      unexpectedRefusal: false
-      sensitiveDataLeak: false
-      requiredKeywordsPresent: true
-    - id: rgpd
-      model: gpt-4o
-      reference: "The answer should mention consent, retention, minimization and privacy notice."
-      actual: "Check consent capture, retention period, data minimization and the privacy notice before launch."
-      semanticScore: 96
-      schemaValid: true
-      unexpectedRefusal: false
-      sensitiveDataLeak: false
-      requiredKeywordsPresent: true
-    - id: campaign
-      model: mistral-large-latest
-      reference: "The answer should be concise, mention compliance review and avoid guaranteed returns."
-      actual: "Use concise wording, include the compliance review and avoid guaranteed returns in the offer."
-      semanticScore: 93
-      schemaValid: true
-      unexpectedRefusal: false
-      sensitiveDataLeak: false
-      requiredKeywordsPresent: true
-    - id: rgpd
-      model: mistral-large-latest
-      reference: "The answer should mention consent, retention, minimization and privacy notice."
-      actual: "Before launch, verify consent, the privacy notice, retention rules and data minimization."
-      semanticScore: 94
-      schemaValid: true
-      unexpectedRefusal: false
-      sensitiveDataLeak: false
-      requiredKeywordsPresent: true
+        reference: "La réponse doit indiquer de déposer les justificatifs, choisir le centre de coût et soumettre pour approbation."
+        requiredKeywords: ["justificatifs", "approbation", "frais"]
+        maxTokens: 180
 ---
 apiVersion: aiops.imperium.io/v1alpha1
 kind: AIQualityGate
 metadata:
-  name: marketing-assistant-quality-gate
+  name: chatbot-rh-quality-gate
 spec:
   target:
     namespace: finops-demo
-    application: marketing-assistant
-    team: marketing
-  sourceModel: gpt-4o
-  candidateModel: mistral-large-latest
-  goldenDatasetRef: { name: marketing-golden-prompts }
-  evidenceRef: { name: marketing-quality-evidence }
-  latencyThresholdMs: 2600
+    application: chatbot-rh
+    team: rh
+  sourceModel: mistral-large-latest
+  candidateModel: mistral-small-latest
+  goldenDatasetRef: { name: rh-golden-prompts }
+  evidenceRef: { name: rh-quality-evidence }
+  evaluation:
+    endpoint: http://eval-gateway.finops-demo.svc.cluster.local/v1/chat/completions
+    maxTokens: 160
+    timeoutSeconds: 60
+  latencyThresholdMs: 2200
   minSamples: 2
   tolerancePoints: 3
-  # No live judge: the kind demo scores the deterministic evidence above.
+  # No live judge model in kind: judged weight 0 keeps the score on the
+  # measurable dimensions.
   weights:
     judged: 0
   requiredChecks:
     noUnexpectedRefusal: true
     noSensitiveDataLeak: true
-    requiredKeywords: [compliance, privacy]
+    requiredKeywords: [congé, frais]
     maxErrorRatePercent: 2
