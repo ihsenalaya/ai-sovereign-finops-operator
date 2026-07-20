@@ -209,4 +209,26 @@ donc aucun privilège d'admission accordé). Documenté dans le README govar.
   `/readyz` — digest `sha256:bdf526715de019907a4cc290b09980555ea7775e19211a310f721e50850252b5`.
   Chart `values.yaml` réépinglé sur ce digest ; chart govar passé en `version: 0.1.1`.
 - Images `finops/confidential/govar-operator:0.1.0` + `latest` reconstruites depuis la
-  source courante et repoussées.
+  source courante et repoussées :
+  - finops-operator `sha256:e836597a1de33f001f1b5e8d41fdf40e755c51fe8e68bf22ea8223e5dd855abd`
+  - confidential-operator `sha256:ed24b5906f13e05458afd2121710bceb456384ba755597d37e35e495481f32cf`
+  - govar-operator `sha256:5de29d7c12c52e2bdeb643d18fc5136d3854a3f9f29905bbb6c61b9f4c4e5c7b`
+- **Artefact publié vérifié** : l'image `gov-ar-admission` tirée *par digest* depuis ghcr,
+  chargée dans kind et déployée via le chart, démarre `1/1 Ready` et le smoke test passe
+  (`/healthz` ok, `/readyz` ok, 84 familles `govar_*`). Le correctif est donc bien dans
+  l'artefact publié, pas seulement dans le build local.
+- **Limite connue** : le package ghcr est **privé** ; un nœud kind sans `imagePullSecret`
+  reçoit `401 Unauthorized` sur le token anonyme. Le déploiement direct par digest depuis
+  le registre échoue donc en `ImagePullBackOff` tant qu'aucun secret de pull n'est
+  configuré (`imagePullSecrets` dans les values) — sans rapport avec le contenu de l'image.
+
+## Reste à faire
+
+- Les 9 panels décisions/ledger/worker du dashboard govar ne sont **pas prouvés en
+  conditions réelles** : la démo kind n'émet aucun trafic d'admission (le smoke test ne
+  touche que `/healthz`, `/readyz`, `/metrics`) et `devInMemory` n'a pas de worker durable.
+  Noms de métriques vérifiés contre la source, mais validation live impossible sans
+  requêtes gouvernées authentifiées (TokenReview + HMAC). Piste : étendre le smoke test
+  pour émettre une vraie décision d'admission.
+- Le monolithe `operateur/charts/ai-sovereign-finops-operator` n'a pas été revérifié dans
+  cette passe (hors périmètre de la décomposition).
