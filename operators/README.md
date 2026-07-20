@@ -95,4 +95,28 @@ enregistrés en double. Choisir l'un ou l'autre par cluster.
 |---|---|---|---|
 | **FinOps** | — | aucun impact | workflow `reroute` intact ; pas de tampon d'identité reviewer |
 | **Confidential** | aucun impact | — | aucun impact |
-| **GOV-AR** | installer soi-même les CRs catalogue (CRDs incluses dans son chart) | aucun impact | — |
+| **GOV-AR** | **installation OK, mais aucune admission ne peut aboutir** — voir ci-dessous | aucun impact | — |
+
+### GOV-AR dépend de FinOps à l'exécution
+
+L'indépendance de GOV-AR est réelle à l'**installation** (chart, CRDs, RBAC disjoints) mais
+**pas à l'exécution de la décision d'admission**. Vérifié en cluster : sans les contrôleurs
+FinOps, chaque requête est refusée. La chaîne exigée avant tout `ADMIT` :
+
+| Exigence | Vérifiée par | Contrôleur qui la produit |
+|---|---|---|
+| `AIBudgetPolicy` réconciliée `Ready` et à jour | `budget.Status.ObservedGeneration == Generation` + condition `Ready` | **FinOps** |
+| une source de télémétrie réelle | le contrôleur budget refuse `Ready` sinon (`NoTelemetrySource`) | **FinOps** |
+| `AIProvider` avec évidence de prix normalisée | adaptateur fermé (`openai` / `azure-openai` **uniquement**) | **FinOps** |
+| prix observés depuis **moins de 24 h** | `spec.pricing.observedAt` | administrateur |
+| `AIModel` routable avec évidence de cap de sortie | `spec.govar.outputCapEvidence` | administrateur |
+| observation qualité fraîche sur le modèle | `model.Status.LastEvaluatedAt` | **FinOps** (AIQualityGate) |
+
+Créer les CRs catalogue ne suffit donc pas : il faut un contrôleur pour les **réconcilier**.
+En pratique, un cluster GOV-AR doit soit embarquer l'opérateur FinOps, soit disposer d'un
+contrôleur équivalent pour les CRDs catalogue qu'il lit. Sans cela, l'admission répond
+`ABSTAIN` avec `policy_not_ready`, `model_not_ready` ou `quality_observation_stale` — un
+refus correct et fail-closed, mais qui rend le service inopérant.
+
+L'automatisation kind de `ai-govar-operator` installe donc FinOps en plus de GOV-AR, et ses
+applications de test fournissent le catalogue, la télémétrie et le quality gate nécessaires.

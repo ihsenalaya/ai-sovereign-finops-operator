@@ -94,10 +94,35 @@ helm upgrade --install "${HELM_RELEASE}" "${CHART_DIR}" \
   "${SM_ARGS[@]}" \
   --wait --timeout 5m
 
+# 5b. FinOps operator (required for admission to reach a decision) -----------------
+# GOV-AR refuses a workload whose AIBudgetPolicy is not reconciled Ready, whose
+# provider has no normalized pricing snapshot, or whose model carries no fresh
+# quality observation. All three are produced by FinOps controllers: the GOV-AR
+# manager owns AIWorkloadBinding only. Without this, every request is a correct
+# but permanent ABSTAIN. See operators/README.md.
+FINOPS_CHART="${REPO_ROOT}/operators/ai-finops-operator/chart/ai-finops-operator"
+FINOPS_IMAGE="${FINOPS_IMAGE:-finops-operator}"
+log "building and loading the FinOps manager image (catalog controllers)..."
+docker build -f "${OPERATOR_DIR}/Dockerfile.finops-operator" -t "${FINOPS_IMAGE}:${IMAGE_TAG}" "${OPERATOR_DIR}"
+kind load docker-image "${FINOPS_IMAGE}:${IMAGE_TAG}" --name "${CLUSTER_NAME}"
+log "installing the FinOps operator so the catalog CRDs get reconciled..."
+helm upgrade --install finops "${FINOPS_CHART}" \
+  --namespace finops-system --create-namespace \
+  --set image.repository="${FINOPS_IMAGE}" \
+  --set image.tag="${IMAGE_TAG}" \
+  --set image.pullPolicy=Never \
+  --wait --timeout 5m
+
 # 6. Test applications ------------------------------------------------------------
 log "applying test applications in namespace ${DEMO_NAMESPACE}..."
 kubectl create namespace "${DEMO_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "${DEMO_NAMESPACE}" apply -f "${HERE}/test-apps/"
+
+# Pricing evidence is rejected when observed more than 24h ago, so the checked-in
+# timestamp is refreshed at apply time rather than going stale in git.
+log "stamping the provider pricing observation..."
+kubectl -n "${DEMO_NAMESPACE}" patch aiprovider azure-eu --type=merge \
+  -p "{\"spec\":{\"pricing\":{\"observedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}}"
 
 # 7. Grafana dashboard ---------------------------------------------------------------
 if [ -z "${SKIP_MONITORING:-}" ]; then

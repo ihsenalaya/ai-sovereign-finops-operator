@@ -78,7 +78,7 @@
    },
    "targets": [
     {
-     "expr": "sum(rate(govar_admission_decisions_total{decision!=\"ADMIT\"}[5m])) / sum(rate(govar_admission_decisions_total[5m]))",
+     "expr": "(sum(rate(govar_admission_decisions_total{decision!=\"ADMIT\"}[5m])) or vector(0)) / sum(rate(govar_admission_decisions_total[5m]))",
      "refId": "A"
     }
    ],

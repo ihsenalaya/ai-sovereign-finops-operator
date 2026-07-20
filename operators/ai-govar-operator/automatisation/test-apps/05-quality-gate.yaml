@@ -1,0 +1,183 @@
+# Quality observation for the routable candidate model.
+#
+# GOV-AR refuses a candidate whose quality observation is missing or older than
+# the freshness limit (ABSTAIN / quality_observation_stale). That observation is
+# written by the AIQualityGate controller onto the CANDIDATE model's status —
+#
+#   model.Status.LastQualityScore = gate.Status.QualityScore
+#   model.Status.LastEvaluatedAt  = now      (aiqualitygate_controller.go)
+#
+# so the gate below has gpt-4o-francecentral as its candidate, which is the
+# model GOV-AR routes to. Like the budget policy, this controller ships with the
+# FinOps operator: GOV-AR alone cannot produce it.
+#
+# The evidence is produced by the operator's own evaluation Job against the stub
+# endpoint: a hand-written evidence ConfigMap is rejected because it lacks the
+# provenance labels only that Job writes.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eval-gateway-script
+data:
+  server.py: |
+    """Minimal OpenAI-compatible stub for the quality evaluation Job."""
+    import json
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    ANSWERS = {
+        "gpt-4o-francecentral": {
+            "refund": "Pour un remboursement, vérifiez le statut du paiement, "
+                      "confirmez le montant puis déclenchez le remboursement.",
+            "dispute": "Documentez le litige, joignez la preuve de paiement et "
+                       "transmettez le dossier au service conformité.",
+        },
+        "gpt-4o-mini-francecentral": {
+            "refund": "Vérifiez le paiement puis remboursez le montant.",
+            "dispute": "Transmettez le litige avec la preuve de paiement.",
+        },
+    }
+
+    def pick(model, prompt):
+        table = ANSWERS.get(model) or ANSWERS["gpt-4o-francecentral"]
+        low = prompt.lower()
+        if "rembours" in low or "refund" in low:
+            return table["refund"]
+        return table["dispute"]
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length", 0))
+            try:
+                payload = json.loads(self.rfile.read(length) or b"{}")
+            except json.JSONDecodeError:
+                payload = {}
+            model = self.headers.get("x-ai-eg-model") or payload.get("model", "")
+            prompt = ""
+            for message in payload.get("messages", []):
+                if message.get("role") == "user":
+                    prompt = message.get("content", "")
+            content = pick(model, prompt)
+            body = json.dumps({
+                "id": "chatcmpl-stub",
+                "object": "chat.completion",
+                "model": model,
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }],
+                "usage": {
+                    "prompt_tokens": max(1, len(prompt.split())),
+                    "completion_tokens": max(1, len(content.split())),
+                    "total_tokens": max(2, len(prompt.split()) + len(content.split())),
+                },
+            }).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, fmt, *args):
+            print("eval-gateway " + fmt % args, flush=True)
+
+    HTTPServer(("", 8080), Handler).serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eval-gateway
+  labels:
+    app: eval-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eval-gateway
+  template:
+    metadata:
+      labels:
+        app: eval-gateway
+    spec:
+      containers:
+        - name: server
+          image: python:3.12-alpine
+          command: ["python3", "/srv/server.py"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: script
+              mountPath: /srv
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 3
+      volumes:
+        - name: script
+          configMap:
+            name: eval-gateway-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eval-gateway
+spec:
+  selector:
+    app: eval-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-golden-prompts
+data:
+  prompts.yaml: |
+    - id: refund
+      prompt: "Comment traiter une demande de remboursement client ?"
+      expected:
+        reference: "La réponse doit vérifier le statut du paiement, confirmer le montant et déclencher le remboursement."
+        requiredKeywords: ["paiement", "montant", "remboursement"]
+        maxTokens: 180
+    - id: dispute
+      prompt: "Que faire en cas de litige sur un paiement ?"
+      expected:
+        reference: "La réponse doit documenter le litige, joindre la preuve de paiement et transmettre à la conformité."
+        requiredKeywords: ["litige", "preuve", "conformité"]
+        maxTokens: 180
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIQualityGate
+metadata:
+  name: payments-api-quality-gate
+spec:
+  target:
+    namespace: govar-demo
+    application: payments-api
+    team: payments
+  sourceModel: gpt-4o-mini-francecentral
+  candidateModel: gpt-4o-francecentral
+  goldenDatasetRef: { name: payments-golden-prompts }
+  # Destination for the golden-run results, written by the evaluation Job.
+  evidenceRef: { name: payments-quality-evidence }
+  evaluation:
+    endpoint: http://eval-gateway.govar-demo.svc.cluster.local/v1/chat/completions
+    maxTokens: 180
+    timeoutSeconds: 60
+  latencyThresholdMs: 2200
+  minSamples: 2
+  tolerancePoints: 3
+  weights:
+    judged: 0
+  requiredChecks:
+    noUnexpectedRefusal: true
+    maxErrorRatePercent: 2

@@ -241,11 +241,38 @@ panels décisions, ledger et worker restent vides tant qu'aucun trafic gouverné
 traversé le service. Les compteurs Prometheus n'apparaissent qu'après leur première
 incrémentation — un panel vide n'y signifie pas une requête erronée.
 
-## Intégration avec les autres opérateurs (optionnelle)
+## Intégration avec les autres opérateurs
 
-- **ai-finops-operator** : fournit naturellement le catalogue et les politiques que GOV-AR
-  lit. S'il est absent, installez les CRs catalogue vous-même (les CRDs sont dans ce chart).
+- **ai-finops-operator** : **requis à l'exécution**, pas optionnel. GOV-AR s'installe seul
+  (chart, CRDs et RBAC disjoints), mais aucune décision d'admission n'aboutit sans les
+  contrôleurs FinOps — voir ci-dessous.
 - **ai-confidential-operator** : indépendant ; aucune dépendance croisée.
+
+### Pourquoi FinOps est requis pour décider
+
+Avant tout `ADMIT`, le service d'admission vérifie une chaîne d'évidences qu'il ne produit
+pas lui-même (le manager GOV-AR n'enregistre que le contrôleur `AIWorkloadBinding`) :
+
+| Exigence | Raison de refus si absente | Producteur |
+|---|---|---|
+| `AIBudgetPolicy` réconciliée `Ready`, génération à jour | `policy_not_ready` | **FinOps** |
+| source de télémétrie réelle (le contrôleur budget refuse `Ready` sinon) | `policy_not_ready` | **FinOps** |
+| `AIProvider` avec snapshot de prix normalisé | `pricing_incomplete` | **FinOps** |
+| `AIModel` `Ready` avec évidence de cap de sortie | `model_not_ready` | **FinOps** |
+| observation qualité fraîche (`status.lastEvaluatedAt`) | `quality_observation_stale` | **FinOps** (`AIQualityGate`) |
+
+Deux contraintes tiennent à l'administrateur, pas à un opérateur :
+
+- **Type de provider** — GOV-AR n'accepte que `openai` et `azure-openai` : ce sont les seuls
+  adaptateurs fermés de prix et d'usage autoritaire. Un provider `mistral` ou `anthropic`
+  est déclarable dans l'API Kubernetes mais **jamais routable** par GOV-AR.
+- **Fraîcheur des prix** — `spec.pricing.observedAt` doit dater de moins de 24 h, sinon le
+  snapshot est rejeté (`pricing_stale`). Un catalogue figé dans git périme donc en un jour ;
+  `automatisation/up.sh` l'horodate à l'application.
+
+Ces refus sont **corrects et fail-closed** : GOV-AR préfère s'abstenir plutôt que d'engager
+de l'argent sur une évidence qu'il ne peut pas prouver. Mais sans FinOps, le service est
+inopérant. L'automatisation kind installe donc les deux opérateurs.
 
 > Ne pas installer cet opérateur **et** le chart monolithe `ai-sovereign-finops-operator`
 > sur le même cluster : les webhooks `AIChangeRequest` seraient enregistrés deux fois.

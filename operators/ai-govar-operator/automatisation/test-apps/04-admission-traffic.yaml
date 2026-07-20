@@ -54,9 +54,18 @@ spec:
               set -u
               BASE="http://govar-ai-govar-operator-gov-ar-admission.govar-system.svc.cluster.local:8084"
               TOKEN="$(cat /var/run/secrets/govar/token)"
-              ok=0; err=0
+              ok=0; err=0; denied=0
               i=1
               while [ "$i" -le 30 ]; do
+                # Every 5th request asks for more output tokens than the
+                # provider cap attested in the catalog (8192). Those must be
+                # refused: a demo where nothing is ever denied does not show
+                # that governance enforces anything.
+                if [ $((i % 5)) -eq 0 ]; then
+                  MAX_OUT=99000
+                else
+                  MAX_OUT=$((200 + i * 10))
+                fi
                 BODY=$(cat <<JSON
               {
                 "request_id": "demo-$(date +%s)-$i",
@@ -71,7 +80,7 @@ spec:
                 "routing_policy_name": "demo-routing",
                 "input_tokens": $((500 + i * 25)),
                 "input_tokens_exact": true,
-                "max_output_tokens": $((200 + i * 10)),
+                "max_output_tokens": ${MAX_OUT},
                 "timeout_seconds": 30,
                 "cancellation_possible": true
               }
@@ -81,8 +90,17 @@ spec:
                   -H "Authorization: Bearer ${TOKEN}" \
                   -H 'Content-Type: application/json' \
                   --data "${BODY}")
+                # A governed refusal is a normal HTTP 200 carrying a decision,
+                # not an HTTP error: only transport/auth failures are non-200.
                 if [ "${RESP}" = "200" ]; then
-                  ok=$((ok + 1))
+                  if grep -q '"decision":"ADMIT"' /tmp/body; then
+                    ok=$((ok + 1))
+                  else
+                    denied=$((denied + 1))
+                    if [ "${denied}" -le 2 ]; then
+                      echo "request $i governed refusal:"; cat /tmp/body; echo ""
+                    fi
+                  fi
                 else
                   err=$((err + 1))
                   if [ "${err}" -le 2 ]; then
@@ -93,8 +111,8 @@ spec:
                 i=$((i + 1))
                 sleep 2
               done
-              echo "admission requests: ${ok} accepted, ${err} rejected"
+              echo "admission: ${ok} ADMIT, ${denied} governed refusals, ${err} transport errors"
               # A governed REJECT is a valid decision: the point is to exercise the
               # decision path and populate govar_admission_decisions_total.
-              if [ "$((ok + err))" -eq 0 ]; then exit 1; fi
+              if [ "$((ok + denied))" -eq 0 ]; then exit 1; fi
               echo "ADMISSION TRAFFIC GENERATED"
