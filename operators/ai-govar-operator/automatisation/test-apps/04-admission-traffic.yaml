@@ -1,0 +1,85 @@
+# Generates real governed admission traffic so the GOV-AR dashboard shows
+# decisions, ledger transitions and decision latency instead of empty panels.
+#
+# The request is authenticated with the Pod's projected ServiceAccount token
+# (TokenReview): GOV-AR resolves the AIWorkloadBinding from the authenticated
+# namespace + serviceAccountName, then requires every field of the body to match
+# that operator-owned binding. A request cannot select its own binding, so the
+# values below are copied from 02-binding.yaml and must stay in sync with it.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: govar-admission-traffic
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: govar-admission-traffic
+    spec:
+      restartPolicy: Never
+      serviceAccountName: payments-api
+      containers:
+        - name: traffic
+          image: curlimages/curl:8.10.1
+          env:
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command:
+            - sh
+            - -c
+            - |
+              set -u
+              BASE="http://govar-ai-govar-operator-gov-ar-admission.govar-system.svc.cluster.local:8084"
+              TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+              ok=0; err=0
+              i=1
+              while [ "$i" -le 30 ]; do
+                BODY=$(cat <<JSON
+              {
+                "request_id": "demo-$(date +%s)-$i",
+                "namespace": "${POD_NAMESPACE}",
+                "tenant_id": "tenant-payments",
+                "workload_uid": "${POD_UID}",
+                "team": "payments",
+                "application": "payments-api",
+                "sensitive_data": true,
+                "allowed_zones": ["eu", "francecentral"],
+                "budget_policy_name": "demo-budget",
+                "routing_policy_name": "demo-routing",
+                "input_tokens": $((500 + i * 25)),
+                "input_tokens_exact": true,
+                "max_output_tokens": $((200 + i * 10)),
+                "timeout_seconds": 30,
+                "cancellation_possible": true
+              }
+              JSON
+              )
+                RESP=$(curl -s -o /tmp/body -w '%{http_code}' -X POST "${BASE}/admit" \
+                  -H "Authorization: Bearer ${TOKEN}" \
+                  -H 'Content-Type: application/json' \
+                  --data "${BODY}")
+                if [ "${RESP}" = "200" ]; then
+                  ok=$((ok + 1))
+                else
+                  err=$((err + 1))
+                  if [ "${err}" -le 2 ]; then
+                    echo "request $i -> HTTP ${RESP}"
+                    cat /tmp/body; echo ""
+                  fi
+                fi
+                i=$((i + 1))
+                sleep 2
+              done
+              echo "admission requests: ${ok} accepted, ${err} rejected"
+              # A governed REJECT is a valid decision: the point is to exercise the
+              # decision path and populate govar_admission_decisions_total.
+              if [ "$((ok + err))" -eq 0 ]; then exit 1; fi
+              echo "ADMISSION TRAFFIC GENERATED"
