@@ -144,6 +144,9 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			if err := r.cleanupQualityGateResources(ctx, &gate); err != nil {
 				return ctrl.Result{}, err
 			}
+			// Drop this gate's series: without it a deleted gate kept being
+			// reported as "not passed" until the operator restarted.
+			qualityGateMetrics.forget(gate.UID)
 			controllerutil.RemoveFinalizer(&gate, qualityGateFinalizer)
 			if err := r.Update(ctx, &gate); err != nil {
 				return ctrl.Result{}, err
@@ -341,6 +344,8 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	condStatus := conditionStatusForGate(gate.Status.Phase)
 	meta.SetStatusCondition(&gate.Status.Conditions, readyCondition(gate.Generation, condStatus, reason, message))
 
+	series := &qualityGateSeriesSet{}
+	series.addGate(&gate)
 	metrics.QualityGatePassed.WithLabelValues(gate.Namespace, gate.Name, gate.Spec.Target.Namespace, gate.Spec.Target.Application, gate.Spec.SourceModel, gate.Spec.CandidateModel).Set(qualityGatePassedValue(gate.Status.Phase))
 	metrics.QualityGateFailedChecks.WithLabelValues(gate.Namespace, gate.Name, gate.Spec.Target.Namespace, gate.Spec.Target.Application).Set(float64(gate.Status.FailedChecks))
 	metrics.QualityGateScore.WithLabelValues(gate.Namespace, gate.Name, gate.Spec.Target.Namespace, gate.Spec.Target.Application).Set(gate.Status.CompositeScore)
@@ -349,7 +354,7 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if provider == "" {
 			provider = r.providerForModel(ctx, gate.Namespace, gate.Spec.CandidateModel)
 		}
-		emitQualityScoreMetrics(&gate, provider, gate.Spec.CandidateModel)
+		emitQualityScoreMetrics(&gate, provider, gate.Spec.CandidateModel, series)
 		if err := r.writeScoreEvidence(ctx, &gate, comparison); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -357,6 +362,10 @@ func (r *AIQualityGateReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{}, err
 		}
 	}
+	// Prune the tuples this gate emitted previously but no longer emits, e.g.
+	// after the candidate model or target application changed. Series still
+	// present above are untouched, so they never flap.
+	qualityGateMetrics.retire(gate.UID, series)
 
 	if err := r.Status().Update(ctx, &gate); err != nil {
 		return ctrl.Result{}, err
@@ -1153,12 +1162,13 @@ func qualityDimensions(b qualityengine.DimensionScores, overall float64, w quali
 	}
 }
 
-func emitQualityScoreMetrics(gate *aiopsv1alpha1.AIQualityGate, provider, model string) {
+func emitQualityScoreMetrics(gate *aiopsv1alpha1.AIQualityGate, provider, model string, series *qualityGateSeriesSet) {
 	if provider == "" {
 		provider = "unknown"
 	}
 	for _, d := range gate.Status.Dimensions {
 		metrics.QualityScore.WithLabelValues(gate.Spec.Target.Namespace, gate.Spec.Target.Application, provider, model, d.Name).Set(d.Score)
+		series.addDimension(gate.Spec.Target.Namespace, gate.Spec.Target.Application, provider, model, d.Name)
 	}
 }
 
