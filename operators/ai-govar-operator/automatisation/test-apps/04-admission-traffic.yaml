@@ -20,9 +20,24 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: payments-api
+      volumes:
+        # The default ServiceAccount token carries the API server audience.
+        # GOV-AR rejects it and requires a token minted for its own audience,
+        # so a caller cannot replay a token issued for something else.
+        - name: govar-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: gov-ar-admission
+                  expirationSeconds: 3600
       containers:
         - name: traffic
           image: curlimages/curl:8.10.1
+          volumeMounts:
+            - name: govar-token
+              mountPath: /var/run/secrets/govar
+              readOnly: true
           env:
             - name: POD_UID
               valueFrom:
@@ -38,7 +53,7 @@ spec:
             - |
               set -u
               BASE="http://govar-ai-govar-operator-gov-ar-admission.govar-system.svc.cluster.local:8084"
-              TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+              TOKEN="$(cat /var/run/secrets/govar/token)"
               ok=0; err=0
               i=1
               while [ "$i" -le 30 ]; do
@@ -62,7 +77,7 @@ spec:
               }
               JSON
               )
-                RESP=$(curl -s -o /tmp/body -w '%{http_code}' -X POST "${BASE}/admit" \
+                RESP=$(curl -s -o /tmp/body -w '%{http_code}' -X POST "${BASE}/v1/admit" \
                   -H "Authorization: Bearer ${TOKEN}" \
                   -H 'Content-Type: application/json' \
                   --data "${BODY}")

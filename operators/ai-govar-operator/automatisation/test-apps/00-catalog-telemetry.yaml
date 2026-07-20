@@ -1,0 +1,142 @@
+# Catalog and telemetry the GOV-AR admission path depends on.
+#
+# WHY A CATALOG IS NEEDED: admission scores candidate routes from typed
+# spec.govar fields. A model without them decodes fine but is not feasible, and
+# every request then ends as ABSTAIN / no_candidate_after_governance.
+#
+# WHY TELEMETRY IS NEEDED: before trusting a workload, admission checks the
+# referenced AIBudgetPolicy is genuinely reconciled —
+#
+#   budget.Status.ObservedGeneration == budget.Generation
+#   && Ready condition is True                     (cmd/gov-ar-admission/main.go)
+#
+# Creating the policy is not enough: something must reconcile it, and the
+# AIBudgetPolicy controller lives in the FinOps operator, not in the GOV-AR
+# manager (which owns AIWorkloadBinding only). The FinOps budget controller in
+# turn refuses to report readiness without a real telemetry source rather than
+# assuming zero spend, so a gateway in configmap mode is declared here.
+#
+# => A GOV-AR cluster needs a controller for the catalog CRDs it reads. See the
+#    operator README for the dependency this implies.
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIProvider
+metadata:
+  name: mistral-eu
+spec:
+  type: azure-openai
+  region: francecentral
+  dataResidency: eu
+  managed: true
+  pricing:
+    currency: EUR
+    # GOV-AR reads version and completeness from this block even though the
+    # authoritative amounts live under spec.govar.pricing. "complete" asserts
+    # every closed billable basis is partitioned into charged or inapplicable.
+    version: demo-2026-07
+    completeness: complete
+    inputTokenPricePerMillion: "1.84"
+    outputTokenPricePerMillion: "5.52"
+  compliance:
+    allowedForSensitiveData: true
+    allowedCountries:
+      - FR
+      - EU
+  govar:
+    # Provider-owned route target. GOV-AR actuates only bindings declared here.
+    # azure-openai + azure-deployment-path is one of the two closed adapters
+    # GOV-AR accepts; francecentral keeps it inside the binding's allowed zones.
+    gatewayRoutes:
+      - name: mistral-eu-primary
+        providerDeployment: mistral-large-latest
+        cluster: eu-west
+        authority: demo-francecentral.openai.azure.com
+        pathMode: azure-deployment-path
+    # The only monetary authority for GOV-AR: legacy pricing above stays
+    # readable for other controllers but cannot make a candidate feasible.
+    pricing:
+      evidence:
+        mode: admin_attested
+        sourceVersion: demo-2026-07
+        # SHA-256 of the attested source document. Deterministic placeholder:
+        # echo -n "govar-demo-pricing-2026-07" | sha256sum
+        evidenceSHA256: "ff9492b3586102801ed82b1dffe2c325a95156e7ef5cea5f349c73eca18b0c81"
+        validUntil: "2027-01-01T00:00:00Z"
+        adapterVersion: govar-pricing-v1
+      # input_tokens and output_tokens are NOT listed here: the controller
+      # derives those two charges from spec.pricing.{input,output}TokenPricePerMillion
+      # above and rejects a redeclaration as a duplicate basis. This list is for
+      # additional bases only.
+      # The chat deployment cannot bill these, declared explicitly so a missing
+      # basis is never silently treated as zero.
+      inapplicableBases:
+        - cached_input_tokens
+        - reasoning_tokens
+        - request
+        - tool_call
+        - media_unit
+        - billable_second
+        - cancellation
+        - retry_attempt
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIModel
+metadata:
+  name: mistral-large
+spec:
+  providerRef: mistral-eu
+  modelName: mistral-large-latest
+  type: llm
+  contextWindow: 128000
+  qualityTier: high
+  costTier: medium
+  sensitiveDataAllowed: true
+  govar:
+    routable: true
+    routeBindingRef: mistral-eu-primary
+    outputCapEvidence:
+      mode: admin_attested
+      sourceVersion: demo-2026-07
+      requestParameter: max_output_tokens
+      maxOutputTokens: 8192
+      validUntil: "2027-01-01T00:00:00Z"
+      capabilityAdapterVersion: govar-pricing-v1
+      # The path adapter enforces the cap on the wire, so a request cannot
+      # exceed the attested maximum.
+      enforcedByPathAdapter: true
+      # echo -n "govar-demo-outputcap-2026-07" | sha256sum
+      evidenceSHA256: "bf6153007e15c6757a658b1015c95335520e6cb28243c928e21c972c74cf1a48"
+---
+apiVersion: aiops.imperium.io/v1alpha1
+kind: AIGateway
+metadata:
+  name: govar-gateway
+spec:
+  type: litellm
+  endpoint: http://litellm.govar-demo.svc.cluster.local:4000
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: govar-demo
+  telemetry:
+    mode: configmap
+    sourceConfigMap: govar-usage
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: govar-usage
+data:
+  usage.json: |
+    [
+      {
+        "Namespace": "govar-demo",
+        "Application": "payments-api",
+        "Team": "payments",
+        "Provider": "mistral-eu",
+        "Model": "mistral-large-latest",
+        "Requests": 640,
+        "InputTokens": 820000,
+        "OutputTokens": 260000,
+        "LatencyMillis": 520,
+        "Errors": 3
+      }
+    ]
