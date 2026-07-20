@@ -20,8 +20,10 @@ ai-govar-operator/
 ├── chart/ai-govar-operator/      ← Helm chart indépendant (manager + admission + calibration)
 ├── docs/                         ← fiches CRD + opérations + migration
 └── automatisation/
-    ├── up.sh / down.sh           ← cluster kind complet en une commande (mode dev in-memory)
-    ├── test-apps/                ← policies + binding + smoke test Job
+    ├── up.sh / down.sh           ← cluster kind complet en une commande (mode dev in-memory ;
+    │                               up.sh installe aussi l'opérateur FinOps, cf. plus bas)
+    ├── test-apps/                ← catalogue+télémétrie (00), policies (01), binding (02),
+    │                               smoke test (03), trafic d'admission (04), quality gate (05)
     └── dashboards/               ← dashboard Grafana "Governed Admission"
 ```
 
@@ -144,22 +146,33 @@ cd automatisation
 ./up.sh          # kind + Prometheus/Grafana + manager + admission (dev in-memory) + tests
 ```
 
-Le script crée le secret d'identité, épingle le **digest** de l'image d'admission publiée,
-installe l'admission en mode `devInMemory` (mono-replica, sans PostgreSQL), applique les
-apps de test (`govar-demo`) : `AIBudgetPolicy` + `AIRoutingPolicy` + ServiceAccount
-`payments-api` + `AIWorkloadBinding` conforme (nom = SA, zones normalisées), puis lance un
-**Job de smoke test** qui vérifie `/healthz`, `/readyz` et la présence des métriques
-`govar_*`.
+Le script :
+
+1. crée le secret d'identité et **construit l'image d'admission depuis la source**
+   (`Dockerfile.gov-ar-admission`, chargée dans kind ; l'image publiée est consommée par
+   digest en production, mais `kind load` ne préserve pas les digests de registre) ;
+2. installe l'admission en mode `devInMemory` (mono-replica, sans PostgreSQL) avec le
+   ServiceMonitor dédié qui scrape les familles `govar_*` ;
+3. **installe aussi l'opérateur FinOps** — requis pour que l'admission décide (voir
+   [Intégration avec les autres opérateurs](#intégration-avec-les-autres-opérateurs)) ;
+4. applique les apps de test (`govar-demo`) : catalogue `azure-openai` GOV-AR-faisable +
+   télémétrie (`00`), `AIBudgetPolicy` + `AIRoutingPolicy` (`01`), ServiceAccount
+   `payments-api` + `AIWorkloadBinding` conforme (`02`), smoke test `/healthz`+`/readyz`
+   (`03`), **générateur de trafic d'admission** (`04`) et **quality gate** évalué par un
+   vrai job (`05`) ; il horodate enfin `pricing.observedAt` (rejeté au-delà de 24 h).
 
 ```bash
 kubectl -n govar-demo get aiwb
 kubectl -n govar-demo logs job/govar-smoke-test
+kubectl -n govar-demo logs job/govar-admission-traffic   # 24 ADMIT, 6 refus gouvernés
 ```
 
 Grafana : `kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80`
-→ dashboard **AI GOV-AR Operator — Governed Admission** (débit et ratio de refus des
-décisions, latences p95/p99, transitions du ledger, backlog du worker durable, âge du
-dernier heartbeat, claims par type de travail).
+→ dashboard **AI GOV-AR Operator — Governed Admission**. Le trafic de démo alimente
+**8 des 12 panels** : décisions, ratio et raisons de refus, transitions du ledger,
+débit/latences HTTP. Les 4 panels de worker durable (`Pending records`, `Last successful
+pass age`, `Worker claims`, `Oldest pending`) restent vides — ces métriques n'existent
+qu'avec PostgreSQL, jamais en `devInMemory`.
 
 Démontage : `./down.sh`.
 
@@ -234,12 +247,21 @@ n'accorde aucun privilège d'admission.
 
 #### Ce que montre la démo kind
 
-La démo n'émet **aucune requête d'admission** (le smoke test ne touche que `/healthz`,
-`/readyz` et `/metrics`) et tourne en `devInMemory` (donc sans worker durable). Sont donc
-alimentés les panels HTTP (débit par endpoint/classe de statut, latences p95/p99) ; les
-panels décisions, ledger et worker restent vides tant qu'aucun trafic gouverné réel n'a
-traversé le service. Les compteurs Prometheus n'apparaissent qu'après leur première
-incrémentation — un panel vide n'y signifie pas une requête erronée.
+Le Job `04-admission-traffic` émet du **vrai trafic d'admission gouverné** : il
+s'authentifie avec le token projeté du ServiceAccount (audience `gov-ar-admission`) et
+envoie 30 requêtes `/v1/admit`, dont une sur cinq demande plus de tokens de sortie que le
+cap attesté au catalogue. La démo produit ainsi **24 `ADMIT`** (`highest_utility_feasible`),
+**6 refus gouvernés** (`ABSTAIN` / `strict_cap_unverified`) et **30 transitions de ledger**
+`NEW → RESERVED`. Sont donc alimentés **8 des 12 panels** : décisions, ratio de refus,
+raisons de refus, transitions du ledger, débit/latences HTTP.
+
+Un refus gouverné est un **HTTP 200 portant la décision dans le corps**, pas une erreur de
+transport — c'est ce que le générateur inspecte.
+
+Les **4 panels restants** (`Pending records`, `Last successful pass age`, `Worker claims`,
+`Oldest pending work item age`) mesurent le **worker durable**, qui n'existe qu'avec
+PostgreSQL. En `devInMemory` ces métriques ne sont jamais émises : **8/12 est le plafond de
+ce mode**, pas un défaut.
 
 ## Intégration avec les autres opérateurs
 

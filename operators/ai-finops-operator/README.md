@@ -19,7 +19,8 @@ ai-finops-operator/
 ├── docs/                      ← une fiche par CRD
 └── automatisation/
     ├── up.sh / down.sh        ← cluster kind complet en une commande
-    ├── test-apps/             ← applications de test (catalogue, usage, policies)
+    ├── test-apps/             ← catalogue (01), usage gateway (02), policies+rapport (03),
+    │                            quality gate (04), egress shadow-AI (05), gateway d'éval (06)
     └── dashboards/            ← dashboard Grafana "AI FinOps Operator — Overview"
 ```
 
@@ -163,10 +164,14 @@ Le script :
 4. installe le chart avec ServiceMonitor activé ;
 5. déploie les **applications de test** dans `finops-demo` : catalogue 2 providers
    (Mistral EU / OpenAI US) + 3 modèles, gateway en télémétrie `configmap` avec usage mesuré
-   statique (3 applications : chatbot-rh, marketing-assistant, support-triage), budget,
-   politique de souveraineté FR/EU (le trafic US déclenche des constats), break-even H100 et
-   rapport consolidé ;
+   statique (chatbot-rh, marketing-assistant, support-triage), budget, politique de
+   souveraineté FR/EU (le trafic US déclenche des constats), break-even H100, rapport
+   consolidé, un **quality gate** évalué par un vrai job contre un endpoint local
+   (`06-eval-gateway`), et un jeu d'**egress observé** (`05-shadow-egress`) qui alimente la
+   détection shadow-AI ;
 6. importe le dashboard Grafana.
+
+Avec ces applications, **les 22 panels du dashboard sont alimentés**.
 
 Vérifier les résultats :
 
