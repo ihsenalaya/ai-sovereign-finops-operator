@@ -2,7 +2,7 @@ apiVersion: v2
 name: ai-govar-operator
 description: AI GOV-AR Operator — standalone governed-admission control plane for AI inference (workload identity bindings, Envoy ext_proc admission, durable PostgreSQL reservation/liability ledger, calibration evidence, fail-closed change approval).
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "0.1.0"
 keywords:
   - governance

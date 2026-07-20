@@ -78,7 +78,7 @@
    },
    "targets": [
     {
-     "expr": "sum(rate(govar_admission_decisions_total{decision!=\"admit\"}[5m])) / sum(rate(govar_admission_decisions_total[5m]))",
+     "expr": "sum(rate(govar_admission_decisions_total{decision!=\"ADMIT\"}[5m])) / sum(rate(govar_admission_decisions_total[5m]))",
      "refId": "A"
     }
    ],
@@ -178,7 +178,7 @@
    },
    "targets": [
     {
-     "expr": "sum by (reason) (rate(govar_admission_decisions_total{decision!=\"admit\"}[5m]))",
+     "expr": "sum by (reason) (rate(govar_admission_decisions_total{decision!=\"ADMIT\"}[5m]))",
      "refId": "A",
      "legendFormat": "{{reason}}"
     }
@@ -214,9 +214,9 @@
    },
    "targets": [
     {
-     "expr": "sum by (transition, outcome) (rate(govar_ledger_transitions_total[5m]))",
+     "expr": "sum by (from, to, reason) (rate(govar_transition_total[5m]))",
      "refId": "A",
-     "legendFormat": "{{transition}}/{{outcome}}"
+     "legendFormat": "{{from}}→{{to}} ({{reason}})"
     }
    ],
    "description": "Dispatch, settlement and cancellation attempts and outcomes."
@@ -271,11 +271,11 @@
    },
    "targets": [
     {
-     "expr": "max(govar_reconciliation_pending_records)",
+     "expr": "sum(govar_worker_backlog)",
      "refId": "A"
     }
    ],
-   "description": "Pending rows in the bounded observation scan. Sustained growth means the worker is behind."
+   "description": "Durable worker backlog (all work kinds and states). Sustained growth means the worker is behind."
   },
   {
    "type": "stat",
@@ -294,15 +294,15 @@
    },
    "targets": [
     {
-     "expr": "time() - max(govar_reconciliation_last_success_unixtime)",
+     "expr": "max(govar_worker_heartbeat_age_seconds)",
      "refId": "A"
     }
    ],
-   "description": "Seconds since the last successful reconciliation pass. Alert if above several intervals."
+   "description": "Age of the last successful durable-worker heartbeat. Alert if above several intervals."
   },
   {
    "type": "timeseries",
-   "title": "Reconciliation runs (success / failure)",
+   "title": "Worker claims (success / failure)",
    "datasource": "${datasource}",
    "gridPos": {
     "h": 7,
@@ -315,16 +315,16 @@
    },
    "targets": [
     {
-     "expr": "sum by (result) (rate(govar_reconciliation_runs_total[5m]))",
+     "expr": "sum by (kind, result) (rate(govar_worker_claims_total[5m]))",
      "refId": "A",
-     "legendFormat": "{{result}}"
+     "legendFormat": "{{kind}}/{{result}}"
     }
    ],
-   "description": "Worker pass outcomes. Repeated failures keep ambiguous holds charged."
+   "description": "Durable worker claim outcomes by work kind. Repeated failures keep ambiguous holds charged."
   },
   {
    "type": "timeseries",
-   "title": "Records changed by reconciliation",
+   "title": "Oldest pending work item age",
    "datasource": "${datasource}",
    "gridPos": {
     "h": 7,
@@ -333,15 +333,18 @@
     "y": 31
    },
    "fieldConfig": {
-    "defaults": {}
+    "defaults": {
+     "unit": "s"
+    }
    },
    "targets": [
     {
-     "expr": "sum(rate(govar_reconciliation_records_total[5m]))",
+     "expr": "max by (kind) (govar_worker_oldest_age_seconds)",
      "refId": "A",
-     "legendFormat": "records"
+     "legendFormat": "{{kind}}"
     }
-   ]
+   ],
+   "description": "Age of the oldest durable worker item by work kind."
   }
  ],
  "uid": "ai-govar-operator-v01",

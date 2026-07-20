@@ -238,6 +238,35 @@ func TestReadyzReportsDurableWorkerFailure(t *testing.T) {
 	}
 }
 
+// The in-memory development ledger runs without durable workers. A nil
+// *durableWorkerManager stored in the workerHealth interface field would make
+// srv.workers non-nil, so the readiness handler would call Healthy() on a nil
+// receiver and panic — leaving the pod permanently unready.
+func TestReadyzWithoutDurableWorkersStaysReady(t *testing.T) {
+	var workers *durableWorkerManager
+	srv := &server{engine: govar.NewEngine()}
+	if workers != nil {
+		srv.workers = workers
+	}
+	recorder := httptest.NewRecorder()
+	srv.handleReadyz(recorder, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("readyz=%d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+// Defence in depth: even if a nil manager reaches the interface field, the
+// readiness probe must not panic.
+func TestReadyzSurvivesTypedNilDurableWorker(t *testing.T) {
+	var workers *durableWorkerManager
+	srv := &server{engine: govar.NewEngine(), workers: workers}
+	recorder := httptest.NewRecorder()
+	srv.handleReadyz(recorder, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("readyz=%d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestIdentityAuthenticatorRejectsBodyTamperingAndReplay(t *testing.T) {
 	now := time.Unix(1_800_000_000, 0)
 	auth := identityAuthenticator{masterSecret: []byte("0123456789abcdef0123456789abcdef"), now: func() time.Time { return now }}

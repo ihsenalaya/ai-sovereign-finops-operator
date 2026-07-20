@@ -67,4 +67,16 @@ spec:
       ports:
         - protocol: TCP
           port: {{ .Values.govArAdmission.extProc.port }}
+    {{- with .Values.govArAdmission.enforcement.networkPolicy.monitoringNamespaceSelector }}
+    # Prometheus scrape path for the govar_* families. The admission API and
+    # /metrics share this port; every API request is authenticated, so scrape
+    # ingress grants no admission privilege.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 8084
+    {{- end }}
 {{- end }}

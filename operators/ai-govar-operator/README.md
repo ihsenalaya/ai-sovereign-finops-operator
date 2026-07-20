@@ -25,6 +25,52 @@ ai-govar-operator/
     └── dashboards/               ← dashboard Grafana "Governed Admission"
 ```
 
+## Fonctionnement
+
+GOV-AR gouverne **chaque requête d'inférence** en temps réel, avec une identité
+prouvée et un ledger financier durable :
+
+1. **Identité par workload** — un `AIWorkloadBinding` (nom = ServiceAccount, spec
+   **immuable**) lie un ServiceAccount à un tenant, un budget, une politique de routage,
+   une sensibilité et des zones autorisées. À l'exécution, le service d'admission
+   résout le binding depuis le Pod **authentifié** (namespace + serviceAccountName via
+   TokenReview) : ni une requête ni une annotation ne peuvent usurper un binding.
+2. **Décision d'admission** — branché sur Envoy `ext_proc` (gRPC) ou en HTTP, le
+   service évalue les **champs typés** du catalogue (`spec.govar` des AIModel/AIProvider,
+   pricing versionné, politique de réservation/calibration/drift/risque de
+   l'AIRoutingPolicy) et rend une décision fermée :
+   `ADMIT` / `QUEUE` / `REJECT` / `ABSTAIN` / `REQUIRE_APPROVAL`.
+3. **Ledger réservation → settlement** — chaque admission réserve un montant
+   (liability) ; la fin de requête le règle (settlement) ; les transitions ne sont
+   comptées **qu'après commit** de la transaction. Production : PostgreSQL avec rôles
+   moindre-privilège ; dev : `devInMemory=true`, explicitement mono-replica.
+4. **Worker durable** — un worker réconcilie les réservations ambiguës (claims par
+   type de travail, backlog, heartbeat) pour qu'aucune liability ne reste ouverte
+   silencieusement.
+5. **Calibration & drift** — le `gov-ar-calibration-producer` (authentifié séparément)
+   produit l'évidence de calibration autoritaire ; en cas de drift détecté, le profil
+   passe en **mode conservateur**.
+6. **Approbation fail-closed** — l'autorisation d'une route exacte passe par un
+   `AIChangeRequest` (`authorize-gov-ar-route`) : le webhook tamponne l'identité
+   vérifiée du reviewer, rejette l'auto-approbation, et l'approbation référence des
+   UID/générations et un `scopeDigest` exacts avec expiration.
+
+## Fonctionnalités
+
+- **Admission temps réel** de l'inférence IA sur Envoy `ext_proc`, à décisions fermées
+  (`ADMIT`/`QUEUE`/`REJECT`/`ABSTAIN`/`REQUIRE_APPROVAL`).
+- **Identité workload non usurpable** : TokenReview + binding immuable nom=SA.
+- **Ledger financier durable** : réservation/liability/settlement transactionnels sur
+  PostgreSQL, mode in-memory réservé au dev et affiché comme tel.
+- **Garde-fous fail-closed au rendu Helm** : sans digest immuable, `softwareSHA256`,
+  secret d'identité ou PostgreSQL (hors dev explicite), le chart **refuse de rendre**.
+- **Chaîne d'approbation à deux personnes** : demandeur ≠ reviewer, groupe IdP dédié,
+  scope et expiration exacts.
+- **Calibration + détection de drift** avec repli conservateur.
+- **Observabilité sans fuite** : métriques `govar_*` sans aucun label
+  tenant/workload/prompt ; traces OTLP (W3C) propagées via `ext_proc` ;
+  `/healthz` / `/readyz` séparés.
+
 ## Composants
 
 | Composant | Binaire / image | Rôle |
@@ -112,8 +158,8 @@ kubectl -n govar-demo logs job/govar-smoke-test
 
 Grafana : `kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80`
 → dashboard **AI GOV-AR Operator — Governed Admission** (débit et ratio de refus des
-décisions, latences p95/p99, transitions du ledger, retard de réconciliation, âge de la
-dernière passe réussie).
+décisions, latences p95/p99, transitions du ledger, backlog du worker durable, âge du
+dernier heartbeat, claims par type de travail).
 
 Démontage : `./down.sh`.
 
@@ -161,6 +207,39 @@ Métriques `govar_*` sur le `/metrics` du service d'admission — **aucun label*
 d'identité tenant/workload/requête/prompt. Traces OTLP (W3C Trace Context) propagées via
 `ext_proc`. `/healthz` (process) et `/readyz` (ledger transactionnel) séparés. Détails :
 [docs/gov-ar-operations.md](docs/gov-ar-operations.md).
+
+#### Scraper les métriques `govar_*`
+
+Les familles `govar_*` sont exposées par le **service d'admission** (port `8084`, qui sert
+aussi l'API), *pas* par le service `-metrics` du manager (port `8080`, métriques
+controller-runtime). Le chart installe donc **deux ServiceMonitors** quand
+`metrics.serviceMonitor.enabled=true` :
+
+| ServiceMonitor | Service scrapé | Métriques |
+|---|---|---|
+| `<release>-ai-govar-operator` | `-metrics` (8080) | `controller_runtime_*`, `workqueue_*` du manager |
+| `<release>-ai-govar-operator-gov-ar-admission` | `-gov-ar-admission` (8084, `/metrics`) | **toutes les `govar_*`** |
+
+En **production**, `enforcement.networkPolicy.enabled=true` applique un ingress
+fail-closed sur le pod d'admission (seule la gateway atteint le port `ext_proc`).
+Prometheus ne peut alors pas scraper le port 8084 : il faut ouvrir explicitement le
+namespace de supervision, sinon **le dashboard reste vide**.
+
+```bash
+--set govArAdmission.enforcement.networkPolicy.monitoringNamespaceSelector."kubernetes\.io/metadata\.name"=monitoring
+```
+
+L'API sur ce port authentifie chaque requête (TokenReview + HMAC) : autoriser le scrape
+n'accorde aucun privilège d'admission.
+
+#### Ce que montre la démo kind
+
+La démo n'émet **aucune requête d'admission** (le smoke test ne touche que `/healthz`,
+`/readyz` et `/metrics`) et tourne en `devInMemory` (donc sans worker durable). Sont donc
+alimentés les panels HTTP (débit par endpoint/classe de statut, latences p95/p99) ; les
+panels décisions, ledger et worker restent vides tant qu'aucun trafic gouverné réel n'a
+traversé le service. Les compteurs Prometheus n'apparaissent qu'après leur première
+incrémentation — un panel vide n'y signifie pas une requête erronée.
 
 ## Intégration avec les autres opérateurs (optionnelle)
 

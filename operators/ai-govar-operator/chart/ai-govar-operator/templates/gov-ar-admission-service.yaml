@@ -24,4 +24,32 @@ spec:
       targetPort: ext-proc
       protocol: TCP
     {{- end }}
+{{- if .Values.metrics.serviceMonitor.enabled }}
+---
+# The govar_* families (admission decisions, ledger transitions, durable worker
+# state) are exposed by the admission service on its API port, not by the
+# manager metrics service. Without this ServiceMonitor the GOV-AR dashboard has
+# no data: the manager ServiceMonitor scrapes a port named "metrics", which the
+# admission service does not expose.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "operator.fullname" . }}-gov-ar-admission
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gov-ar-admission
+    {{- with .Values.metrics.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "operator.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: gov-ar-admission
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.metrics.serviceMonitor.interval }}
+{{- end }}
 {{- end }}

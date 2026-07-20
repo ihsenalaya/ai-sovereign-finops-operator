@@ -122,3 +122,91 @@ indépendants**, chacun installable et opérable seul :
 - 18h30 — automatisation govar + smoke test ; 10 docs CRD écrites + 12 copiées ; README ×3 +
   operators/README.md ; workflow release + pointeur README racine ; validation finale complète.
   CHANTIER TERMINÉ — commit + push effectués.
+
+## Vérification de bout en bout (2026-07-19)
+
+Passe de vérification complète : build Go 3 managers OK, tests webhook OK, helm lint +
+template 3/3 OK, scripts bash -n OK, test kind réel des 3 opérateurs.
+
+- **finops kind** : PASS complet — CRs réconciliés (budget Exceeded 697 %, souveraineté
+  3 findings, rapport Markdown généré, gateway Ready), 52 métriques `ai_finops_*`,
+  monitoring + dashboard importés.
+- **confidential kind** : PASS — runtimeclasses simulées bootstrappées, webhooks pods
+  (mutate/validate HTTP 200), chaîne d'attestation simulée appliquée, pod démo sur
+  `simulated-kata-qemu-snp`.
+- **govar kind** : DEUX bugs trouvés et corrigés dans `automatisation/up.sh`.
+  1. *ImagePullBackOff* — le chart épinglait l'image admission **par digest**, mais
+     `kind load` ne préserve pas les manifest digests du registre. **Fix** :
+     `govArAdmission.image.digest=""` (référence par tag en kind).
+  2. *Readiness crash-loop* — **bug réel dans le code source** (pas seulement dans
+     l'image publiée : première hypothèse fausse, corrigée après reproduction).
+     `/readyz` panique en mode `devInMemory` : **typed-nil interface** Go.
+     - `main.go:145` : `var workers *durableWorkerManager` (pointeur concret, reste
+       nil sans PostgreSQL) ;
+     - `main.go:59` : le champ `server.workers` est de type **interface** `workerHealth` ;
+     - `main.go:180` : assigner le pointeur nil dans le champ interface produit une
+       **interface non-nil contenant un pointeur nil** ;
+     - `main.go:340` : le garde `if s.workers != nil` est donc **vrai** → appel de
+       `Healthy()` sur récepteur nil → panic sur `m.mu.RLock()`
+       (`reconciliation_worker.go:377`).
+     Conséquence : pod jamais Ready → `helm --wait` timeout → up.sh échoue avant les
+     test-apps et le smoke test. Explique aussi le crash de l'image publiée.
+     **Fix (2 niveaux)** :
+     - `main.go` : n'assigner `srv.workers` que si `workers != nil` (cause racine) ;
+     - `reconciliation_worker.go` : `Healthy()` tolère un récepteur nil (défense en
+       profondeur) ;
+     - 2 tests de régression dans `main_test.go`
+       (`TestReadyzWithoutDurableWorkersStaysReady`,
+       `TestReadyzSurvivesTypedNilDurableWorker`) — vérifiés : ils **paniquent sans le
+       correctif**, passent avec.
+     `up.sh` construit désormais l'image d'admission depuis la source
+     (`Dockerfile.gov-ar-admission`, `pullPolicy=Never`) au lieu de tirer le tag publié.
+- **Dashboards Grafana — corrections** (demande utilisateur) :
+  - `confidential-overview.json` : 12 des 13 panels référençaient des métriques
+    `aiops_*` qui n'existent nulle part dans le code → réécrit sur les métriques réelles
+    du manager (controller_runtime_*, workqueue_* scopé au job de l'opérateur,
+    ai_simulated_runtimeclass_in_use) ; validé live contre Prometheus (toutes les
+    requêtes renvoient des séries).
+  - `govar-overview.json` : `decision!="admit"` → `decision!="ADMIT"` (valeurs réelles
+    ADMIT/QUEUE/REJECT/ABSTAIN/REQUIRE_APPROVAL) ; `govar_ledger_transitions_total` →
+    `govar_transition_total{from,to,reason}` ; rangée réconciliation → métriques worker
+    réelles (`govar_worker_backlog`, `govar_worker_heartbeat_age_seconds`,
+    `govar_worker_claims_total`, `govar_worker_oldest_age_seconds`).
+  - `finops-overview.json` : vérifié, toutes les métriques/labels existent — inchangé.
+- **README ×3 enrichis** (demande utilisateur) : sections « Fonctionnement » (flux de
+  réconciliation/décision) et « Fonctionnalités » ajoutées ; descriptions des dashboards
+  alignées sur les panels corrigés.
+
+### Bug n°3 govar — métriques `govar_*` jamais scrapées
+
+Le ServiceMonitor du manager sélectionne bien les deux services (matchLabels par
+sous-ensemble) mais son endpoint cible un port **nommé `metrics`** ; or le service
+d'admission expose son port sous le nom **`http`** (8084, qui sert aussi `/metrics`).
+Résultat : 0 cible pour l'admission → **toutes** les familles `govar_*` échappaient à
+Prometheus (le dashboard entier aurait été vide en production).
+**Fix** : ServiceMonitor dédié à l'admission dans `gov-ar-admission-service.yaml`
+(`port: http`, `path: /metrics`). Vérifié en live : cible `up`, 102 séries `govar_*`.
+
+### Bug n°4 govar — NetworkPolicy de production bloque le scrape
+
+`enforcement.networkPolicy.enabled=true` (exigé en production par les garde-fous) pose un
+ingress fail-closed n'autorisant que la gateway sur le port `ext_proc` → Prometheus ne peut
+pas atteindre le port 8084. **Fix** : nouvelle valeur opt-in
+`govArAdmission.enforcement.networkPolicy.monitoringNamespaceSelector` ajoutant une règle
+d'ingress explicite pour le namespace de supervision (l'API y authentifie chaque requête,
+donc aucun privilège d'admission accordé). Documenté dans le README govar.
+
+### Validation live des dashboards
+
+- confidential : toutes les requêtes renvoient des séries.
+- govar : 3 panels HTTP alimentés ; 9 panels (décisions/ledger/worker) légitimement vides —
+  la démo kind n'émet aucun trafic d'admission et `devInMemory` n'a pas de worker durable.
+  Les compteurs Prometheus n'existent qu'après première incrémentation. Documenté.
+
+### Publication
+
+- `gov-ar-admission:0.5.13-article3.20260720` **poussée** sur ghcr avec le correctif
+  `/readyz` — digest `sha256:bdf526715de019907a4cc290b09980555ea7775e19211a310f721e50850252b5`.
+  Chart `values.yaml` réépinglé sur ce digest ; chart govar passé en `version: 0.1.1`.
+- Images `finops/confidential/govar-operator:0.1.0` + `latest` reconstruites depuis la
+  source courante et repoussées.

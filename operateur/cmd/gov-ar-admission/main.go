@@ -177,7 +177,14 @@ func run(ctx context.Context) error {
 		log.Println("gov-ar-admission using explicit single-replica development in-memory ledger")
 	}
 
-	srv := &server{k8s: k8sClient, engine: engine, auth: identityAuthenticator{masterSecret: []byte(identitySecret), now: time.Now, reviewToken: tokenReviewFunc(k8sClient)}, metrics: metrics, workers: workers}
+	srv := &server{k8s: k8sClient, engine: engine, auth: identityAuthenticator{masterSecret: []byte(identitySecret), now: time.Now, reviewToken: tokenReviewFunc(k8sClient)}, metrics: metrics}
+	// Assign only when a durable worker exists: storing a nil *durableWorkerManager
+	// in the workerHealth interface field would leave srv.workers non-nil, and the
+	// readiness nil check below would call Healthy() on a nil receiver. The
+	// in-memory development ledger runs without durable workers.
+	if workers != nil {
+		srv.workers = workers
+	}
 	extProcAddr := strings.TrimSpace(os.Getenv("GOV_AR_EXT_PROC_ADDR"))
 	if extProcAddr == "" {
 		extProcAddr = ":9002"

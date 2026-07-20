@@ -27,14 +27,31 @@ collectors:
 
 | Metric | Meaning |
 |---|---|
-| `govar_http_requests_total` | Requests by bounded endpoint, method, and status class. |
-| `govar_http_request_duration_seconds` | Decision-path latency histogram. |
-| `govar_admission_decisions_total` | Admission decisions by closed decision and reason. |
-| `govar_ledger_transitions_total` | Dispatch, settlement, and cancellation attempts and outcomes. |
-| `govar_reconciliation_runs_total` | Successful and failed worker passes. |
-| `govar_reconciliation_records_total` | Records changed by expiration reconciliation. |
-| `govar_reconciliation_pending_records` | Pending rows in the bounded observation scan. |
-| `govar_reconciliation_last_success_unixtime` | Last successful pass time. |
+| Metric | Labels | Meaning |
+|---|---|---|
+| `govar_http_requests_total` | `endpoint`, `method`, `status_class` | Requests by bounded endpoint, method, and status class. |
+| `govar_http_request_duration_seconds` | `endpoint`, `method` | Decision-path latency histogram. |
+| `govar_admission_decisions_total` | `decision`, `reason`, `method` | Admission decisions. `decision` is **uppercase**: `ADMIT`, `QUEUE`, `REJECT`, `ABSTAIN`, `REQUIRE_APPROVAL`. |
+| `govar_transition_total` | `from`, `to`, `reason` | Effective ledger state transitions, recorded **only after transaction commit**. |
+| `govar_decision_duration_seconds` | — | End-to-end admission decision duration. |
+| `govar_transaction_duration_seconds` | — | Duration of committed GOV-AR database transactions. |
+| `govar_settlement_delay_seconds` | — | Delay from provider completion to committed settlement. |
+| `govar_worker_claims_total` | `kind`, `result` | Durable worker claims by work kind and result. |
+| `govar_worker_backlog` | `kind`, `state` | Durable worker backlog by work kind and state. |
+| `govar_worker_oldest_age_seconds` | `kind` | Age of the oldest durable worker item. |
+| `govar_worker_heartbeat_age_seconds` | `kind` | Age of the last successful worker heartbeat. |
+| `govar_reserved_micros` / `govar_settled_micros` | tenant profile | Committed reserved / settled monetary snapshots. |
+| `govar_outstanding_liability_micros` / `govar_carried_debt_micros` | tenant profile | Committed liability and carried-debt snapshots. |
+| `govar_calibration_support` / `govar_calibration_coverage_ppb` | policy profile, detector | Calibration support and empirical coverage. |
+| `govar_drift_detected` / `govar_conservative_mode` | policy profile | Drift detection and conservative-mode state. |
+| `govar_arithmetic_overflow_total` / `govar_bound_violation_total` | operation / basis | Rejected overflows and reservation-bound violations. |
+| `govar_audit_verification_total` | — | Append-only audit-chain verification outcomes. |
+
+> The `govar_http_*` family is registered by the admission service itself
+> (`cmd/gov-ar-admission/metrics.go`); the rest come from the shared
+> `internal/govarobservability` registry. There is **no** `govar_ledger_transitions_total`
+> nor any `govar_reconciliation_*` metric — durable-worker progress is observed through
+> the `govar_worker_*` family above.
 
 Metric labels never contain tenant, workload, request, reservation, trace, or
 prompt identity. Per-request investigation must use the protected ledger/audit

@@ -23,6 +23,78 @@ ai-finops-operator/
     └── dashboards/            ← dashboard Grafana "AI FinOps Operator — Overview"
 ```
 
+## Fonctionnement
+
+L'opérateur est **read-mostly** : il observe la télémétrie, calcule, publie des statuts,
+des métriques et des rapports — et ne touche au plan de données que lorsqu'un chemin
+d'enforcement est explicitement configuré.
+
+```
+                        ┌──────────────────────────────────────────────┐
+   AIGateway            │              finops-manager                  │
+   (source télémétrie)  │                                              │
+ prometheus/configmap ─→│ 1. Collecte   usage: requêtes, tokens in/out │
+                        │ 2. Valorisation  EUR via tarifs AIProvider/  │
+   AIProvider/AIModel ─→│    AIModel (par namespace/app/modèle/zone)   │
+   (catalogue+tarifs)   │ 3. Évaluation des politiques                 │
+                        │    AIBudgetPolicy   → usage%, phase          │
+   AIBudgetPolicy    ─→ │    AISovereigntyPolicy → findings            │
+   AISovereigntyPolicy  │    AIBreakEvenAnalysis → économies           │
+   AIBreakEvenAnalysis  │ 4. Publication                               │
+                        │    status CRs + events + métriques ai_finops_│
+                        │    AIFinOpsReport → ConfigMap (md/json)      │
+                        │ 5. Enforcement (opt-in, mode enforce)        │
+                        │    reroute budget / blocage souveraineté     │
+                        └──────────────────────────────────────────────┘
+```
+
+1. **Collecte** — `AIGateway` déclare la source de télémétrie (`prometheus`,
+   `configmap`, `aigw`). Il n'existe **aucun repli silencieux** : sans source réelle,
+   l'opérateur pose la condition `NoTelemetrySource` au lieu d'inventer des données.
+2. **Valorisation** — chaque enregistrement d'usage (application, modèle, tokens
+   entrée/sortie) est converti en EUR avec les tarifs du catalogue `AIProvider`/`AIModel`,
+   puis ventilé par namespace, application, modèle et **zone de résidence** (EU/US…).
+3. **Évaluation des politiques** — à chaque réconciliation :
+   - `AIBudgetPolicy` compare la dépense observée au budget de la période et publie
+     `usage%` et une phase (`Ok` → `Warning` → `Exceeded`), avec seuils d'alerte ;
+   - `AISovereigntyPolicy` confronte la zone de chaque provider utilisé aux zones
+     autorisées et produit des **findings** par application (sévérité incluse) ;
+   - `AIBreakEvenAnalysis` calcule le point mort API managée vs auto-hébergement
+     (coût GPU) et les économies (positives ou négatives) du basculement.
+4. **Publication** — statuts typés sur chaque CR (`kubectl get aibudget` montre la
+   phase), events Kubernetes, métriques `ai_finops_*`, et `AIFinOpsReport` qui génère un
+   **ConfigMap** avec le rapport complet en Markdown + JSON (résumé exécutif, coût par
+   modèle/application, projection mensuelle run-rate, recommandations).
+5. **Enforcement (opt-in)** — `enforcementMode: reportOnly → warn → enforce`. En
+   `enforce` avec une Envoy AI Gateway configurée, l'opérateur actue réellement :
+   reroute budget vers le fallback managé conforme, blocage souveraineté, reroute manuel
+   immédiat (`AIRouteOverride`) et changement gouverné par approbation humaine
+   (`AIChangeRequest`).
+6. **Optimisation continue** — `AIRoutingPolicy` score chaque route candidate
+   (coût, latence, qualité — `ai_finops_routing_score`) ; `AIQualityGate` valide la
+   qualité d'un modèle candidat **avant** toute bascule ; le radar qualité/coût du
+   dashboard compare les fournisseurs sur ces dimensions.
+
+## Fonctionnalités
+
+- **Attribution des coûts en EUR** par requête, modèle, application, équipe, namespace
+  et zone — à partir d'une télémétrie mesurée, jamais simulée silencieusement.
+- **Budgets avec dégradation gracieuse** : seuils d'alerte, phase `Exceeded`, fallback
+  managé conforme au lieu d'un blocage brutal.
+- **Souveraineté du trafic IA** : contraintes de résidence des données (ex. FR/EU),
+  findings par application, blocage optionnel du trafic hors-zone.
+- **Break-even managé vs auto-hébergé** : à quel volume un H100 auto-hébergé devient
+  rentable face à l'API managée (économies mensuelles chiffrées).
+- **Rapports FinOps consolidés** : ConfigMap Markdown/JSON par namespace et par période,
+  consommable par un humain ou un pipeline.
+- **Quality gates** : validation multi-dimensions (correctness, reliability, latency,
+  semantic) avant changement de modèle.
+- **Optimisation de routage** + **reroute manuel réversible** + **workflow
+  d'approbation humaine** pour les changements sensibles.
+- **Détection shadow-AI** : trafic IA sortant qui contourne la gateway
+  (`ai_finops_shadow_ai_egress`).
+- **Observabilité native** : ~30 familles de métriques `ai_finops_*`, events, conditions.
+
 ## CRDs possédées (11)
 
 | CRD | shortName | Rôle | Doc |

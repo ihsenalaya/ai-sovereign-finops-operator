@@ -46,6 +46,42 @@ cd ai-govar-operator/automatisation         && ./up.sh
 Les trois clusters kind (`finops-operator`, `confidential-operator`, `govar-operator`)
 peuvent coexister sur la même machine. `./down.sh` supprime le cluster correspondant.
 
+## État de validation (2026-07-20)
+
+Les trois opérateurs ont été déployés sur kind et vérifiés bout en bout.
+
+| Opérateur | Déploiement | Vérifications |
+|---|---|---|
+| **finops** | OK | CRs réconciliées (budget `Exceeded` 697 %, 3 constats de souveraineté), rapport Markdown généré en ConfigMap, 52 métriques `ai_finops_*`, dashboard importé |
+| **confidential** | OK | runtime classes simulées bootstrappées, webhooks pods `/mutate` + `/validate` en HTTP 200, chaîne d'attestation simulée, pod démo sur `simulated-kata-qemu-snp` |
+| **govar** | OK après 3 correctifs | smoke test PASSED (`/healthz`, `/readyz`, 84 familles `govar_*`), `AIWorkloadBinding` réconciliée, admission scrapée par Prometheus |
+
+Correctifs appliqués pendant cette validation :
+
+1. **`/readyz` paniquait** (typed-nil interface Go) — un `*durableWorkerManager` nil rangé
+   dans le champ interface `workerHealth` rendait le garde `!= nil` vrai, puis l'appel
+   paniquait sur un récepteur nil. Sans PostgreSQL (mode `devInMemory`), le pod
+   d'admission ne devenait **jamais** `Ready` : `helm --wait` expirait et `up.sh`
+   s'arrêtait avant les applications de test. Corrigé à la racine dans
+   `cmd/gov-ar-admission/main.go`, plus une garde de récepteur nil dans
+   `reconciliation_worker.go`, avec deux tests de régression.
+2. **Métriques d'admission non scrapées** — le ServiceMonitor du manager cible un port
+   nommé `metrics`, que le service d'admission n'expose pas (son port s'appelle `http`).
+   Toutes les `govar_*` échappaient donc à Prometheus. Le chart installe désormais un
+   **ServiceMonitor dédié** à l'admission.
+3. **Dashboards désalignés du code** — le dashboard confidential interrogeait des
+   métriques `aiops_*` inexistantes (12 panels sur 13) ; le dashboard govar utilisait
+   `govar_ledger_transitions_total` et une famille `govar_reconciliation_*` qui
+   n'existent pas, et filtrait `decision!="admit"` alors que les valeurs sont en
+   majuscules. Les deux ont été réécrits sur les métriques réellement exposées et
+   validés requête par requête contre un Prometheus live. `docs/gov-ar-operations.md`
+   documentait les mêmes noms erronés — corrigé aussi.
+
+En production, l'ingress fail-closed du pod d'admission bloque le scrape : ouvrir
+explicitement le namespace de supervision via
+`govArAdmission.enforcement.networkPolicy.monitoringNamespaceSelector`, sinon le
+dashboard GOV-AR reste vide (voir le README de l'opérateur).
+
 ## Compatibilité avec le monolithe
 
 Le chart historique `operateur/charts/ai-sovereign-finops-operator` (image `controller`)

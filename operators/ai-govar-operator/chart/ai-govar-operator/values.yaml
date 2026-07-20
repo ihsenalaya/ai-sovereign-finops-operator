@@ -86,10 +86,12 @@ govArAdmission:
     create: true
   image:
     repository: ghcr.io/ihsenalaya/ai-sovereign-finops-operator/gov-ar-admission
-    tag: "0.5.12-article3.20260713"
+    tag: "0.5.13-article3.20260720"
     # Release manifests set this immutable digest. Development may retain an
     # explicit non-stable tag while this field is empty.
-    digest: "sha256:5408cb8041a9876a2b9ea4d08933fc67ace360abe08083a7dfc9e1f4d6fde7e0"
+    # 0.5.13 fixes the /readyz nil-receiver panic that kept the admission pod
+    # permanently unready whenever it ran without PostgreSQL.
+    digest: "sha256:bdf526715de019907a4cc290b09980555ea7775e19211a310f721e50850252b5"
     pullPolicy: IfNotPresent
   # SHA-256 of the immutable admission-service image/software artifact. It is
   # embedded into every production audit transition and is required outside
@@ -172,6 +174,15 @@ govArAdmission:
       gatewayNamespaceSelector: {}
       gatewayPodSelector:
         aiops.imperium.io/govar-gateway: "true"
+      # Namespace allowed to scrape the admission API port (govar_* metrics).
+      # Empty means no scrape ingress: with networkPolicy.enabled the GOV-AR
+      # dashboard then stays empty because Prometheus cannot reach the service.
+      # Set it to the monitoring namespace, e.g.:
+      #   monitoringNamespaceSelector:
+      #     kubernetes.io/metadata.name: monitoring
+      # The API on this port authenticates every request (TokenReview + HMAC),
+      # so scrape access does not grant admission privileges.
+      monitoringNamespaceSelector: {}
 
 # Optional deployment for the independently authenticated authoritative
 # calibration producer. Its database credential must map to the least-

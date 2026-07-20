@@ -4,7 +4,7 @@
  },
  "editable": true,
  "schemaVersion": 39,
- "title": "AI Confidential Operator \u2014 Attestation & Placement",
+ "title": "AI Confidential Operator — Attestation & Placement",
  "tags": [
   "ai-confidential",
   "attestation",
@@ -28,7 +28,7 @@
  "panels": [
   {
    "type": "row",
-   "title": "Confidential Governance \u2014 Attestation & Key Release",
+   "title": "Confidential Operator — Réconciliation & Webhooks",
    "gridPos": {
     "x": 0,
     "y": 0,
@@ -40,7 +40,7 @@
   },
   {
    "type": "stat",
-   "title": "Attestation Evidence (active)",
+   "title": "Reconciliations (success)",
    "id": 61,
    "gridPos": {
     "x": 0,
@@ -85,19 +85,20 @@
    },
    "targets": [
     {
-     "expr": "sum(aiops_attestation_evidence_total)",
-     "legendFormat": "active evidences",
+     "expr": "sum(controller_runtime_reconcile_total{result=\"success\"})",
+     "legendFormat": "successful reconciles",
      "refId": "A"
     }
    ],
    "datasource": {
     "type": "prometheus",
     "uid": "${datasource}"
-   }
+   },
+   "description": "Total successful reconciliations across the confidential controllers (AttestationEvidence, AIPlacementDecision, AIKeyReleasePolicy, AIRevocationPolicy, AIEvidenceRecord)."
   },
   {
    "type": "stat",
-   "title": "Placement Decisions (allowed)",
+   "title": "Reconcile success / errors",
    "id": 62,
    "gridPos": {
     "x": 6,
@@ -134,13 +135,13 @@
    },
    "targets": [
     {
-     "expr": "sum(aiops_placement_decisions_total{allowed=\"true\"})",
-     "legendFormat": "allowed",
+     "expr": "sum(controller_runtime_reconcile_total{result=\"success\"})",
+     "legendFormat": "success",
      "refId": "A"
     },
     {
-     "expr": "sum(aiops_placement_decisions_total{allowed=\"false\"})",
-     "legendFormat": "denied",
+     "expr": "sum(controller_runtime_reconcile_errors_total)",
+     "legendFormat": "errors",
      "refId": "B"
     }
    ],
@@ -151,7 +152,7 @@
   },
   {
    "type": "gauge",
-   "title": "Key Release \u2014 Allow Rate (%)",
+   "title": "Webhooks pods — Success Rate (%)",
    "id": 63,
    "gridPos": {
     "x": 12,
@@ -197,19 +198,20 @@
    },
    "targets": [
     {
-     "expr": "100 * sum(aiops_key_release_requests_total{result=\"allow\"}) / (sum(aiops_key_release_requests_total) > 0)",
-     "legendFormat": "allow rate",
+     "expr": "100 * sum(controller_runtime_webhook_requests_total{code=\"200\"}) / (sum(controller_runtime_webhook_requests_total) > 0)",
+     "legendFormat": "success rate",
      "refId": "A"
     }
    ],
    "datasource": {
     "type": "prometheus",
     "uid": "${datasource}"
-   }
+   },
+   "description": "HTTP 200 ratio of the pod injection/validation webhooks (/mutate-v1-pod, /validate-v1-pod)."
   },
   {
    "type": "piechart",
-   "title": "Evidence \u2014 Simulated vs Real TEE",
+   "title": "Réconciliations par contrôleur",
    "id": 64,
    "gridPos": {
     "x": 18,
@@ -237,14 +239,9 @@
    },
    "targets": [
     {
-     "expr": "sum(aiops_attestation_evidence_total{simulated=\"true\"})",
-     "legendFormat": "simulated (kind)",
+     "expr": "sum by (controller) (controller_runtime_reconcile_total)",
+     "legendFormat": "{{controller}}",
      "refId": "A"
-    },
-    {
-     "expr": "sum(aiops_attestation_evidence_total{simulated=\"false\"})",
-     "legendFormat": "real TEE",
-     "refId": "B"
     }
    ],
    "datasource": {
@@ -254,7 +251,7 @@
   },
   {
    "type": "timeseries",
-   "title": "Placement Decisions over time",
+   "title": "Reconcile rate over time (by controller)",
    "id": 65,
    "gridPos": {
     "x": 0,
@@ -282,7 +279,7 @@
      {
       "matcher": {
        "id": "byName",
-       "options": "denied"
+       "options": "errors"
       },
       "properties": [
        {
@@ -298,13 +295,13 @@
    },
    "targets": [
     {
-     "expr": "rate(aiops_placement_decisions_total{allowed=\"true\"}[5m])",
-     "legendFormat": "allowed",
+     "expr": "sum by (controller) (rate(controller_runtime_reconcile_total[5m]))",
+     "legendFormat": "{{controller}}",
      "refId": "A"
     },
     {
-     "expr": "rate(aiops_placement_decisions_total{allowed=\"false\"}[5m])",
-     "legendFormat": "denied",
+     "expr": "sum(rate(controller_runtime_reconcile_errors_total[5m]))",
+     "legendFormat": "errors",
      "refId": "B"
     }
    ],
@@ -315,7 +312,7 @@
   },
   {
    "type": "bargauge",
-   "title": "Key Release \u2014 Deny Reasons",
+   "title": "Webhook requests (endpoint / code HTTP)",
    "id": 66,
    "gridPos": {
     "x": 12,
@@ -328,7 +325,7 @@
     "displayMode": "gradient",
     "reduceOptions": {
      "calcs": [
-      "sum"
+      "lastNotNull"
      ]
     }
    },
@@ -359,8 +356,8 @@
    },
    "targets": [
     {
-     "expr": "sum by (reason) (aiops_key_release_deny_reason_total)",
-     "legendFormat": "{{reason}}",
+     "expr": "sum by (webhook, code) (controller_runtime_webhook_requests_total)",
+     "legendFormat": "{{webhook}} — HTTP {{code}}",
      "refId": "A"
     }
    ],
@@ -371,7 +368,7 @@
   },
   {
    "type": "table",
-   "title": "Revocation Events",
+   "title": "Workqueue depth (par contrôleur)",
    "id": 67,
    "gridPos": {
     "x": 0,
@@ -393,8 +390,8 @@
    },
    "targets": [
     {
-     "expr": "sum by (namespace, node, action) (aiops_revocation_events_total)",
-     "legendFormat": "{{namespace}}/{{node}} \u2014 {{action}}",
+     "expr": "sum by (name) (workqueue_depth{job=~\".*ai-confidential-operator.*\"})",
+     "legendFormat": "{{name}}",
      "refId": "A",
      "instant": true,
      "format": "table"
@@ -403,11 +400,12 @@
    "datasource": {
     "type": "prometheus",
     "uid": "${datasource}"
-   }
+   },
+   "description": "Backlog of pending reconcile items per controller workqueue (0 = the operator keeps up)."
   },
   {
    "type": "stat",
-   "title": "Audit Chain \u2014 Checkpoint Age",
+   "title": "Webhook p99 latency",
    "id": 68,
    "gridPos": {
     "x": 12,
@@ -440,33 +438,34 @@
        },
        {
         "color": "yellow",
-        "value": 300
+        "value": 0.5
        },
        {
         "color": "red",
-        "value": 900
+        "value": 1
        }
       ]
      },
      "unit": "s",
-     "displayName": "Checkpoint Age"
+     "displayName": "p99 latency"
     }
    },
    "targets": [
     {
-     "expr": "max(aiops_audit_anchor_checkpoint_age_seconds)",
-     "legendFormat": "age (seconds)",
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(controller_runtime_webhook_latency_seconds_bucket[5m])))",
+     "legendFormat": "p99",
      "refId": "A"
     }
    ],
    "datasource": {
     "type": "prometheus",
     "uid": "${datasource}"
-   }
+   },
+   "description": "99th percentile latency of the pod injection/validation admission webhooks."
   },
   {
    "type": "row",
-   "title": "Environnement d'ex\u00e9cution",
+   "title": "Environnement d'exécution",
    "gridPos": {
     "h": 1,
     "w": 24,
@@ -499,7 +498,7 @@
   },
   {
    "type": "stat",
-   "title": "Evidence expiring < 10 min",
+   "title": "Workqueue backlog (total)",
    "datasource": "${datasource}",
    "gridPos": {
     "h": 6,
@@ -512,15 +511,15 @@
    },
    "targets": [
     {
-     "expr": "count(aiops_attestation_evidence_expires_in_seconds < 600) or vector(0)",
+     "expr": "sum(workqueue_depth{job=~\".*ai-confidential-operator.*\"})",
      "refId": "A"
     }
    ],
-   "description": "AttestationEvidence records that will expire within 10 minutes (renewal pressure)."
+   "description": "Total pending reconcile items across all confidential controllers (renewal / appraisal pressure)."
   },
   {
    "type": "timeseries",
-   "title": "Attestation evidence over time",
+   "title": "Latence de réconciliation (p50 / p95 / p99)",
    "datasource": "${datasource}",
    "gridPos": {
     "h": 7,
@@ -529,28 +528,30 @@
     "y": 24
    },
    "fieldConfig": {
-    "defaults": {}
+    "defaults": {
+     "unit": "s"
+    }
    },
    "targets": [
     {
-     "expr": "sum(aiops_attestation_evidence_total)",
+     "expr": "histogram_quantile(0.50, sum by (le) (rate(controller_runtime_reconcile_time_seconds_bucket[5m])))",
      "refId": "A",
-     "legendFormat": "evidence (total)"
+     "legendFormat": "p50"
     },
     {
-     "expr": "sum(aiops_attestation_evidence_total{simulated=\"true\"})",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(controller_runtime_reconcile_time_seconds_bucket[5m])))",
      "refId": "B",
-     "legendFormat": "simulated"
+     "legendFormat": "p95"
     },
     {
-     "expr": "sum(aiops_attestation_evidence_total{simulated=\"false\"})",
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(controller_runtime_reconcile_time_seconds_bucket[5m])))",
      "refId": "C",
-     "legendFormat": "real TEE"
+     "legendFormat": "p99"
     }
    ],
-   "description": "Volume of appraised evidence by nature."
+   "description": "Reconciliation latency percentiles across the confidential controllers."
   }
  ],
  "uid": "ai-confidential-operator-v01",
- "version": 1
+ "version": 2
 }

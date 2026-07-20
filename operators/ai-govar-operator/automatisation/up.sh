@@ -30,13 +30,20 @@ log "building manager image ${IMAGE_NAME}:${IMAGE_TAG}..."
 docker build -f "${DOCKERFILE}" -t "${IMAGE_NAME}:${IMAGE_TAG}" "${OPERATOR_DIR}"
 kind load docker-image "${IMAGE_NAME}:${IMAGE_TAG}" --name "${CLUSTER_NAME}"
 
-log "pulling and loading the published gov-ar-admission image..."
-ADMISSION_TAG="0.5.12-article3.20260713"
-docker pull "${ADMISSION_IMAGE}:${ADMISSION_TAG}"
-kind load docker-image "${ADMISSION_IMAGE}:${ADMISSION_TAG}" --name "${CLUSTER_NAME}"
-ADMISSION_SHA="$(docker inspect --format '{{index .RepoDigests 0}}' "${ADMISSION_IMAGE}:${ADMISSION_TAG}" | cut -d@ -f2)"
-ADMISSION_SOFTWARE_SHA="${ADMISSION_SHA#sha256:}"
-log "admission image digest: ${ADMISSION_SHA}"
+# The kind demo builds gov-ar-admission from the local source tree rather than
+# pulling the published tag. The published 0.5.12-article3 image predates the
+# /readyz nil-guard for devInMemory mode (server.workers is nil without
+# PostgreSQL) and crash-loops the readiness probe. Building from source ships
+# the fix; production still consumes the immutable published digest.
+ADMISSION_LOCAL_IMAGE="gov-ar-admission"
+ADMISSION_TAG="dev"
+log "building the gov-ar-admission image ${ADMISSION_LOCAL_IMAGE}:${ADMISSION_TAG} from source..."
+docker build -f "${OPERATOR_DIR}/Dockerfile.gov-ar-admission" -t "${ADMISSION_LOCAL_IMAGE}:${ADMISSION_TAG}" "${OPERATOR_DIR}"
+kind load docker-image "${ADMISSION_LOCAL_IMAGE}:${ADMISSION_TAG}" --name "${CLUSTER_NAME}"
+# softwareSHA256 is inert in devInMemory (only read on the PostgreSQL path); the
+# image id keeps a stable, well-formed value for the attestation env var.
+ADMISSION_SOFTWARE_SHA="$(docker inspect --format '{{.Id}}' "${ADMISSION_LOCAL_IMAGE}:${ADMISSION_TAG}" | cut -d: -f2)"
+log "admission image built from source: ${ADMISSION_LOCAL_IMAGE}:${ADMISSION_TAG}"
 
 # 3. Monitoring ------------------------------------------------------------------
 if [ -z "${SKIP_MONITORING:-}" ]; then
@@ -66,6 +73,10 @@ fi
 # 5. Operator chart -----------------------------------------------------------------
 # devInMemory is the EXPLICIT development mode: single replica, no PostgreSQL.
 # Production requires govArAdmission.postgres.enabled=true and an OTLP endpoint.
+# image.digest is cleared here: `kind load` does not preserve registry manifest
+# digests, so a by-digest reference cannot be satisfied by the image loaded on
+# the node. The kind demo pins by tag instead; softwareSHA256 stays enforced.
+# Production keeps the immutable digest from values.yaml.
 log "installing ai-govar-operator chart (release ${HELM_RELEASE})..."
 helm upgrade --install "${HELM_RELEASE}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
@@ -74,8 +85,10 @@ helm upgrade --install "${HELM_RELEASE}" "${CHART_DIR}" \
   --set image.pullPolicy=Never \
   --set govArAdmission.enabled=true \
   --set govArAdmission.devInMemory=true \
+  --set govArAdmission.image.repository="${ADMISSION_LOCAL_IMAGE}" \
   --set govArAdmission.image.tag="${ADMISSION_TAG}" \
-  --set govArAdmission.image.digest="${ADMISSION_SHA}" \
+  --set govArAdmission.image.digest="" \
+  --set govArAdmission.image.pullPolicy=Never \
   --set govArAdmission.softwareSHA256="${ADMISSION_SOFTWARE_SHA}" \
   --set govArAdmission.identity.masterExistingSecret=govar-identity-master \
   "${SM_ARGS[@]}" \

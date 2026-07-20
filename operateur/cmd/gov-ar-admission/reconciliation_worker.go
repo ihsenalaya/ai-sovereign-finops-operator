@@ -374,6 +374,11 @@ func (m *durableWorkerManager) refreshMetrics(ctx context.Context) {
 }
 
 func (m *durableWorkerManager) Healthy() error {
+	// A nil manager means no durable worker is configured (in-memory development
+	// ledger); there is no worker state that could be unhealthy.
+	if m == nil {
+		return nil
+	}
 	m.mu.RLock()
 	lastSuccess, enqueueError := m.lastEnqueueSuccess, m.lastEnqueueError
 	critical := make(map[govarworker.Kind]string, len(m.criticalHandlerErrors))
